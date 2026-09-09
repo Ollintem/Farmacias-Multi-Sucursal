@@ -1,17 +1,17 @@
 <?php
 
-use App\Concerns\ProfileValidationRules;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Title('Profile settings')] class extends Component {
-    use ProfileValidationRules;
-
-    public string $name = '';
+    public string $nombre = '';
+    public string $apellido = '';
+    public string $nombre_usuario = '';
     public string $email = '';
 
     /**
@@ -19,8 +19,12 @@ new #[Title('Profile settings')] class extends Component {
      */
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
+        $user = Auth::user();
+
+        $this->nombre = $user->nombre;
+        $this->apellido = $user->apellido;
+        $this->nombre_usuario = $user->nombre_usuario;
+        $this->email = $user->email;
     }
 
     /**
@@ -30,7 +34,19 @@ new #[Title('Profile settings')] class extends Component {
     {
         $user = Auth::user();
 
-        $validated = $this->validate($this->profileRules($user->id));
+        $validated = $this->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'apellido' => ['required', 'string', 'max:255'],
+            'nombre_usuario' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique('usuarios', 'email')->ignore($user->id),
+            ],
+        ]);
 
         $user->fill($validated);
 
@@ -50,9 +66,13 @@ new #[Title('Profile settings')] class extends Component {
 
     <flux:heading level="2" class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your profile information')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+            <flux:input wire:model="nombre" :label="__('First name')" type="text" required autofocus autocomplete="given-name" />
+
+            <flux:input wire:model="apellido" :label="__('Last name')" type="text" required autocomplete="family-name" />
+
+            <flux:input wire:model="nombre_usuario" :label="__('Username')" type="text" required autocomplete="username" />
 
             <div>
                 <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />

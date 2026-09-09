@@ -15,7 +15,9 @@ test('profile information can be updated', function () {
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.profile')
-        ->set('name', 'Test User')
+        ->set('nombre', 'Test')
+        ->set('apellido', 'User')
+        ->set('nombre_usuario', 'testuser')
         ->set('email', 'test@example.com')
         ->call('updateProfileInformation');
 
@@ -23,7 +25,9 @@ test('profile information can be updated', function () {
 
     $user->refresh();
 
-    expect($user->name)->toEqual('Test User');
+    expect($user->nombre)->toEqual('Test');
+    expect($user->apellido)->toEqual('User');
+    expect($user->nombre_usuario)->toEqual('testuser');
     expect($user->email)->toEqual('test@example.com');
     expect($user->email_verified_at)->toBeNull();
 });
@@ -34,7 +38,9 @@ test('email verification status is unchanged when email address is unchanged', f
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.profile')
-        ->set('name', 'Test User')
+        ->set('nombre', 'Test')
+        ->set('apellido', 'User')
+        ->set('nombre_usuario', 'testuser')
         ->set('email', $user->email)
         ->call('updateProfileInformation');
 
