@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -81,5 +83,29 @@ class User extends Authenticatable
         return Str::length($initials) > 1
             ? Str::substr($initials, 0, 1).Str::substr($initials, -1)
             : $initials;
+    }
+
+    /**
+     * @return BelongsTo<Rol, $this>
+     */
+    public function rol(): BelongsTo
+    {
+        return $this->belongsTo(Rol::class, 'id_rol');
+    }
+
+    /**
+     * @return BelongsTo<Sucursal, $this>
+     */
+    public function sucursal(): BelongsTo
+    {
+        return $this->belongsTo(Sucursal::class, 'id_sucursal');
+    }
+
+    /**
+     * @return HasMany<PermisoActivado, $this>
+     */
+    public function permisosActivados(): HasMany
+    {
+        return $this->hasMany(PermisoActivado::class, 'id_usuario');
     }
 }
