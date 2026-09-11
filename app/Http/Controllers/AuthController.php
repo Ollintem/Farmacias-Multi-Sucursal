@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class AuthController extends Controller
 {
@@ -13,9 +14,8 @@ class AuthController extends Controller
         return view('pages::auth.login');
     }
 
-    public function login()
+    public function login(): RedirectResponse
     {
-
         $credentials = request()->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -25,11 +25,10 @@ class AuthController extends Controller
             request()->session()->regenerate();
 
             return redirect()->intended('/dashboard');
-        } else {
-            return back()->withErrors([
-                'email' => 'Credenciales inválidas.',
-            ]);
         }
 
+        return back()->withErrors([
+            'email' => 'Credenciales inválidas.',
+        ]);
     }
 }
