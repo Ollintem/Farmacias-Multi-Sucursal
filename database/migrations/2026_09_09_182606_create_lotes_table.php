@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('folio', 20);
             $table->foreignId('id_proveedor')->constrained('proveedores')->cascadeOnDelete();
             $table->timestamp('entregado_en')->useCurrent();
-            $table->timestamp('fecha_caducidad');
+            $table->timestamp('fecha_caducidad')->nullable();
         });
     }
 
