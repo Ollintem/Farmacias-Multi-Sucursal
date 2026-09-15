@@ -47,6 +47,57 @@
     }
 }
 
+@layer components {
+    .erp-sidebar {
+        --color-accent: #0c9f9c;
+        --color-accent-content: #ffffff;
+        --color-accent-foreground: #ffffff;
+        box-shadow: 8px 0 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .erp-sidebar [data-flux-sidebar-item] {
+        min-height: 2.65rem;
+        border-left: 3px solid transparent;
+        border-radius: 0;
+        color: #a9b8d3;
+        font-size: 0.88rem;
+    }
+
+    .erp-sidebar [data-flux-sidebar-item]:hover {
+        background: rgba(23, 162, 159, 0.12);
+        color: #f8fafc;
+    }
+
+    .erp-sidebar [data-current="true"] {
+        border-left-color: #16b8b1;
+        background: rgba(12, 159, 156, 0.22);
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    .erp-sidebar [data-flux-sidebar-item] svg {
+        color: #91a7c9;
+    }
+
+    .erp-sidebar [data-current="true"] svg {
+        color: #ffffff;
+    }
+
+    .erp-sidebar [data-flux-sidebar-badge] {
+        min-width: 1.15rem;
+        border-radius: 9999px;
+        background: #fb4b55;
+        color: white;
+        font-size: 0.68rem;
+        font-weight: 700;
+    }
+
+    .erp-sidebar-version {
+        border-top: 1px solid rgba(148, 163, 184, 0.14);
+        color: #536887;
+    }
+}
+
 [data-flux-field]:not(ui-radio, ui-checkbox) {
     @apply grid gap-2;
 }

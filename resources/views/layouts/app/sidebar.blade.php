@@ -3,32 +3,62 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+    <body class="min-h-screen bg-[#eef3f8] dark:bg-zinc-950">
+        <flux:sidebar sticky collapsible="mobile" class="erp-sidebar border-e border-[#202b43] bg-[#0f172a] text-[#a9b8d3]">
             <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
-                <flux:sidebar.collapse class="lg:hidden" />
+                <flux:sidebar.brand name="FarmaERP" href="{{ route('dashboard') }}" wire:navigate>
+                    <x-slot name="logo" class="erp-logo flex aspect-square size-8 items-center justify-center rounded-lg bg-[#0c9f9c] text-white">
+                        <span class="text-xs font-bold">Rx</span>
+                    </x-slot>
+                </flux:sidebar.brand>
+                <flux:sidebar.collapse class="lg:hidden text-[#a9b8d3]" />
             </flux:sidebar.header>
 
-            <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
+            <flux:sidebar.nav class="erp-nav">
+                <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                    Dashboard
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="receipt-percent" href="#">
+                    Punto de Venta
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="cube" href="#">
+                    Productos
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="archive-box" href="#">
+                    Inventario
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="clock" href="#">
+                    Lotes y Caducidades
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="inbox-arrow-down" href="#">
+                    Entradas de Almacén
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="arrows-right-left" href="#" badge="3">
+                    Traspasos
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="map-pin" :href="route('dashboard')" :current="request()->routeIs('sucursales.*')" wire:navigate>
+                    Sucursales
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="users" :href="route('usuarios.index')" :current="request()->routeIs('usuarios.*')" wire:navigate>
+                    Usuarios y Roles
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="banknotes" href="#">
+                    Caja
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="list-bullet" href="#">
+                    Reportes
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="flag" href="#" badge="7">
+                    Alertas
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.*')" wire:navigate>
+                    Configuración
+                </flux:sidebar.item>
             </flux:sidebar.nav>
 
             <flux:spacer />
 
-            <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
-                </flux:sidebar.item>
-
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
-                </flux:sidebar.item>
-            </flux:sidebar.nav>
+            <div class="erp-sidebar-version px-3 pb-2 text-xs">v2.4.1 - Julio 2026</div>
 
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
         </flux:sidebar>
