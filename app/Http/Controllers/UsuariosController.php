@@ -7,6 +7,7 @@ use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class UsuariosController extends Controller
@@ -22,7 +23,9 @@ class UsuariosController extends Controller
 
     public function create(): View
     {
-        $roles = Rol::orderBy('tipo_rol')->get();
+        $roles = Rol::where('tipo_rol', '!=', 'SuperAdmin')
+            ->orderBy('tipo_rol')
+            ->get();
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
 
         return view('usuarios.create', compact('roles', 'sucursales'));
@@ -36,9 +39,17 @@ class UsuariosController extends Controller
             'nombre_usuario' => ['required', 'string', 'max:80', 'unique:usuarios,nombre_usuario'],
             'email' => ['required', 'email', 'unique:usuarios,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'id_rol' => ['required', 'exists:roles,id'],
+            'id_rol' => [
+                'required',
+                Rule::exists('roles', 'id')->where(fn ($query) => $query->where('tipo_rol', '!=', 'SuperAdmin')),
+            ],
             'id_sucursal' => ['nullable', 'exists:sucursales,id'],
             'es_activo' => ['boolean'],
+        ], [
+            'password.required' => 'Escribe una contraseña para el usuario.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden. Escríbelas nuevamente.',
+            'password_confirmation.required' => 'Confirma la contraseña escribiéndola nuevamente.',
         ]);
 
         $usuario = User::create([

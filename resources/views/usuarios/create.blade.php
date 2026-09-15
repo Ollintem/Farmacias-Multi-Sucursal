@@ -247,7 +247,8 @@
 
                     <div>
                         <label class="mb-2 block text-sm font-medium">Contraseña</label>
-                        <input type="password" name="password" class="theme-input" required>
+                        <input type="password" name="password" class="theme-input" minlength="8" aria-describedby="password-help" required>
+                        <p id="password-help" class="mt-1 text-xs text-slate-500">Usa al menos 8 caracteres. Puedes combinar letras, números y símbolos.</p>
                         @error('password')
                             <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                         @enderror
@@ -256,6 +257,10 @@
                     <div>
                         <label class="mb-2 block text-sm font-medium">Confirmar contraseña</label>
                         <input type="password" name="password_confirmation" class="theme-input" required>
+                        <p class="mt-1 text-xs text-slate-500">Vuelve a escribir exactamente la misma contraseña.</p>
+                        @error('password_confirmation')
+                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
 
