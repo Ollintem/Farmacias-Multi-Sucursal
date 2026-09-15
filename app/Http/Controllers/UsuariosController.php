@@ -118,11 +118,26 @@ class UsuariosController extends Controller
 
         $modulos = Modulo::orderBy('id')->get();
         $permisos = Permiso::orderBy('id')->get();
-        $seleccionados = collect($request->input('permisos', []))
-            ->mapWithKeys(fn ($permisoIds, $moduloId) => [
-                (int) $moduloId => collect($permisoIds)->map(fn ($permisoId) => (int) $permisoId)->all(),
-            ])
-            ->all();
+        $seleccionados = [];
+        $permisosInput = $request->input('permisos', []);
+
+        if (is_array($permisosInput)) {
+            foreach ($permisosInput as $moduloId => $permisoIds) {
+                if (! is_array($permisoIds)) {
+                    continue;
+                }
+
+                $ids = [];
+
+                foreach ($permisoIds as $permisoId) {
+                    if (is_numeric($permisoId)) {
+                        $ids[] = (int) $permisoId;
+                    }
+                }
+
+                $seleccionados[(int) $moduloId] = $ids;
+            }
+        }
 
         foreach ($modulos as $modulo) {
             foreach ($permisos as $permiso) {
