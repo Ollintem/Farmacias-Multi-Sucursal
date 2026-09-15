@@ -15,45 +15,62 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="erp-nav">
+                @php($modulosVisibles = auth()->user()?->modulosVisibles() ?? [])
+                @if(in_array('Dashboard', $modulosVisibles, true))
                 <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                     Dashboard
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="receipt-percent" href="#">
-                    Punto de Venta
+                @endif
+                @if(in_array('Punto de venta', $modulosVisibles, true))
+                <flux:sidebar.item icon="receipt-percent" :href="route('punto-venta.index')" :current="request()->routeIs('punto-venta.*')" wire:navigate>
+                    Punto de venta
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="cube" href="#">
-                    Productos
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="archive-box" href="#">
+                @endif
+                @if(in_array('Inventario', $modulosVisibles, true))
+                <flux:sidebar.item icon="archive-box" :href="route('inventario.index')" :current="request()->routeIs('inventario.*')" wire:navigate>
                     Inventario
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="clock" href="#">
-                    Lotes y Caducidades
+                @endif
+                @if(in_array('Lotes y caducidades', $modulosVisibles, true))
+                <flux:sidebar.item icon="clock" :href="route('lotes.index')" :current="request()->routeIs('lotes.*')" wire:navigate>
+                    Lotes y caducidades
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="inbox-arrow-down" href="#">
-                    Entradas de Almacén
+                @endif
+                @if(in_array('Entradas de almacén', $modulosVisibles, true))
+                <flux:sidebar.item icon="inbox-arrow-down" :href="route('entradas.index')" :current="request()->routeIs('entradas.*')" wire:navigate>
+                    Entradas de almacén
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="arrows-right-left" href="#" badge="3">
+                @endif
+                @if(in_array('Traspasos', $modulosVisibles, true))
+                <flux:sidebar.item icon="arrows-right-left" :href="route('traspasos.index')" :current="request()->routeIs('traspasos.*')" wire:navigate>
                     Traspasos
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="map-pin" :href="route('dashboard')" :current="request()->routeIs('sucursales.*')" wire:navigate>
+                @endif
+                @if(in_array('Sucursales', $modulosVisibles, true))
+                <flux:sidebar.item icon="map-pin" :href="route('sucursales.index')" :current="request()->routeIs('sucursales.*')" wire:navigate>
                     Sucursales
                 </flux:sidebar.item>
+                @endif
+                @if(in_array('Usuarios y roles', $modulosVisibles, true))
                 <flux:sidebar.item icon="users" :href="route('usuarios.index')" :current="request()->routeIs('usuarios.*')" wire:navigate>
-                    Usuarios y Roles
+                    Usuarios y roles
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="banknotes" href="#">
+                @endif
+                @if(in_array('Caja', $modulosVisibles, true))
+                <flux:sidebar.item icon="banknotes" :href="route('caja.index')" :current="request()->routeIs('caja.*')" wire:navigate>
                     Caja
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="list-bullet" href="#">
+                @endif
+                @if(in_array('Reportes', $modulosVisibles, true))
+                <flux:sidebar.item icon="list-bullet" :href="route('reportes.index')" :current="request()->routeIs('reportes.*')" wire:navigate>
                     Reportes
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="flag" href="#" badge="7">
+                @endif
+                @if(in_array('Alertas', $modulosVisibles, true))
+                <flux:sidebar.item icon="flag" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" wire:navigate>
                     Alertas
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="cog-6-tooth" :href="route('profile.edit')" :current="request()->routeIs('profile.*')" wire:navigate>
-                    Configuración
-                </flux:sidebar.item>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />

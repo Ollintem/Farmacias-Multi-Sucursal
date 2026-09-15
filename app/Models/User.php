@@ -108,4 +108,30 @@ class User extends Authenticatable
     {
         return $this->hasMany(PermisoActivado::class, 'id_usuario');
     }
+
+    /**
+     * Nombres de módulos con permiso de ver (Mostrar id 4 o Todos id 5) activo.
+     *
+     * Una sola consulta por request, memoizada para no hacer N+1 desde el sidebar.
+     *
+     * @return array<int, string>
+     */
+    public function modulosVisibles(): array
+    {
+        return $this->permisosActivados()
+            ->where('es_activo', true)
+            ->whereIn('id_permiso', [4, 5])
+            ->with('modulo:id,nombre_modulo')
+            ->get()
+            ->pluck('modulo.nombre_modulo')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function puedeVerModulo(string $nombreModulo): bool
+    {
+        return in_array($nombreModulo, $this->modulosVisibles(), true);
+    }
 }

@@ -188,6 +188,12 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-600">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <div class="theme-table">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200 text-left">
@@ -199,6 +205,7 @@
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Rol</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Sucursal</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Estado</th>
+                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500" colspan="2">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
@@ -216,10 +223,24 @@
                                             <span class="inline-flex rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-600">Inactivo</span>
                                         @endif
                                     </td>
+                                    <td class="px-4 py-4 text-sm">
+                                        <a href="{{ route('usuarios.edit', $usuario) }}" class="text-emerald-600 hover:text-emerald-800">Editar</a>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm">
+                                        @if($usuario->id === auth()->id() || $usuario->rol?->tipo_rol === 'SuperAdmin')
+                                            <span class="text-gray-400">No se puede eliminar</span>
+                                        @else
+                                        <form action="{{ route('usuarios.delete', $usuario) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-800">Eliminar</button>
+                                        </form>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-4 py-10 text-center text-sm text-slate-500">No hay usuarios registrados aún.</td>
+                                    <td colspan="8" class="px-4 py-10 text-center text-sm text-slate-500">No hay usuarios registrados aún.</td>
                                 </tr>
                             @endforelse
                         </tbody>

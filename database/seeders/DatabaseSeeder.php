@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ModuloSeeder::class,
             PermisoSeeder::class,
             UserSeeder::class,
+            PermisoActivadoSeeder::class,
         ]);
     }
 }

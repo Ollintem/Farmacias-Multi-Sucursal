@@ -9,9 +9,16 @@ use Illuminate\View\View;
 
 class SucursalesController extends Controller
 {
+    public function index(): View
+    {
+        $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
+
+        return view('pages.sucursales.index', compact('sucursales'));
+    }
+
     public function create(): View
     {
-        return view('sucursales.create');
+        return view('pages.sucursales.create');
     }
 
     public function store(Request $request): RedirectResponse
