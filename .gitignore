@@ -8,7 +8,7 @@
 /storage/pail
 /vendor
 .README.md
-.opencode.json
+opencode.json
 boost.json
 .env
 .env.backup
