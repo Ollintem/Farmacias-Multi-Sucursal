@@ -196,13 +196,35 @@
 }
 
 [data-flux-label] {
-    @apply  !mb-0 !leading-tight;
+    margin-bottom: 0;
+    line-height: 1.25;
 }
 
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+input:invalid,
+textarea:invalid,
+select:invalid,
+input:required:invalid,
+textarea:required:invalid,
+select:required:invalid {
+    box-shadow: none;
+    border-color: rgba(148, 163, 184, 0.6);
+    background-color: rgba(255, 255, 255, 0.96);
+}
+
+input:invalid:focus,
+textarea:invalid:focus,
+select:invalid:focus,
+input:required:invalid:focus,
+textarea:required:invalid:focus,
+select:required:invalid:focus {
+    box-shadow: 0 0 0 3px rgba(46, 200, 191, 0.15);
+    border-color: rgba(46, 200, 191, 0.8);
 }
 
 /* ==========================================================================
@@ -217,7 +239,7 @@ select:focus[data-flux-control] {
 }
 
 .theme-light {
-    background: linear-gradient(180deg, #f4f9f3 0%, #edf3ef 100%);
+    background: linear-gradient(180deg, #f5f5f2 0%, #f1f4f1 100%);
     color: #0f172a;
 }
 
@@ -232,14 +254,14 @@ select:focus[data-flux-control] {
     gap: 1.5rem;
     width: 100%;
     border-radius: 1.5rem;
-    padding: 1.5rem;
+    padding: 1.75rem 1.75rem 1.5rem;
     transition: all 0.25s ease;
 }
 
 .theme-light .theme-shell-inner {
-    background: rgba(255, 255, 255, 0.55);
-    border: 1px solid #d8e5d8;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    background: rgba(245, 246, 243, 0.96);
+    border: 1px solid rgba(203, 214, 208, 0.9);
+    box-shadow: none;
 }
 
 .theme-dark .theme-shell-inner {
@@ -250,11 +272,12 @@ select:focus[data-flux-control] {
 
 .theme-card {
     border-radius: 1.25rem;
-    border: 1px solid #dfeae0;
-    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(208, 216, 211, 0.95);
+    background: rgba(255, 255, 255, 0.72);
     color: #0f172a;
     padding: 1.5rem;
     transition: all 0.25s ease;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.02);
 }
 
 .theme-dark .theme-card {
@@ -276,17 +299,17 @@ select:focus[data-flux-control] {
     align-items: center;
     justify-content: center;
     border-radius: 0.9rem;
-    padding: 0.7rem 1rem;
-    font-weight: 600;
+    padding: 0.72rem 1.15rem;
+    font-weight: 700;
     transition: all 0.2s ease;
     border: 1px solid transparent;
     text-decoration: none;
 }
 
 .theme-button-primary {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color: #052e16;
-    box-shadow: 0 10px 22px rgba(34, 197, 94, 0.25);
+    background: linear-gradient(135deg, #65d7bf 0%, #3ec8ab 100%);
+    color: #0b3b35;
+    box-shadow: 0 12px 28px rgba(62, 200, 171, 0.25);
 }
 
 .theme-dark .theme-button-primary {
@@ -296,9 +319,9 @@ select:focus[data-flux-control] {
 }
 
 .theme-button-secondary {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: #d8e5d8;
-    color: #0f172a;
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(188, 201, 196, 0.9);
+    color: #1d2c2c;
 }
 
 .theme-dark .theme-button-secondary {
@@ -441,11 +464,11 @@ select:focus[data-flux-control] {
     border-radius: 1rem;
     padding: 0.9rem 1rem;
     min-height: 110px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    border: 1px solid rgba(209, 216, 212, 0.95);
 }
 
 .theme-light .compact-stat {
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.95), rgba(240, 253, 244, 0.9));
+    background: linear-gradient(180deg, rgba(249, 250, 248, 0.95), rgba(240, 247, 244, 0.9));
 }
 
 .theme-dark .compact-stat {
@@ -464,18 +487,18 @@ select:focus[data-flux-control] {
 }
 
 .stat-pill.positive {
-    background: rgba(34, 197, 94, 0.12);
-    color: #15803d;
+    background: rgba(60, 201, 171, 0.12);
+    color: #0d8f74;
 }
 
 .stat-pill.warning {
-    background: rgba(251, 191, 36, 0.12);
-    color: #b45309;
+    background: rgba(245, 168, 60, 0.14);
+    color: #b86d00;
 }
 
 .stat-pill.info {
-    background: rgba(59, 130, 246, 0.12);
-    color: #1d4ed8;
+    background: rgba(94, 168, 255, 0.12);
+    color: #1c6ed8;
 }
 
 /* --- Módulo Lotes y caducidades --- */

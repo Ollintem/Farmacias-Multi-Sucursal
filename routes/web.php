@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LotesController;
 use App\Http\Controllers\SucursalesController;
 use App\Http\Controllers\UsuariosController;
@@ -19,6 +20,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::get('/lotes-y-caducidades', [LotesController::class, 'index'])->name('lotes.index');
+    Route::get('/lotes-y-caducidades/create', [LotesController::class, 'create'])->name('lotes.create');
+    Route::post('/lotes-y-caducidades', [LotesController::class, 'store'])->name('lotes.store');
 
     Route::get('/usuarios', [UsuariosController::class, 'index'])->name('usuarios.index');
     Route::get('/usuarios/create', [UsuariosController::class, 'create'])->name('usuarios.create');
@@ -35,7 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Módulos del catálogo (modulos.nombre_modulo) aún sin controlador propio.
     // Se exponen con una vista placeholder para que el sidebar no apunte a "#".
     Route::view('/punto-venta', 'pages.modulos.placeholder', ['tituloModulo' => 'Punto de venta'])->name('punto-venta.index');
-    Route::view('/inventario', 'pages.modulos.placeholder', ['tituloModulo' => 'Inventario'])->name('inventario.index');
+    Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index');
+    Route::get('/inventario/create', [InventarioController::class, 'create'])->name('inventario.create');
+    Route::post('/inventario', [InventarioController::class, 'store'])->name('inventario.store');
     Route::view('/entradas', 'pages.modulos.placeholder', ['tituloModulo' => 'Entradas de almacén'])->name('entradas.index');
     Route::view('/traspasos', 'pages.modulos.placeholder', ['tituloModulo' => 'Traspasos'])->name('traspasos.index');
     Route::view('/caja', 'pages.modulos.placeholder', ['tituloModulo' => 'Caja'])->name('caja.index');
