@@ -307,10 +307,10 @@
                 </div>
 
                 <div class="lotes-user">
-                    <div class="lotes-avatar">C</div>
+                    <div class="lotes-avatar">{{ strtoupper(substr(auth()->user()->nombre ?? auth()->user()->name, 0, 1)) }}</div>
                     <div class="lotes-user-meta">
-                        <strong>Carlos Mendoza</strong>
-                        <span>Super Admin</span>
+                        <strong>{{ auth()->user()->name }}</strong>
+                        <span>{{ auth()->user()->rol?->tipo_rol ?? 'Sin rol' }}</span>
                     </div>
                 </div>
             </header>
