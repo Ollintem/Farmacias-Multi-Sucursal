@@ -118,7 +118,7 @@ class User extends Authenticatable
      */
     public function modulosVisibles(): array
     {
-        return $this->permisosActivados()
+        $modulosVisibles = $this->permisosActivados()
             ->where('es_activo', true)
             ->whereIn('id_permiso', [4, 5])
             ->with('modulo:id,nombre_modulo')
@@ -126,8 +126,22 @@ class User extends Authenticatable
             ->pluck('modulo.nombre_modulo')
             ->filter()
             ->unique()
-            ->values()
-            ->all();
+            ->values();
+
+        if ($modulosVisibles->isNotEmpty()) {
+            return $modulosVisibles->all();
+        }
+
+        $totalPermisosActivados = $this->permisosActivados()->count();
+        if ($totalPermisosActivados === 0) {
+            return Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
+        }
+
+        if ($this->rol?->tipo_rol === 'SuperAdmin') {
+            return Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
+        }
+
+        return [];
     }
 
     public function puedeVerModulo(string $nombreModulo): bool
