@@ -8,7 +8,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Profile settings')] class extends Component {
+new #[Title('Ajustes de perfil')] class extends Component {
     public string $nombre = '';
     public string $apellido = '';
     public string $nombre_usuario = '';
@@ -56,7 +56,7 @@ new #[Title('Profile settings')] class extends Component {
 
         $user->save();
 
-        Flux::toast(variant: 'success', text: __('Profile updated.'));
+        Flux::toast(variant: 'success', text: 'Perfil actualizado.');
     }
 
 }; ?>
@@ -64,25 +64,25 @@ new #[Title('Profile settings')] class extends Component {
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <flux:heading level="2" class="sr-only">{{ __('Profile settings') }}</flux:heading>
+    <flux:heading level="2" class="sr-only">Ajustes de perfil</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your profile information')">
-        <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="nombre" :label="__('First name')" type="text" required autofocus autocomplete="given-name" />
+    <x-pages::settings.layout heading="Perfil" subheading="Actualiza la información de tu perfil">
+        <form wire:submit="updateProfileInformation" class="w-full space-y-6">
+            <flux:input wire:model="nombre" label="Nombre" type="text" required autofocus autocomplete="given-name" />
 
-            <flux:input wire:model="apellido" :label="__('Last name')" type="text" required autocomplete="family-name" />
+            <flux:input wire:model="apellido" label="Apellido" type="text" required autocomplete="family-name" />
 
-            <flux:input wire:model="nombre_usuario" :label="__('Username')" type="text" required autocomplete="username" />
+            <flux:input wire:model="nombre_usuario" label="Nombre de usuario" type="text" required autocomplete="username" />
 
             <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+                <flux:input wire:model="email" label="Correo electrónico" type="email" required autocomplete="email" />
 
             </div>
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
                     <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
-                        {{ __('Save') }}
+                        Guardar
                     </flux:button>
                 </div>
 

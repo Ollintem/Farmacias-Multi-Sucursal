@@ -1,187 +1,49 @@
-<x-layouts::app :title="__('Editar usuario')">
+<x-layouts::app :title="__(($modo ?? 'editar') === 'ver' ? 'Ver usuario' : 'Editar usuario')">
+    @php
+        $soloLectura = ($modo ?? 'editar') === 'ver';
+    @endphp
     <div id="theme-shell" class="theme-light">
-        <style>
-            #theme-shell {
-                width: 100%;
-                min-height: 100%;
-                transition: all 0.25s ease;
-            }
-
-            .theme-light {
-                background: linear-gradient(180deg, #f4f9f3 0%, #edf3ef 100%);
-                color: #0f172a;
-            }
-
-            .theme-dark {
-                background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
-                color: #f8fafc;
-            }
-
-            .theme-shell-inner {
-                display: flex;
-                flex-direction: column;
-                gap: 1.5rem;
-                width: 100%;
-                border-radius: 1.5rem;
-                padding: 1.5rem;
-                transition: all 0.25s ease;
-            }
-
-            .theme-light .theme-shell-inner {
-                background: rgba(255, 255, 255, 0.55);
-                border: 1px solid #d8e5d8;
-                box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-            }
-
-            .theme-dark .theme-shell-inner {
-                background: rgba(15, 23, 42, 0.78);
-                border: 1px solid rgba(148, 163, 184, 0.25);
-                box-shadow: 0 12px 30px rgba(2, 6, 23, 0.45);
-            }
-
-            .theme-card {
-                border-radius: 1.25rem;
-                border: 1px solid transparent;
-                padding: 1.5rem;
-                transition: all 0.25s ease;
-            }
-
-            .theme-light .theme-card {
-                background: rgba(255, 255, 255, 0.9);
-                border-color: #dfeae0;
-                color: #0f172a;
-            }
-
-            .theme-dark .theme-card {
-                background: rgba(15, 23, 42, 0.72);
-                border-color: rgba(148, 163, 184, 0.25);
-                color: #f8fafc;
-            }
-
-            .theme-button {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 0.9rem;
-                padding: 0.7rem 1rem;
-                font-weight: 600;
-                transition: all 0.2s ease;
-                border: 1px solid transparent;
-                text-decoration: none;
-            }
-
-            .theme-light .theme-button-primary {
-                background: linear-gradient(135deg, #22c55e, #16a34a);
-                color: #052e16;
-            }
-
-            .theme-dark .theme-button-primary {
-                background: linear-gradient(135deg, #34d399, #10b981);
-                color: #06241a;
-            }
-
-            .theme-light .theme-button-secondary {
-                background: rgba(255, 255, 255, 0.8);
-                border-color: #d8e5d8;
-                color: #0f172a;
-            }
-
-            .theme-dark .theme-button-secondary {
-                background: rgba(15, 23, 42, 0.8);
-                border-color: rgba(148, 163, 184, 0.25);
-                color: #f8fafc;
-            }
-
-            .theme-input {
-                width: 100%;
-                border-radius: 0.9rem;
-                border: 1px solid #dfeae0;
-                background: rgba(255, 255, 255, 0.85);
-                color: #0f172a;
-                padding: 0.7rem 0.9rem;
-                outline: none;
-                transition: all 0.2s ease;
-            }
-
-            .theme-dark .theme-input {
-                background: rgba(15, 23, 42, 0.7);
-                border-color: rgba(148, 163, 184, 0.25);
-                color: #f8fafc;
-            }
-
-            .theme-input:focus {
-                border-color: #34d399;
-                box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
-            }
-
-            .theme-switch {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.75rem;
-                border: none;
-                background: transparent;
-                cursor: pointer;
-                color: inherit;
-            }
-
-            .theme-switch-track {
-                position: relative;
-                display: inline-flex;
-                width: 3.1rem;
-                height: 1.8rem;
-                border-radius: 9999px;
-                background: rgba(148, 163, 184, 0.4);
-                transition: all 0.2s ease;
-                padding: 0.2rem;
-            }
-
-            .theme-switch-thumb {
-                position: absolute;
-                top: 0.2rem;
-                left: 0.2rem;
-                width: 1.4rem;
-                height: 1.4rem;
-                border-radius: 9999px;
-                background: white;
-                box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18);
-                transition: transform 0.2s ease;
-            }
-
-            .theme-dark .theme-switch-thumb {
-                transform: translateX(1.3rem);
-                background: #d1fae5;
-            }
-
-            .theme-switch-text {
-                font-size: 0.75rem;
-                font-weight: 600;
-                letter-spacing: 0.04em;
-                text-transform: uppercase;
-            }
-        </style>
-
         <div class="theme-shell-inner">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Gestión de personal</p>
-                    <h1 class="mt-2 text-3xl font-bold">Editar usuario: {{ $usuario->nombre }} {{ $usuario->apellido }}</h1>
+                    <h1 class="mt-2 text-3xl font-bold">{{ $soloLectura ? 'Ver usuario' : 'Editar usuario' }}: {{ $usuario->nombre }} {{ $usuario->apellido }}</h1>
+                    @if($soloLectura)
+                        <p class="mt-2 text-sm text-slate-500">Consulta de solo lectura con los permisos activados del usuario.</p>
+                    @endif
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button type="button" id="theme-toggle" class="theme-switch" aria-label="Cambiar tema">
-                        <span class="theme-switch-track">
-                            <span class="theme-switch-thumb"></span>
-                        </span>
-                        <span class="theme-switch-text">Claro</span>
-                    </button>
-
                     <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary">Volver</a>
+                    @if($soloLectura)
+                        <a href="{{ route('usuarios.edit', $usuario) }}" class="theme-button theme-button-primary">Editar permisos</a>
+                    @endif
                 </div>
             </div>
 
             @if(session('success'))
                 <div class="rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600">
                     {{ session('success') }}
+                </div>
+            @endif
+
+            @if($soloLectura)
+                <div class="theme-card">
+                    <h2 class="text-lg font-semibold">Permisos activados</h2>
+                    <p class="mt-1 text-sm text-slate-500">Resumen de lo que puede hacer {{ $usuario->nombre }} en cada módulo.</p>
+
+                    @forelse($permisosAgrupados ?? [] as $nombreModulo => $tiposPermiso)
+                        <div class="mt-4 flex flex-col gap-2 border-t border-slate-200 pt-4 first:border-t-0 first:pt-0 md:flex-row md:items-center md:justify-between">
+                            <span class="text-sm font-medium">{{ $nombreModulo }}</span>
+                            <span class="flex flex-wrap gap-2">
+                                @foreach($tiposPermiso as $tipoPermiso)
+                                    <span class="theme-badge">{{ $tipoPermiso }}</span>
+                                @endforeach
+                            </span>
+                        </div>
+                    @empty
+                        <p class="mt-4 text-sm text-slate-500">Este usuario no tiene permisos activados.</p>
+                    @endforelse
                 </div>
             @endif
 
@@ -196,7 +58,7 @@
                     <div class="mt-5 grid gap-5 md:grid-cols-2">
                         <div>
                             <label class="mb-2 block text-sm font-medium">Nombre</label>
-                            <input name="nombre" value="{{ old('nombre', $usuario->nombre) }}" class="theme-input" required>
+                            <input name="nombre" value="{{ old('nombre', $usuario->nombre) }}" class="theme-input" required @disabled($soloLectura)>
                             @error('nombre')
                                 <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                             @enderror
@@ -204,7 +66,7 @@
 
                         <div>
                             <label class="mb-2 block text-sm font-medium">Apellido</label>
-                            <input name="apellido" value="{{ old('apellido', $usuario->apellido) }}" class="theme-input" required>
+                            <input name="apellido" value="{{ old('apellido', $usuario->apellido) }}" class="theme-input" required @disabled($soloLectura)>
                             @error('apellido')
                                 <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                             @enderror
@@ -212,7 +74,7 @@
 
                         <div>
                             <label class="mb-2 block text-sm font-medium">Nombre de usuario</label>
-                            <input name="nombre_usuario" value="{{ old('nombre_usuario', $usuario->nombre_usuario) }}" class="theme-input" required>
+                            <input name="nombre_usuario" value="{{ old('nombre_usuario', $usuario->nombre_usuario) }}" class="theme-input" required @disabled($soloLectura)>
                             @error('nombre_usuario')
                                 <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                             @enderror
@@ -220,7 +82,7 @@
 
                         <div>
                             <label class="mb-2 block text-sm font-medium">Email</label>
-                            <input type="email" name="email" value="{{ old('email', $usuario->email) }}" class="theme-input" required>
+                            <input type="email" name="email" value="{{ old('email', $usuario->email) }}" class="theme-input" required @disabled($soloLectura)>
                             @error('email')
                                 <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                             @enderror
@@ -228,7 +90,7 @@
 
                         <div>
                             <label class="mb-2 block text-sm font-medium">Rol</label>
-                            <select name="id_rol" class="theme-input" required>
+                            <select name="id_rol" class="theme-input" required @disabled($soloLectura)>
                                 <option value="">Selecciona un rol</option>
                                 @foreach($roles as $rol)
                                     <option value="{{ $rol->id }}" {{ (int) old('id_rol', $usuario->id_rol) === $rol->id ? 'selected' : '' }}>
@@ -243,7 +105,7 @@
 
                         <div>
                             <label class="mb-2 block text-sm font-medium">Sucursal</label>
-                            <select name="id_sucursal" class="theme-input">
+                            <select name="id_sucursal" class="theme-input" @disabled($soloLectura)>
                                 <option value="">Selecciona una sucursal</option>
                                 @foreach($sucursales as $sucursal)
                                     <option value="{{ $sucursal->id }}" {{ (int) old('id_sucursal', $usuario->id_sucursal) === $sucursal->id ? 'selected' : '' }}>
@@ -256,25 +118,27 @@
                             @enderror
                         </div>
 
-                        <div>
-                            <label class="mb-2 block text-sm font-medium">Nueva contraseña</label>
-                            <input type="password" name="password" class="theme-input" minlength="8" aria-describedby="password-help" autocomplete="new-password">
-                            <p id="password-help" class="mt-1 text-xs text-slate-500">Déjala en blanco para mantener la actual. Si la cambias, usa al menos 8 caracteres.</p>
-                            @error('password')
-                                <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
-                            @enderror
-                        </div>
+                        @if(! $soloLectura)
+                            <div>
+                                <label class="mb-2 block text-sm font-medium">Nueva contraseña</label>
+                                <input type="password" name="password" class="theme-input" minlength="8" aria-describedby="password-help" autocomplete="new-password">
+                                <p id="password-help" class="mt-1 text-xs text-slate-500">Déjala en blanco para mantener la actual. Si la cambias, usa al menos 8 caracteres.</p>
+                                @error('password')
+                                    <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
+                                @enderror
+                            </div>
 
-                        <div>
-                            <label class="mb-2 block text-sm font-medium">Confirmar nueva contraseña</label>
-                            <input type="password" name="password_confirmation" class="theme-input" autocomplete="new-password">
-                            <p class="mt-1 text-xs text-slate-500">Solo es obligatoria si escribes una nueva contraseña.</p>
-                        </div>
+                            <div>
+                                <label class="mb-2 block text-sm font-medium">Confirmar nueva contraseña</label>
+                                <input type="password" name="password_confirmation" class="theme-input" autocomplete="new-password">
+                                <p class="mt-1 text-xs text-slate-500">Solo es obligatoria si escribes una nueva contraseña.</p>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="mt-6 flex items-center">
                         <input type="hidden" name="es_activo" value="0">
-                        <input type="checkbox" name="es_activo" value="1" {{ old('es_activo', $usuario->es_activo) ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
+                        <input type="checkbox" name="es_activo" value="1" {{ old('es_activo', $usuario->es_activo) ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" @disabled($soloLectura)>
                         <label class="ml-2 text-sm">Usuario activo</label>
                     </div>
                 </div>
@@ -283,9 +147,11 @@
                     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div>
                             <h2 class="text-lg font-semibold">Permisos por módulo</h2>
-                            <p class="mt-1 text-sm text-slate-500">Marca de forma granular qué puede hacer el usuario en cada módulo.</p>
+                            <p class="mt-1 text-sm text-slate-500">{{ $soloLectura ? 'Permisos que tiene activos el usuario en cada módulo.' : 'Marca de forma granular qué puede hacer el usuario en cada módulo.' }}</p>
                         </div>
-                        <button type="button" id="permisos-toggle-all" class="theme-button theme-button-secondary">Activar todo</button>
+                        @if(! $soloLectura)
+                            <button type="button" id="permisos-toggle-all" class="theme-button theme-button-secondary">Activar todo</button>
+                        @endif
                     </div>
                     @error('permisos')
                         <span class="mt-2 block text-sm text-red-500">{{ $message }}</span>
@@ -323,7 +189,9 @@
                                     @foreach($permisos as $permiso)
                                         <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{{ $permiso->tipo_permiso }}</th>
                                     @endforeach
-                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Todos</th>
+                                    @if(! $soloLectura)
+                                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Todos</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200">
@@ -336,12 +204,14 @@
                                         <td class="px-4 py-3 text-sm font-medium">{{ $modulo->nombre_modulo }}</td>
                                         @foreach($permisos as $permiso)
                                             <td class="px-4 py-3 text-center">
-                                                <input type="checkbox" name="permisos[{{ $modulo->id }}][]" value="{{ $permiso->id }}" @checked(in_array((int) $permiso->id, $activosModulo, true)) class="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" data-permiso-checkbox>
+                                                <input type="checkbox" name="permisos[{{ $modulo->id }}][]" value="{{ $permiso->id }}" @checked(in_array((int) $permiso->id, $activosModulo, true)) class="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" data-permiso-checkbox @disabled($soloLectura)>
                                             </td>
                                         @endforeach
-                                        <td class="px-4 py-3 text-center">
-                                            <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" data-permisos-row-toggle title="Marcar todos los permisos de {{ $modulo->nombre_modulo }}" @checked($todosActivosFila)>
-                                        </td>
+                                        @if(! $soloLectura)
+                                            <td class="px-4 py-3 text-center">
+                                                <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" data-permisos-row-toggle title="Marcar todos los permisos de {{ $modulo->nombre_modulo }}" @checked($todosActivosFila)>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -351,34 +221,17 @@
 
                 <div class="mt-8 flex justify-end gap-3">
                     <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary">Cancelar</a>
-                    <button type="submit" class="theme-button theme-button-primary">Guardar cambios</button>
+                    @if($soloLectura)
+                        <a href="{{ route('usuarios.edit', $usuario) }}" class="theme-button theme-button-primary">Editar permisos</a>
+                    @else
+                        <button type="submit" class="theme-button theme-button-primary">Guardar cambios</button>
+                    @endif
                 </div>
             </form>
         </div>
 
         <script>
             (() => {
-                const shell = document.getElementById('theme-shell');
-                const toggle = document.getElementById('theme-toggle');
-                const label = toggle?.querySelector('.theme-switch-text');
-
-                const applyTheme = (darkMode) => {
-                    shell.classList.toggle('theme-dark', darkMode);
-                    shell.classList.toggle('theme-light', !darkMode);
-                    if (label) {
-                        label.textContent = darkMode ? 'Oscuro' : 'Claro';
-                    }
-                };
-
-                const savedTheme = localStorage.getItem('farmacia-theme');
-                applyTheme(savedTheme === 'dark');
-
-                toggle?.addEventListener('click', () => {
-                    const isDark = !shell.classList.contains('theme-dark');
-                    localStorage.setItem('farmacia-theme', isDark ? 'dark' : 'light');
-                    applyTheme(isDark);
-                });
-
                 const syncRowToggle = (row) => {
                     const boxes = [...row.querySelectorAll('[data-permiso-checkbox]')];
                     const rowToggle = row.querySelector('[data-permisos-row-toggle]');

@@ -10,7 +10,7 @@ use Laravel\Fortify\Fortify;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Security settings')] class extends Component {
+new #[Title('Ajustes de seguridad')] class extends Component {
     use PasswordValidationRules;
 
     public string $current_password = '';
@@ -49,7 +49,7 @@ new #[Title('Security settings')] class extends Component {
 
         $this->reset('current_password', 'password', 'password_confirmation');
 
-        Flux::toast(variant: 'success', text: __('Password updated.'));
+        Flux::toast(variant: 'success', text: 'Contraseña actualizada.');
     }
 
 
@@ -58,13 +58,13 @@ new #[Title('Security settings')] class extends Component {
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <flux:heading level="2" class="sr-only">{{ __('Security settings') }}</flux:heading>
+    <flux:heading level="2" class="sr-only">Ajustes de seguridad</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
-        <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
+    <x-pages::settings.layout heading="Actualizar contraseña" subheading="Usa una contraseña larga y aleatoria para mantener tu cuenta segura">
+        <form method="POST" wire:submit="updatePassword" class="space-y-6">
             <flux:input
                 wire:model="current_password"
-                :label="__('Current password')"
+                label="Contraseña actual"
                 type="password"
                 required
                 autocomplete="current-password"
@@ -72,7 +72,7 @@ new #[Title('Security settings')] class extends Component {
             />
             <flux:input
                 wire:model="password"
-                :label="__('New password')"
+                label="Nueva contraseña"
                 type="password"
                 required
                 autocomplete="new-password"
@@ -81,7 +81,7 @@ new #[Title('Security settings')] class extends Component {
             />
             <flux:input
                 wire:model="password_confirmation"
-                :label="__('Confirm password')"
+                label="Confirmar contraseña"
                 type="password"
                 required
                 autocomplete="new-password"
@@ -91,7 +91,7 @@ new #[Title('Security settings')] class extends Component {
 
             <div class="flex items-center gap-4">
                 <flux:button variant="primary" type="submit" data-test="update-password-button">
-                    {{ __('Save') }}
+                    Guardar
                 </flux:button>
             </div>
         </form>

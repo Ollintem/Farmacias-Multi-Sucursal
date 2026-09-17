@@ -219,3 +219,87 @@ it('actualiza los datos del usuario y sus permisos granulares', function () {
         'es_activo' => false,
     ]);
 });
+
+it('muestra los permisos activados del usuario en modo solo lectura', function () {
+    $rol = Rol::create(['tipo_rol' => 'Cajero', 'descripcion' => 'Ventas y cobros']);
+    $modulo = Modulo::create(['nombre_modulo' => 'Caja']);
+    $mostrar = Permiso::create(['tipo_permiso' => 'Mostrar', 'descripcion' => 'Permite ver registros']);
+    $crear = Permiso::create(['tipo_permiso' => 'Crear', 'descripcion' => 'Permite crear registros']);
+
+    $admin = User::create([
+        'nombre' => 'Admin',
+        'apellido' => 'Sistema',
+        'nombre_usuario' => 'admin_sistema',
+        'email' => 'admin@sistema.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rol->id,
+    ]);
+
+    $usuario = User::create([
+        'nombre' => 'Ana',
+        'apellido' => 'Lopez',
+        'nombre_usuario' => 'ana_cajera',
+        'email' => 'ana@farmacia.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rol->id,
+    ]);
+
+    PermisoActivado::create([
+        'id_usuario' => $usuario->id,
+        'id_modulo' => $modulo->id,
+        'id_permiso' => $mostrar->id,
+        'es_activo' => true,
+    ]);
+
+    PermisoActivado::create([
+        'id_usuario' => $usuario->id,
+        'id_modulo' => $modulo->id,
+        'id_permiso' => $crear->id,
+        'es_activo' => false,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('usuarios.show', $usuario));
+
+    $response->assertOk()
+        ->assertSee('Ver usuario')
+        ->assertSee('Permisos activados')
+        ->assertSee($modulo->nombre_modulo)
+        ->assertSee($mostrar->tipo_permiso)
+        ->assertSee('Editar permisos')
+        ->assertDontSee('Guardar cambios');
+});
+
+it('muestra el modo edición con controles para modificar los permisos', function () {
+    $rol = Rol::create(['tipo_rol' => 'Cajero', 'descripcion' => 'Ventas y cobros']);
+
+    $admin = User::create([
+        'nombre' => 'Admin',
+        'apellido' => 'Sistema',
+        'nombre_usuario' => 'admin_sistema',
+        'email' => 'admin@sistema.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rol->id,
+    ]);
+
+    $usuario = User::create([
+        'nombre' => 'Ana',
+        'apellido' => 'Lopez',
+        'nombre_usuario' => 'ana_cajera',
+        'email' => 'ana@farmacia.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rol->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('usuarios.edit', $usuario));
+
+    $response->assertOk()
+        ->assertSee('Editar usuario')
+        ->assertSee('Guardar cambios')
+        ->assertSee('Activar todo');
+});

@@ -50,6 +50,6 @@ class LotesController extends Controller
                 ];
             });
 
-        return view('lotes.index', compact('lotes'));
+        return view('pages.lotes.index', compact('lotes'));
     }
 }

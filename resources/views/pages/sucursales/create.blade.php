@@ -1,20 +1,5 @@
 <x-layouts::app :title="__('Nueva sucursal')">
     <div id="theme-shell" class="theme-light">
-        <style>
-            #theme-shell { width: 100%; min-height: 100%; color: #0f172a; }
-            .theme-light { background: linear-gradient(180deg, #f4f9f3 0%, #edf3ef 100%); }
-            .theme-dark { background: linear-gradient(180deg, #111827 0%, #0b1220 100%); color: #f8fafc; }
-            .theme-shell-inner { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; padding: 1.5rem; }
-            .theme-card { border-radius: 1.25rem; border: 1px solid #dfeae0; padding: 1.5rem; background: rgba(255, 255, 255, 0.9); }
-            .theme-dark .theme-card { background: rgba(15, 23, 42, 0.72); border-color: rgba(148, 163, 184, 0.25); }
-            .theme-input { width: 100%; border-radius: 0.85rem; border: 1px solid #d8e5d8; background: rgba(255, 255, 255, 0.85); padding: 0.7rem 0.9rem; color: #0f172a; outline: none; }
-            .theme-dark .theme-input { border-color: rgba(148, 163, 184, 0.3); background: rgba(15, 23, 42, 0.8); color: #f8fafc; }
-            .theme-button { display: inline-flex; align-items: center; justify-content: center; border-radius: 0.9rem; padding: 0.7rem 1rem; font-weight: 600; text-decoration: none; }
-            .theme-button-primary { background: linear-gradient(135deg, #22c55e, #16a34a); color: #052e16; }
-            .theme-button-secondary { border: 1px solid #d8e5d8; background: rgba(255, 255, 255, 0.8); color: #0f172a; }
-            .theme-dark .theme-button-secondary { border-color: rgba(148, 163, 184, 0.3); background: rgba(15, 23, 42, 0.8); color: #f8fafc; }
-        </style>
-
         <div class="theme-shell-inner">
             <div>
                 <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-emerald-600">← Volver al dashboard</a>

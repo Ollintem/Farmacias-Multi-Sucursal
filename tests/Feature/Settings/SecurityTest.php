@@ -23,7 +23,7 @@ test('security settings page renders without two factor when feature is disabled
     $this->actingAs($user)
         ->get(route('security.edit'))
         ->assertOk()
-        ->assertSee('Update password')
+        ->assertSee('Actualizar contraseña')
         ->assertDontSee('Manage your passkeys for passwordless sign-in')
         ->assertDontSee('Add a passkey to sign in without a password')
         ->assertDontSee('Two-factor authentication');

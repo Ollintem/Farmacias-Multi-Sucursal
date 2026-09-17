@@ -64,7 +64,36 @@ class UsuariosController extends Controller
         return redirect()->route('usuarios.index')->with('success', 'Usuario registrado correctamente.');
     }
 
+    public function show(User $usuario): View
+    {
+        $usuario->load(['rol', 'sucursal']);
+        $datos = $this->datosPermisos($usuario);
+
+        return view('pages.usuarios.edit', [
+            ...$datos,
+            'usuario' => $usuario,
+            'modo' => 'ver',
+        ]);
+    }
+
     public function edit(User $usuario): View
+    {
+        $datos = $this->datosPermisos($usuario);
+
+        return view('pages.usuarios.edit', [
+            ...$datos,
+            'usuario' => $usuario,
+            'modo' => 'editar',
+        ]);
+    }
+
+    /**
+     * Datos compartidos por show() y edit(): catálogos, matriz de
+     * permisos y permisos activados del usuario (planos y agrupados).
+     *
+     * @return array<string, mixed>
+     */
+    private function datosPermisos(User $usuario): array
     {
         $roles = Rol::where('tipo_rol', '!=', 'SuperAdmin')
             ->orderBy('tipo_rol')
@@ -79,8 +108,20 @@ class UsuariosController extends Controller
                 $permisoActivado->id_modulo.'-'.$permisoActivado->id_permiso => true,
             ])
             ->all();
+        $permisosAgrupados = PermisoActivado::where('id_usuario', $usuario->id)
+            ->where('es_activo', true)
+            ->with(['modulo', 'permiso'])
+            ->get()
+            ->groupBy(fn (PermisoActivado $permisoActivado) => $permisoActivado->modulo?->nombre_modulo ?? 'Sin módulo')
+            ->map(fn ($grupo) => $grupo
+                ->map(fn (PermisoActivado $permisoActivado) => $permisoActivado->permiso?->tipo_permiso)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all())
+            ->all();
 
-        return view('pages.usuarios.edit', compact('usuario', 'roles', 'sucursales', 'modulos', 'permisos', 'permisosActivos'));
+        return compact('roles', 'sucursales', 'modulos', 'permisos', 'permisosActivos', 'permisosAgrupados');
     }
 
     public function update(Request $request, User $usuario): RedirectResponse

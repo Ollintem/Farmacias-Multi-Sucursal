@@ -1,4 +1,4 @@
-<flux:dropdown position="bottom" align="start">
+<flux:dropdown position="bottom" align="start" class="erp-user-menu">
     <flux:sidebar.profile
         :name="auth()->user()->name"
         :initials="auth()->user()->initials()"
@@ -7,10 +7,11 @@
     />
 
     <flux:menu>
-        <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
+        <div class="erp-user-menu-identity flex items-center gap-2 px-1 py-1.5 text-start text-sm">
             <flux:avatar
                 :name="auth()->user()->name"
                 :initials="auth()->user()->initials()"
+                class="ring-2 ring-[#0c9f9c]/60"
             />
             <div class="grid flex-1 text-start text-sm leading-tight">
                 <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
