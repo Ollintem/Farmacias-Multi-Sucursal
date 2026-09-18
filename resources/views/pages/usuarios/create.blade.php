@@ -8,6 +8,7 @@
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <a href="{{ route('roles.index') }}" class="theme-button theme-button-secondary">Gestionar roles</a>
                     <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary">Volver</a>
                 </div>
             </div>
@@ -49,7 +50,10 @@
                     </div>
 
                     <div>
-                        <label class="mb-2 block text-sm font-medium">Rol</label>
+                        <div class="mb-2 flex items-center justify-between">
+                            <label class="block text-sm font-medium">Rol</label>
+                            <a href="{{ route('roles.create') }}" class="text-xs font-medium text-emerald-600 hover:text-emerald-800">+ Nuevo rol</a>
+                        </div>
                         <select name="id_rol" class="theme-input" required>
                             <option value="">Selecciona un rol</option>
                             @foreach($roles as $rol)

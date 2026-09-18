@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,16 +10,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('permisos_activados', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('id_permiso')->constrained('permisos')->cascadeOnDelete();
-            $table->foreignId('id_usuario')->constrained('usuarios')->cascadeOnDelete();
-            $table->foreignId('id_modulo')->constrained('modulos')->cascadeOnDelete();
-            $table->boolean('es_activo')->default(false);
-            $table->timestamp('creado_en')->useCurrent();
-            $table->timestamp('actualizado_en')->useCurrent()->useCurrentOnUpdate();
-            $table->timestamps();
-        });
+        // Limpieza del diseño anterior: el catálogo `permisos` ya no existe,
+        // los flags viven directamente en `permisos_activados`.
+        Schema::dropIfExists('permisos');
     }
 
     /**
@@ -28,6 +20,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('permisos_activados');
+        // No se recrea el catálogo legacy.
     }
 };

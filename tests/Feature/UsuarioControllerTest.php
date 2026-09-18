@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Modulo;
-use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -64,7 +63,6 @@ it('permite al superadmin crear un supervisor', function () {
 it('muestra el formulario de edición con los datos y permisos del usuario', function () {
     $rol = Rol::create(['tipo_rol' => 'Cajero', 'descripcion' => 'Ventas y cobros']);
     $modulo = Modulo::create(['nombre_modulo' => 'Caja']);
-    $permiso = Permiso::create(['tipo_permiso' => 'Mostrar', 'descripcion' => 'Permite ver registros']);
 
     $admin = User::create([
         'nombre' => 'Admin',
@@ -89,8 +87,10 @@ it('muestra el formulario de edición con los datos y permisos del usuario', fun
     PermisoActivado::create([
         'id_usuario' => $usuario->id,
         'id_modulo' => $modulo->id,
-        'id_permiso' => $permiso->id,
-        'es_activo' => true,
+        'puede_ver' => true,
+        'puede_crear' => false,
+        'puede_editar' => false,
+        'puede_borrar' => false,
     ]);
 
     $response = $this->actingAs($admin)
@@ -100,7 +100,7 @@ it('muestra el formulario de edición con los datos y permisos del usuario', fun
         ->assertSee('ana_cajera')
         ->assertSee('Permisos por módulo')
         ->assertSee($modulo->nombre_modulo)
-        ->assertSee($permiso->tipo_permiso);
+        ->assertSee('Ver');
 });
 
 it('impide eliminar al propio usuario o a un SuperAdmin', function () {
@@ -162,8 +162,6 @@ it('impide eliminar al propio usuario o a un SuperAdmin', function () {
 it('actualiza los datos del usuario y sus permisos granulares', function () {
     $rol = Rol::create(['tipo_rol' => 'Cajero', 'descripcion' => 'Ventas y cobros']);
     $modulo = Modulo::create(['nombre_modulo' => 'Caja']);
-    $mostrar = Permiso::create(['tipo_permiso' => 'Mostrar', 'descripcion' => 'Permite ver registros']);
-    $crear = Permiso::create(['tipo_permiso' => 'Crear', 'descripcion' => 'Permite crear registros']);
 
     $admin = User::create([
         'nombre' => 'Admin',
@@ -194,7 +192,7 @@ it('actualiza los datos del usuario y sus permisos granulares', function () {
             'id_rol' => $rol->id,
             'id_sucursal' => null,
             'es_activo' => '1',
-            'permisos' => [$modulo->id => [$mostrar->id]],
+            'permisos' => [$modulo->id => ['ver' => '1']],
         ]);
 
     $response->assertRedirect(route('usuarios.edit', $usuario))
@@ -208,23 +206,16 @@ it('actualiza los datos del usuario y sus permisos granulares', function () {
     $this->assertDatabaseHas('permisos_activados', [
         'id_usuario' => $usuario->id,
         'id_modulo' => $modulo->id,
-        'id_permiso' => $mostrar->id,
-        'es_activo' => true,
-    ]);
-
-    $this->assertDatabaseHas('permisos_activados', [
-        'id_usuario' => $usuario->id,
-        'id_modulo' => $modulo->id,
-        'id_permiso' => $crear->id,
-        'es_activo' => false,
+        'puede_ver' => true,
+        'puede_crear' => false,
+        'puede_editar' => false,
+        'puede_borrar' => false,
     ]);
 });
 
 it('muestra los permisos activados del usuario en modo solo lectura', function () {
     $rol = Rol::create(['tipo_rol' => 'Cajero', 'descripcion' => 'Ventas y cobros']);
     $modulo = Modulo::create(['nombre_modulo' => 'Caja']);
-    $mostrar = Permiso::create(['tipo_permiso' => 'Mostrar', 'descripcion' => 'Permite ver registros']);
-    $crear = Permiso::create(['tipo_permiso' => 'Crear', 'descripcion' => 'Permite crear registros']);
 
     $admin = User::create([
         'nombre' => 'Admin',
@@ -249,15 +240,10 @@ it('muestra los permisos activados del usuario en modo solo lectura', function (
     PermisoActivado::create([
         'id_usuario' => $usuario->id,
         'id_modulo' => $modulo->id,
-        'id_permiso' => $mostrar->id,
-        'es_activo' => true,
-    ]);
-
-    PermisoActivado::create([
-        'id_usuario' => $usuario->id,
-        'id_modulo' => $modulo->id,
-        'id_permiso' => $crear->id,
-        'es_activo' => false,
+        'puede_ver' => true,
+        'puede_crear' => false,
+        'puede_editar' => false,
+        'puede_borrar' => false,
     ]);
 
     $response = $this->actingAs($admin)
@@ -267,7 +253,7 @@ it('muestra los permisos activados del usuario en modo solo lectura', function (
         ->assertSee('Ver usuario')
         ->assertSee('Permisos activados')
         ->assertSee($modulo->nombre_modulo)
-        ->assertSee($mostrar->tipo_permiso)
+        ->assertSee('Ver')
         ->assertSee('Editar permisos')
         ->assertDontSee('Guardar cambios');
 });

@@ -113,7 +113,7 @@ class User extends Authenticatable
     private ?array $modulosVisiblesCache = null;
 
     /**
-     * Nombres de módulos con permiso de ver (Mostrar id 4 o Todos id 5) activo.
+     * Nombres de módulos con permiso de ver activo.
      *
      * Una sola consulta por request, memoizada para no hacer N+1 desde el sidebar.
      *
@@ -126,8 +126,7 @@ class User extends Authenticatable
         }
 
         $modulosVisibles = $this->permisosActivados()
-            ->where('es_activo', true)
-            ->whereIn('id_permiso', [4, 5])
+            ->where('puede_ver', true)
             ->with('modulo:id,nombre_modulo')
             ->get()
             ->pluck('modulo.nombre_modulo')
@@ -163,10 +162,12 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     private const MAPA_PERMISOS = [
-        'ver' => 'Mostrar',
-        'crear' => 'Crear',
-        'editar' => 'Editar',
-        'eliminar' => 'Borrar',
+        'ver' => 'puede_ver',
+        'mostrar' => 'puede_ver',
+        'crear' => 'puede_crear',
+        'editar' => 'puede_editar',
+        'eliminar' => 'puede_borrar',
+        'borrar' => 'puede_borrar',
     ];
 
     /**
@@ -177,7 +178,9 @@ class User extends Authenticatable
         'punto-venta' => 'Punto de venta',
         'inventario' => 'Inventario',
         'lotes' => 'Lotes y caducidades',
+        'lotes-y-caducidades' => 'Lotes y caducidades',
         'entradas' => 'Entradas de almacén',
+        'entradas-de-almacen' => 'Entradas de almacén',
         'traspasos' => 'Traspasos',
         'sucursales' => 'Sucursales',
         'usuarios' => 'Usuarios y roles',
@@ -197,12 +200,15 @@ class User extends Authenticatable
             return true;
         }
 
-        $tipoPermiso = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
+        $columna = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
         $nombreModulo = self::MAPA_MODULOS[strtolower($modulo)] ?? $modulo;
 
+        if (! in_array($columna, ['puede_ver', 'puede_crear', 'puede_editar', 'puede_borrar'], true)) {
+            return false;
+        }
+
         return $this->permisosActivados()
-            ->where('es_activo', true)
-            ->whereHas('permiso', fn ($query) => $query->where('tipo_permiso', $tipoPermiso))
+            ->where($columna, true)
             ->whereHas('modulo', fn ($query) => $query->where('nombre_modulo', $nombreModulo))
             ->exists();
     }

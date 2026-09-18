@@ -11,10 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('permisos', function (Blueprint $table) {
+        Schema::create('permisos_activados', function (Blueprint $table) {
             $table->id();
-            $table->string('tipo_permiso', 20);
-            $table->text('descripcion');
+            $table->foreignId('id_modulo')->constrained('modulos')->cascadeOnDelete();
+            $table->foreignId('id_usuario')->constrained('usuarios')->cascadeOnDelete();
+            $table->boolean('puede_ver')->default(true);
+            $table->boolean('puede_crear')->default(true);
+            $table->boolean('puede_editar')->default(true);
+            $table->boolean('puede_borrar')->default(true);
+            $table->timestamps();
+
+            $table->unique(['id_modulo', 'id_usuario']);
         });
     }
 
@@ -23,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('permisos');
+        Schema::dropIfExists('permisos_activados');
     }
 };

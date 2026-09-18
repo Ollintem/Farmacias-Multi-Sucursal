@@ -5,20 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
- * @property int $id_permiso
- * @property int $id_usuario
  * @property int $id_modulo
- * @property bool $es_activo
- * @property Carbon $creado_en
- * @property Carbon $actualizado_en
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property int $id_usuario
+ * @property bool $puede_ver
+ * @property bool $puede_crear
+ * @property bool $puede_editar
+ * @property bool $puede_borrar
  */
-#[Fillable(['id_permiso', 'id_usuario', 'id_modulo', 'es_activo'])]
+#[Fillable(['id_modulo', 'id_usuario', 'puede_ver', 'puede_crear', 'puede_editar', 'puede_borrar'])]
 class PermisoActivado extends Model
 {
     /**
@@ -34,18 +31,11 @@ class PermisoActivado extends Model
     protected function casts(): array
     {
         return [
-            'es_activo' => 'boolean',
-            'creado_en' => 'datetime',
-            'actualizado_en' => 'datetime',
+            'puede_ver' => 'boolean',
+            'puede_crear' => 'boolean',
+            'puede_editar' => 'boolean',
+            'puede_borrar' => 'boolean',
         ];
-    }
-
-    /**
-     * @return BelongsTo<Permiso, $this>
-     */
-    public function permiso(): BelongsTo
-    {
-        return $this->belongsTo(Permiso::class, 'id_permiso');
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Modulo;
-use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -100,28 +99,43 @@ class UsuariosController extends Controller
             ->get();
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $modulos = Modulo::orderBy('id')->get();
-        $permisos = Permiso::orderBy('id')->get();
-        $permisosActivos = PermisoActivado::where('id_usuario', $usuario->id)
-            ->where('es_activo', true)
+        $filas = PermisoActivado::where('id_usuario', $usuario->id)
             ->get()
-            ->mapWithKeys(fn (PermisoActivado $permisoActivado) => [
-                $permisoActivado->id_modulo.'-'.$permisoActivado->id_permiso => true,
-            ])
-            ->all();
-        $permisosAgrupados = PermisoActivado::where('id_usuario', $usuario->id)
-            ->where('es_activo', true)
-            ->with(['modulo', 'permiso'])
-            ->get()
-            ->groupBy(fn (PermisoActivado $permisoActivado) => $permisoActivado->modulo?->nombre_modulo ?? 'Sin módulo')
-            ->map(fn ($grupo) => $grupo
-                ->map(fn (PermisoActivado $permisoActivado) => $permisoActivado->permiso?->tipo_permiso)
-                ->filter()
-                ->unique()
-                ->values()
-                ->all())
-            ->all();
+            ->keyBy('id_modulo');
 
-        return compact('roles', 'sucursales', 'modulos', 'permisos', 'permisosActivos', 'permisosAgrupados');
+        $etiquetas = [
+            'puede_ver' => 'Ver',
+            'puede_crear' => 'Crear',
+            'puede_editar' => 'Editar',
+            'puede_borrar' => 'Borrar',
+        ];
+
+        $permisosActivos = [];
+        $permisosAgrupados = [];
+
+        foreach ($modulos as $modulo) {
+            $fila = $filas->get($modulo->id);
+
+            $permisosActivos[$modulo->id] = [
+                'ver' => (bool) ($fila?->puede_ver ?? false),
+                'crear' => (bool) ($fila?->puede_crear ?? false),
+                'editar' => (bool) ($fila?->puede_editar ?? false),
+                'borrar' => (bool) ($fila?->puede_borrar ?? false),
+            ];
+
+            $activos = [];
+            foreach ($etiquetas as $columna => $etiqueta) {
+                if ($fila && (bool) $fila->{$columna}) {
+                    $activos[] = $etiqueta;
+                }
+            }
+
+            if ($activos !== []) {
+                $permisosAgrupados[$modulo->nombre_modulo] = $activos;
+            }
+        }
+
+        return compact('roles', 'sucursales', 'modulos', 'permisosActivos', 'permisosAgrupados');
     }
 
     public function update(Request $request, User $usuario): RedirectResponse
@@ -139,8 +153,10 @@ class UsuariosController extends Controller
             'id_sucursal' => ['nullable', 'exists:sucursales,id'],
             'es_activo' => ['boolean'],
             'permisos' => ['nullable', 'array'],
-            'permisos.*' => ['array'],
-            'permisos.*.*' => ['integer', Rule::exists('permisos', 'id')],
+            'permisos.*.ver' => ['nullable', 'boolean'],
+            'permisos.*.crear' => ['nullable', 'boolean'],
+            'permisos.*.editar' => ['nullable', 'boolean'],
+            'permisos.*.borrar' => ['nullable', 'boolean'],
         ], [
             'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
             'password.confirmed' => 'Las contraseñas no coinciden. Escríbelas nuevamente.',
@@ -158,39 +174,25 @@ class UsuariosController extends Controller
         ]);
 
         $modulos = Modulo::orderBy('id')->get();
-        $permisos = Permiso::orderBy('id')->get();
-        $seleccionados = [];
         $permisosInput = $request->input('permisos', []);
 
-        if (is_array($permisosInput)) {
-            foreach ($permisosInput as $moduloId => $permisoIds) {
-                if (! is_array($permisoIds)) {
-                    continue;
-                }
-
-                $ids = [];
-
-                foreach ($permisoIds as $permisoId) {
-                    if (is_numeric($permisoId)) {
-                        $ids[] = (int) $permisoId;
-                    }
-                }
-
-                $seleccionados[(int) $moduloId] = $ids;
-            }
-        }
-
         foreach ($modulos as $modulo) {
-            foreach ($permisos as $permiso) {
-                PermisoActivado::updateOrCreate(
-                    [
-                        'id_usuario' => $usuario->id,
-                        'id_modulo' => $modulo->id,
-                        'id_permiso' => $permiso->id,
-                    ],
-                    ['es_activo' => in_array($permiso->id, $seleccionados[$modulo->id] ?? [], true)],
-                );
-            }
+            $flagsModulo = is_array($permisosInput[$modulo->id] ?? null)
+                ? $permisosInput[$modulo->id]
+                : [];
+
+            PermisoActivado::updateOrCreate(
+                [
+                    'id_usuario' => $usuario->id,
+                    'id_modulo' => $modulo->id,
+                ],
+                [
+                    'puede_ver' => ! empty($flagsModulo['ver']),
+                    'puede_crear' => ! empty($flagsModulo['crear']),
+                    'puede_editar' => ! empty($flagsModulo['editar']),
+                    'puede_borrar' => ! empty($flagsModulo['borrar']),
+                ],
+            );
         }
 
         return redirect()->route('usuarios.edit', $usuario)->with('success', 'Usuario actualizado correctamente.');

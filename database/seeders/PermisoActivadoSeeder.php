@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Modulo;
-use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -26,54 +25,46 @@ class PermisoActivadoSeeder extends Seeder
         }
 
         $modulos = Modulo::all();
-        $permisos = Permiso::all()->keyBy('tipo_permiso');
 
-        // Usuario 1 (admin): todos los permisos en todos los módulos.
+        // Usuario 1 (admin): acceso total en todos los módulos.
         foreach ($modulos as $modulo) {
-            foreach ($permisos as $permiso) {
-                PermisoActivado::updateOrCreate(
-                    [
-                        'id_usuario' => $admin->id,
-                        'id_modulo' => $modulo->id,
-                        'id_permiso' => $permiso->id,
-                    ],
-                    ['es_activo' => true]
-                );
-            }
+            PermisoActivado::updateOrCreate(
+                [
+                    'id_usuario' => $admin->id,
+                    'id_modulo' => $modulo->id,
+                ],
+                [
+                    'puede_ver' => true,
+                    'puede_crear' => true,
+                    'puede_editar' => true,
+                    'puede_borrar' => true,
+                ]
+            );
         }
 
-        // Usuario 2 (pruebas): solo un subconjunto operativo básico.
+        // Usuario 2 (pruebas): permisos limitados, solo operativo básico.
         $accesosLimitados = [
-            'Dashboard' => ['Mostrar'],
-            'Punto de venta' => ['Crear', 'Mostrar'],
-            'Inventario' => ['Mostrar'],
-            'Caja' => ['Crear', 'Mostrar'],
-            'Alertas' => ['Mostrar'],
+            'Dashboard' => ['puede_ver' => true, 'puede_crear' => false, 'puede_editar' => false, 'puede_borrar' => false],
+            'Punto de venta' => ['puede_ver' => true, 'puede_crear' => true, 'puede_editar' => false, 'puede_borrar' => false],
+            'Inventario' => ['puede_ver' => true, 'puede_crear' => false, 'puede_editar' => false, 'puede_borrar' => false],
+            'Caja' => ['puede_ver' => true, 'puede_crear' => true, 'puede_editar' => false, 'puede_borrar' => false],
+            'Alertas' => ['puede_ver' => true, 'puede_crear' => false, 'puede_editar' => false, 'puede_borrar' => false],
         ];
 
-        foreach ($accesosLimitados as $nombreModulo => $tiposPermiso) {
+        foreach ($accesosLimitados as $nombreModulo => $flags) {
             $modulo = $modulos->firstWhere('nombre_modulo', $nombreModulo);
 
             if (! $modulo) {
                 continue;
             }
 
-            foreach ($tiposPermiso as $tipoPermiso) {
-                $permiso = $permisos->get($tipoPermiso);
-
-                if (! $permiso) {
-                    continue;
-                }
-
-                PermisoActivado::updateOrCreate(
-                    [
-                        'id_usuario' => $pruebas->id,
-                        'id_modulo' => $modulo->id,
-                        'id_permiso' => $permiso->id,
-                    ],
-                    ['es_activo' => true]
-                );
-            }
+            PermisoActivado::updateOrCreate(
+                [
+                    'id_usuario' => $pruebas->id,
+                    'id_modulo' => $modulo->id,
+                ],
+                $flags
+            );
         }
     }
 }

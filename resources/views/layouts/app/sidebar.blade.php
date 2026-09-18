@@ -37,7 +37,7 @@
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Entradas de almacén') ?? false)
-                <flux:sidebar.item icon="inbox-arrow-down" :href="route('entradas.index')" :current="request()->routeIs('entradas.*')" wire:navigate>
+                <flux:sidebar.item icon="inbox-arrow-down" :href="route('entradas-de-almacen.index')" :current="request()->routeIs('entradas-de-almacen.*')" wire:navigate>
                     Entradas de almacén
                 </flux:sidebar.item>
                 @endif

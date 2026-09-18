@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Modulo;
-use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\User;
@@ -22,22 +21,30 @@ function crearUsuarioConRol(string $tipoRol): User
     ]);
 }
 
-function otorgarPermiso(User $usuario, string $nombreModulo, string $tipoPermiso): void
+/**
+ * @param  array{puede_ver?: bool, puede_crear?: bool, puede_editar?: bool, puede_borrar?: bool}  $flags
+ */
+function otorgarPermiso(User $usuario, string $nombreModulo, array $flags = []): void
 {
-    $modulo = Modulo::create(['nombre_modulo' => $nombreModulo]);
-    $permiso = Permiso::create(['tipo_permiso' => $tipoPermiso, 'descripcion' => $tipoPermiso]);
+    $modulo = Modulo::firstOrCreate(['nombre_modulo' => $nombreModulo]);
 
-    PermisoActivado::create([
-        'id_usuario' => $usuario->id,
-        'id_modulo' => $modulo->id,
-        'id_permiso' => $permiso->id,
-        'es_activo' => true,
-    ]);
+    PermisoActivado::updateOrCreate(
+        [
+            'id_usuario' => $usuario->id,
+            'id_modulo' => $modulo->id,
+        ],
+        [
+            'puede_ver' => $flags['puede_ver'] ?? true,
+            'puede_crear' => $flags['puede_crear'] ?? false,
+            'puede_editar' => $flags['puede_editar'] ?? false,
+            'puede_borrar' => $flags['puede_borrar'] ?? false,
+        ],
+    );
 }
 
 it('bloquea con 403 cuando el usuario no tiene el permiso del módulo', function () {
     $usuario = crearUsuarioConRol('Cajero');
-    otorgarPermiso($usuario, 'Caja', 'Mostrar');
+    otorgarPermiso($usuario, 'Caja');
 
     $this->actingAs($usuario)
         ->get(route('usuarios.index'))
@@ -46,8 +53,8 @@ it('bloquea con 403 cuando el usuario no tiene el permiso del módulo', function
 
 it('permite el acceso cuando el usuario tiene el permiso del módulo', function () {
     $usuario = crearUsuarioConRol('Cajero');
-    otorgarPermiso($usuario, 'Caja', 'Mostrar');
-    otorgarPermiso($usuario, 'Usuarios y roles', 'Mostrar');
+    otorgarPermiso($usuario, 'Caja');
+    otorgarPermiso($usuario, 'Usuarios y roles');
 
     $this->actingAs($usuario)
         ->get(route('usuarios.index'))

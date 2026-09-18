@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LotesController;
+use App\Http\Controllers\RolesController;
 use App\Http\Controllers\SucursalesController;
 use App\Http\Controllers\UsuariosController;
 use App\Models\Sucursal;
@@ -23,6 +24,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/lotes-y-caducidades/create', [LotesController::class, 'create'])->name('lotes.create')->middleware('checarPermisos:crear,lotes-y-caducidades');
     Route::post('/lotes-y-caducidades', [LotesController::class, 'store'])->name('lotes.store')->middleware('checarPermisos:crear,lotes-y-caducidades');
 
+    /*
+    Modulo de usuarios y roles
+    Este modulo es el encargado de crear, editar, inhablitar usuarios y roles
+    */
     Route::get('/usuarios', [UsuariosController::class, 'index'])->name('usuarios.index')->middleware('checarPermisos:ver,usuarios')->middleware('checarPermisos:ver,usuarios');
     Route::get('/usuarios/create', [UsuariosController::class, 'create'])->name('usuarios.create')->middleware('checarPermisos:crear,usuarios')->middleware('checarPermisos:crear,usuarios');
     Route::post('/usuarios', [UsuariosController::class, 'store'])->name('usuarios.store')->middleware('checarPermisos:crear,usuarios')->middleware('checarPermisos:crear,usuarios');
@@ -30,6 +35,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/usuarios/{usuario}/edit', [UsuariosController::class, 'edit'])->name('usuarios.edit')->middleware('checarPermisos:editar,usuarios')->middleware('checarPermisos:editar,usuarios');
     Route::put('/usuarios/{usuario}', [UsuariosController::class, 'update'])->name('usuarios.update')->middleware('checarPermisos:editar,usuarios')->middleware('checarPermisos:editar,usuarios');
     Route::delete('/usuarios/{usuario}', [UsuariosController::class, 'delete'])->name('usuarios.delete')->middleware('checarPermisos:eliminar,usuarios')->middleware('checarPermisos:eliminar,usuarios');
+    // Roles
+    Route::get('/roles', [RolesController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create', [RolesController::class, 'create'])->name('roles.create');
+    Route::post('/roles', [RolesController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{rol}', [RolesController::class, 'show'])->name('roles.show');
+    Route::get('/roles/{rol}/edit', [RolesController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{rol}', [RolesController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{rol}', [RolesController::class, 'destroy'])->name('roles.destroy');
+
     // Módulo: Sucursales
     Route::get('/sucursales', [SucursalesController::class, 'index'])->name('sucursales.index')->middleware('checarPermisos:ver,sucursales');
     Route::get('/sucursales/create', [SucursalesController::class, 'create'])->name('sucursales.create')->middleware('checarPermisos:crear,sucursales');
@@ -44,6 +58,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('/caja', 'pages.modulos.placeholder', ['tituloModulo' => 'Caja'])->name('caja.index')->middleware('checarPermisos:ver,caja');
     Route::view('/reportes', 'pages.modulos.placeholder', ['tituloModulo' => 'Reportes'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
     Route::view('/alertas', 'pages.modulos.placeholder', ['tituloModulo' => 'Alertas'])->name('alertas.index')->middleware('checarPermisos:ver,alertas');
+    Route::view('/entradas-de-almacen', 'pages.modulos.placeholder', ['tituloModulo' => 'Entradas de almacén'])->name('entradas-de-almacen.index')->middleware('checarPermisos:ver,entradas-de-almacen');
+    Route::view('/traspasos', 'pages.modulos.placeholder', ['tituloModulo' => 'Traspasos'])->name('traspasos.index')->middleware('checarPermisos:ver,traspasos');
 });
 
 require __DIR__.'/settings.php';

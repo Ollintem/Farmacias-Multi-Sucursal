@@ -158,24 +158,18 @@
                     @enderror
 
                     @php
+                        $columnasPermiso = ['ver' => 'Ver', 'crear' => 'Crear', 'editar' => 'Editar', 'borrar' => 'Borrar'];
                         $permisosFormulario = old('permisos');
                         $permisosActivosSeguros = $permisosActivos ?? [];
                         $permisosSeleccionadosPorModulo = [];
 
-                        if ($permisosFormulario !== null) {
-                            foreach ($modulos as $moduloClave) {
-                                $permisosSeleccionadosPorModulo[$moduloClave->id] = array_map(
-                                    'intval',
-                                    (array) ($permisosFormulario[$moduloClave->id] ?? [])
-                                );
-                            }
-                        } else {
-                            foreach ($modulos as $moduloClave) {
-                                $permisosSeleccionadosPorModulo[$moduloClave->id] = [];
-                                foreach ($permisos as $permisoClave) {
-                                    if (! empty($permisosActivosSeguros[$moduloClave->id.'-'.$permisoClave->id])) {
-                                        $permisosSeleccionadosPorModulo[$moduloClave->id][] = (int) $permisoClave->id;
-                                    }
+                        foreach ($modulos as $moduloClave) {
+                            $permisosSeleccionadosPorModulo[$moduloClave->id] = [];
+                            foreach ($columnasPermiso as $clavePermiso => $etiquetaPermiso) {
+                                if ($permisosFormulario !== null) {
+                                    $permisosSeleccionadosPorModulo[$moduloClave->id][$clavePermiso] = ! empty($permisosFormulario[$moduloClave->id][$clavePermiso] ?? null);
+                                } else {
+                                    $permisosSeleccionadosPorModulo[$moduloClave->id][$clavePermiso] = ! empty($permisosActivosSeguros[$moduloClave->id][$clavePermiso] ?? null);
                                 }
                             }
                         }
@@ -186,8 +180,8 @@
                             <thead>
                                 <tr>
                                     <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Módulo</th>
-                                    @foreach($permisos as $permiso)
-                                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{{ $permiso->tipo_permiso }}</th>
+                                    @foreach($columnasPermiso as $etiquetaPermiso)
+                                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{{ $etiquetaPermiso }}</th>
                                     @endforeach
                                     @if(! $soloLectura)
                                         <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Todos</th>
@@ -198,13 +192,13 @@
                                 @foreach($modulos as $modulo)
                                     @php
                                         $activosModulo = $permisosSeleccionadosPorModulo[$modulo->id] ?? [];
-                                        $todosActivosFila = count($permisos) > 0 && count($activosModulo) === count($permisos);
+                                        $todosActivosFila = count(array_filter($activosModulo)) === count($columnasPermiso);
                                     @endphp
                                     <tr class="bg-transparent hover:bg-emerald-50/50" data-permisos-row="{{ $modulo->id }}">
                                         <td class="px-4 py-3 text-sm font-medium">{{ $modulo->nombre_modulo }}</td>
-                                        @foreach($permisos as $permiso)
+                                        @foreach($columnasPermiso as $clavePermiso => $etiquetaPermiso)
                                             <td class="px-4 py-3 text-center">
-                                                <input type="checkbox" name="permisos[{{ $modulo->id }}][]" value="{{ $permiso->id }}" @checked(in_array((int) $permiso->id, $activosModulo, true)) class="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" data-permiso-checkbox @disabled($soloLectura)>
+                                                <input type="checkbox" name="permisos[{{ $modulo->id }}][{{ $clavePermiso }}]" value="1" @checked(! empty($activosModulo[$clavePermiso])) class="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" data-permiso-checkbox @disabled($soloLectura)>
                                             </td>
                                         @endforeach
                                         @if(! $soloLectura)
