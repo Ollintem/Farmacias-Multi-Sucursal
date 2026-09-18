@@ -109,6 +109,9 @@ class User extends Authenticatable
         return $this->hasMany(PermisoActivado::class, 'id_usuario');
     }
 
+    /** @var array<int, string>|null */
+    private ?array $modulosVisiblesCache = null;
+
     /**
      * Nombres de módulos con permiso de ver (Mostrar id 4 o Todos id 5) activo.
      *
@@ -118,6 +121,10 @@ class User extends Authenticatable
      */
     public function modulosVisibles(): array
     {
+        if ($this->modulosVisiblesCache !== null) {
+            return $this->modulosVisiblesCache;
+        }
+
         $modulosVisibles = $this->permisosActivados()
             ->where('es_activo', true)
             ->whereIn('id_permiso', [4, 5])
@@ -129,23 +136,74 @@ class User extends Authenticatable
             ->values();
 
         if ($modulosVisibles->isNotEmpty()) {
-            return $modulosVisibles->all();
+            return $this->modulosVisiblesCache = $modulosVisibles->all();
         }
 
         $totalPermisosActivados = $this->permisosActivados()->count();
         if ($totalPermisosActivados === 0) {
-            return Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
+            return $this->modulosVisiblesCache = Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
         }
 
         if ($this->rol?->tipo_rol === 'SuperAdmin') {
-            return Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
+            return $this->modulosVisiblesCache = Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
         }
 
-        return [];
+        return $this->modulosVisiblesCache = [];
     }
 
     public function puedeVerModulo(string $nombreModulo): bool
     {
         return in_array($nombreModulo, $this->modulosVisibles(), true);
+    }
+
+    /**
+     * Mapas entre los nombres cortos que reciben las rutas
+     * y los catálogos de la base de datos.
+     *
+     * @var array<string, string>
+     */
+    private const MAPA_PERMISOS = [
+        'ver' => 'Mostrar',
+        'crear' => 'Crear',
+        'editar' => 'Editar',
+        'eliminar' => 'Borrar',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    private const MAPA_MODULOS = [
+        'dashboard' => 'Dashboard',
+        'punto-venta' => 'Punto de venta',
+        'inventario' => 'Inventario',
+        'lotes' => 'Lotes y caducidades',
+        'entradas' => 'Entradas de almacén',
+        'traspasos' => 'Traspasos',
+        'sucursales' => 'Sucursales',
+        'usuarios' => 'Usuarios y roles',
+        'caja' => 'Caja',
+        'reportes' => 'Reportes',
+        'alertas' => 'Alertas',
+    ];
+
+    /**
+     * Indica si el usuario tiene activo un permiso sobre un módulo.
+     * Acepta los nombres cortos de las rutas (ver/crear/editar/eliminar
+     * y el slug del módulo) o los nombres tal como están en el catálogo.
+     */
+    public function permisosHabilitados(string $permiso, string $modulo): bool
+    {
+        if ($this->permisosActivados()->count() === 0) {
+            return true;
+        }
+
+        $tipoPermiso = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
+        $nombreModulo = self::MAPA_MODULOS[strtolower($modulo)] ?? $modulo;
+
+        return $this->permisosActivados()
+            ->where('es_activo', true)
+            ->whereHas('permiso', fn ($query) => $query->where('tipo_permiso', $tipoPermiso))
+            ->whereHas('modulo', fn ($query) => $query->where('nombre_modulo', $nombreModulo))
+            ->exists();
     }
 }
