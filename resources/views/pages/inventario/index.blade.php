@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Inventario')">
-    <div id="theme-shell" class="theme-light">
-        <div class="theme-shell-inner">
+    <div class="module-page">
+        <div class="module-page-inner">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Catálogo</p>
@@ -12,8 +12,15 @@
                 </div>
             </div>
 
-            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <div class="compact-stat">
+            <nav class="module-tabs" aria-label="Secciones de inventario">
+                <a href="{{ route('inventario.index', ['sucursal' => $selectedSucursal?->id]) }}" class="module-tab module-tab-active">Productos y stock</a>
+                @if(auth()->user()?->puedeVerModulo('Lotes y caducidades') ?? false)
+                    <a href="{{ route('lotes.index', ['sucursal' => $selectedSucursal?->id]) }}" class="module-tab">Lotes y caducidades</a>
+                @endif
+            </nav>
+
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Productos</span>
                         <span class="stat-pill positive">{{ $productos->count() }}</span>
@@ -22,7 +29,7 @@
                     <p class="mt-1 text-xs theme-subtle">Disponibles en la vista</p>
                 </div>
 
-                <div class="compact-stat">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Stock crítico</span>
                         <span class="stat-pill warning">{{ $stockCritico }}</span>
@@ -31,7 +38,7 @@
                     <p class="mt-1 text-xs theme-subtle">Productos con stock bajo</p>
                 </div>
 
-                <div class="compact-stat">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Unidades</span>
                         <span class="stat-pill info">Total</span>
@@ -40,7 +47,7 @@
                     <p class="mt-1 text-xs theme-subtle">Existencias actuales</p>
                 </div>
 
-                <div class="compact-stat">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Valor total</span>
                         <span class="stat-pill positive">MXN</span>
@@ -50,7 +57,7 @@
                 </div>
             </div>
 
-            <div class="theme-card">
+            <div class="module-card p-5 sm:p-6">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="theme-subtle text-xs uppercase tracking-[0.25em]">Sucursal activa</p>
@@ -75,10 +82,10 @@
                     </div>
                 </div>
 
-                <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white/80">
+                <div class="module-table mt-6">
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-600">
+                            <thead class="text-slate-600 dark:text-slate-300">
                                 <tr>
                                     <th class="px-4 py-3 font-semibold">Código</th>
                                     <th class="px-4 py-3 font-semibold">Producto</th>
@@ -90,20 +97,19 @@
                             </thead>
                             <tbody>
                                 @forelse($productos as $producto)
-                                    <tr class="border-t border-slate-200">
+                                    <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5">
                                         <td class="px-4 py-3 font-medium text-slate-800">{{ $producto->codigo_barras }}</td>
                                         <td class="px-4 py-3 font-medium text-slate-800">{{ $producto->nombre_producto }}</td>
                                         <td class="px-4 py-3 text-slate-600">{{ $producto->descripcion ?: 'Sin descripción' }}</td>
                                         <td class="px-4 py-3 text-slate-700">{{ $producto->stock }} uds.</td>
                                         <td class="px-4 py-3 text-slate-700">${{ number_format($producto->precio, 2) }}</td>
                                         <td class="px-4 py-3">
-                                            @php($estado = $producto->stock <= 15 ? 'Bajo' : 'Disponible')
-                                            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold
-                                                @if($estado === 'Disponible') bg-emerald-100 text-emerald-700
-                                                @else bg-amber-100 text-amber-700
-                                                @endif">
-                                                {{ $estado }}
-                                            </span>
+                                            @if($producto->stock <= 15)
+                                                <span class="inventory-status inventory-status-low">Bajo</span>
+                                            @endif
+                                            @if($producto->stock > 15)
+                                                <span class="inventory-status inventory-status-available">Disponible</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty

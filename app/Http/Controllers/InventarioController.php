@@ -12,6 +12,12 @@ use Illuminate\View\View;
 
 class InventarioController extends Controller
 {
+    /**
+     * Muestra el inventario filtrado por sucursal y texto de búsqueda.
+     *
+     * Entrada: query string `sucursal` y `buscar`.
+     * Salida: resources/views/pages/inventario/index.blade.php.
+     */
     public function index(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
@@ -53,6 +59,12 @@ class InventarioController extends Controller
         ));
     }
 
+    /**
+     * Carga los catálogos necesarios para registrar un producto.
+     *
+     * Entrada: query string opcional `sucursal`.
+     * Salida: resources/views/pages/inventario/create.blade.php.
+     */
     public function create(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
@@ -63,6 +75,12 @@ class InventarioController extends Controller
         return view('pages.inventario.create', compact('sucursales', 'selectedSucursalId', 'presentaciones', 'lotes'));
     }
 
+    /**
+     * Valida, crea el producto y lo vincula con la sucursal seleccionada.
+     *
+     * Entrada: datos del formulario de alta de inventario.
+     * Salida: redirección a inventario.index con mensaje de resultado.
+     */
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -72,8 +90,8 @@ class InventarioController extends Controller
             'descripcion' => ['nullable', 'string'],
             'stock' => ['required', 'integer', 'min:0'],
             'precio' => ['required', 'numeric', 'min:0'],
-            'id_lote' => ['nullable', 'exists:lotes,id'],
-            'id_presentacion' => ['nullable', 'exists:presentacion_productos,id'],
+            'id_lote' => ['required', 'exists:lotes,id'],
+            'id_presentacion' => ['required', 'exists:presentacion_productos,id'],
             'es_controlado' => ['boolean'],
         ]);
 
@@ -83,8 +101,8 @@ class InventarioController extends Controller
             'descripcion' => $data['descripcion'] ?? '',
             'stock' => $data['stock'],
             'precio' => $data['precio'],
-            'id_lote' => $data['id_lote'] ?? 1,
-            'id_presentacion' => $data['id_presentacion'] ?? 1,
+            'id_lote' => $data['id_lote'],
+            'id_presentacion' => $data['id_presentacion'],
             'es_controlado' => $request->boolean('es_controlado', false),
             'es_activo' => true,
         ]);

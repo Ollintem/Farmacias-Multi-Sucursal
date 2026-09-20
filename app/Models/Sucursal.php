@@ -13,18 +13,29 @@ use Illuminate\Support\Carbon;
  * @property string $direccion
  * @property string $hora_apertura
  * @property string $hora_cierre
+ * @property string|null $telefono
+ * @property string|null $correo_contacto
+ * @property string|null $responsable
+ * @property bool $es_activa
  * @property Carbon|null $fecha_creacion
  * @property Carbon|null $fecha_actualizacion
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['nombre_sucursal', 'direccion', 'hora_apertura', 'hora_cierre'])]
+#[Fillable(['nombre_sucursal', 'direccion', 'telefono', 'correo_contacto', 'responsable', 'hora_apertura', 'hora_cierre', 'es_activa'])]
 class Sucursal extends Model
 {
     /**
      * The table associated with the model.
      */
     protected $table = 'sucursales';
+
+    protected function casts(): array
+    {
+        return [
+            'es_activa' => 'boolean',
+        ];
+    }
 
     /**
      * @return HasMany<User, $this>

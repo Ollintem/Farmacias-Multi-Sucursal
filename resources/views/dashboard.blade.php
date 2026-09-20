@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Dashboard')">
-    <div id="theme-shell" class="theme-light">
-        <div class="theme-shell-inner">
+    <div class="module-page">
+        <div class="module-page-inner">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Panel general</p>
@@ -13,7 +13,7 @@
                 </div>
             </div>
 
-            <div class="theme-card">
+            <div class="module-hero">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="theme-subtle text-xs uppercase tracking-[0.25em]">Sucursal activa</p>
@@ -36,7 +36,7 @@
                 </div>
 
                 <div class="mt-5 grid gap-3 md:grid-cols-3">
-                    <div class="compact-stat">
+                        <div class="module-stat">
                         <div class="flex items-center justify-between">
                             <span class="theme-subtle text-sm">Ventas</span>
                             <span class="stat-pill positive">+12%</span>
@@ -45,7 +45,7 @@
                         <p class="mt-1 text-xs theme-subtle">Aún no disponible</p>
                     </div>
 
-                    <div class="compact-stat">
+                    <div class="module-stat">
                         <div class="flex items-center justify-between">
                             <span class="theme-subtle text-sm">Clientes</span>
                             <span class="stat-pill info">Pendiente</span>
@@ -54,7 +54,7 @@
                         <p class="mt-1 text-xs theme-subtle">Aún no disponible</p>
                     </div>
 
-                    <div class="compact-stat">
+                    <div class="module-stat">
                         <div class="flex items-center justify-between">
                             <span class="theme-subtle text-sm">Stock</span>
                             <span class="stat-pill warning">Pendiente</span>
@@ -67,7 +67,7 @@
 
             <div class="grid gap-4 lg:grid-cols-[1.8fr_1fr]">
                 <div class="space-y-4">
-                    <div class="theme-card">
+                    <div class="module-card p-5">
                         <div class="mb-4 flex items-center justify-between">
                             <h2 class="text-lg font-semibold">Acceso rápido</h2>
                             <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600">Superadmin</span>
@@ -91,7 +91,7 @@
                         </div>
                     </div>
 
-                    <div class="theme-card">
+                    <div class="module-card p-5">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="theme-subtle text-sm">Resumen de operación</p>
@@ -114,7 +114,7 @@
                 </div>
 
                 <div class="space-y-4">
-                    <div class="theme-card">
+                    <div class="module-card p-5">
                         <h2 class="text-lg font-semibold">Estado del sistema</h2>
 
                         <div class="mt-5 space-y-4">
@@ -124,7 +124,7 @@
                         </div>
                     </div>
 
-                    <div class="theme-card">
+                    <div class="module-card p-5">
                         <h2 class="text-lg font-semibold">Actividad reciente</h2>
                         <ul class="mt-4 space-y-3">
                             <li class="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm theme-subtle">

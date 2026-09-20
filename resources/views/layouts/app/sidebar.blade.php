@@ -31,11 +31,6 @@
                     Inventario
                 </flux:sidebar.item>
                 @endif
-                @if($usuarioActual?->puedeVerModulo('Lotes y caducidades') ?? false)
-                <flux:sidebar.item icon="clock" :href="route('lotes.index')" :current="request()->routeIs('lotes.*')" wire:navigate>
-                    Lotes y caducidades
-                </flux:sidebar.item>
-                @endif
                 @if($usuarioActual?->puedeVerModulo('Entradas de almacén') ?? false)
                 <flux:sidebar.item icon="inbox-arrow-down" :href="route('entradas-de-almacen.index')" :current="request()->routeIs('entradas-de-almacen.*')" wire:navigate>
                     Entradas de almacén

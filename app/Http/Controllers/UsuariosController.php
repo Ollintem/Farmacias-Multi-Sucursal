@@ -14,6 +14,11 @@ use Illuminate\View\View;
 
 class UsuariosController extends Controller
 {
+    /**
+     * Lista usuarios con su rol y sucursal precargados.
+     *
+     * Salida: resources/views/pages/usuarios/index.blade.php.
+     */
     public function index(): View
     {
         $usuarios = User::with(['rol', 'sucursal'])
@@ -23,6 +28,11 @@ class UsuariosController extends Controller
         return view('pages.usuarios.index', compact('usuarios'));
     }
 
+    /**
+     * Carga roles y sucursales para el formulario de alta.
+     *
+     * Salida: resources/views/pages/usuarios/create.blade.php.
+     */
     public function create(): View
     {
         $roles = Rol::where('tipo_rol', '!=', 'SuperAdmin')
@@ -33,6 +43,12 @@ class UsuariosController extends Controller
         return view('pages.usuarios.create', compact('roles', 'sucursales'));
     }
 
+    /**
+     * Valida y registra un usuario, excluyendo el rol SuperAdmin.
+     *
+     * Entrada: datos del formulario de alta.
+     * Salida: redirección a usuarios.index.
+     */
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -63,6 +79,12 @@ class UsuariosController extends Controller
         return redirect()->route('usuarios.index')->with('success', 'Usuario registrado correctamente.');
     }
 
+    /**
+     * Muestra un usuario en modo consulta con sus permisos actuales.
+     *
+     * Entrada: usuario resuelto mediante route model binding.
+     * Salida: resources/views/pages/usuarios/edit.blade.php en modo ver.
+     */
     public function show(User $usuario): View
     {
         $usuario->load(['rol', 'sucursal']);
@@ -75,6 +97,12 @@ class UsuariosController extends Controller
         ]);
     }
 
+    /**
+     * Carga un usuario en modo edición junto con catálogos y permisos.
+     *
+     * Entrada: usuario resuelto mediante route model binding.
+     * Salida: resources/views/pages/usuarios/edit.blade.php en modo editar.
+     */
     public function edit(User $usuario): View
     {
         $datos = $this->datosPermisos($usuario);
@@ -138,6 +166,12 @@ class UsuariosController extends Controller
         return compact('roles', 'sucursales', 'modulos', 'permisosActivos', 'permisosAgrupados');
     }
 
+    /**
+     * Actualiza datos del usuario y reconstruye su matriz de permisos.
+     *
+     * Entrada: datos del formulario y usuario resuelto por la ruta.
+     * Salida: redirección a usuarios.edit.
+     */
     public function update(Request $request, User $usuario): RedirectResponse
     {
         $data = $request->validate([
@@ -198,6 +232,12 @@ class UsuariosController extends Controller
         return redirect()->route('usuarios.edit', $usuario)->with('success', 'Usuario actualizado correctamente.');
     }
 
+    /**
+     * Elimina un usuario salvo que sea el usuario autenticado o un SuperAdmin.
+     *
+     * Entrada: usuario resuelto mediante route model binding.
+     * Salida: redirección a usuarios.index con mensaje de resultado.
+     */
     public function delete(User $usuario): RedirectResponse
     {
         if ($usuario->is(auth()->user())) {

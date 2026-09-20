@@ -15,9 +15,9 @@
                     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Escaneo</p>
-                            <p class="mt-1 text-sm text-slate-700">Puedes capturar el código de barras del producto con lector o escribirlo manualmente.</p>
+                            <p class="mt-1 text-sm text-slate-700">Puedes usar la cámara de la PC, un lector USB o escribirlo manualmente.</p>
                         </div>
-                        <button type="button" id="scanner-focus-button" class="theme-button theme-button-secondary whitespace-nowrap">Activar lector</button>
+                        <button type="button" id="scanner-focus-button" class="theme-button theme-button-secondary whitespace-nowrap">Escanear con cámara</button>
                     </div>
                 </div>
 
@@ -144,18 +144,4 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const trigger = document.getElementById('scanner-focus-button');
-            const barcodeInput = document.getElementById('barcode-input');
-
-            if (trigger && barcodeInput) {
-                trigger.addEventListener('click', function () {
-                    barcodeInput.focus();
-                    barcodeInput.select();
-                    barcodeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                });
-            }
-        });
-    </script>
 </x-layouts::app>

@@ -19,9 +19,9 @@
                     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Escaneo</p>
-                            <p class="mt-1 text-sm text-slate-700">Usa el lector de códigos de barras para capturar el código directamente en el campo.</p>
+                            <p class="mt-1 text-sm text-slate-700">Usa la cámara de la PC o un lector USB para capturar el código directamente en el campo.</p>
                         </div>
-                        <button type="button" id="scanner-focus-button" class="theme-button theme-button-secondary whitespace-nowrap">Activar lector</button>
+                        <button type="button" id="scanner-focus-button" class="theme-button theme-button-secondary whitespace-nowrap">Escanear con cámara</button>
                     </div>
                 </div>
 
@@ -44,7 +44,7 @@
                     <div>
                         <label class="mb-2 block text-sm font-medium">Código de barras o código interno</label>
                         <input id="barcode-input" name="codigo_barras" value="{{ old('codigo_barras') }}" class="theme-input" placeholder="Ej. 7501234567890" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="numeric" required>
-                        <p class="mt-1 text-xs text-slate-500">Si usas un lector, enfoca este campo y escanea; el valor se capturará automáticamente.</p>
+                        <p class="mt-1 text-xs text-slate-500">También puedes escribir el código o usar un lector USB.</p>
                         @error('codigo_barras')
                             <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                         @enderror
@@ -76,19 +76,22 @@
 
                     <div>
                         <label class="mb-2 block text-sm font-medium">Lote</label>
-                        <select name="id_lote" class="theme-input">
-                            <option value="">Sin lote</option>
+                        <select name="id_lote" class="theme-input" required>
+                            <option value="">Selecciona un lote</option>
                             @foreach($lotes as $lote)
                                 <option value="{{ $lote->id }}" {{ old('id_lote') == $lote->id ? 'selected' : '' }}>
                                     {{ $lote->folio }}
                                 </option>
                             @endforeach
                         </select>
+                        @error('id_lote')
+                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
                         <label class="mb-2 block text-sm font-medium">Presentación</label>
-                        <select name="id_presentacion" class="theme-input">
+                        <select name="id_presentacion" class="theme-input" required>
                             <option value="">Selecciona una presentación</option>
                             @foreach($presentaciones as $presentacion)
                                 <option value="{{ $presentacion->id }}" {{ old('id_presentacion') == $presentacion->id ? 'selected' : '' }}>
@@ -96,6 +99,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @error('id_presentacion')
+                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="md:col-span-2">
@@ -119,18 +125,4 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const trigger = document.getElementById('scanner-focus-button');
-            const barcodeInput = document.getElementById('barcode-input');
-
-            if (trigger && barcodeInput) {
-                trigger.addEventListener('click', function () {
-                    barcodeInput.focus();
-                    barcodeInput.select();
-                    barcodeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                });
-            }
-        });
-    </script>
 </x-layouts::app>

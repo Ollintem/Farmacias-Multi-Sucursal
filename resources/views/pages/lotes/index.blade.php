@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Lotes y caducidades')">
-    <div id="theme-shell" class="theme-light">
-        <div class="theme-shell-inner">
+    <div class="module-page">
+        <div class="module-page-inner">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Trazabilidad</p>
@@ -12,8 +12,15 @@
                 </div>
             </div>
 
-            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <div class="compact-stat">
+            <nav class="module-tabs" aria-label="Secciones de inventario">
+                @if(auth()->user()?->puedeVerModulo('Inventario') ?? false)
+                    <a href="{{ route('inventario.index', ['sucursal' => $selectedSucursal?->id]) }}" class="module-tab">Productos y stock</a>
+                @endif
+                <a href="{{ route('lotes.index', ['sucursal' => $selectedSucursal?->id]) }}" class="module-tab module-tab-active">Lotes y caducidades</a>
+            </nav>
+
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Total de lotes</span>
                         <span class="stat-pill info">{{ $totalLotes }}</span>
@@ -22,7 +29,7 @@
                     <p class="mt-1 text-xs theme-subtle">Registros activos</p>
                 </div>
 
-                <div class="compact-stat">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Vigentes</span>
                         <span class="stat-pill positive">OK</span>
@@ -31,7 +38,7 @@
                     <p class="mt-1 text-xs theme-subtle">Sin riesgo de caducidad</p>
                 </div>
 
-                <div class="compact-stat">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Por caducar</span>
                         <span class="stat-pill warning">{{ $porCaducar }}</span>
@@ -40,7 +47,7 @@
                     <p class="mt-1 text-xs theme-subtle">Menos de 90 días</p>
                 </div>
 
-                <div class="compact-stat">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Caducados</span>
                         <span class="stat-pill danger">{{ $caducados }}</span>
@@ -50,7 +57,7 @@
                 </div>
             </div>
 
-            <div class="theme-card">
+            <div class="module-card p-5 sm:p-6">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="theme-subtle text-xs uppercase tracking-[0.25em]">Sucursal activa</p>
@@ -74,10 +81,10 @@
                     </form>
                 </div>
 
-                <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white/80">
+                <div class="module-table mt-6">
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-600">
+                            <thead class="text-slate-600 dark:text-slate-300">
                                 <tr>
                                     <th class="px-4 py-3 font-semibold">Lote</th>
                                     <th class="px-4 py-3 font-semibold">Producto</th>
@@ -91,7 +98,7 @@
                             </thead>
                             <tbody>
                                 @forelse($lotes as $lote)
-                                    <tr class="border-t border-slate-200">
+                                    <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5">
                                         <td class="px-4 py-3 font-medium text-slate-800">{{ $lote['folio'] }}</td>
                                         <td class="px-4 py-3">
                                             <div class="font-medium text-slate-800">{{ $lote['producto'] }}</div>

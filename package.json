@@ -7,6 +7,7 @@
         "dev": "vite dev"
     },
     "dependencies": {
+        "@zxing/browser": "^0.1.5",
         "@tailwindcss/vite": "^4.1.11",
         "concurrently": "^10.0.3",
         "laravel-vite-plugin": "^3.1",

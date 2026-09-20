@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LotesController;
 use App\Http\Controllers\RolesController;
+use App\Http\Controllers\PuntoVentaController;
 use App\Http\Controllers\SucursalesController;
 use App\Http\Controllers\UsuariosController;
 use App\Models\Sucursal;
@@ -48,10 +49,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/sucursales', [SucursalesController::class, 'index'])->name('sucursales.index')->middleware('checarPermisos:ver,sucursales');
     Route::get('/sucursales/create', [SucursalesController::class, 'create'])->name('sucursales.create')->middleware('checarPermisos:crear,sucursales');
     Route::post('/sucursales', [SucursalesController::class, 'store'])->name('sucursales.store')->middleware('checarPermisos:crear,sucursales');
+    Route::get('/sucursales/{sucursal}/edit', [SucursalesController::class, 'edit'])->name('sucursales.edit')->middleware('checarPermisos:editar,sucursales');
+    Route::put('/sucursales/{sucursal}', [SucursalesController::class, 'update'])->name('sucursales.update')->middleware('checarPermisos:editar,sucursales');
 
-    // Módulos del catálogo (modulos.nombre_modulo) aún sin controlador propio.
-    // Se exponen con una vista placeholder para que el sidebar no apunte a "#".
-    Route::view('/punto-venta', 'pages.modulos.placeholder', ['tituloModulo' => 'Punto de venta'])->name('punto-venta.index')->middleware('checarPermisos:ver,punto-venta');
+    Route::get('/punto-venta', [PuntoVentaController::class, 'index'])->name('punto-venta.index')->middleware('checarPermisos:ver,punto-venta');
     Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index')->middleware('checarPermisos:ver,inventario');
     Route::get('/inventario/create', [InventarioController::class, 'create'])->name('inventario.create')->middleware('checarPermisos:crear,inventario');
     Route::post('/inventario', [InventarioController::class, 'store'])->name('inventario.store')->middleware('checarPermisos:crear,inventario');

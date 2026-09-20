@@ -10,8 +10,8 @@
 <?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Inventario'))]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <div id="theme-shell" class="theme-light">
-        <div class="theme-shell-inner">
+    <div class="module-page">
+        <div class="module-page-inner">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Catálogo</p>
@@ -23,8 +23,15 @@
                 </div>
             </div>
 
-            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <div class="compact-stat">
+            <nav class="module-tabs" aria-label="Secciones de inventario">
+                <a href="<?php echo e(route('inventario.index', ['sucursal' => $selectedSucursal?->id])); ?>" class="module-tab module-tab-active">Productos y stock</a>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()?->puedeVerModulo('Lotes y caducidades') ?? false): ?>
+                    <a href="<?php echo e(route('lotes.index', ['sucursal' => $selectedSucursal?->id])); ?>" class="module-tab">Lotes y caducidades</a>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            </nav>
+
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Productos</span>
                         <span class="stat-pill positive"><?php echo e($productos->count()); ?></span>
@@ -33,7 +40,7 @@
                     <p class="mt-1 text-xs theme-subtle">Disponibles en la vista</p>
                 </div>
 
-                <div class="compact-stat">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Stock crítico</span>
                         <span class="stat-pill warning"><?php echo e($stockCritico); ?></span>
@@ -42,7 +49,7 @@
                     <p class="mt-1 text-xs theme-subtle">Productos con stock bajo</p>
                 </div>
 
-                <div class="compact-stat">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Unidades</span>
                         <span class="stat-pill info">Total</span>
@@ -51,7 +58,7 @@
                     <p class="mt-1 text-xs theme-subtle">Existencias actuales</p>
                 </div>
 
-                <div class="compact-stat">
+                <div class="module-stat">
                     <div class="flex items-center justify-between">
                         <span class="theme-subtle text-sm">Valor total</span>
                         <span class="stat-pill positive">MXN</span>
@@ -61,7 +68,7 @@
                 </div>
             </div>
 
-            <div class="theme-card">
+            <div class="module-card p-5 sm:p-6">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="theme-subtle text-xs uppercase tracking-[0.25em]">Sucursal activa</p>
@@ -87,10 +94,10 @@
                     </div>
                 </div>
 
-                <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white/80">
+                <div class="module-table mt-6">
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-600">
+                            <thead class="text-slate-600 dark:text-slate-300">
                                 <tr>
                                     <th class="px-4 py-3 font-semibold">Código</th>
                                     <th class="px-4 py-3 font-semibold">Producto</th>
@@ -102,21 +109,19 @@
                             </thead>
                             <tbody>
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $productos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $producto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <tr class="border-t border-slate-200">
+                                    <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5">
                                         <td class="px-4 py-3 font-medium text-slate-800"><?php echo e($producto->codigo_barras); ?></td>
                                         <td class="px-4 py-3 font-medium text-slate-800"><?php echo e($producto->nombre_producto); ?></td>
                                         <td class="px-4 py-3 text-slate-600"><?php echo e($producto->descripcion ?: 'Sin descripción'); ?></td>
                                         <td class="px-4 py-3 text-slate-700"><?php echo e($producto->stock); ?> uds.</td>
                                         <td class="px-4 py-3 text-slate-700">$<?php echo e(number_format($producto->precio, 2)); ?></td>
                                         <td class="px-4 py-3">
-                                            <?php ($estado = $producto->stock <= 15 ? 'Bajo' : 'Disponible'); ?>
-                                            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold
-                                                <?php if($estado === 'Disponible'): ?> bg-emerald-100 text-emerald-700
-                                                <?php else: ?> bg-amber-100 text-amber-700
-                                                <?php endif; ?>">
-                                                <?php echo e($estado); ?>
-
-                                            </span>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($producto->stock <= 15): ?>
+                                                <span class="inventory-status inventory-status-low">Bajo</span>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($producto->stock > 15): ?>
+                                                <span class="inventory-status inventory-status-available">Disponible</span>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>

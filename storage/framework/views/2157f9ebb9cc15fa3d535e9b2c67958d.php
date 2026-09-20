@@ -72,8 +72,8 @@
 
             <?php ob_start(); ?><nav class="flex flex-col overflow-visible min-h-auto erp-nav" data-flux-sidebar-nav>
     <?php ob_start(); ?>
-                <?php ($modulosVisibles = auth()->user()?->modulosVisibles() ?? []); ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Dashboard', $modulosVisibles, true)): ?>
+                <?php ($usuarioActual = auth()->user()); ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Dashboard') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
@@ -89,7 +89,7 @@
 <?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
 <?php $__blaze->popData(); ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Punto de venta', $modulosVisibles, true)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Punto de venta') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
@@ -105,7 +105,7 @@
 <?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
 <?php $__blaze->popData(); ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Inventario', $modulosVisibles, true)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Inventario') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
@@ -121,27 +121,11 @@
 <?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
 <?php $__blaze->popData(); ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Lotes y caducidades', $modulosVisibles, true)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Entradas de almacén') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
-<?php $__attrs43f35a791afbb95033543b6416b62d96 = ['icon' => 'clock','href' => route('lotes.index'),'current' => request()->routeIs('lotes.*'),'wire:navigate' => true]; ?>
-<?php $__slots43f35a791afbb95033543b6416b62d96 = []; ?>
-<?php $__blaze->pushData($__attrs43f35a791afbb95033543b6416b62d96); ?>
-<?php ob_start(); ?>
-                    Lotes y caducidades
-                <?php $__slots43f35a791afbb95033543b6416b62d96['slot'] = new \Illuminate\View\ComponentSlot(trim(ob_get_clean()), []); ?>
-<?php $__blaze->pushSlots($__slots43f35a791afbb95033543b6416b62d96); ?>
-<?php _43f35a791afbb95033543b6416b62d96($__blaze, $__attrs43f35a791afbb95033543b6416b62d96, $__slots43f35a791afbb95033543b6416b62d96, ['href', 'current', 'wire:navigate'], [], $__this ?? (isset($this) ? $this : null)); ?>
-<?php if (! empty($__slotsStack43f35a791afbb95033543b6416b62d96)) { $__slots43f35a791afbb95033543b6416b62d96 = array_pop($__slotsStack43f35a791afbb95033543b6416b62d96); } ?>
-<?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
-<?php $__blaze->popData(); ?>
-                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Entradas de almacén', $modulosVisibles, true)): ?>
-                <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
-<?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
-<?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
-<?php $__attrs43f35a791afbb95033543b6416b62d96 = ['icon' => 'inbox-arrow-down','href' => route('entradas.index'),'current' => request()->routeIs('entradas.*'),'wire:navigate' => true]; ?>
+<?php $__attrs43f35a791afbb95033543b6416b62d96 = ['icon' => 'inbox-arrow-down','href' => route('entradas-de-almacen.index'),'current' => request()->routeIs('entradas-de-almacen.*'),'wire:navigate' => true]; ?>
 <?php $__slots43f35a791afbb95033543b6416b62d96 = []; ?>
 <?php $__blaze->pushData($__attrs43f35a791afbb95033543b6416b62d96); ?>
 <?php ob_start(); ?>
@@ -153,7 +137,7 @@
 <?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
 <?php $__blaze->popData(); ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Traspasos', $modulosVisibles, true)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Traspasos') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
@@ -169,7 +153,7 @@
 <?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
 <?php $__blaze->popData(); ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Sucursales', $modulosVisibles, true)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Sucursales') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
@@ -185,7 +169,7 @@
 <?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
 <?php $__blaze->popData(); ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Usuarios y roles', $modulosVisibles, true)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Usuarios y roles') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
@@ -201,7 +185,7 @@
 <?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
 <?php $__blaze->popData(); ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Caja', $modulosVisibles, true)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Caja') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
@@ -217,7 +201,7 @@
 <?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
 <?php $__blaze->popData(); ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Reportes', $modulosVisibles, true)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Reportes') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>
@@ -233,7 +217,7 @@
 <?php if (! empty($__attrsStack43f35a791afbb95033543b6416b62d96)) { $__attrs43f35a791afbb95033543b6416b62d96 = array_pop($__attrsStack43f35a791afbb95033543b6416b62d96); } ?>
 <?php $__blaze->popData(); ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array('Alertas', $modulosVisibles, true)): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($usuarioActual?->puedeVerModulo('Alertas') ?? false): ?>
                 <?php if (!function_exists('_43f35a791afbb95033543b6416b62d96')) { $__blaze->compile('C:\Users\Spirit of Fire\Documents\Reportes_servicio\residencias\proyecto\programacion\Farmacias-Multi-Sucursal\vendor\livewire\flux\src/../stubs/resources/views/flux/sidebar/item.blade.php', $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'); require $__blaze->compiledPath.'/43f35a791afbb95033543b6416b62d96.php'; } ?>
 <?php if (isset($__slots43f35a791afbb95033543b6416b62d96)) { $__slotsStack43f35a791afbb95033543b6416b62d96[] = $__slots43f35a791afbb95033543b6416b62d96; } ?>
 <?php if (isset($__attrs43f35a791afbb95033543b6416b62d96)) { $__attrsStack43f35a791afbb95033543b6416b62d96[] = $__attrs43f35a791afbb95033543b6416b62d96; } ?>

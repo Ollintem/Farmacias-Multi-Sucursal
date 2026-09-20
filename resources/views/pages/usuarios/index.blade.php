@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Usuarios')">
-    <div id="theme-shell" class="theme-light">
-        <div class="theme-shell-inner">
+    <div class="module-page">
+        <div class="module-page-inner">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Personal</p>
@@ -25,10 +25,10 @@
                 </div>
             @endif
 
-            <div class="theme-table">
+            <div class="module-table">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200 text-left">
-                        <thead class="bg-emerald-50/80">
+                        <thead>
                             <tr>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Nombre</th>
                                 <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Usuario</th>
@@ -41,7 +41,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             @forelse($usuarios as $usuario)
-                                <tr class="bg-transparent hover:bg-emerald-50/50">
+                                <tr class="bg-transparent transition hover:bg-emerald-50/60 dark:hover:bg-emerald-500/5">
                                     <td class="px-4 py-4 text-sm">{{ $usuario->nombre }} {{ $usuario->apellido }}</td>
                                     <td class="px-4 py-4 text-sm">{{ $usuario->nombre_usuario }}</td>
                                     <td class="px-4 py-4 text-sm">{{ $usuario->email }}</td>

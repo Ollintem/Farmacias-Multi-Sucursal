@@ -14,6 +14,12 @@ use Illuminate\View\View;
 
 class LotesController extends Controller
 {
+    /**
+     * Muestra lotes asociados a productos de la sucursal seleccionada.
+     *
+     * Entrada: query string `sucursal` y `buscar`.
+     * Salida: resources/views/pages/lotes/index.blade.php con estados de caducidad.
+     */
     public function index(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
@@ -96,6 +102,12 @@ class LotesController extends Controller
         ));
     }
 
+    /**
+     * Carga los catálogos para registrar un lote y su primer producto.
+     *
+     * Entrada: query string opcional `sucursal`.
+     * Salida: resources/views/pages/lotes/create.blade.php.
+     */
     public function create(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
@@ -106,6 +118,12 @@ class LotesController extends Controller
         return view('pages.lotes.create', compact('sucursales', 'proveedores', 'presentaciones', 'selectedSucursalId'));
     }
 
+    /**
+     * Valida y crea el lote, el producto inicial y su vínculo con la sucursal.
+     *
+     * Entrada: datos del formulario de alta de lote.
+     * Salida: redirección a lotes.index con mensaje de resultado.
+     */
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([

@@ -1,3 +1,5 @@
+import './barcode-scanner';
+
 /**
  * Tema global de FarmaERP.
  *
