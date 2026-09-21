@@ -15,16 +15,12 @@ use Illuminate\View\View;
 
 class UsuariosController extends Controller
 {
-<<<<<<< HEAD
     /**
      * Lista usuarios con su rol y sucursal precargados.
      *
      * Salida: resources/views/pages/usuarios/index.blade.php.
      */
-    public function index(): View
-=======
     public function index(Request $request): View
->>>>>>> 433ab4d (feat: update pharmacy modules and POS)
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
