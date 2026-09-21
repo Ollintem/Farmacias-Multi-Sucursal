@@ -13,30 +13,29 @@
                 </div>
             </div>
 
+
+
+            @php
+                $sucursalId = session('active_sucursal_id') ?? auth()->user()?->id_sucursal;
+                $selectedSucursal = $sucursalId ? \App\Models\Sucursal::find($sucursalId) : null;
+            @endphp
+
             <div class="module-hero">
+
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="theme-subtle text-xs uppercase tracking-[0.25em]">Sucursal activa</p>
-                        <h2 class="mt-2 text-2xl font-bold">Centro Histórico</h2>
+                        <h2 class="mt-2 text-2xl font-bold">{{ $selectedSucursal?->nombre_sucursal ?? 'Centro Histórico' }}</h2>
                     </div>
 
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <label class="flex items-center gap-2 text-sm font-medium">
-                            <span class="theme-subtle">Ver:</span>
-                            <select id="branch-select" class="branch-select" aria-label="Seleccionar sucursal">
-                                @foreach($sucursales as $sucursal)
-                                    <option value="{{ $sucursal->id }}" data-name="{{ $sucursal->nombre_sucursal }}" {{ $loop->first ? 'selected' : '' }}>
-                                        {{ $sucursal->nombre_sucursal }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </label>
                         <a href="{{ route('sucursales.create') }}" class="theme-button theme-button-secondary whitespace-nowrap">+ Agregar sucursal</a>
                     </div>
                 </div>
-
+                
                 <div class="mt-5 grid gap-3 md:grid-cols-3">
-                        <div class="module-stat">
+                    <div class="module-stat">
+
                         <div class="flex items-center justify-between">
                             <span class="theme-subtle text-sm">Ventas</span>
                             <span class="stat-pill positive">+12%</span>
@@ -135,20 +134,5 @@
                 </div>
             </div>
         </div>
-
-        <script>
-            (() => {
-                const branchSelect = document.getElementById('branch-select');
-                const title = document.querySelector('.theme-card h2');
-
-                const updateBranchStats = (value) => {
-                    const option = [...(branchSelect?.options || [])].find((item) => item.value === value);
-                    if (title) title.textContent = option?.dataset.name || 'Sucursal activa';
-                };
-
-                branchSelect?.addEventListener('change', (event) => updateBranchStats(event.target.value));
-                updateBranchStats(branchSelect?.value || '');
-            })();
-        </script>
     </div>
 </x-layouts::app>

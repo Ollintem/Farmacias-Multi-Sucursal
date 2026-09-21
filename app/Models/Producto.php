@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToSucursal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Producto extends Model
 {
+    use BelongsToSucursal;
+
     protected $table = 'productos';
 
     protected $fillable = [
@@ -30,6 +33,11 @@ class Producto extends Model
     public function lote(): BelongsTo
     {
         return $this->belongsTo(Lote::class, 'id_lote');
+    }
+
+    public function presentacion(): BelongsTo
+    {
+        return $this->belongsTo(PresentacionProducto::class, 'id_presentacion');
     }
 
     public function sucursales(): BelongsToMany

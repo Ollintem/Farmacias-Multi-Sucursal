@@ -8,14 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int $id
+ * @property int $id_permiso
  * @property int $id_modulo
  * @property int $id_usuario
- * @property bool $puede_ver
- * @property bool $puede_crear
- * @property bool $puede_editar
- * @property bool $puede_borrar
+ * @property bool $es_activo
  */
-#[Fillable(['id_modulo', 'id_usuario', 'puede_ver', 'puede_crear', 'puede_editar', 'puede_borrar'])]
+#[Fillable(['id_permiso', 'id_modulo', 'id_usuario', 'es_activo'])]
 class PermisoActivado extends Model
 {
     /**
@@ -31,10 +29,7 @@ class PermisoActivado extends Model
     protected function casts(): array
     {
         return [
-            'puede_ver' => 'boolean',
-            'puede_crear' => 'boolean',
-            'puede_editar' => 'boolean',
-            'puede_borrar' => 'boolean',
+            'es_activo' => 'boolean',
         ];
     }
 
@@ -52,5 +47,13 @@ class PermisoActivado extends Model
     public function modulo(): BelongsTo
     {
         return $this->belongsTo(Modulo::class, 'id_modulo');
+    }
+
+    /**
+     * @return BelongsTo<Permiso, $this>
+     */
+    public function permiso(): BelongsTo
+    {
+        return $this->belongsTo(Permiso::class, 'id_permiso');
     }
 }

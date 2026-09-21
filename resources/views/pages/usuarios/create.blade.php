@@ -72,7 +72,7 @@
                         <select name="id_sucursal" class="theme-input">
                             <option value="">Selecciona una sucursal</option>
                             @foreach($sucursales as $sucursal)
-                                <option value="{{ $sucursal->id }}" {{ old('id_sucursal') == $sucursal->id ? 'selected' : '' }}>
+                                <option value="{{ $sucursal->id }}" {{ (old('id_sucursal', $selectedSucursalId ?? '')) == $sucursal->id ? 'selected' : '' }}>
                                     {{ $sucursal->nombre_sucursal }}
                                 </option>
                             @endforeach

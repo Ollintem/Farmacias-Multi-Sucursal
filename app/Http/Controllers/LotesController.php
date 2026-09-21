@@ -23,7 +23,7 @@ class LotesController extends Controller
     public function index(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
-        $selectedSucursalId = $request->query('sucursal') ?? $sucursales->first()?->id;
+        $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
         $selectedSucursal = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
         $busqueda = trim((string) $request->query('buscar', ''));
 
@@ -113,7 +113,7 @@ class LotesController extends Controller
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $proveedores = Proveedor::orderBy('nombre_proveedor')->get();
         $presentaciones = PresentacionProducto::orderBy('presentacion')->get();
-        $selectedSucursalId = $request->query('sucursal') ?? $sucursales->first()?->id;
+        $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
 
         return view('pages.lotes.create', compact('sucursales', 'proveedores', 'presentaciones', 'selectedSucursalId'));
     }
@@ -159,8 +159,6 @@ class LotesController extends Controller
             'es_controlado' => $request->boolean('es_controlado', false),
             'es_activo' => true,
         ]);
-
-        $producto->sucursales()->syncWithoutDetaching([$data['sucursal']]);
 
         return redirect()->route('lotes.index', ['sucursal' => $data['sucursal']])
             ->with('success', 'Lote registrado correctamente.');

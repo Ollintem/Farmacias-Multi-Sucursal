@@ -1053,3 +1053,12 @@ select:required:invalid:focus {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}

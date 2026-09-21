@@ -65,17 +65,6 @@
                     </div>
 
                     <form method="GET" action="{{ route('lotes.index') }}" class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <label class="flex items-center gap-2 text-sm font-medium">
-                            <span class="theme-subtle">Sucursal:</span>
-                            <select name="sucursal" class="branch-select" aria-label="Seleccionar sucursal" onchange="this.form.submit()">
-                                @foreach($sucursales as $sucursal)
-                                    <option value="{{ $sucursal->id }}" {{ $selectedSucursal && $selectedSucursal->id === $sucursal->id ? 'selected' : '' }}>
-                                        {{ $sucursal->nombre_sucursal }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </label>
-
                         <input type="search" name="buscar" value="{{ old('buscar', $busqueda) }}" placeholder="Buscar folio, proveedor o producto" class="theme-input w-full sm:w-72" aria-label="Buscar lote">
                         <button type="submit" class="theme-button theme-button-secondary whitespace-nowrap">Buscar</button>
                     </form>

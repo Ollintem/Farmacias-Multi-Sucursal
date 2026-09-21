@@ -22,18 +22,14 @@ class InventarioController extends Controller
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
 
-        $selectedSucursalId = $request->query('sucursal') ?? $sucursales->first()?->id;
+        $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
         $selectedSucursal = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
 
         $busqueda = trim((string) $request->query('buscar', ''));
 
         $productos = Producto::query()
             ->with('sucursales')
-            ->when($selectedSucursal, function ($query, $sucursal) {
-                $query->whereHas('sucursales', function ($subQuery) use ($sucursal) {
-                    $subQuery->where('sucursales.id', $sucursal->id);
-                });
-            })
+            ->activeSucursal()
             ->when($busqueda !== '', function ($query, $busqueda) {
                 $query->where(function ($subQuery) use ($busqueda) {
                     $subQuery->where('codigo_barras', 'like', "%{$busqueda}%")
@@ -68,7 +64,7 @@ class InventarioController extends Controller
     public function create(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
-        $selectedSucursalId = $request->query('sucursal') ?? $sucursales->first()?->id;
+        $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
         $presentaciones = PresentacionProducto::orderBy('presentacion')->get();
         $lotes = Lote::with('proveedor')->orderBy('folio')->get();
 
@@ -101,13 +97,16 @@ class InventarioController extends Controller
             'descripcion' => $data['descripcion'] ?? '',
             'stock' => $data['stock'],
             'precio' => $data['precio'],
+
             'id_lote' => $data['id_lote'],
             'id_presentacion' => $data['id_presentacion'],
+
+            'id_lote' => $data['id_lote'] ?? null,
+            'id_presentacion' => $data['id_presentacion'] ?? null,
+
             'es_controlado' => $request->boolean('es_controlado', false),
             'es_activo' => true,
         ]);
-
-        $producto->sucursales()->syncWithoutDetaching([$data['sucursal']]);
 
         return redirect()->route('inventario.index', ['sucursal' => $data['sucursal']])
             ->with('success', 'Producto agregado correctamente al inventario.');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Modulo;
+use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -14,18 +15,33 @@ use Illuminate\View\View;
 
 class UsuariosController extends Controller
 {
+<<<<<<< HEAD
     /**
      * Lista usuarios con su rol y sucursal precargados.
      *
      * Salida: resources/views/pages/usuarios/index.blade.php.
      */
     public function index(): View
+=======
+    public function index(Request $request): View
+>>>>>>> 433ab4d (feat: update pharmacy modules and POS)
     {
-        $usuarios = User::with(['rol', 'sucursal'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
+        $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
+        $selectedSucursal = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
 
-        return view('pages.usuarios.index', compact('usuarios'));
+        $query = User::with(['rol', 'sucursal']);
+
+        // SuperAdmin ve todos los usuarios; otros ven solo su sucursal
+        if (auth()->user()->rol?->tipo_rol !== 'SuperAdmin') {
+            $query->where('id_sucursal', $selectedSucursalId);
+        } elseif ($selectedSucursal) {
+            $query->where('id_sucursal', $selectedSucursalId);
+        }
+
+        $usuarios = $query->orderBy('created_at', 'desc')->get();
+
+        return view('pages.usuarios.index', compact('usuarios', 'sucursales', 'selectedSucursal'));
     }
 
     /**
@@ -40,7 +56,10 @@ class UsuariosController extends Controller
             ->get();
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
 
-        return view('pages.usuarios.create', compact('roles', 'sucursales'));
+        // Pre-seleccionar la sucursal activa
+        $selectedSucursalId = session('active_sucursal_id') ?? auth()->user()?->id_sucursal;
+
+        return view('pages.usuarios.create', compact('roles', 'sucursales', 'selectedSucursalId'));
     }
 
     /**
@@ -69,6 +88,11 @@ class UsuariosController extends Controller
             'password.confirmed' => 'Las contraseñas no coinciden. Escríbelas nuevamente.',
             'password_confirmation.required' => 'Confirma la contraseña escribiéndola nuevamente.',
         ]);
+
+        // Si no se especifica sucursal, usar la activa
+        if (empty($data['id_sucursal'])) {
+            $data['id_sucursal'] = session('active_sucursal_id') ?? auth()->user()?->id_sucursal;
+        }
 
         $usuario = User::create([
             ...$data,
@@ -127,35 +151,45 @@ class UsuariosController extends Controller
             ->get();
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $modulos = Modulo::orderBy('id')->get();
-        $filas = PermisoActivado::where('id_usuario', $usuario->id)
-            ->get()
-            ->keyBy('id_modulo');
 
-        $etiquetas = [
-            'puede_ver' => 'Ver',
-            'puede_crear' => 'Crear',
-            'puede_editar' => 'Editar',
-            'puede_borrar' => 'Borrar',
-        ];
+        // Cargar permisos activados con relación a Permiso
+        $filas = PermisoActivado::where('id_usuario', $usuario->id)
+            ->where('es_activo', true)
+            ->with('permiso')
+            ->get()
+            ->groupBy('id_modulo');
 
         $permisosActivos = [];
         $permisosAgrupados = [];
 
         foreach ($modulos as $modulo) {
-            $fila = $filas->get($modulo->id);
+            $permisosModulo = $filas->get($modulo->id, collect());
+
+            $tieneVer = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Mostrar');
+            $tieneCrear = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Crear');
+            $tieneEditar = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Editar');
+            $tieneBorrar = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Borrar');
+            $tieneTodos = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Todos');
 
             $permisosActivos[$modulo->id] = [
-                'ver' => (bool) ($fila?->puede_ver ?? false),
-                'crear' => (bool) ($fila?->puede_crear ?? false),
-                'editar' => (bool) ($fila?->puede_editar ?? false),
-                'borrar' => (bool) ($fila?->puede_borrar ?? false),
+                'ver' => $tieneVer || $tieneTodos,
+                'crear' => $tieneCrear || $tieneTodos,
+                'editar' => $tieneEditar || $tieneTodos,
+                'borrar' => $tieneBorrar || $tieneTodos,
             ];
 
             $activos = [];
-            foreach ($etiquetas as $columna => $etiqueta) {
-                if ($fila && (bool) $fila->{$columna}) {
-                    $activos[] = $etiqueta;
-                }
+            if ($tieneVer || $tieneTodos) {
+                $activos[] = 'Ver';
+            }
+            if ($tieneCrear || $tieneTodos) {
+                $activos[] = 'Crear';
+            }
+            if ($tieneEditar || $tieneTodos) {
+                $activos[] = 'Editar';
+            }
+            if ($tieneBorrar || $tieneTodos) {
+                $activos[] = 'Borrar';
             }
 
             if ($activos !== []) {
@@ -210,23 +244,53 @@ class UsuariosController extends Controller
         $modulos = Modulo::orderBy('id')->get();
         $permisosInput = $request->input('permisos', []);
 
+        // Obtener IDs de permisos por tipo
+        $permisosIds = Permiso::whereIn('tipo_permiso', ['Mostrar', 'Crear', 'Editar', 'Borrar'])
+            ->pluck('id', 'tipo_permiso');
+
         foreach ($modulos as $modulo) {
             $flagsModulo = is_array($permisosInput[$modulo->id] ?? null)
                 ? $permisosInput[$modulo->id]
                 : [];
 
-            PermisoActivado::updateOrCreate(
-                [
+            // Primero borrar permisos existentes para este usuario/módulo
+            PermisoActivado::where('id_usuario', $usuario->id)
+                ->where('id_modulo', $modulo->id)
+                ->delete();
+
+            // Crear nuevos permisos según flags
+            if (! empty($flagsModulo['ver'])) {
+                PermisoActivado::create([
                     'id_usuario' => $usuario->id,
                     'id_modulo' => $modulo->id,
-                ],
-                [
-                    'puede_ver' => ! empty($flagsModulo['ver']),
-                    'puede_crear' => ! empty($flagsModulo['crear']),
-                    'puede_editar' => ! empty($flagsModulo['editar']),
-                    'puede_borrar' => ! empty($flagsModulo['borrar']),
-                ],
-            );
+                    'id_permiso' => $permisosIds['Mostrar'],
+                    'es_activo' => true,
+                ]);
+            }
+            if (! empty($flagsModulo['crear'])) {
+                PermisoActivado::create([
+                    'id_usuario' => $usuario->id,
+                    'id_modulo' => $modulo->id,
+                    'id_permiso' => $permisosIds['Crear'],
+                    'es_activo' => true,
+                ]);
+            }
+            if (! empty($flagsModulo['editar'])) {
+                PermisoActivado::create([
+                    'id_usuario' => $usuario->id,
+                    'id_modulo' => $modulo->id,
+                    'id_permiso' => $permisosIds['Editar'],
+                    'es_activo' => true,
+                ]);
+            }
+            if (! empty($flagsModulo['borrar'])) {
+                PermisoActivado::create([
+                    'id_usuario' => $usuario->id,
+                    'id_modulo' => $modulo->id,
+                    'id_permiso' => $permisosIds['Borrar'],
+                    'es_activo' => true,
+                ]);
+            }
         }
 
         return redirect()->route('usuarios.edit', $usuario)->with('success', 'Usuario actualizado correctamente.');

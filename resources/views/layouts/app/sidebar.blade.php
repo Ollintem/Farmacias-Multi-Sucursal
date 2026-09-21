@@ -3,7 +3,7 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-[#eef3f8] dark:bg-zinc-950">
+    <body class="min-h-screen bg-[#eef3f8] dark:bg-zinc-950" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
         <flux:sidebar sticky collapsible="mobile" class="erp-sidebar border-e border-[#202b43] bg-[#0f172a] text-[#a9b8d3]">
             <flux:sidebar.header>
                 <flux:sidebar.brand name="FarmaERP" href="{{ route('dashboard') }}" wire:navigate>
@@ -72,14 +72,76 @@
 
             <div class="erp-sidebar-version px-3 pb-2 text-xs">v2.4.1 - Julio 2026</div>
 
+            {{-- Selector de Sucursal Global (mismo estilo que usuario) --}}
+            <flux:dropdown position="bottom" align="start" class="erp-user-menu">
+                <flux:sidebar.profile
+                    :name="\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))?->nombre_sucursal ?? 'Seleccionar sucursal'"
+                    :initials="\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))?->nombre_sucursal ? \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))->nombre_sucursal, 0, 1)) : 'S'"
+                    icon:trailing="chevrons-up-down"
+                />
+
+                <flux:menu class="w-56">
+                    @foreach(\App\Models\Sucursal::orderBy('nombre_sucursal')->get() as $sucursal)
+                        <a
+                            href="{{ request()->fullUrlWithQuery(array_merge(request()->query(), ['sucursal' => $sucursal->id])) }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-[#a9b8d3] hover:bg-[#1e293b] rounded-lg transition
+                                {{ (session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id ? 'bg-[#0c9f9c]/20 text-[#0c9f9c] font-medium' : '' }}"
+                            wire:navigate
+                        >
+                            <span class="w-5 h-5 flex items-center justify-center rounded bg-[#0c9f9c]/20 text-[#0c9f9c] text-xs font-bold">
+                                {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($sucursal->nombre_sucursal, 0, 1)) }}
+                            </span>
+                            <span class="truncate">{{ $sucursal->nombre_sucursal }}</span>
+                            @if((session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id)
+                                <svg class="ml-auto w-4 h-4 text-[#0c9f9c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            @endif
+                        </a>
+                    @endforeach
+                </flux:menu>
+            </flux:dropdown>
+
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
-        <flux:header class="lg:hidden">
+        <flux:header class="lg:hidden" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
             <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
             <flux:spacer />
+
+            {{-- Selector Sucursal Mobile (mismo estilo) --}}
+            <flux:dropdown position="bottom" align="start" class="mr-2 erp-user-menu">
+                <flux:sidebar.profile
+                    :name="\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))?->nombre_sucursal ?? 'Seleccionar sucursal'"
+                    :initials="\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))?->nombre_sucursal ? \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))->nombre_sucursal, 0, 1)) : 'S'"
+                    icon:trailing="chevrons-up-down"
+                />
+
+                <flux:menu class="w-48">
+                    @foreach(\App\Models\Sucursal::orderBy('nombre_sucursal')->get() as $sucursal)
+                        <a
+                            href="{{ request()->fullUrlWithQuery(array_merge(request()->query(), ['sucursal' => $sucursal->id])) }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-[#a9b8d3] hover:bg-[#1e293b] rounded-lg transition
+                                {{ (session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id ? 'bg-[#0c9f9c]/20 text-[#0c9f9c] font-medium' : '' }}"
+                            wire:navigate
+                        >
+                            <span class="w-5 h-5 flex items-center justify-center rounded bg-[#0c9f9c]/20 text-[#0c9f9c] text-xs font-bold">
+                                {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($sucursal->nombre_sucursal, 0, 1)) }}
+                            </span>
+                            <span class="truncate">{{ $sucursal->nombre_sucursal }}</span>
+                            @if((session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id)
+                                <svg class="ml-auto w-4 h-4 text-[#0c9f9c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            @endif
+                        </a>
+                    @endforeach
+                </flux:menu>
+            </flux:dropdown>
+
+            {{-- Fecha Mobile --}}
+            <span
+                x-text="currentDate"
+                class="hidden sm:inline-block text-xs font-medium text-[#6b7280] font-mono mr-3"
+            ></span>
 
             <flux:dropdown position="top" align="end">
                 <flux:profile
@@ -98,7 +160,7 @@
 
                                 <div class="grid flex-1 text-start text-sm leading-tight">
                                     <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
-                                    <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
+                                    <flux:text class="truncate text-zinc-500 dark:text-zinc-400">{{ auth()->user()->rol?->tipo_rol ?? 'Sin rol asignado' }}</flux:text>
                                 </div>
                             </div>
                         </div>
@@ -129,6 +191,17 @@
                 </flux:menu>
             </flux:dropdown>
         </flux:header>
+
+        <script>
+            function updateDate() {
+                const now = new Date();
+                const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+                const dateStr = now.toLocaleDateString('es-ES', options);
+                const parts = dateStr.split(' ');
+                const formatted = `${parts[0]}, ${parts[1]} de ${parts[2]} de ${parts[3]}`;
+                document.querySelector('[x-text="currentDate"]')?.textContent = formatted;
+            }
+        </script>
 
         {{ $slot }}
 

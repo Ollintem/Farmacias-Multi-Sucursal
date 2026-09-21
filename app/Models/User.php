@@ -126,7 +126,8 @@ class User extends Authenticatable
         }
 
         $modulosVisibles = $this->permisosActivados()
-            ->where('puede_ver', true)
+            ->whereHas('permiso', fn ($q) => $q->where('tipo_permiso', 'Mostrar'))
+            ->where('es_activo', true)
             ->with('modulo:id,nombre_modulo')
             ->get()
             ->pluck('modulo.nombre_modulo')
@@ -162,12 +163,12 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     private const MAPA_PERMISOS = [
-        'ver' => 'puede_ver',
-        'mostrar' => 'puede_ver',
-        'crear' => 'puede_crear',
-        'editar' => 'puede_editar',
-        'eliminar' => 'puede_borrar',
-        'borrar' => 'puede_borrar',
+        'ver' => 'Mostrar',
+        'mostrar' => 'Mostrar',
+        'crear' => 'Crear',
+        'editar' => 'Editar',
+        'eliminar' => 'Borrar',
+        'borrar' => 'Borrar',
     ];
 
     /**
@@ -200,16 +201,28 @@ class User extends Authenticatable
             return true;
         }
 
-        $columna = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
+        $tipoPermiso = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
         $nombreModulo = self::MAPA_MODULOS[strtolower($modulo)] ?? $modulo;
 
-        if (! in_array($columna, ['puede_ver', 'puede_crear', 'puede_editar', 'puede_borrar'], true)) {
+        if (! in_array($tipoPermiso, ['Mostrar', 'Crear', 'Editar', 'Borrar', 'Todos'], true)) {
             return false;
         }
 
+        // Si tiene permiso "Todos" en ese módulo, acceso total
+        $tieneTodos = $this->permisosActivados()
+            ->whereHas('permiso', fn ($q) => $q->where('tipo_permiso', 'Todos'))
+            ->where('es_activo', true)
+            ->whereHas('modulo', fn ($q) => $q->where('nombre_modulo', $nombreModulo))
+            ->exists();
+
+        if ($tieneTodos) {
+            return true;
+        }
+
         return $this->permisosActivados()
-            ->where($columna, true)
-            ->whereHas('modulo', fn ($query) => $query->where('nombre_modulo', $nombreModulo))
+            ->whereHas('permiso', fn ($q) => $q->where('tipo_permiso', $tipoPermiso))
+            ->where('es_activo', true)
+            ->whereHas('modulo', fn ($q) => $q->where('nombre_modulo', $nombreModulo))
             ->exists();
     }
 }
