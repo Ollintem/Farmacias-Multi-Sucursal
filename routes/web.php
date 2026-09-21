@@ -29,7 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Modulo de usuarios y roles
     Este modulo es el encargado de crear, editar, inhablitar usuarios y roles
     */
-    Route::get('/usuarios', [UsuariosController::class, 'index'])->name('usuarios.index')->middleware('checarPermisos:ver,usuarios')->middleware('checarPermisos:ver,usuarios');
+    Route::get('/usuarios', [UsuariosController::class, 'index'])->name('usuarios.index')->middleware('checarPermisos:ver,usuarios');
     Route::get('/usuarios/create', [UsuariosController::class, 'create'])->name('usuarios.create')->middleware('checarPermisos:crear,usuarios')->middleware('checarPermisos:crear,usuarios');
     Route::post('/usuarios', [UsuariosController::class, 'store'])->name('usuarios.store')->middleware('checarPermisos:crear,usuarios')->middleware('checarPermisos:crear,usuarios');
     Route::get('/usuarios/{usuario}/permisos', [UsuariosController::class, 'permisos'])->name('usuarios.permisos')->middleware('checarPermisos:ver,usuarios');

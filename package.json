@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite dev"
+        "dev": "vite"
     },
     "dependencies": {
         "@zxing/browser": "^0.1.5",
