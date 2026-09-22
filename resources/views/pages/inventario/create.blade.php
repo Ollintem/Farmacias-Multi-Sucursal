@@ -1,5 +1,5 @@
 <x-layouts::app :title="__('Nuevo producto')">
-    <div id="theme-shell" class="theme-light">
+    <div id="theme-shell">
         <div class="theme-shell-inner">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -111,7 +111,7 @@
 
                     <div class="md:col-span-2">
                         <label class="inline-flex items-center gap-3 text-sm font-medium">
-                            <input type="checkbox" name="es_controlado" value="1" {{ old('es_controlado', false) ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500">
+                            <input type="checkbox" name="es_controlado" value="1" {{ old('es_controlado', false) ? 'checked' : '' }}>
                             Producto controlado
                         </label>
                     </div>

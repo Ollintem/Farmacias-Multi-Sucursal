@@ -32,16 +32,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/usuarios', [UsuariosController::class, 'index'])->name('usuarios.index')->middleware('checarPermisos:ver,usuarios')->middleware('checarPermisos:ver,usuarios');
     Route::get('/usuarios/create', [UsuariosController::class, 'create'])->name('usuarios.create')->middleware('checarPermisos:crear,usuarios')->middleware('checarPermisos:crear,usuarios');
     Route::post('/usuarios', [UsuariosController::class, 'store'])->name('usuarios.store')->middleware('checarPermisos:crear,usuarios')->middleware('checarPermisos:crear,usuarios');
-    Route::get('/usuarios/{usuario}', [UsuariosController::class, 'show'])->name('usuarios.show')->middleware('checarPermisos:ver,usuarios')->middleware('checarPermisos:ver,usuarios');
-    Route::get('/usuarios/{usuario}/edit', [UsuariosController::class, 'edit'])->name('usuarios.edit')->middleware('checarPermisos:editar,usuarios')->middleware('checarPermisos:editar,usuarios');
+    Route::get('/usuarios/{usuario}/permisos', [UsuariosController::class, 'permisos'])->name('usuarios.permisos')->middleware('checarPermisos:ver,usuarios');
+    Route::put('/usuarios/{usuario}/permisos', [UsuariosController::class, 'updatePermisos'])->name('usuarios.updatePermisos')->middleware('checarPermisos:editar,usuarios');
+    Route::get('/usuarios/{usuario}/edit', [UsuariosController::class, 'edit'])->name('usuarios.edit')->middleware('checarPermisos:editar,usuarios');
     Route::put('/usuarios/{usuario}', [UsuariosController::class, 'update'])->name('usuarios.update')->middleware('checarPermisos:editar,usuarios')->middleware('checarPermisos:editar,usuarios');
     Route::delete('/usuarios/{usuario}', [UsuariosController::class, 'delete'])->name('usuarios.delete')->middleware('checarPermisos:eliminar,usuarios')->middleware('checarPermisos:eliminar,usuarios');
     // Roles
-    Route::get('/roles', [RolesController::class, 'index'])->name('roles.index');
-    Route::get('/roles/create', [RolesController::class, 'create'])->name('roles.create');
     Route::post('/roles', [RolesController::class, 'store'])->name('roles.store');
-    Route::get('/roles/{rol}', [RolesController::class, 'show'])->name('roles.show');
-    Route::get('/roles/{rol}/edit', [RolesController::class, 'edit'])->name('roles.edit');
     Route::put('/roles/{rol}', [RolesController::class, 'update'])->name('roles.update');
     Route::delete('/roles/{rol}', [RolesController::class, 'destroy'])->name('roles.destroy');
 
@@ -51,7 +48,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/sucursales', [SucursalesController::class, 'store'])->name('sucursales.store')->middleware('checarPermisos:crear,sucursales');
     Route::get('/sucursales/{sucursal}/edit', [SucursalesController::class, 'edit'])->name('sucursales.edit')->middleware('checarPermisos:editar,sucursales');
     Route::put('/sucursales/{sucursal}', [SucursalesController::class, 'update'])->name('sucursales.update')->middleware('checarPermisos:editar,sucursales');
-
 
     // Punto de Venta
     Route::get('/punto-venta', PuntoDeVenta::class)

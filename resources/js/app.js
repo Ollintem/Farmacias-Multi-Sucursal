@@ -3,41 +3,29 @@ import './barcode-scanner';
 /**
  * Tema global de FarmaERP.
  *
- * Aplica en todas las vistas con #theme-shell el modo elegido en
- * Ajustes > Apariencia (claro / oscuro / sistema). Ese es el único
- * control del tema; las vistas no tienen interruptores propios.
+ * Alterna la clase "dark" en <html> (para las variantes dark: de Tailwind)
+ * y las clases theme-dark / theme-light en <html> (para los estilos CSS
+ * del body). La preferencia se guarda en localStorage bajo
+ * "farmacia-theme-modo" (claro | oscuro | sistema).
  */
 (() => {
-    const shell = document.getElementById('theme-shell');
-
-    if (! shell) {
-        return;
-    }
-
     const media = window.matchMedia('(prefers-color-scheme: dark)');
 
-    const modoGuardado = () => localStorage.getItem('farmacia-theme-modo')
-        || (localStorage.getItem('farmacia-theme') === 'dark' ? 'oscuro' : 'claro');
+    const modoGuardado = () => localStorage.getItem('farmacia-theme-modo') || 'claro';
 
-    const esOscuro = () => {
-        const modo = modoGuardado();
-
-        if (modo === 'oscuro') {
-            return true;
-        }
-
-        if (modo === 'claro') {
-            return false;
-        }
-
+    const esOscuro = (modo) => {
+        if (modo === 'oscuro') return true;
+        if (modo === 'claro') return false;
         return media.matches;
     };
 
     const aplicar = () => {
-        const dark = esOscuro();
+        const modo = modoGuardado();
+        const dark = esOscuro(modo);
 
-        shell.classList.toggle('theme-dark', dark);
-        shell.classList.toggle('theme-light', ! dark);
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.classList.toggle('theme-dark', dark);
+        document.documentElement.classList.toggle('theme-light', !dark);
     };
 
     aplicar();

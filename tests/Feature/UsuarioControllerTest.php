@@ -247,15 +247,13 @@ it('muestra los permisos activados del usuario en modo solo lectura', function (
     ]);
 
     $response = $this->actingAs($admin)
-        ->get(route('usuarios.show', $usuario));
+        ->get(route('usuarios.permisos', $usuario));
 
     $response->assertOk()
-        ->assertSee('Ver usuario')
-        ->assertSee('Permisos activados')
+        ->assertSee($usuario->nombre)
+        ->assertSee('Permisos por modulo')
         ->assertSee($modulo->nombre_modulo)
-        ->assertSee('Ver')
-        ->assertSee('Editar permisos')
-        ->assertDontSee('Guardar cambios');
+        ->assertSee('Guardar permisos');
 });
 
 it('muestra el modo edición con controles para modificar los permisos', function () {

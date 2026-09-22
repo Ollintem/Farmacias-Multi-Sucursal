@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+    <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-[#eef3f8] dark:bg-zinc-950" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
-        <flux:sidebar sticky collapsible="mobile" class="erp-sidebar border-e border-[#202b43] bg-[#0f172a] text-[#a9b8d3]">
+        <flux:sidebar sticky collapsible="true" class="erp-sidebar border-e border-[#202b43] bg-[#0f172a] text-[#a9b8d3]">
             <flux:sidebar.header>
                 <flux:sidebar.brand name="FarmaERP" href="{{ route('dashboard') }}" wire:navigate>
                     <x-slot name="logo" class="erp-logo flex aspect-square size-8 items-center justify-center rounded-lg bg-[#0c9f9c] text-white">
                         <span class="text-xs font-bold">Rx</span>
                     </x-slot>
                 </flux:sidebar.brand>
-                <flux:sidebar.collapse class="lg:hidden text-[#a9b8d3]" />
+                <flux:sidebar.collapse class="text-[#a9b8d3]" />
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="erp-nav">

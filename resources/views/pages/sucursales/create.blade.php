@@ -99,7 +99,7 @@
                     </div>
 
                     <label class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-                        <input type="checkbox" name="es_activa" value="1" class="h-4 w-4 rounded border-slate-300 text-emerald-600" @checked(old('es_activa', $sucursal?->es_activa ?? true))>
+                        <input type="checkbox" name="es_activa" value="1" @checked(old('es_activa', $sucursal?->es_activa ?? true))>
                         <span>
                             <span class="block text-sm font-bold text-emerald-900 dark:text-emerald-100">Sucursal activa</span>
                             <span class="block text-xs text-emerald-800/75 dark:text-emerald-200/75">Permite identificarla como disponible para la operación.</span>

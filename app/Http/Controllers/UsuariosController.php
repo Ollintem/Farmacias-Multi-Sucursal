@@ -15,11 +15,6 @@ use Illuminate\View\View;
 
 class UsuariosController extends Controller
 {
-    /**
-     * Lista usuarios con su rol y sucursal precargados.
-     *
-     * Salida: resources/views/pages/usuarios/index.blade.php.
-     */
     public function index(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
@@ -28,7 +23,6 @@ class UsuariosController extends Controller
 
         $query = User::with(['rol', 'sucursal']);
 
-        // SuperAdmin ve todos los usuarios; otros ven solo su sucursal
         if (auth()->user()->rol?->tipo_rol !== 'SuperAdmin') {
             $query->where('id_sucursal', $selectedSucursalId);
         } elseif ($selectedSucursal) {
@@ -37,33 +31,31 @@ class UsuariosController extends Controller
 
         $usuarios = $query->orderBy('created_at', 'desc')->get();
 
-        return view('pages.usuarios.index', compact('usuarios', 'sucursales', 'selectedSucursal'));
+        $roles = Rol::withCount(['usuarios' => function ($query) use ($selectedSucursalId) {
+            $query->where('id_sucursal', $selectedSucursalId);
+        }])
+            ->get()
+            ->sortBy(function ($rol) {
+                return $rol->tipo_rol === 'SuperAdmin' ? 0 : 1;
+            })
+            ->values();
+
+        $totalUsuarios = User::where('id_sucursal', $selectedSucursalId)->count();
+
+        return view('pages.usuarios.index', compact('usuarios', 'sucursales', 'selectedSucursal', 'roles', 'totalUsuarios'));
     }
 
-    /**
-     * Carga roles y sucursales para el formulario de alta.
-     *
-     * Salida: resources/views/pages/usuarios/create.blade.php.
-     */
     public function create(): View
     {
         $roles = Rol::where('tipo_rol', '!=', 'SuperAdmin')
             ->orderBy('tipo_rol')
             ->get();
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
-
-        // Pre-seleccionar la sucursal activa
         $selectedSucursalId = session('active_sucursal_id') ?? auth()->user()?->id_sucursal;
 
         return view('pages.usuarios.create', compact('roles', 'sucursales', 'selectedSucursalId'));
     }
 
-    /**
-     * Valida y registra un usuario, excluyendo el rol SuperAdmin.
-     *
-     * Entrada: datos del formulario de alta.
-     * Salida: redirección a usuarios.index.
-     */
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -79,18 +71,17 @@ class UsuariosController extends Controller
             'id_sucursal' => ['nullable', 'exists:sucursales,id'],
             'es_activo' => ['boolean'],
         ], [
-            'password.required' => 'Escribe una contraseña para el usuario.',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
-            'password.confirmed' => 'Las contraseñas no coinciden. Escríbelas nuevamente.',
-            'password_confirmation.required' => 'Confirma la contraseña escribiéndola nuevamente.',
+            'password.required' => 'Escribe una contrasena para el usuario.',
+            'password.min' => 'La contrasena debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contrasenas no coinciden. Escribelas nuevamente.',
+            'password_confirmation.required' => 'Confirma la contrasena escribiendola nuevamente.',
         ]);
 
-        // Si no se especifica sucursal, usar la activa
         if (empty($data['id_sucursal'])) {
             $data['id_sucursal'] = session('active_sucursal_id') ?? auth()->user()?->id_sucursal;
         }
 
-        $usuario = User::create([
+        User::create([
             ...$data,
             'password' => bcrypt($data['password']),
             'es_activo' => $request->boolean('es_activo', true),
@@ -99,30 +90,6 @@ class UsuariosController extends Controller
         return redirect()->route('usuarios.index')->with('success', 'Usuario registrado correctamente.');
     }
 
-    /**
-     * Muestra un usuario en modo consulta con sus permisos actuales.
-     *
-     * Entrada: usuario resuelto mediante route model binding.
-     * Salida: resources/views/pages/usuarios/edit.blade.php en modo ver.
-     */
-    public function show(User $usuario): View
-    {
-        $usuario->load(['rol', 'sucursal']);
-        $datos = $this->datosPermisos($usuario);
-
-        return view('pages.usuarios.edit', [
-            ...$datos,
-            'usuario' => $usuario,
-            'modo' => 'ver',
-        ]);
-    }
-
-    /**
-     * Carga un usuario en modo edición junto con catálogos y permisos.
-     *
-     * Entrada: usuario resuelto mediante route model binding.
-     * Salida: resources/views/pages/usuarios/edit.blade.php en modo editar.
-     */
     public function edit(User $usuario): View
     {
         $datos = $this->datosPermisos($usuario);
@@ -130,16 +97,74 @@ class UsuariosController extends Controller
         return view('pages.usuarios.edit', [
             ...$datos,
             'usuario' => $usuario,
-            'modo' => 'editar',
         ]);
     }
 
-    /**
-     * Datos compartidos por show() y edit(): catálogos, matriz de
-     * permisos y permisos activados del usuario (planos y agrupados).
-     *
-     * @return array<string, mixed>
-     */
+    public function permisos(User $usuario): View
+    {
+        $usuario->load(['rol', 'sucursal']);
+        $datos = $this->datosPermisos($usuario);
+
+        return view('pages.usuarios.permisos', [
+            ...$datos,
+            'usuario' => $usuario,
+        ]);
+    }
+
+    public function updatePermisos(Request $request, User $usuario): RedirectResponse
+    {
+        $modulos = Modulo::orderBy('id')->get();
+        $permisosInput = $request->input('permisos', []);
+
+        $permisosIds = Permiso::whereIn('tipo_permiso', ['Mostrar', 'Crear', 'Editar', 'Borrar'])
+            ->pluck('id', 'tipo_permiso');
+
+        foreach ($modulos as $modulo) {
+            $flagsModulo = is_array($permisosInput[$modulo->id] ?? null)
+                ? $permisosInput[$modulo->id]
+                : [];
+
+            PermisoActivado::where('id_usuario', $usuario->id)
+                ->where('id_modulo', $modulo->id)
+                ->delete();
+
+            if (! empty($flagsModulo['ver'])) {
+                PermisoActivado::create([
+                    'id_usuario' => $usuario->id,
+                    'id_modulo' => $modulo->id,
+                    'id_permiso' => $permisosIds['Mostrar'],
+                    'es_activo' => true,
+                ]);
+            }
+            if (! empty($flagsModulo['crear'])) {
+                PermisoActivado::create([
+                    'id_usuario' => $usuario->id,
+                    'id_modulo' => $modulo->id,
+                    'id_permiso' => $permisosIds['Crear'],
+                    'es_activo' => true,
+                ]);
+            }
+            if (! empty($flagsModulo['editar'])) {
+                PermisoActivado::create([
+                    'id_usuario' => $usuario->id,
+                    'id_modulo' => $modulo->id,
+                    'id_permiso' => $permisosIds['Editar'],
+                    'es_activo' => true,
+                ]);
+            }
+            if (! empty($flagsModulo['borrar'])) {
+                PermisoActivado::create([
+                    'id_usuario' => $usuario->id,
+                    'id_modulo' => $modulo->id,
+                    'id_permiso' => $permisosIds['Borrar'],
+                    'es_activo' => true,
+                ]);
+            }
+        }
+
+        return redirect()->route('usuarios.permisos', $usuario)->with('success', 'Permisos actualizados correctamente.');
+    }
+
     private function datosPermisos(User $usuario): array
     {
         $roles = Rol::where('tipo_rol', '!=', 'SuperAdmin')
@@ -148,7 +173,6 @@ class UsuariosController extends Controller
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $modulos = Modulo::orderBy('id')->get();
 
-        // Cargar permisos activados con relación a Permiso
         $filas = PermisoActivado::where('id_usuario', $usuario->id)
             ->where('es_activo', true)
             ->with('permiso')
@@ -196,12 +220,6 @@ class UsuariosController extends Controller
         return compact('roles', 'sucursales', 'modulos', 'permisosActivos', 'permisosAgrupados');
     }
 
-    /**
-     * Actualiza datos del usuario y reconstruye su matriz de permisos.
-     *
-     * Entrada: datos del formulario y usuario resuelto por la ruta.
-     * Salida: redirección a usuarios.edit.
-     */
     public function update(Request $request, User $usuario): RedirectResponse
     {
         $data = $request->validate([
@@ -222,8 +240,8 @@ class UsuariosController extends Controller
             'permisos.*.editar' => ['nullable', 'boolean'],
             'permisos.*.borrar' => ['nullable', 'boolean'],
         ], [
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
-            'password.confirmed' => 'Las contraseñas no coinciden. Escríbelas nuevamente.',
+            'password.min' => 'La contrasena debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contrasenas no coinciden. Escribelas nuevamente.',
         ]);
 
         $usuario->update([
@@ -240,7 +258,6 @@ class UsuariosController extends Controller
         $modulos = Modulo::orderBy('id')->get();
         $permisosInput = $request->input('permisos', []);
 
-        // Obtener IDs de permisos por tipo
         $permisosIds = Permiso::whereIn('tipo_permiso', ['Mostrar', 'Crear', 'Editar', 'Borrar'])
             ->pluck('id', 'tipo_permiso');
 
@@ -249,12 +266,10 @@ class UsuariosController extends Controller
                 ? $permisosInput[$modulo->id]
                 : [];
 
-            // Primero borrar permisos existentes para este usuario/módulo
             PermisoActivado::where('id_usuario', $usuario->id)
                 ->where('id_modulo', $modulo->id)
                 ->delete();
 
-            // Crear nuevos permisos según flags
             if (! empty($flagsModulo['ver'])) {
                 PermisoActivado::create([
                     'id_usuario' => $usuario->id,
@@ -292,12 +307,6 @@ class UsuariosController extends Controller
         return redirect()->route('usuarios.edit', $usuario)->with('success', 'Usuario actualizado correctamente.');
     }
 
-    /**
-     * Elimina un usuario salvo que sea el usuario autenticado o un SuperAdmin.
-     *
-     * Entrada: usuario resuelto mediante route model binding.
-     * Salida: redirección a usuarios.index con mensaje de resultado.
-     */
     public function delete(User $usuario): RedirectResponse
     {
         if ($usuario->is(auth()->user())) {

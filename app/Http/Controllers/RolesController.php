@@ -6,30 +6,11 @@ use App\Models\Rol;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 
 class RolesController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     */
-    public function index(): View
-    {
-        $roles = Rol::withCount('usuarios')->orderBy('tipo_rol')->get();
-
-        return view('pages.roles.index', compact('roles'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(): View
-    {
-        return view('pages.roles.create');
-    }
-
-    /**
-     * Store a newly created resource in storage.
+     * Store a newly created role.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -40,44 +21,16 @@ class RolesController extends Controller
 
         Rol::create($data);
 
-        return redirect()->route('roles.index')->with('success', 'Rol registrado correctamente.');
+        return redirect()->route('usuarios.index')->with('success', 'Rol registrado correctamente.');
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Rol $rol): View
-    {
-        $rol->loadCount('usuarios');
-
-        return view('pages.roles.edit', [
-            'rol' => $rol,
-            'modo' => 'ver',
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Rol $rol): View|RedirectResponse
-    {
-        if ($rol->tipo_rol === 'SuperAdmin') {
-            return redirect()->route('roles.index')->with('error', 'El rol SuperAdmin no se puede editar.');
-        }
-
-        return view('pages.roles.edit', [
-            'rol' => $rol,
-            'modo' => 'editar',
-        ]);
-    }
-
-    /**
-     * Update the specified resource in storage.
+     * Update the specified role.
      */
     public function update(Request $request, Rol $rol): RedirectResponse
     {
         if ($rol->tipo_rol === 'SuperAdmin') {
-            return redirect()->route('roles.index')->with('error', 'El rol SuperAdmin no se puede editar.');
+            return redirect()->route('usuarios.index')->with('error', 'El rol SuperAdmin no se puede editar.');
         }
 
         $data = $request->validate([
@@ -87,24 +40,24 @@ class RolesController extends Controller
 
         $rol->update($data);
 
-        return redirect()->route('roles.index')->with('success', 'Rol actualizado correctamente.');
+        return redirect()->route('usuarios.index')->with('success', 'Rol actualizado correctamente.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified role.
      */
     public function destroy(Rol $rol): RedirectResponse
     {
         if ($rol->tipo_rol === 'SuperAdmin') {
-            return redirect()->route('roles.index')->with('error', 'El rol SuperAdmin no se puede eliminar.');
+            return redirect()->route('usuarios.index')->with('error', 'El rol SuperAdmin no se puede eliminar.');
         }
 
         if ($rol->usuarios()->exists()) {
-            return redirect()->route('roles.index')->with('error', 'No se puede eliminar el rol porque tiene usuarios asignados.');
+            return redirect()->route('usuarios.index')->with('error', 'No se puede eliminar el rol porque tiene usuarios asignados.');
         }
 
         $rol->delete();
 
-        return redirect()->route('roles.index')->with('success', 'Rol eliminado correctamente.');
+        return redirect()->route('usuarios.index')->with('success', 'Rol eliminado correctamente.');
     }
 }

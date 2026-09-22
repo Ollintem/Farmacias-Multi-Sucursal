@@ -23,17 +23,6 @@ function crearAdminConRol(string $tipoRol = 'SuperAdmin'): User
     ]);
 }
 
-it('muestra el listado de roles', function () {
-    $admin = crearAdminConRol();
-    Rol::create(['tipo_rol' => 'Almacenista', 'descripcion' => 'Gestiona almacén']);
-
-    $this->actingAs($admin)
-        ->get(route('roles.index'))
-        ->assertOk()
-        ->assertSee('Roles')
-        ->assertSee('Almacenista');
-});
-
 it('registra un rol nuevo', function () {
     $admin = crearAdminConRol();
 
@@ -43,7 +32,7 @@ it('registra un rol nuevo', function () {
             'descripcion' => 'Supervisa sucursal',
         ]);
 
-    $response->assertRedirect(route('roles.index'))
+    $response->assertRedirect(route('usuarios.index'))
         ->assertSessionHas('success');
 
     $this->assertDatabaseHas('roles', ['tipo_rol' => 'Supervisor']);
@@ -55,7 +44,7 @@ it('impide eliminar el rol SuperAdmin o un rol con usuarios', function () {
 
     $this->actingAs($admin)
         ->delete(route('roles.destroy', $superAdmin))
-        ->assertRedirect(route('roles.index'))
+        ->assertRedirect(route('usuarios.index'))
         ->assertSessionHas('error');
 
     $this->assertDatabaseHas('roles', ['id' => $superAdmin->id]);
@@ -73,7 +62,7 @@ it('impide eliminar el rol SuperAdmin o un rol con usuarios', function () {
 
     $this->actingAs($admin)
         ->delete(route('roles.destroy', $rolConUsuarios))
-        ->assertRedirect(route('roles.index'))
+        ->assertRedirect(route('usuarios.index'))
         ->assertSessionHas('error');
 
     $this->assertDatabaseHas('roles', ['id' => $rolConUsuarios->id]);

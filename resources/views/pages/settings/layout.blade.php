@@ -1,4 +1,4 @@
-<div id="theme-shell" class="theme-light settings-shell">
+<div id="theme-shell" class="settings-shell">
     <div class="theme-shell-inner">
         <div class="flex items-start max-md:flex-col">
             <div class="me-10 w-full pb-4 md:w-[220px]">
