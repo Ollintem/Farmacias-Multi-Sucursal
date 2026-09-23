@@ -30,17 +30,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Este modulo es el encargado de crear, editar, inhablitar usuarios y roles
     */
     Route::get('/usuarios', [UsuariosController::class, 'index'])->name('usuarios.index')->middleware('checarPermisos:ver,usuarios');
-    Route::get('/usuarios/create', [UsuariosController::class, 'create'])->name('usuarios.create')->middleware('checarPermisos:crear,usuarios')->middleware('checarPermisos:crear,usuarios');
-    Route::post('/usuarios', [UsuariosController::class, 'store'])->name('usuarios.store')->middleware('checarPermisos:crear,usuarios')->middleware('checarPermisos:crear,usuarios');
+    Route::get('/usuarios/create', [UsuariosController::class, 'create'])->name('usuarios.create')->middleware('checarPermisos:crear,usuarios');
+    Route::post('/usuarios', [UsuariosController::class, 'store'])->name('usuarios.store')->middleware('checarPermisos:crear,usuarios');
     Route::get('/usuarios/{usuario}/permisos', [UsuariosController::class, 'permisos'])->name('usuarios.permisos')->middleware('checarPermisos:ver,usuarios');
     Route::put('/usuarios/{usuario}/permisos', [UsuariosController::class, 'updatePermisos'])->name('usuarios.updatePermisos')->middleware('checarPermisos:editar,usuarios');
     Route::get('/usuarios/{usuario}/edit', [UsuariosController::class, 'edit'])->name('usuarios.edit')->middleware('checarPermisos:editar,usuarios');
     Route::put('/usuarios/{usuario}', [UsuariosController::class, 'update'])->name('usuarios.update')->middleware('checarPermisos:editar,usuarios')->middleware('checarPermisos:editar,usuarios');
     Route::delete('/usuarios/{usuario}', [UsuariosController::class, 'delete'])->name('usuarios.delete')->middleware('checarPermisos:eliminar,usuarios')->middleware('checarPermisos:eliminar,usuarios');
     // Roles
-    Route::post('/roles', [RolesController::class, 'store'])->name('roles.store');
-    Route::put('/roles/{rol}', [RolesController::class, 'update'])->name('roles.update');
-    Route::delete('/roles/{rol}', [RolesController::class, 'destroy'])->name('roles.destroy');
+    Route::post('/roles', [RolesController::class, 'store'])->name('roles.store')->middleware('checarPermisos:crear,roles');
+    Route::put('/roles/{rol}', [RolesController::class, 'update'])->name('roles.update')->middleware('checarPermisos:editar,roles');
+    Route::delete('/roles/{rol}', [RolesController::class, 'destroy'])->name('roles.destroy')->middleware('checarPermisos:eliminar,roles');
 
     // Módulo: Sucursales
     Route::get('/sucursales', [SucursalesController::class, 'index'])->name('sucursales.index')->middleware('checarPermisos:ver,sucursales');

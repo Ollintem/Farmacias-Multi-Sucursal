@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Modulo;
-use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -116,49 +115,30 @@ class UsuariosController extends Controller
         $modulos = Modulo::orderBy('id')->get();
         $permisosInput = $request->input('permisos', []);
 
-        $permisosIds = Permiso::whereIn('tipo_permiso', ['Mostrar', 'Crear', 'Editar', 'Borrar'])
-            ->pluck('id', 'tipo_permiso');
-
         foreach ($modulos as $modulo) {
             $flagsModulo = is_array($permisosInput[$modulo->id] ?? null)
                 ? $permisosInput[$modulo->id]
                 : [];
 
-            PermisoActivado::where('id_usuario', $usuario->id)
-                ->where('id_modulo', $modulo->id)
-                ->delete();
+            $flags = [
+                'puede_ver' => ! empty($flagsModulo['ver']),
+                'puede_crear' => ! empty($flagsModulo['crear']),
+                'puede_editar' => ! empty($flagsModulo['editar']),
+                'puede_borrar' => ! empty($flagsModulo['borrar']),
+            ];
 
-            if (! empty($flagsModulo['ver'])) {
-                PermisoActivado::create([
-                    'id_usuario' => $usuario->id,
-                    'id_modulo' => $modulo->id,
-                    'id_permiso' => $permisosIds['Mostrar'],
-                    'es_activo' => true,
-                ]);
-            }
-            if (! empty($flagsModulo['crear'])) {
-                PermisoActivado::create([
-                    'id_usuario' => $usuario->id,
-                    'id_modulo' => $modulo->id,
-                    'id_permiso' => $permisosIds['Crear'],
-                    'es_activo' => true,
-                ]);
-            }
-            if (! empty($flagsModulo['editar'])) {
-                PermisoActivado::create([
-                    'id_usuario' => $usuario->id,
-                    'id_modulo' => $modulo->id,
-                    'id_permiso' => $permisosIds['Editar'],
-                    'es_activo' => true,
-                ]);
-            }
-            if (! empty($flagsModulo['borrar'])) {
-                PermisoActivado::create([
-                    'id_usuario' => $usuario->id,
-                    'id_modulo' => $modulo->id,
-                    'id_permiso' => $permisosIds['Borrar'],
-                    'es_activo' => true,
-                ]);
+            if (in_array(true, $flags, true)) {
+                PermisoActivado::updateOrCreate(
+                    [
+                        'id_usuario' => $usuario->id,
+                        'id_modulo' => $modulo->id,
+                    ],
+                    $flags
+                );
+            } else {
+                PermisoActivado::where('id_usuario', $usuario->id)
+                    ->where('id_modulo', $modulo->id)
+                    ->delete();
             }
         }
 
@@ -174,41 +154,38 @@ class UsuariosController extends Controller
         $modulos = Modulo::orderBy('id')->get();
 
         $filas = PermisoActivado::where('id_usuario', $usuario->id)
-            ->where('es_activo', true)
-            ->with('permiso')
             ->get()
-            ->groupBy('id_modulo');
+            ->keyBy('id_modulo');
 
         $permisosActivos = [];
         $permisosAgrupados = [];
 
         foreach ($modulos as $modulo) {
-            $permisosModulo = $filas->get($modulo->id, collect());
+            $fila = $filas->get($modulo->id);
 
-            $tieneVer = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Mostrar');
-            $tieneCrear = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Crear');
-            $tieneEditar = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Editar');
-            $tieneBorrar = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Borrar');
-            $tieneTodos = $permisosModulo->contains(fn ($p) => $p->permiso?->tipo_permiso === 'Todos');
+            $tieneVer = (bool) ($fila?->puede_ver ?? false);
+            $tieneCrear = (bool) ($fila?->puede_crear ?? false);
+            $tieneEditar = (bool) ($fila?->puede_editar ?? false);
+            $tieneBorrar = (bool) ($fila?->puede_borrar ?? false);
 
             $permisosActivos[$modulo->id] = [
-                'ver' => $tieneVer || $tieneTodos,
-                'crear' => $tieneCrear || $tieneTodos,
-                'editar' => $tieneEditar || $tieneTodos,
-                'borrar' => $tieneBorrar || $tieneTodos,
+                'ver' => $tieneVer,
+                'crear' => $tieneCrear,
+                'editar' => $tieneEditar,
+                'borrar' => $tieneBorrar,
             ];
 
             $activos = [];
-            if ($tieneVer || $tieneTodos) {
+            if ($tieneVer) {
                 $activos[] = 'Ver';
             }
-            if ($tieneCrear || $tieneTodos) {
+            if ($tieneCrear) {
                 $activos[] = 'Crear';
             }
-            if ($tieneEditar || $tieneTodos) {
+            if ($tieneEditar) {
                 $activos[] = 'Editar';
             }
-            if ($tieneBorrar || $tieneTodos) {
+            if ($tieneBorrar) {
                 $activos[] = 'Borrar';
             }
 
@@ -258,49 +235,30 @@ class UsuariosController extends Controller
         $modulos = Modulo::orderBy('id')->get();
         $permisosInput = $request->input('permisos', []);
 
-        $permisosIds = Permiso::whereIn('tipo_permiso', ['Mostrar', 'Crear', 'Editar', 'Borrar'])
-            ->pluck('id', 'tipo_permiso');
-
         foreach ($modulos as $modulo) {
             $flagsModulo = is_array($permisosInput[$modulo->id] ?? null)
                 ? $permisosInput[$modulo->id]
                 : [];
 
-            PermisoActivado::where('id_usuario', $usuario->id)
-                ->where('id_modulo', $modulo->id)
-                ->delete();
+            $flags = [
+                'puede_ver' => ! empty($flagsModulo['ver']),
+                'puede_crear' => ! empty($flagsModulo['crear']),
+                'puede_editar' => ! empty($flagsModulo['editar']),
+                'puede_borrar' => ! empty($flagsModulo['borrar']),
+            ];
 
-            if (! empty($flagsModulo['ver'])) {
-                PermisoActivado::create([
-                    'id_usuario' => $usuario->id,
-                    'id_modulo' => $modulo->id,
-                    'id_permiso' => $permisosIds['Mostrar'],
-                    'es_activo' => true,
-                ]);
-            }
-            if (! empty($flagsModulo['crear'])) {
-                PermisoActivado::create([
-                    'id_usuario' => $usuario->id,
-                    'id_modulo' => $modulo->id,
-                    'id_permiso' => $permisosIds['Crear'],
-                    'es_activo' => true,
-                ]);
-            }
-            if (! empty($flagsModulo['editar'])) {
-                PermisoActivado::create([
-                    'id_usuario' => $usuario->id,
-                    'id_modulo' => $modulo->id,
-                    'id_permiso' => $permisosIds['Editar'],
-                    'es_activo' => true,
-                ]);
-            }
-            if (! empty($flagsModulo['borrar'])) {
-                PermisoActivado::create([
-                    'id_usuario' => $usuario->id,
-                    'id_modulo' => $modulo->id,
-                    'id_permiso' => $permisosIds['Borrar'],
-                    'es_activo' => true,
-                ]);
+            if (in_array(true, $flags, true)) {
+                PermisoActivado::updateOrCreate(
+                    [
+                        'id_usuario' => $usuario->id,
+                        'id_modulo' => $modulo->id,
+                    ],
+                    $flags
+                );
+            } else {
+                PermisoActivado::where('id_usuario', $usuario->id)
+                    ->where('id_modulo', $modulo->id)
+                    ->delete();
             }
         }
 

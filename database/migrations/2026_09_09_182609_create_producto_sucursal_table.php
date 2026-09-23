@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('producto_sucursal', function (Blueprint $table) {
+        Schema::create('inventario', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('producto')->constrained('productos')->cascadeOnDelete();
-            $table->foreignId('sucursal')->constrained('sucursales')->cascadeOnDelete();
+            $table->foreignId('id_sucursal')->constrained('sucursales')->cascadeOnDelete();
+            $table->foreignId('id_producto')->constrained('productos')->cascadeOnDelete();
+            $table->integer('stock')->default(0);
+            $table->timestamps();
+
+            $table->unique(['id_sucursal', 'id_producto']);
         });
     }
 
@@ -23,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('producto_sucursal');
+        Schema::dropIfExists('inventario');
     }
 };

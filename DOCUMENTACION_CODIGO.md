@@ -53,7 +53,7 @@ Los modelos representan tablas y relaciones de la base de datos. Tambien definen
 | `User.php` | Usuarios del sistema. | Rol, sucursal y permisos activados. |
 | `Rol.php` | Roles de acceso. | Usuarios y permisos segun la configuracion existente. |
 | `Sucursal.php` | Sucursales de la farmacia. | Usuarios y productos. |
-| `Producto.php` | Productos del inventario. | Lote y sucursales mediante `producto_sucursal`. |
+| `Producto.php` | Productos del inventario. | Lote y sucursales mediante `inventario`. |
 | `Lote.php` | Lotes y fechas de caducidad. | Proveedor y productos. |
 | `Proveedor.php` | Proveedores de productos. | Lotes. |
 | `PresentacionProducto.php` | Presentaciones o unidades de producto. | Productos. |

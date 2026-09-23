@@ -19,7 +19,7 @@ return new class extends Migration
             $table->integer('stock');
             $table->double('precio');
             $table->foreignId('id_lote')->constrained('lotes')->cascadeOnDelete();
-            $table->foreignId('id_presentacion')->constrained('presentacion_productos')->cascadeOnDelete();
+            $table->foreignId('id_presentacion')->constrained('presentaciones')->cascadeOnDelete();
             $table->boolean('es_controlado')->default(false);
             $table->boolean('es_activo')->default(true);
             $table->timestamp('creado_en')->useCurrent();

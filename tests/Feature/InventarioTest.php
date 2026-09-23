@@ -56,8 +56,8 @@ test('el inventario puede filtrar por sucursal y guardar un producto ligado a la
     ]);
 
     $producto = Producto::where('codigo_barras', '7501234567890')->firstOrFail();
-    $this->assertDatabaseHas('producto_sucursal', [
-        'producto' => $producto->id,
-        'sucursal' => $sucursal->id,
+    $this->assertDatabaseHas('inventario', [
+        'id_producto' => $producto->id,
+        'id_sucursal' => $sucursal->id,
     ]);
 });

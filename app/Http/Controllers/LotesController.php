@@ -137,7 +137,7 @@ class LotesController extends Controller
             'descripcion' => ['nullable', 'string'],
             'stock' => ['required', 'integer', 'min:1'],
             'precio' => ['required', 'numeric', 'min:0'],
-            'id_presentacion' => ['required', 'exists:presentacion_productos,id'],
+            'id_presentacion' => ['required', 'exists:presentaciones,id'],
             'es_controlado' => ['boolean'],
         ]);
 

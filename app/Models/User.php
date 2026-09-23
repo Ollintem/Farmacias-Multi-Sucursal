@@ -126,8 +126,7 @@ class User extends Authenticatable
         }
 
         $modulosVisibles = $this->permisosActivados()
-            ->whereHas('permiso', fn ($q) => $q->where('tipo_permiso', 'Mostrar'))
-            ->where('es_activo', true)
+            ->where('puede_ver', true)
             ->with('modulo:id,nombre_modulo')
             ->get()
             ->pluck('modulo.nombre_modulo')
@@ -158,17 +157,18 @@ class User extends Authenticatable
 
     /**
      * Mapas entre los nombres cortos que reciben las rutas
-     * y los catálogos de la base de datos.
+     * y las columnas de flags en `permisos_activados`.
      *
      * @var array<string, string>
      */
     private const MAPA_PERMISOS = [
-        'ver' => 'Mostrar',
-        'mostrar' => 'Mostrar',
-        'crear' => 'Crear',
-        'editar' => 'Editar',
-        'eliminar' => 'Borrar',
-        'borrar' => 'Borrar',
+        'ver' => 'puede_ver',
+        'mostrar' => 'puede_ver',
+        'crear' => 'puede_crear',
+        'editar' => 'puede_editar',
+        'eliminar' => 'puede_borrar',
+        'borrar' => 'puede_borrar',
+        'todos' => 'todos',
     ];
 
     /**
@@ -201,28 +201,28 @@ class User extends Authenticatable
             return true;
         }
 
-        $tipoPermiso = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
+        $columna = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
         $nombreModulo = self::MAPA_MODULOS[strtolower($modulo)] ?? $modulo;
 
-        if (! in_array($tipoPermiso, ['Mostrar', 'Crear', 'Editar', 'Borrar', 'Todos'], true)) {
+        if ($columna === 'todos') {
+            $registro = $this->permisosActivados()
+                ->whereHas('modulo', fn ($q) => $q->where('nombre_modulo', $nombreModulo))
+                ->first();
+
+            return $registro !== null
+                && $registro->puede_ver
+                && $registro->puede_crear
+                && $registro->puede_editar
+                && $registro->puede_borrar;
+        }
+
+        if (! in_array($columna, ['puede_ver', 'puede_crear', 'puede_editar', 'puede_borrar'], true)) {
             return false;
         }
 
-        // Si tiene permiso "Todos" en ese módulo, acceso total
-        $tieneTodos = $this->permisosActivados()
-            ->whereHas('permiso', fn ($q) => $q->where('tipo_permiso', 'Todos'))
-            ->where('es_activo', true)
-            ->whereHas('modulo', fn ($q) => $q->where('nombre_modulo', $nombreModulo))
-            ->exists();
-
-        if ($tieneTodos) {
-            return true;
-        }
-
         return $this->permisosActivados()
-            ->whereHas('permiso', fn ($q) => $q->where('tipo_permiso', $tipoPermiso))
-            ->where('es_activo', true)
             ->whereHas('modulo', fn ($q) => $q->where('nombre_modulo', $nombreModulo))
+            ->where($columna, true)
             ->exists();
     }
 }

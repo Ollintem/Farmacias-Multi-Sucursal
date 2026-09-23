@@ -1,20 +1,17 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Elimina la tabla legacy `farmacias` en BDs ya migradas.
+     * En migrate:fresh es no-op porque su migración de creación fue eliminada.
      */
     public function up(): void
     {
-        Schema::create('farmacias', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        Schema::dropIfExists('farmacias');
     }
 
     /**
@@ -22,6 +19,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('farmacias');
+        // No se restaura: la tabla quedó fuera del esquema.
     }
 };

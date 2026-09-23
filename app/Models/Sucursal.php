@@ -44,4 +44,20 @@ class Sucursal extends Model
     {
         return $this->hasMany(User::class, 'id_sucursal');
     }
+
+    /**
+     * @return HasMany<Pedido, $this>
+     */
+    public function pedidos(): HasMany
+    {
+        return $this->hasMany(Pedido::class, 'id_sucursal');
+    }
+
+    /**
+     * @return HasMany<Inventario, $this>
+     */
+    public function inventarios(): HasMany
+    {
+        return $this->hasMany(Inventario::class, 'id_sucursal');
+    }
 }

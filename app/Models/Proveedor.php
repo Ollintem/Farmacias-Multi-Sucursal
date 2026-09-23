@@ -23,4 +23,9 @@ class Proveedor extends Model
     {
         return $this->hasMany(Lote::class, 'id_proveedor');
     }
+
+    public function pedidos(): HasMany
+    {
+        return $this->hasMany(Pedido::class, 'id_proveedor');
+    }
 }

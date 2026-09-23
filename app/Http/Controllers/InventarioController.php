@@ -87,7 +87,7 @@ class InventarioController extends Controller
             'stock' => ['required', 'integer', 'min:0'],
             'precio' => ['required', 'numeric', 'min:0'],
             'id_lote' => ['required', 'exists:lotes,id'],
-            'id_presentacion' => ['required', 'exists:presentacion_productos,id'],
+            'id_presentacion' => ['required', 'exists:presentaciones,id'],
             'es_controlado' => ['boolean'],
         ]);
 
