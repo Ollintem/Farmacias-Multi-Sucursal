@@ -142,7 +142,7 @@ Relaciones: `productos` (1:N vía `productos.id_lote`).
 | creado_en / actualizado_en | timestamp | No | current | |
 | created_at / updated_at | timestamp | Sí | NULL | |
 
-### `presentaciones` (antes `presentacion_productos`)
+### `presentaciones` 
 | Columna | Tipo | Nulo | Default | Notas |
 |---|---|---|---|---|
 | id | bigint unsigned PK AI | No | — | Catálogo (Caja, Paquete, …), sin timestamps |
@@ -258,12 +258,4 @@ Relaciones: `productos` (1:N vía `productos.id_lote`).
 | `jobs` / `job_batches` / `failed_jobs` | Colas de trabajos |
 | `password_reset_tokens` | Tokens de recuperación (`email` PK) |
 
-## Historial de cambios recientes
 
-- `presentacion_productos` → **`presentaciones`** (con migración de renombrado para BDs existentes).
-- `producto_sucursal` (`producto`, `sucursal`) → **`inventario`** (`id_producto`, `id_sucursal`, `stock`), con migración de consolidación.
-- Nueva **`pedidos`** (proveedor + sucursal + `pedido_por`/`recibido_por` + estado).
-- `lotes` suma `stock_lote`, `id_pedido` y `fecha_de_caducidad` (sincronizada con `fecha_caducidad`).
-- Nueva **`presentacion_producto`** (precio por presentación y producto).
-- `productos` suma `entregado_en`; `codigo_barras` queda en varchar(20).
-- Tabla **`farmacias`** eliminada (sin uso en el código).

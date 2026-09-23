@@ -6,23 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('lotes', function (Blueprint $table) {
             $table->id();
             $table->string('folio', 20);
-            $table->foreignId('id_proveedor')->constrained('proveedores')->cascadeOnDelete();
+            $table->integer('stock_lote')->default(0);
+            $table->foreignId('id_pedido')->nullable()->constrained('pedidos')->nullOnDelete();
+            $table->foreignId('id_proveedor')->nullable()->constrained('proveedores')->cascadeOnDelete();
             $table->timestamp('entregado_en')->useCurrent();
             $table->timestamp('fecha_caducidad')->nullable();
+            $table->timestamp('fecha_de_caducidad')->nullable();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('lotes');

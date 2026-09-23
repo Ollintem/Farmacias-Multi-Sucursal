@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('cortes_caja', function (Blueprint $table) {
@@ -25,13 +22,21 @@ return new class extends Migration
             $table->string('estado', 20);
             $table->timestamp('creado_en')->useCurrent();
         });
+
+        Schema::create('traspasos', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('sucursal_a')->constrained('sucursales')->cascadeOnDelete();
+            $table->foreignId('sucursal_b')->constrained('sucursales')->cascadeOnDelete();
+            $table->foreignId('pedido_por')->constrained('usuarios')->cascadeOnDelete();
+            $table->foreignId('recibido_por')->nullable()->constrained('usuarios')->nullOnDelete();
+            $table->string('estado', 20);
+            $table->timestamp('creado_en')->useCurrent();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        Schema::dropIfExists('traspasos');
         Schema::dropIfExists('cortes_caja');
     }
 };

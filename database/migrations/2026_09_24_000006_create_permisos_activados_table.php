@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('permisos_activados', function (Blueprint $table) {
@@ -20,14 +17,10 @@ return new class extends Migration
             $table->boolean('puede_editar')->default(true);
             $table->boolean('puede_borrar')->default(true);
             $table->timestamps();
-
             $table->unique(['id_modulo', 'id_usuario']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('permisos_activados');

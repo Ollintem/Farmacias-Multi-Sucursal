@@ -6,21 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('productos', function (Blueprint $table) {
             $table->id();
-            $table->text('codigo_barras');
-            $table->string('nombre_producto', 20);
+            $table->string('codigo_barras', 20);
+            $table->string('nombre_producto', 120);
             $table->text('descripcion');
             $table->integer('stock');
             $table->double('precio');
-            $table->foreignId('id_lote')->constrained('lotes')->cascadeOnDelete();
-            $table->foreignId('id_presentacion')->constrained('presentaciones')->cascadeOnDelete();
+            $table->foreignId('id_lote')->nullable()->constrained('lotes')->cascadeOnDelete();
+            $table->foreignId('id_presentacion')->nullable()->constrained('presentaciones')->cascadeOnDelete();
             $table->boolean('es_controlado')->default(false);
+            $table->timestamp('entregado_en')->nullable();
             $table->boolean('es_activo')->default(true);
             $table->timestamp('creado_en')->useCurrent();
             $table->timestamp('actualizado_en')->useCurrent()->useCurrentOnUpdate();
@@ -28,9 +26,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('productos');

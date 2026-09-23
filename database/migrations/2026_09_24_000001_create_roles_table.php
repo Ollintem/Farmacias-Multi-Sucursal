@@ -8,15 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('productos', function (Blueprint $table) {
-            $table->string('nombre_producto', 120)->change();
+        Schema::create('roles', function (Blueprint $table) {
+            $table->id();
+            $table->string('tipo_rol');
+            $table->string('descripcion')->nullable();
+            $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::table('productos', function (Blueprint $table) {
-            $table->string('nombre_producto', 20)->change();
-        });
+        Schema::dropIfExists('roles');
     }
 };
