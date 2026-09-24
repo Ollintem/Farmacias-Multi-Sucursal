@@ -1,15 +1,24 @@
 <section class="w-full" x-data="{
     modo: '{{ $modo }}',
-    init() { this.aplicar(this.modo); },
-    aplicar(nuevoModo) {
+    init() {
+        const guardado = localStorage.getItem('farmacia-theme-modo');
+        if (guardado) { this.modo = guardado; }
+        this.aplicar(this.modo, false);
+    },
+    aplicar(nuevoModo, guardar = true) {
         this.modo = nuevoModo;
-        const media = window.matchMedia('(prefers-color-scheme: dark)');
-        const dark = nuevoModo === 'oscuro' ? true : nuevoModo === 'claro' ? false : media.matches;
-        document.documentElement.classList.toggle('dark', dark);
-        document.documentElement.classList.toggle('theme-dark', dark);
-        document.documentElement.classList.toggle('theme-light', !dark);
-        localStorage.setItem('farmacia-theme-modo', nuevoModo);
-        localStorage.setItem('farmacia-theme', dark ? 'dark' : 'light');
+        if (window.FarmaTheme) {
+            window.FarmaTheme.aplicar(nuevoModo);
+        } else {
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            const dark = nuevoModo === 'oscuro' ? true : nuevoModo === 'claro' ? false : media.matches;
+            document.documentElement.classList.toggle('dark', dark);
+            document.documentElement.classList.toggle('theme-dark', dark);
+            document.documentElement.classList.toggle('theme-light', !dark);
+            localStorage.setItem('farmacia-theme-modo', nuevoModo);
+            localStorage.setItem('farmacia-theme', dark ? 'dark' : 'light');
+        }
+        if (guardar) { $wire.cambiarTema(nuevoModo); }
     }
 }">
     @include('partials.settings-heading')
@@ -29,19 +38,19 @@
 
         <div class="flex-1 self-stretch max-md:pt-6">
             <flux:heading>Apariencia</flux:heading>
-            <flux:subheading>Elige el tema de FarmaERP</flux:subheading>
+            <flux:subheading>Teal medio para salud y calma, petróleo para confianza médica. Sin blancos puros ni negros puros.</flux:subheading>
 
             <div class="mt-5 w-full max-w-lg">
                 <div class="grid gap-4 sm:grid-cols-3" role="radiogroup" aria-label="Tema de la aplicacion">
                     <button
                         type="button"
-                        x-on:click="aplicar('claro'); $wire.cambiarTema('claro')"
+                        x-on:click="aplicar('claro')"
                         role="radio"
                         :aria-checked="modo === 'claro'"
                         class="rounded-2xl border p-4 text-left transition"
-                        :class="modo === 'claro' ? 'border-[#0c9f9c] ring-2 ring-[#0c9f9c]/20' : 'border-slate-200 dark:border-zinc-700'"
+                        :class="modo === 'claro' ? 'border-[#0e9384] ring-2 ring-[#0e9384]/25 bg-[#f7faf9]' : 'border-[#cfddd7] dark:border-[#33505c]'"
                     >
-                        <span class="flex h-20 items-center justify-center rounded-xl bg-white border border-slate-200">
+                        <span class="flex h-20 items-center justify-center rounded-xl bg-[#eef5f2] border border-[#cfddd7]">
                             <span class="theme-switch" aria-hidden="true">
                                 <span class="theme-switch-track">
                                     <span class="theme-switch-thumb"></span>
@@ -50,20 +59,20 @@
                         </span>
                         <span class="mt-3 flex items-center justify-between">
                             <span class="text-base font-semibold">Claro</span>
-                            <span x-show="modo === 'claro'" class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-600">Activo</span>
+                            <span x-show="modo === 'claro'" class="rounded-full bg-[#0e9384]/15 px-2 py-0.5 text-xs font-semibold text-[#0c7569]">Activo</span>
                         </span>
-                        <span class="mt-1 block text-sm text-slate-500">Fondo claro para el dia.</span>
+                        <span class="mt-1 block text-sm text-slate-500">Salvia suave, ideal para el turno de día.</span>
                     </button>
 
                     <button
                         type="button"
-                        x-on:click="aplicar('oscuro'); $wire.cambiarTema('oscuro')"
+                        x-on:click="aplicar('oscuro')"
                         role="radio"
                         :aria-checked="modo === 'oscuro'"
                         class="rounded-2xl border p-4 text-left transition"
-                        :class="modo === 'oscuro' ? 'border-[#0c9f9c] ring-2 ring-[#0c9f9c]/20' : 'border-slate-200 dark:border-zinc-700'"
+                        :class="modo === 'oscuro' ? 'border-[#0e9384] ring-2 ring-[#0e9384]/25' : 'border-slate-200 dark:border-zinc-700'"
                     >
-                        <span class="flex h-20 items-center justify-center rounded-xl bg-zinc-900 border border-zinc-700">
+                        <span class="flex h-20 items-center justify-center rounded-xl bg-[#1e3039] border border-[#33505c]">
                             <span class="theme-switch" aria-hidden="true">
                                 <span class="theme-switch-track">
                                     <span class="theme-switch-thumb"></span>
@@ -72,18 +81,18 @@
                         </span>
                         <span class="mt-3 flex items-center justify-between">
                             <span class="text-base font-semibold">Oscuro</span>
-                            <span x-show="modo === 'oscuro'" class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-600">Activo</span>
+                            <span x-show="modo === 'oscuro'" class="rounded-full bg-[#0e9384]/15 px-2 py-0.5 text-xs font-semibold text-emerald-600">Activo</span>
                         </span>
-                        <span class="mt-1 block text-sm text-slate-500">Fondo oscuro para la noche.</span>
+                        <span class="mt-1 block text-sm text-slate-500">Petróleo suave, descansa la vista de noche.</span>
                     </button>
 
                     <button
                         type="button"
-                        x-on:click="aplicar('sistema'); $wire.cambiarTema('sistema')"
+                        x-on:click="aplicar('sistema')"
                         role="radio"
                         :aria-checked="modo === 'sistema'"
                         class="rounded-2xl border p-4 text-left transition"
-                        :class="modo === 'sistema' ? 'border-[#0c9f9c] ring-2 ring-[#0c9f9c]/20' : 'border-slate-200 dark:border-zinc-700'"
+                        :class="modo === 'sistema' ? 'border-[#0e9384] ring-2 ring-[#0e9384]/25' : 'border-slate-200 dark:border-zinc-700'"
                     >
                         <span class="flex h-20 items-center justify-center rounded-xl bg-gradient-to-br from-white to-zinc-900 border border-slate-200">
                             <svg class="h-8 w-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

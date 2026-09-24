@@ -102,7 +102,7 @@
                             <div>
                                 <label class="mb-2 block text-sm font-medium">Nueva contrasena</label>
                                 <input type="password" name="password" class="theme-input" minlength="8" autocomplete="new-password">
-                                <p class="mt-1 text-xs text-slate-500">Dejala en blanco para mantener la actual.</p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-zinc-400">Dejala en blanco para mantener la actual.</p>
                                 @error('password')
                                     <span class="mt-1 block text-xs text-red-500">{{ $message }}</span>
                                 @enderror

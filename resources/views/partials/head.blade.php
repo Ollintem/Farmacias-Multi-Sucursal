@@ -13,3 +13,17 @@
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
+<script>
+    // Aplica el tema antes del primer pintado para evitar parpadeos.
+    (() => {
+        try {
+            const guardado = localStorage.getItem('farmacia-theme-modo') || 'claro';
+            const sistemaOscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const oscuro = guardado === 'oscuro' || (guardado === 'sistema' && sistemaOscuro);
+            document.documentElement.classList.toggle('dark', oscuro);
+            document.documentElement.classList.toggle('theme-dark', oscuro);
+            document.documentElement.classList.toggle('theme-light', !oscuro);
+            document.documentElement.style.colorScheme = oscuro ? 'dark' : 'light';
+        } catch (e) {}
+    })();
+</script>

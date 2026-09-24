@@ -11,11 +11,11 @@
             <form action="{{ route('lotes.store') }}" method="POST" class="theme-card">
                 @csrf
 
-                <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+                <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
                     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Escaneo</p>
-                            <p class="mt-1 text-sm text-slate-700">Puedes usar la cámara de la PC, un lector USB o escribirlo manualmente.</p>
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Escaneo</p>
+                            <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">Puedes usar la cámara de la PC, un lector USB o escribirlo manualmente.</p>
                         </div>
                         <button type="button" id="scanner-focus-button" class="theme-button theme-button-secondary whitespace-nowrap">Escanear con cámara</button>
                     </div>

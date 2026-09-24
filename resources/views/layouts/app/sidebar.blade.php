@@ -3,15 +3,15 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-[#eef3f8] dark:bg-zinc-950" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
-        <flux:sidebar sticky collapsible="true" class="erp-sidebar border-e border-[#202b43] bg-[#0f172a] text-[#a9b8d3]">
+    <body class="min-h-screen bg-[#e9efec] text-[#22332f] dark:bg-[#1a2a32] dark:text-[#e6efec]" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
+        <flux:sidebar sticky collapsible="true" class="erp-sidebar border-e border-[#2c545e] bg-[#20444c] text-[#c3d4cf] dark:bg-[#1e3039]">
             <flux:sidebar.header>
                 <flux:sidebar.brand name="FarmaERP" href="{{ route('dashboard') }}" wire:navigate>
-                    <x-slot name="logo" class="erp-logo flex aspect-square size-8 items-center justify-center rounded-lg bg-[#0c9f9c] text-white">
-                        <span class="text-xs font-bold">Rx</span>
+                    <x-slot name="logo" class="erp-logo flex aspect-square size-8 items-center justify-center rounded-xl bg-[#0e9384] text-white shadow-lg shadow-black/20">
+                        <span class="text-xs font-black">Rx</span>
                     </x-slot>
                 </flux:sidebar.brand>
-                <flux:sidebar.collapse class="text-[#a9b8d3]" />
+                <flux:sidebar.collapse class="text-[#c3d4cf] hover:text-white" />
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="erp-nav">
@@ -72,6 +72,12 @@
 
             <div class="erp-sidebar-version px-3 pb-2 text-xs">v2.4.1 - Julio 2026</div>
 
+            {{-- Único interruptor de modo claro/oscuro: solo vive en el panel lateral
+                 y se aplica a todas las vistas hasta que el usuario lo cambie. --}}
+            <div class="px-3 pb-2">
+                <x-theme-toggle />
+            </div>
+
             {{-- Selector de Sucursal Global (mismo estilo que usuario) --}}
             <flux:dropdown position="bottom" align="start" class="erp-user-menu">
                 <flux:sidebar.profile
@@ -84,16 +90,16 @@
                     @foreach(\App\Models\Sucursal::orderBy('nombre_sucursal')->get() as $sucursal)
                         <a
                             href="{{ request()->fullUrlWithQuery(array_merge(request()->query(), ['sucursal' => $sucursal->id])) }}"
-                            class="flex items-center gap-2 px-3 py-2 text-sm text-[#a9b8d3] hover:bg-[#1e293b] rounded-lg transition
-                                {{ (session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id ? 'bg-[#0c9f9c]/20 text-[#0c9f9c] font-medium' : '' }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-[#d5e5e0] hover:bg-white/10 rounded-lg transition
+                                {{ (session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id ? 'bg-[#0e9384]/25 text-white font-semibold' : '' }}"
                             wire:navigate
                         >
-                            <span class="w-5 h-5 flex items-center justify-center rounded bg-[#0c9f9c]/20 text-[#0c9f9c] text-xs font-bold">
+                            <span class="w-5 h-5 flex items-center justify-center rounded bg-[#0e9384]/25 text-[#7fd7c8] text-xs font-bold">
                                 {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($sucursal->nombre_sucursal, 0, 1)) }}
                             </span>
                             <span class="truncate">{{ $sucursal->nombre_sucursal }}</span>
                             @if((session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id)
-                                <svg class="ml-auto w-4 h-4 text-[#0c9f9c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <svg class="ml-auto w-4 h-4 text-[#7fd7c8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             @endif
                         </a>
                     @endforeach
@@ -104,7 +110,7 @@
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
-        <flux:header class="lg:hidden" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
+        <flux:header class="border-b border-[#cfddd7] bg-[#f7faf9] lg:hidden dark:border-[#33505c] dark:bg-[#22353f]" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
             <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
             <flux:spacer />
@@ -121,16 +127,16 @@
                     @foreach(\App\Models\Sucursal::orderBy('nombre_sucursal')->get() as $sucursal)
                         <a
                             href="{{ request()->fullUrlWithQuery(array_merge(request()->query(), ['sucursal' => $sucursal->id])) }}"
-                            class="flex items-center gap-2 px-3 py-2 text-sm text-[#a9b8d3] hover:bg-[#1e293b] rounded-lg transition
-                                {{ (session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id ? 'bg-[#0c9f9c]/20 text-[#0c9f9c] font-medium' : '' }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-[#d5e5e0] hover:bg-white/10 rounded-lg transition
+                                {{ (session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id ? 'bg-[#0e9384]/25 text-white font-semibold' : '' }}"
                             wire:navigate
                         >
-                            <span class="w-5 h-5 flex items-center justify-center rounded bg-[#0c9f9c]/20 text-[#0c9f9c] text-xs font-bold">
+                            <span class="w-5 h-5 flex items-center justify-center rounded bg-[#0e9384]/25 text-[#7fd7c8] text-xs font-bold">
                                 {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($sucursal->nombre_sucursal, 0, 1)) }}
                             </span>
                             <span class="truncate">{{ $sucursal->nombre_sucursal }}</span>
                             @if((session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id)
-                                <svg class="ml-auto w-4 h-4 text-[#0c9f9c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <svg class="ml-auto w-4 h-4 text-[#7fd7c8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             @endif
                         </a>
                     @endforeach

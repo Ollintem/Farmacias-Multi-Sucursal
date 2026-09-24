@@ -11,6 +11,24 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
+    /* Paleta FarmaERP — psicología del color para farmacia.
+       Tonos medios equilibrados: ni neón ni negro puro.
+       Teal = salud/higiene/confianza, petróleo = profesionalismo médico,
+       salvia = calma, terracota/ámbar solo para alertas. */
+    --color-farma-50: #eef5f2;
+    --color-farma-100: #dcebe5;
+    --color-farma-200: #bcd8cd;
+    --color-farma-300: #8fbcab;
+    --color-farma-400: #5da088;
+    --color-farma-500: #2f8570;
+    --color-farma-600: #0e9384;
+    --color-farma-700: #0c7569;
+    --color-farma-800: #155e57;
+    --color-farma-900: #174d48;
+    --color-petrol-500: #2a7fa0;
+    --color-petrol-700: #245a6b;
+    --color-petrol-900: #1a2a32;
+
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
     --color-zinc-200: #e5e5e5;
@@ -23,16 +41,16 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
-    --color-accent-foreground: var(--color-white);
+    --color-accent: var(--color-farma-600);
+    --color-accent-content: var(--color-farma-600);
+    --color-accent-foreground: #ffffff;
 }
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent: var(--color-farma-400);
+        --color-accent-content: var(--color-farma-300);
+        --color-accent-foreground: #10201d;
     }
 }
 
@@ -49,38 +67,51 @@
 
 @layer components {
     .erp-sidebar {
-        --color-accent: #0c9f9c;
+        --color-accent: #0e9384;
         --color-accent-content: #ffffff;
         --color-accent-foreground: #ffffff;
-        box-shadow: 8px 0 24px rgba(15, 23, 42, 0.08);
+        background: linear-gradient(180deg, #234e56 0%, #20444c 45%, #1c3d44 100%);
+        box-shadow: 8px 0 24px rgba(26, 42, 50, 0.12);
     }
 
+    /* Opciones del menú lateral: tipografía clara y jerarquía marcada */
     .erp-sidebar [data-flux-sidebar-item] {
-        min-height: 3rem;
+        min-height: 2.9rem;
         border-left: 3px solid transparent;
-        border-radius: 0;
-        color: #a9b8d3;
-        font-size: 0.9375rem;
-        margin-top: 3px;
-        margin-bottom: 3px;
+        border-radius: 0 0.75rem 0.75rem 0;
+        color: #d5e5e0;
+        font-size: 0.925rem;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        line-height: 1.35;
+        margin-top: 2px;
+        margin-bottom: 2px;
+        padding-left: 0.85rem;
+        transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
     }
 
     .erp-sidebar [data-flux-sidebar-item]:hover {
-        background: rgba(23, 162, 159, 0.12);
-        color: #f8fafc;
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
     }
 
     .erp-sidebar [data-current="true"] {
-        border-left-color: #16b8b1;
-        background: rgba(12, 159, 156, 0.22);
+        border-left-color: #5ec8b4;
+        background: rgba(14, 147, 132, 0.35);
         color: #ffffff;
         font-weight: 700;
+        letter-spacing: 0.015em;
     }
 
     .erp-sidebar [data-flux-sidebar-item] svg {
-        color: #91a7c9;
+        color: #a9c6bf;
         width: 20px;
         height: 20px;
+        flex-shrink: 0;
+    }
+
+    .erp-sidebar [data-flux-sidebar-item]:hover svg {
+        color: #d5e5e0;
     }
 
     .erp-sidebar [data-flux-sidebar-item][data-current="true"] svg {
@@ -92,46 +123,57 @@
     .erp-sidebar [data-flux-sidebar-badge] {
         min-width: 1.15rem;
         border-radius: 9999px;
-        background: #fb4b55;
+        background: #c0564b;
         color: white;
         font-size: 0.68rem;
         font-weight: 700;
     }
 
+    /* Marca y textos del encabezado del panel */
+    .erp-sidebar [data-flux-sidebar-brand] {
+        color: #ffffff;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+    }
+
+    .erp-sidebar [data-flux-sidebar-profile] {
+        color: #eef5f2;
+    }
+
     .erp-sidebar-version {
-        border-top: 1px solid rgba(148, 163, 184, 0.14);
-        color: #536887;
+        border-top: 1px solid rgba(190, 210, 203, 0.18);
+        color: #8fa9a3;
     }
 }
 
 /* --- Menú de usuario del sidebar (mismo tema FarmaERP) --- */
 
 .erp-user-menu [data-flux-menu] {
-    background: #16213c;
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    box-shadow: 0 16px 40px rgba(2, 6, 23, 0.5);
+    background: #1e3039;
+    border: 1px solid rgba(190, 210, 203, 0.22);
+    box-shadow: 0 16px 40px rgba(26, 42, 50, 0.5);
 }
 
 .erp-user-menu [data-flux-heading] {
-    color: #f8fafc;
+    color: #ffffff;
 }
 
 .erp-user-menu [data-flux-text] {
-    color: #a9b8d3;
+    color: #c3d4cf;
 }
 
 .erp-user-menu [data-flux-menu-item] {
-    color: #a9b8d3;
+    color: #d5e5e0;
 }
 
 .erp-user-menu [data-flux-menu-item]:hover,
 .erp-user-menu [data-flux-menu-item][data-active] {
-    background: rgba(12, 159, 156, 0.16);
+    background: rgba(14, 147, 132, 0.25);
     color: #ffffff;
 }
 
 .erp-user-menu [data-flux-menu-item-icon] {
-    color: #91a7c9;
+    color: #a9c6bf;
 }
 
 .erp-user-menu [data-flux-menu-item]:hover [data-flux-menu-item-icon],
@@ -292,12 +334,12 @@ select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 
-input:invalid,
-textarea:invalid,
-select:invalid,
-input:required:invalid,
-textarea:required:invalid,
-select:required:invalid {
+html:not(.dark) input:invalid,
+html:not(.dark) textarea:invalid,
+html:not(.dark) select:invalid,
+html:not(.dark) input:required:invalid,
+html:not(.dark) textarea:required:invalid,
+html:not(.dark) select:required:invalid {
     box-shadow: none;
     border-color: rgba(148, 163, 184, 0.6);
     background-color: rgba(255, 255, 255, 0.96);
@@ -311,6 +353,34 @@ textarea:required:invalid:focus,
 select:required:invalid:focus {
     box-shadow: 0 0 0 3px rgba(46, 200, 191, 0.15);
     border-color: rgba(46, 200, 191, 0.8);
+}
+
+/* Opciones de los desplegables (Rol, Sucursal, Lote, etc.): fondo y letra
+   explícitos para que la lista siempre sea legible en ambos modos. */
+.theme-input option,
+select.theme-input option {
+    background-color: #ffffff;
+    color: #0f172a;
+}
+
+.dark .theme-input option,
+.theme-dark .theme-input option {
+    background-color: #1e3039;
+    color: #e6efec;
+}
+
+.theme-input::placeholder {
+    color: #7d8f89;
+    opacity: 1;
+}
+
+.dark .theme-input::placeholder {
+    color: #8fa9a3;
+    opacity: 1;
+}
+
+.dark {
+    color-scheme: dark;
 }
 
 /* ==========================================================================
@@ -1352,4 +1422,224 @@ input[type="checkbox"]:checked {
 input[type="checkbox"]:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* ==========================================================================
+   FarmaERP — Sistema de diseño 2026 (psicología del color farmacia)
+   - Claro: fondo salvia medio #e9efec (no blanco puro), tarjetas #f7faf9.
+   - Oscuro: fondo petróleo suave #1a2a32 (no negro puro), superficie #22353f.
+   - Primario teal medio #0e9384 (salud/confianza), secundario petróleo #245a6b.
+   ========================================================================== */
+
+:root {
+    --farma-bg: #e9efec;
+    --farma-surface: #f7faf9;
+    --farma-surface-2: #eef4f1;
+    --farma-border: #cfddd7;
+    --farma-text: #22332f;
+    --farma-muted: #5f746e;
+    --farma-primary: #0e9384;
+    --farma-primary-strong: #0c7569;
+    --farma-primary-soft: rgba(14, 147, 132, 0.12);
+    --farma-petrol: #245a6b;
+    --farma-sidebar: #20444c;
+    --farma-sidebar-2: #1c3d44;
+}
+
+.dark {
+    --farma-bg: #1a2a32;
+    --farma-surface: #22353f;
+    --farma-surface-2: #1e3039;
+    --farma-border: #33505c;
+    --farma-text: #e6efec;
+    --farma-muted: #a9bfb8;
+    --farma-primary: #3fbda9;
+    --farma-primary-strong: #5ec8b4;
+    --farma-primary-soft: rgba(63, 189, 169, 0.14);
+    --farma-petrol: #33505c;
+    --farma-sidebar: #1e3039;
+    --farma-sidebar-2: #1a2a32;
+}
+
+body {
+    background-color: var(--farma-bg);
+    color: var(--farma-text);
+}
+
+.dark body {
+    background-color: var(--farma-bg);
+    color: var(--farma-text);
+}
+
+/* Superficies de módulo: unifican dashboard, inventario, usuarios, etc. */
+.module-page {
+    background: var(--farma-bg);
+    color: var(--farma-text);
+}
+
+.dark .module-page {
+    background: #1a2a32;
+    color: #e6efec;
+}
+
+.module-hero {
+    border: 1px solid var(--farma-border);
+    background: linear-gradient(120deg, #dcebe5 0%, #f7faf9 55%, #d7e5e8 100%);
+}
+
+.dark .module-hero {
+    border-color: #33505c;
+    background: linear-gradient(120deg, #234741 0%, #22353f 65%, #245a6b 100%);
+}
+
+.module-card,
+.module-stat,
+.module-table {
+    background: var(--farma-surface);
+    border-color: var(--farma-border);
+}
+
+.dark .module-card,
+.dark .module-stat,
+.dark .module-table {
+    background: #22353f;
+    border-color: #33505c;
+}
+
+/* Botones terapéuticos */
+.theme-button-primary {
+    background: linear-gradient(135deg, #23a894 0%, #0e9384 100%);
+    color: #ffffff;
+    box-shadow: 0 12px 28px rgba(14, 147, 132, 0.28);
+}
+
+.theme-button-primary:hover {
+    background: linear-gradient(135deg, #35b9a4 0%, #0c7569 100%);
+}
+
+.theme-button-secondary {
+    background: #f7faf9;
+    border-color: #cfddd7;
+    color: #20444c;
+}
+
+/* Interruptor de tema global */
+.farma-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1px solid var(--farma-border);
+    border-radius: 9999px;
+    background: var(--farma-surface);
+    color: var(--farma-text);
+    padding: 0.45rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.farma-theme-toggle:hover {
+    border-color: var(--farma-primary);
+    box-shadow: 0 8px 20px rgba(14, 147, 132, 0.18);
+    transform: translateY(-1px);
+}
+
+.dark .farma-theme-toggle {
+    background: #22353f;
+    border-color: #33505c;
+    color: #e6efec;
+}
+
+.farma-theme-dot {
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 9999px;
+    background: var(--farma-primary-soft);
+    color: var(--farma-primary-strong);
+}
+
+.dark .farma-theme-dot {
+    color: #5ec8b4;
+}
+
+.farma-kicker {
+    color: var(--farma-primary-strong);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.dark .farma-kicker {
+    color: #5ec8b4;
+}
+
+/* ==========================================================================
+   Barra lateral FarmaERP — fondo petróleo siempre oscuro.
+   Texto claro forzado en modo claro Y en modo oscuro. Bloque SIN @layer
+   para imponerse a las utilidades de Flux/Tailwind (text-zinc-500,
+   data-current:bg-white, etc.), que en modo claro dejaban la letra
+   invisible sobre el fondo oscuro.
+   ========================================================================== */
+
+.erp-sidebar [data-flux-sidebar-item] {
+    color: #e8f1ee;
+}
+
+.erp-sidebar [data-flux-sidebar-item]:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.erp-sidebar [data-flux-sidebar-item] svg {
+    color: #a9c6bf;
+}
+
+.erp-sidebar [data-flux-sidebar-item]:hover svg {
+    color: #e8f1ee;
+}
+
+.erp-sidebar [data-flux-sidebar-item][data-current] {
+    color: #ffffff;
+    font-weight: 700;
+    background-color: rgba(14, 147, 132, 0.38);
+    border-color: transparent;
+    border-left-color: #5ec8b4;
+}
+
+.erp-sidebar [data-flux-sidebar-item][data-current] svg {
+    color: #ffffff;
+}
+
+.erp-sidebar [data-flux-sidebar-brand],
+.erp-sidebar [data-flux-sidebar-brand] div {
+    color: #ffffff;
+}
+
+.erp-sidebar [data-flux-sidebar-profile],
+.erp-sidebar [data-flux-sidebar-profile] span {
+    color: #e8f1ee;
+}
+
+.erp-sidebar [data-flux-sidebar-profile]:hover span {
+    color: #ffffff;
+}
+
+.erp-sidebar [data-flux-sidebar-profile] svg,
+.erp-sidebar [data-flux-sidebar-collapse] button,
+.erp-sidebar [data-flux-sidebar-collapse] svg {
+    color: #a9c6bf;
+}
+
+.erp-sidebar [data-flux-sidebar-profile]:hover svg,
+.erp-sidebar [data-flux-sidebar-collapse] button:hover,
+.erp-sidebar [data-flux-sidebar-collapse] button:hover svg {
+    color: #ffffff;
+}
+
+.erp-sidebar [data-flux-sidebar-collapse] button:hover {
+    background-color: rgba(255, 255, 255, 0.08);
 }

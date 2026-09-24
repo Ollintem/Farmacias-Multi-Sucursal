@@ -3,11 +3,12 @@
         <div class="module-page-inner">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Panel general</p>
-                    <h1 class="mt-2 text-3xl font-bold">Dashboard farmacéutico</h1>
+                    <p class="farma-kicker">Panel general · Salud y confianza</p>
+                    <h1 class="mt-2 text-3xl font-bold tracking-tight">Dashboard farmacéutico</h1>
+                    <p class="theme-subtle mt-1 text-sm">Teal para higiene y calma, petróleo para respaldo médico profesional.</p>
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-primary">Ver usuarios</a>
                     <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-secondary">Nuevo usuario</a>
                 </div>
@@ -73,19 +74,19 @@
                         </div>
 
                         <div class="grid gap-4 md:grid-cols-3">
-                            <a href="{{ route('usuarios.index') }}" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 transition hover:border-emerald-400 hover:bg-emerald-100/80">
+                            <a href="{{ route('usuarios.index') }}" class="rounded-2xl border border-[#cfddd7] bg-[#eef5f2] p-4 transition hover:-translate-y-0.5 hover:border-[#0e9384] hover:bg-[#dcebe5] dark:border-[#33505c] dark:bg-[#1e3039] dark:hover:border-[#3fbda9]">
                                 <p class="text-base font-semibold">Usuarios</p>
-                                <p class="mt-1 text-sm text-slate-500">Gestión de personal</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Gestión de personal</p>
                             </a>
 
-                            <a href="#" class="rounded-2xl border border-sky-200 bg-sky-50 p-4 transition hover:border-sky-400 hover:bg-sky-100/80">
+                            <a href="#" class="rounded-2xl border border-[#bccfdd] bg-[#e8eff3] p-4 transition hover:-translate-y-0.5 hover:border-[#2a7fa0] hover:bg-[#d7e5e8] dark:border-[#33505c] dark:bg-[#1e3039] dark:hover:border-[#2a7fa0]">
                                 <p class="text-base font-semibold">Inventario</p>
-                                <p class="mt-1 text-sm text-slate-500">Productos y stock</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Productos y stock</p>
                             </a>
 
-                            <a href="#" class="rounded-2xl border border-violet-200 bg-violet-50 p-4 transition hover:border-violet-400 hover:bg-violet-100/80">
+                            <a href="#" class="rounded-2xl border border-[#d8cfae] bg-[#f3efe2] p-4 transition hover:-translate-y-0.5 hover:border-[#b7791f] hover:bg-[#ece5cf] dark:border-[#33505c] dark:bg-[#1e3039] dark:hover:border-[#b7791f]">
                                 <p class="text-base font-semibold">Sucursales</p>
-                                <p class="mt-1 text-sm text-slate-500">Control por tienda</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Control por tienda</p>
                             </a>
                         </div>
                     </div>
