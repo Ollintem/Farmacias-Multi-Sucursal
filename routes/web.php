@@ -35,8 +35,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/usuarios/{usuario}/permisos', [UsuariosController::class, 'permisos'])->name('usuarios.permisos')->middleware('checarPermisos:ver,usuarios');
     Route::put('/usuarios/{usuario}/permisos', [UsuariosController::class, 'updatePermisos'])->name('usuarios.updatePermisos')->middleware('checarPermisos:editar,usuarios');
     Route::get('/usuarios/{usuario}/edit', [UsuariosController::class, 'edit'])->name('usuarios.edit')->middleware('checarPermisos:editar,usuarios');
-    Route::put('/usuarios/{usuario}', [UsuariosController::class, 'update'])->name('usuarios.update')->middleware('checarPermisos:editar,usuarios')->middleware('checarPermisos:editar,usuarios');
-    Route::delete('/usuarios/{usuario}', [UsuariosController::class, 'delete'])->name('usuarios.delete')->middleware('checarPermisos:eliminar,usuarios')->middleware('checarPermisos:eliminar,usuarios');
+    Route::put('/usuarios/{usuario}', [UsuariosController::class, 'update'])->name('usuarios.update')->middleware('checarPermisos:editar,usuarios');
+    Route::delete('/usuarios/{usuario}', [UsuariosController::class, 'delete'])->name('usuarios.delete')->middleware('checarPermisos:eliminar,usuarios');
     // Roles
     Route::post('/roles', [RolesController::class, 'store'])->name('roles.store')->middleware('checarPermisos:crear,roles');
     Route::put('/roles/{rol}', [RolesController::class, 'update'])->name('roles.update')->middleware('checarPermisos:editar,roles');
@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('/caja', 'pages.modulos.placeholder', ['tituloModulo' => 'Caja'])->name('caja.index')->middleware('checarPermisos:ver,caja');
     Route::view('/reportes', 'pages.modulos.placeholder', ['tituloModulo' => 'Reportes'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
     Route::view('/alertas', 'pages.modulos.placeholder', ['tituloModulo' => 'Alertas'])->name('alertas.index')->middleware('checarPermisos:ver,alertas');
+    Route::view('/traspasos', 'pages.modulos.placeholder', ['tituloModulo' => 'Traspasos'])->name('traspasos.index')->middleware('checarPermisos:ver,traspasos');
 });
 
 require __DIR__.'/settings.php';
