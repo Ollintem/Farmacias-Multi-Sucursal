@@ -9,14 +9,17 @@ class Proveedor extends Model
 {
     protected $table = 'proveedores';
 
-    public $timestamps = false;
-
     protected $fillable = [
         'nombre_proveedor',
         'direccion',
         'unidad_entrega',
         'telefono',
         'correo',
+    ];
+
+    protected $casts = [
+        'creado_en' => 'datetime',
+        'actualizado_en' => 'datetime',
     ];
 
     public function lotes(): HasMany

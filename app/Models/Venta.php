@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Venta extends Model
 {
@@ -41,5 +42,10 @@ class Venta extends Model
     {
         return $this->belongsToMany(Producto::class, 'producto_venta', 'venta', 'producto')
             ->withPivot('cantidad', 'precio_unidad');
+    }
+
+    public function detalles(): HasMany
+    {
+        return $this->hasMany(ProductoVenta::class, 'venta');
     }
 }

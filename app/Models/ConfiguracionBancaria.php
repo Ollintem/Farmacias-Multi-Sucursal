@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class ConfiguracionBancaria extends Model
 {
-    public $timestamps = false;
-
     protected $table = 'configuracion_bancaria';
 
     protected $fillable = [
@@ -16,8 +14,6 @@ class ConfiguracionBancaria extends Model
         'beneficiario',
         'numero_cuenta',
         'correo_contacto',
-        'created_at',
-        'updated_at',
     ];
 
     public static function obtener(): static

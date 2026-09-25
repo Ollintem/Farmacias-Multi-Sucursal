@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CorteCaja extends Model
 {
+    public $timestamps = false;
+
     protected $table = 'cortes_caja';
 
     protected $fillable = [

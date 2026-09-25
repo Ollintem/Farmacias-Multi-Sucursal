@@ -109,6 +109,46 @@ class User extends Authenticatable
         return $this->hasMany(PermisoActivado::class, 'id_usuario');
     }
 
+    /**
+     * @return HasMany<Pedido, $this>
+     */
+    public function pedidosSolicitados(): HasMany
+    {
+        return $this->hasMany(Pedido::class, 'pedido_por');
+    }
+
+    /**
+     * @return HasMany<Pedido, $this>
+     */
+    public function pedidosRecibidos(): HasMany
+    {
+        return $this->hasMany(Pedido::class, 'recibido_por');
+    }
+
+    /**
+     * @return HasMany<CorteCaja, $this>
+     */
+    public function cortesCaja(): HasMany
+    {
+        return $this->hasMany(CorteCaja::class, 'id_usuario');
+    }
+
+    /**
+     * @return HasMany<Traspaso, $this>
+     */
+    public function traspasosSolicitados(): HasMany
+    {
+        return $this->hasMany(Traspaso::class, 'pedido_por');
+    }
+
+    /**
+     * @return HasMany<Traspaso, $this>
+     */
+    public function traspasosRecibidos(): HasMany
+    {
+        return $this->hasMany(Traspaso::class, 'recibido_por');
+    }
+
     /** @var array<int, string>|null */
     private ?array $modulosVisiblesCache = null;
 

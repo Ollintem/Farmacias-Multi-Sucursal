@@ -20,7 +20,6 @@ class Producto extends Model
         'descripcion',
         'stock',
         'precio',
-        'id_lote',
         'id_presentacion',
         'es_controlado',
         'es_activo',
@@ -28,15 +27,15 @@ class Producto extends Model
     ];
 
     protected $casts = [
+        'stock' => 'integer',
+        'precio' => 'float',
+        'id_presentacion' => 'integer',
         'es_controlado' => 'boolean',
         'es_activo' => 'boolean',
         'entregado_en' => 'datetime',
+        'creado_en' => 'datetime',
+        'actualizado_en' => 'datetime',
     ];
-
-    public function lote(): BelongsTo
-    {
-        return $this->belongsTo(Lote::class, 'id_lote');
-    }
 
     public function presentacion(): BelongsTo
     {
@@ -58,5 +57,11 @@ class Producto extends Model
     public function presentacionesPrecio(): HasMany
     {
         return $this->hasMany(ProductoPresentacion::class, 'producto');
+    }
+
+    public function ventas(): BelongsToMany
+    {
+        return $this->belongsToMany(Venta::class, 'producto_venta', 'producto', 'venta')
+            ->withPivot('cantidad', 'precio_unidad');
     }
 }

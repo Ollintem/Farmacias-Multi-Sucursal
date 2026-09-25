@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Lote extends Model
 {
@@ -18,6 +17,7 @@ class Lote extends Model
         'stock_lote',
         'id_pedido',
         'id_proveedor',
+        'id_producto',
         'entregado_en',
         'fecha_caducidad',
         'fecha_de_caducidad',
@@ -66,8 +66,8 @@ class Lote extends Model
         return $this->belongsTo(Proveedor::class, 'id_proveedor');
     }
 
-    public function productos(): HasMany
+    public function producto(): BelongsTo
     {
-        return $this->hasMany(Producto::class, 'id_lote');
+        return $this->belongsTo(Producto::class, 'id_producto');
     }
 }

@@ -60,4 +60,28 @@ class Sucursal extends Model
     {
         return $this->hasMany(Inventario::class, 'id_sucursal');
     }
+
+    /**
+     * @return HasMany<Caja, $this>
+     */
+    public function cajas(): HasMany
+    {
+        return $this->hasMany(Caja::class, 'id_sucursal');
+    }
+
+    /**
+     * @return HasMany<Traspaso, $this>
+     */
+    public function traspasosOrigen(): HasMany
+    {
+        return $this->hasMany(Traspaso::class, 'sucursal_a');
+    }
+
+    /**
+     * @return HasMany<Traspaso, $this>
+     */
+    public function traspasosDestino(): HasMany
+    {
+        return $this->hasMany(Traspaso::class, 'sucursal_b');
+    }
 }

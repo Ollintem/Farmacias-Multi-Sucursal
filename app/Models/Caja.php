@@ -14,6 +14,11 @@ class Caja extends Model
         'id_sucursal',
     ];
 
+    protected $casts = [
+        'creado_en' => 'datetime',
+        'actualizado_en' => 'datetime',
+    ];
+
     public function sucursal(): BelongsTo
     {
         return $this->belongsTo(Sucursal::class, 'id_sucursal');
