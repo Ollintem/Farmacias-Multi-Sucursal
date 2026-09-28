@@ -12,12 +12,7 @@
                 </div>
             </div>
 
-            <nav class="module-tabs" aria-label="Secciones de inventario">
-                @if(auth()->user()?->puedeVerModulo('Inventario') ?? false)
-                    <a href="{{ route('inventario.index', ['sucursal' => $selectedSucursal?->id]) }}" class="module-tab">Productos y stock</a>
-                @endif
-                <a href="{{ route('lotes.index', ['sucursal' => $selectedSucursal?->id]) }}" class="module-tab module-tab-active">Lotes y caducidades</a>
-            </nav>
+            @include('pages.inventario.tabs', ['seccion' => 'lotes', 'selectedSucursal' => $selectedSucursal])
 
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div class="module-stat">
@@ -57,7 +52,7 @@
                 </div>
             </div>
 
-            <div class="module-card p-5 sm:p-6">
+            <div class="module-card p-5 sm:p-6" x-data="buscadorTabla()" x-effect="filtrar($el)">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="theme-subtle text-xs uppercase tracking-[0.25em]">Sucursal activa</p>
@@ -65,7 +60,7 @@
                     </div>
 
                     <form method="GET" action="{{ route('lotes.index') }}" class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <input type="search" name="buscar" value="{{ old('buscar', $busqueda) }}" placeholder="Buscar folio, proveedor o producto" class="theme-input w-full sm:w-72" aria-label="Buscar lote">
+                        <input type="search" name="buscar" value="{{ old('buscar', $busqueda) }}" placeholder="Buscar folio, proveedor o producto" class="theme-input w-full sm:w-72" aria-label="Buscar lote" @input.debounce.200ms="texto = $event.target.value">
                         <button type="submit" class="theme-button theme-button-secondary whitespace-nowrap">Buscar</button>
                     </form>
                 </div>
@@ -86,8 +81,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($lotes as $lote)
-                                    <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5">
+                                @foreach($lotes as $lote)
+                                    <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5" data-buscar="{{ $lote['folio'] }} {{ $lote['producto'] }} {{ $lote['marca'] }}">
                                         <td class="px-4 py-3 font-medium text-slate-800">{{ $lote['folio'] }}</td>
                                         <td class="px-4 py-3">
                                             <div class="font-medium text-slate-800">{{ $lote['producto'] }}</div>
@@ -101,13 +96,12 @@
                                             <span class="status-badge {{ $lote['estado_class'] }}">{{ $lote['estado'] }}</span>
                                         </td>
                                     </tr>
-                                @empty
-                                    <tr>
+                                @endforeach
+                                    <tr data-vacio @if($lotes->isNotEmpty()) style="display: none" @endif>
                                         <td colspan="8" class="px-4 py-10 text-center text-slate-500">
                                             No se encontraron lotes para la sucursal o búsqueda actual.
                                         </td>
                                     </tr>
-                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -115,4 +109,6 @@
             </div>
         </div>
     </div>
+
+    @include('partials.buscador-cliente')
 </x-layouts::app>

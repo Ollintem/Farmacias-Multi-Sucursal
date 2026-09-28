@@ -20,7 +20,9 @@ class DatabaseSeeder extends Seeder
             RolSeeder::class,
             ModuloSeeder::class,
             PresentacionProductoSeeder::class,
+            CategoriaSeeder::class,
             ProveedorSeeder::class,
+            LoteSeeder::class,
             UserSeeder::class,
             PermisoActivadoSeeder::class,
         ]);

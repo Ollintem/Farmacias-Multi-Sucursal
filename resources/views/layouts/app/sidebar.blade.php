@@ -4,7 +4,7 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-[#e9efec] text-[#22332f] dark:bg-[#1a2a32] dark:text-[#e6efec]" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
-        <flux:sidebar sticky collapsible="true" class="erp-sidebar border-e border-[#2c545e] bg-[#20444c] text-[#c3d4cf] dark:bg-[#1e3039]">
+        <flux:sidebar id="app-sidebar" sticky collapsible class="erp-sidebar border-e border-[#2c545e] bg-[#20444c] text-[#c3d4cf] dark:bg-[#1e3039]">
             <flux:sidebar.header>
                 <flux:sidebar.brand name="FarmaERP" href="{{ route('dashboard') }}" wire:navigate>
                     <x-slot name="logo" class="erp-logo flex aspect-square size-8 items-center justify-center rounded-xl bg-[#0e9384] text-white shadow-lg shadow-black/20">
@@ -27,7 +27,7 @@
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Inventario') ?? false)
-                <flux:sidebar.item icon="archive-box" :href="route('inventario.index')" :current="request()->routeIs('inventario.*')" wire:navigate>
+                <flux:sidebar.item icon="archive-box" :href="route('inventario.productos')" :current="request()->routeIs('inventario.*')" wire:navigate>
                     Inventario
                 </flux:sidebar.item>
                 @endif
@@ -111,7 +111,7 @@
 
         <!-- Mobile User Menu -->
         <flux:header class="border-b border-[#cfddd7] bg-[#f7faf9] lg:hidden dark:border-[#33505c] dark:bg-[#22353f]" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
-            <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
+            <flux:sidebar.toggle for="app-sidebar" class="lg:hidden" icon="bars-2" inset="left" />
 
             <flux:spacer />
 
@@ -205,7 +205,10 @@
                 const dateStr = now.toLocaleDateString('es-ES', options);
                 const parts = dateStr.split(' ');
                 const formatted = `${parts[0]}, ${parts[1]} de ${parts[2]} de ${parts[3]}`;
-                document.querySelector('[x-text="currentDate"]')?.textContent = formatted;
+                const fecha = document.querySelector('[x-text="currentDate"]');
+                if (fecha) {
+                    fecha.textContent = formatted;
+                }
             }
         </script>
 

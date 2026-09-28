@@ -97,9 +97,17 @@
 
                                 <div class="mt-auto pt-2">
                                     <div class="flex items-end justify-between">
-                                        <span class="text-lg font-extrabold text-[#0c9f9c]">
-                                            ${{ number_format($producto->precio, 2) }}
-                                        </span>
+                                        @if($producto->precio !== null)
+                                            <span class="text-lg font-extrabold text-[#0c9f9c]">
+                                                ${{ number_format($producto->precio, 2) }}
+                                            </span>
+                                        @elseif($producto->presentacionesPrecio->isNotEmpty())
+                                            <span class="text-lg font-extrabold text-[#0c9f9c]">
+                                                Desde ${{ number_format($producto->presentacionesPrecio->min('precio_presentacion'), 2) }}
+                                            </span>
+                                        @else
+                                            <span class="text-sm font-medium text-slate-400 dark:text-zinc-500">Sin precio</span>
+                                        @endif
 
                                         <button
                                             wire:click="agregarAlCarrito({{ $producto->id }})"
@@ -163,7 +171,12 @@
                                             {{ $item['nombre'] }}
                                         </h4>
                                         @if($item['presentacion'])
-                                            <p class="text-xs text-slate-500 dark:text-zinc-400">{{ ucfirst($item['presentacion']) }}</p>
+                                            <p class="text-xs text-slate-500 dark:text-zinc-400">
+                                                {{ ucfirst($item['presentacion']) }}
+                                                @if(($item['tipo_venta'] ?? 'unidad') === 'presentacion')
+                                                    &middot; {{ $item['unidades'] ?? 1 }} und
+                                                @endif
+                                            </p>
                                         @endif
                                         <p class="mt-1 text-sm font-bold text-[#0c9f9c]">${{ number_format($item['precio'], 2) }}</p>
                                     </div>
@@ -191,7 +204,7 @@
                                         <button
                                             wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] + 1 }})"
                                             class="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
-                                            @disabled($item['cantidad'] >= $item['stock'])
+                                            @disabled($item['cantidad'] >= (int) floor($item['stock'] / (($item['tipo_venta'] ?? 'unidad') === 'presentacion' ? max(1, (int) ($item['unidades'] ?? 1)) : 1)))
                                         >
                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                                         </button>
@@ -306,7 +319,12 @@
                                         <div class="min-w-0 flex-1">
                                             <h4 class="text-sm font-semibold text-slate-800 dark:text-white line-clamp-1">{{ $item['nombre'] }}</h4>
                                             @if($item['presentacion'])
-                                                <p class="text-xs text-slate-500 dark:text-zinc-400">{{ ucfirst($item['presentacion']) }}</p>
+                                                <p class="text-xs text-slate-500 dark:text-zinc-400">
+                                                    {{ ucfirst($item['presentacion']) }}
+                                                    @if(($item['tipo_venta'] ?? 'unidad') === 'presentacion')
+                                                        &middot; {{ $item['unidades'] ?? 1 }} und
+                                                    @endif
+                                                </p>
                                             @endif
                                             <p class="mt-1 text-sm font-bold text-[#0c9f9c]">${{ number_format($item['precio'], 2) }}</p>
                                         </div>
@@ -320,7 +338,7 @@
                                                 <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/></svg>
                                             </button>
                                             <span class="w-8 text-center text-sm font-bold text-slate-800 dark:text-white">{{ $item['cantidad'] }}</span>
-                                            <button wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] + 1 }})" class="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600" @disabled($item['cantidad'] >= $item['stock'])>
+                                            <button wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] + 1 }})" class="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600" @disabled($item['cantidad'] >= (int) floor($item['stock'] / (($item['tipo_venta'] ?? 'unidad') === 'presentacion' ? max(1, (int) ($item['unidades'] ?? 1)) : 1)))>
                                                 <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                                             </button>
                                         </div>
@@ -905,6 +923,68 @@
                     >
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         Validar y continuar
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════════════════════════════════════════════════ --}}
+    {{-- Modal Selector de Presentación (productos sin precio unitario) --}}
+    {{-- ═══════════════════════════════════════════════════════════ --}}
+    @if($selectorProductoId)
+        <div class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarSelector"></div>
+
+            <div class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-900">
+                {{-- Header --}}
+                <div class="bg-[#0c9f9c] px-6 py-5 text-center">
+                    <svg class="mx-auto h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    <h3 class="mt-2 text-lg font-bold text-white">Seleccionar presentación</h3>
+                    <p class="mt-1 text-sm font-medium text-emerald-100">{{ $selectorNombreProducto }}</p>
+                </div>
+
+                <div class="px-6 py-5">
+                    @if(empty($selectorPresentaciones))
+                        <p class="text-center text-sm text-slate-500 dark:text-zinc-400">
+                            Este producto no tiene presentaciones registradas.
+                        </p>
+                    @else
+                        <p class="mb-4 text-xs text-slate-500 dark:text-zinc-400">
+                            Elige la presentación con la que se venderá este producto.
+                        </p>
+
+                        <div class="flex flex-col gap-2">
+                            @foreach($selectorPresentaciones as $presentacion)
+                                <button
+                                    wire:click="elegirPresentacion({{ $presentacion['id'] }})"
+                                    class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-[#0c9f9c] hover:bg-[#0c9f9c]/5 active:scale-[0.99] dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-[#0c9f9c]"
+                                >
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800 dark:text-white">
+                                            {{ ucfirst($presentacion['presentacion']) }}
+                                        </p>
+                                        <p class="text-xs text-slate-500 dark:text-zinc-400">
+                                            {{ $presentacion['unidades'] }} und
+                                        </p>
+                                    </div>
+                                    <span class="text-base font-extrabold text-[#0c9f9c]">
+                                        ${{ number_format($presentacion['precio'], 2) }}
+                                    </span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                <div class="border-t border-slate-200 px-6 py-4 dark:border-zinc-700">
+                    <button
+                        wire:click="cerrarSelector"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 active:scale-[0.98] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    >
+                        Cancelar
                     </button>
                 </div>
             </div>

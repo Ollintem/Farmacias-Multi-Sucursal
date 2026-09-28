@@ -47,10 +47,19 @@ class PuntoDeVenta extends Component
 
     public bool $esSuperAdmin = false;
 
+    // Selector de presentación (productos sin precio unitario)
+    public $selectorProductoId = null;
+
+    public string $selectorNombreProducto = '';
+
+    public array $selectorPresentaciones = [];
+
     // Receta modal (controlled meds)
     public bool $mostrandoReceta = false;
 
     public int $recetaProductoId = 0;
+
+    public ?int $recetaPresentacionId = null;
 
     public string $recetaNombreMedico = '';
 
@@ -86,7 +95,7 @@ class PuntoDeVenta extends Component
     public function getProductosProperty(): \Illuminate\Database\Eloquent\Collection
     {
         $query = Producto::query()
-            ->with(['presentacion'])
+            ->with(['presentacion', 'presentacionesPrecio.presentacion'])
             ->activeSucursal()
             ->where('es_activo', true);
 
@@ -99,7 +108,12 @@ class PuntoDeVenta extends Component
         }
 
         if ($this->filtroPresentacion !== '') {
-            $query->where('id_presentacion', $this->filtroPresentacion);
+            $query->where(function ($q) {
+                $q->where('id_presentacion', $this->filtroPresentacion)
+                    ->orWhereHas('presentacionesPrecio', function ($subQuery) {
+                        $subQuery->where('id_presentacion', $this->filtroPresentacion);
+                    });
+            });
         }
 
         return $query->orderBy('nombre_producto')->get();
@@ -108,6 +122,21 @@ class PuntoDeVenta extends Component
     public function getCantidadArticulosProperty(): int
     {
         return array_sum(array_column($this->carrito, 'cantidad'));
+    }
+
+    /**
+     * Unidades totales que consume un ítem del carrito en stock.
+     *
+     * Entrada: ítem del carrito.
+     * Salida: cantidad × unidades por presentación (1 por unidad).
+     */
+    private function unidadesRequeridas(array $item): int
+    {
+        $unidades = ($item['tipo_venta'] ?? 'unidad') === 'presentacion'
+            ? max(1, (int) ($item['unidades'] ?? 1))
+            : 1;
+
+        return (int) $item['cantidad'] * $unidades;
     }
 
     public function getCantidadProductosProperty(): int
@@ -177,7 +206,13 @@ class PuntoDeVenta extends Component
 
     public function agregarAlCarrito(int $productoId): void
     {
-        $producto = Producto::findOrFail($productoId);
+        $producto = Producto::with('presentacionesPrecio.presentacion')->findOrFail($productoId);
+
+        if ($producto->precio === null) {
+            $this->abrirSelector($productoId);
+
+            return;
+        }
 
         if ($producto->es_controlado) {
             $this->abrirReceta($productoId);
@@ -187,7 +222,7 @@ class PuntoDeVenta extends Component
 
         $existe = false;
         foreach ($this->carrito as $index => $item) {
-            if ($item['producto_id'] === $productoId) {
+            if ($item['producto_id'] === $productoId && ($item['tipo_venta'] ?? 'unidad') === 'unidad') {
                 if ($this->carrito[$index]['cantidad'] < $producto->stock) {
                     $this->carrito[$index]['cantidad']++;
                 }
@@ -205,7 +240,114 @@ class PuntoDeVenta extends Component
                 'stock' => $producto->stock,
                 'presentacion' => $producto->presentacion?->presentacion ?? '',
                 'es_controlado' => $producto->es_controlado,
+                'tipo_venta' => 'unidad',
             ];
+        }
+
+        $this->guardarCarrito();
+    }
+
+    // ─── Selector de presentación (productos sin precio unitario) ──
+
+    public function abrirSelector(int $productoId): void
+    {
+        $producto = Producto::with('presentacionesPrecio.presentacion')->findOrFail($productoId);
+
+        $this->selectorProductoId = $producto->id;
+        $this->selectorNombreProducto = $producto->nombre_producto;
+        $this->selectorPresentaciones = $producto->presentacionesPrecio
+            ->map(fn ($rel) => [
+                'id' => $rel->id,
+                'presentacion' => $rel->presentacion?->presentacion ?? '',
+                'unidades' => (int) $rel->unidades,
+                'precio' => (float) $rel->precio_presentacion,
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function cerrarSelector(): void
+    {
+        $this->selectorProductoId = null;
+        $this->selectorNombreProducto = '';
+        $this->selectorPresentaciones = [];
+    }
+
+    public function elegirPresentacion(int $presentacionPrecioId): void
+    {
+        $productoId = $this->selectorProductoId;
+
+        if (! $productoId) {
+            return;
+        }
+
+        $producto = Producto::find($productoId);
+
+        if ($producto && $producto->es_controlado) {
+            $this->recetaPresentacionId = $presentacionPrecioId;
+            $this->cerrarSelector();
+            $this->abrirReceta($productoId);
+
+            return;
+        }
+
+        $this->agregarItemPresentacion($productoId, $presentacionPrecioId);
+        $this->cerrarSelector();
+    }
+
+    private function agregarItemPresentacion(int $productoId, int $presentacionPrecioId, ?array $receta = null): void
+    {
+        $producto = Producto::with('presentacionesPrecio.presentacion')->findOrFail($productoId);
+        $relacion = $producto->presentacionesPrecio->firstWhere('id', $presentacionPrecioId);
+
+        if (! $relacion) {
+            return;
+        }
+
+        $unidades = max(1, (int) $relacion->unidades);
+        $maxPresentaciones = (int) floor($producto->stock / $unidades);
+
+        if ($maxPresentaciones < 1) {
+            return;
+        }
+
+        $existe = false;
+        foreach ($this->carrito as $index => $item) {
+            if (
+                $item['producto_id'] === $productoId
+                && ($item['tipo_venta'] ?? 'unidad') === 'presentacion'
+                && (int) ($item['presentacion_id'] ?? 0) === $presentacionPrecioId
+            ) {
+                if ($this->carrito[$index]['cantidad'] < $maxPresentaciones) {
+                    $this->carrito[$index]['cantidad']++;
+                }
+                if ($receta !== null) {
+                    $this->carrito[$index]['receta'] = $receta;
+                }
+                $existe = true;
+                break;
+            }
+        }
+
+        if (! $existe) {
+            $item = [
+                'producto_id' => $producto->id,
+                'nombre' => $producto->nombre_producto,
+                'precio' => (float) $relacion->precio_presentacion,
+                'cantidad' => 1,
+                'stock' => $producto->stock,
+                'presentacion' => $relacion->presentacion?->presentacion ?? '',
+                'es_controlado' => $producto->es_controlado,
+                'tipo_venta' => 'presentacion',
+                'presentacion_id' => $relacion->id,
+                'unidades' => $unidades,
+            ];
+
+            if ($receta !== null) {
+                $item['receta'] = $receta;
+            }
+
+            $this->carrito[] = $item;
         }
 
         $this->guardarCarrito();
@@ -226,8 +368,12 @@ class PuntoDeVenta extends Component
         }
 
         $cantidad = max(1, $cantidad);
-        $stockDisponible = $this->carrito[$index]['stock'];
-        $cantidad = min($cantidad, $stockDisponible);
+        $item = $this->carrito[$index];
+        $unidades = ($item['tipo_venta'] ?? 'unidad') === 'presentacion'
+            ? max(1, (int) ($item['unidades'] ?? 1))
+            : 1;
+        $maximo = (int) floor($item['stock'] / $unidades);
+        $cantidad = min($cantidad, max(1, $maximo));
 
         $this->carrito[$index]['cantidad'] = $cantidad;
         $this->guardarCarrito();
@@ -264,6 +410,7 @@ class PuntoDeVenta extends Component
     {
         $this->mostrandoReceta = false;
         $this->errorReceta = '';
+        $this->recetaPresentacionId = null;
     }
 
     public function validarYAgregar(): void
@@ -285,6 +432,24 @@ class PuntoDeVenta extends Component
         if (! $producto) {
             $this->errorReceta = 'El producto ya no esta disponible.';
             $this->mostrandoReceta = false;
+            $this->recetaPresentacionId = null;
+
+            return;
+        }
+
+        $receta = [
+            'nombre_medico' => $nombreMedico,
+            'cedula_profesional' => $cedula,
+            'folio_receta' => $folio,
+            'fecha_receta' => $fecha,
+        ];
+
+        // Producto controlado elegido desde el selector de presentación
+        if ($this->recetaPresentacionId !== null) {
+            $presentacionId = $this->recetaPresentacionId;
+            $this->recetaPresentacionId = null;
+            $this->mostrandoReceta = false;
+            $this->agregarItemPresentacion($producto->id, $presentacionId, $receta);
 
             return;
         }
@@ -292,16 +457,11 @@ class PuntoDeVenta extends Component
         // Add to cart with receta data
         $existe = false;
         foreach ($this->carrito as $index => $item) {
-            if ($item['producto_id'] === $this->recetaProductoId) {
+            if ($item['producto_id'] === $this->recetaProductoId && ($item['tipo_venta'] ?? 'unidad') === 'unidad') {
                 if ($this->carrito[$index]['cantidad'] < $producto->stock) {
                     $this->carrito[$index]['cantidad']++;
                 }
-                $this->carrito[$index]['receta'] = [
-                    'nombre_medico' => $nombreMedico,
-                    'cedula_profesional' => $cedula,
-                    'folio_receta' => $folio,
-                    'fecha_receta' => $fecha,
-                ];
+                $this->carrito[$index]['receta'] = $receta;
                 $existe = true;
                 break;
             }
@@ -316,12 +476,8 @@ class PuntoDeVenta extends Component
                 'stock' => $producto->stock,
                 'presentacion' => $producto->presentacion?->presentacion ?? '',
                 'es_controlado' => $producto->es_controlado,
-                'receta' => [
-                    'nombre_medico' => $nombreMedico,
-                    'cedula_profesional' => $cedula,
-                    'folio_receta' => $folio,
-                    'fecha_receta' => $fecha,
-                ],
+                'tipo_venta' => 'unidad',
+                'receta' => $receta,
             ];
         }
 
@@ -407,8 +563,8 @@ class PuntoDeVenta extends Component
                     return;
                 }
 
-                if ($producto->stock < $item['cantidad']) {
-                    $this->errorVenta = "Stock insuficiente para '{$item['nombre']}'. Disponible: {$producto->stock}, solicitado: {$item['cantidad']}.";
+                if ($producto->stock < $this->unidadesRequeridas($item)) {
+                    $this->errorVenta = "Stock insuficiente para '{$item['nombre']}'. Disponible: {$producto->stock}, solicitado: {$this->unidadesRequeridas($item)} unidades.";
                     $this->procesando = false;
 
                     return;
@@ -501,9 +657,9 @@ class PuntoDeVenta extends Component
                         'precio_unidad' => $item['precio'],
                     ]);
 
-                    // Decrement stock
+                    // Decrement stock (unidades: 1 caja de 10 und descuenta 10)
                     Producto::where('id', $item['producto_id'])
-                        ->decrement('stock', $item['cantidad']);
+                        ->decrement('stock', $this->unidadesRequeridas($item));
                 }
 
                 return $venta;

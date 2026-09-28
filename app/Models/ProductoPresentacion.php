@@ -13,10 +13,12 @@ class ProductoPresentacion extends Model
         'id_presentacion',
         'producto',
         'precio_presentacion',
+        'unidades',
     ];
 
     protected $casts = [
         'precio_presentacion' => 'float',
+        'unidades' => 'integer',
     ];
 
     public function presentacion(): BelongsTo

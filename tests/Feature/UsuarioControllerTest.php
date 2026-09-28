@@ -98,7 +98,12 @@ it('muestra el formulario de edición con los datos y permisos del usuario', fun
 
     $response->assertOk()
         ->assertSee('ana_cajera')
-        ->assertSee('Permisos por módulo')
+        ->assertSee(route('usuarios.permisos', $usuario));
+
+    $this->actingAs($admin)
+        ->get(route('usuarios.permisos', $usuario))
+        ->assertOk()
+        ->assertSee('Permisos por modulo')
         ->assertSee($modulo->nombre_modulo)
         ->assertSee('Ver');
 });
@@ -285,5 +290,10 @@ it('muestra el modo edición con controles para modificar los permisos', functio
     $response->assertOk()
         ->assertSee('Editar usuario')
         ->assertSee('Guardar cambios')
+        ->assertSee(route('usuarios.permisos', $usuario));
+
+    $this->actingAs($admin)
+        ->get(route('usuarios.permisos', $usuario))
+        ->assertOk()
         ->assertSee('Activar todo');
 });

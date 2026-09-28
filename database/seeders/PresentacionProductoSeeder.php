@@ -16,8 +16,6 @@ class PresentacionProductoSeeder extends Seeder
             [
                 ['presentacion' => 'caja', 'descripcion' => 'Empaque con múltiples unidades del producto.'],
                 ['presentacion' => 'blister', 'descripcion' => 'Lámina con dosis individuales selladas.'],
-                ['presentacion' => 'ampolleta', 'descripcion' => 'Recipiente sellado de vidrio para uso inyectable.'],
-                ['presentacion' => 'pastilla', 'descripcion' => 'Unidad individual de medicamento sólido.'],
             ] as $presentacion
         ) {
             PresentacionProducto::updateOrCreate(
