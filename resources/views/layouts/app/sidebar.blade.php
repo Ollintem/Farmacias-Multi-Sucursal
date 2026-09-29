@@ -36,9 +36,9 @@
                     Entradas de almacén
                 </flux:sidebar.item>
                 @endif
-                @if($usuarioActual?->puedeVerModulo('Traspasos') ?? false)
-                <flux:sidebar.item icon="arrows-right-left" :href="route('traspasos.index')" :current="request()->routeIs('traspasos.*')" wire:navigate>
-                    Traspasos
+                @if($usuarioActual?->puedeVerModulo('Proveedores') ?? false)
+                <flux:sidebar.item icon="truck" :href="route('proveedores.index')" :current="request()->routeIs('proveedores.*')" wire:navigate>
+                    Proveedores
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Sucursales') ?? false)

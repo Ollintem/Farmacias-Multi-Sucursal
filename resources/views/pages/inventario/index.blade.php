@@ -125,10 +125,10 @@
                                         <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $producto->codigo_barras }}</td>
                                         <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $producto->nombre_producto }}</td>
                                         <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $producto->descripcion ?: 'Sin descripción' }}</td>
-                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $producto->stock }} uds.</td>
+                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $producto->stock_sucursal ?? $producto->stock }} uds.</td>
                                         <td class="px-4 py-3 text-slate-700 dark:text-slate-200">${{ number_format($producto->precio, 2) }}</td>
                                         <td class="px-4 py-3">
-                                            @if($producto->stock <= 15)
+                                            @if(($producto->stock_sucursal ?? $producto->stock) <= 15)
                                                 <span class="inventory-status inventory-status-low">Bajo</span>
                                             @else
                                                 <span class="inventory-status inventory-status-available">Disponible</span>

@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('inventario', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_sucursal')->constrained('sucursales')->cascadeOnDelete();
-            $table->foreignId('id_producto')->constrained('productos')->cascadeOnDelete();
+            $table->foreignId('id_lote')->constrained('lotes')->cascadeOnDelete();
             $table->integer('stock')->default(0);
             $table->timestamps();
-            $table->unique(['id_sucursal', 'id_producto']);
+            $table->unique(['id_sucursal', 'id_lote']);
         });
 
         Schema::create('presentacion_producto', function (Blueprint $table) {

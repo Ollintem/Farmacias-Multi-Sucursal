@@ -222,6 +222,7 @@ class User extends Authenticatable
         'lotes-y-caducidades' => 'Lotes y caducidades',
         'entradas' => 'Entradas de almacén',
         'entradas-de-almacen' => 'Entradas de almacén',
+        'proveedores' => 'Proveedores',
         'traspasos' => 'Traspasos',
         'sucursales' => 'Sucursales',
         'usuarios' => 'Usuarios y roles',

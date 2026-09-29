@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Lote extends Model
 {
@@ -16,7 +17,6 @@ class Lote extends Model
         'folio',
         'stock_lote',
         'id_pedido',
-        'id_proveedor',
         'id_producto',
         'entregado_en',
         'fecha_caducidad',
@@ -56,18 +56,22 @@ class Lote extends Model
         });
     }
 
+    /**
+     * Pedido de compra que originó el lote. El proveedor se resuelve vía
+     * pedido (`$lote->pedido?->proveedor`).
+     */
     public function pedido(): BelongsTo
     {
         return $this->belongsTo(Pedido::class, 'id_pedido');
     }
 
-    public function proveedor(): BelongsTo
-    {
-        return $this->belongsTo(Proveedor::class, 'id_proveedor');
-    }
-
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class, 'id_producto');
+    }
+
+    public function inventarios(): HasMany
+    {
+        return $this->hasMany(Inventario::class, 'id_lote');
     }
 }

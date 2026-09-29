@@ -8,6 +8,7 @@ use App\Models\Lote;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\Sucursal;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -29,7 +30,12 @@ class InventarioController extends Controller
     }
 
     /**
-     * Muestra la pestaña Stock filtrada por sucursal y texto de búsqueda.
+     * Muestra la pestaña Stock: todos los productos activos con su stock en la
+     * sucursal seleccionada (0 si no tienen inventario ahí).
+     *
+     * El stock por sucursal vive en `inventario` y llega al producto vía lote,
+     * por eso se agrega con Inventario::stockPorProducto() en lugar de usar el
+     * stock global de `productos`.
      *
      * Entrada: query string `sucursal` y `buscar`.
      * Salida: resources/views/pages/inventario/index.blade.php.
@@ -43,23 +49,23 @@ class InventarioController extends Controller
 
         $busqueda = trim((string) $request->query('buscar', ''));
 
-        $productos = Producto::query()
-            ->with('sucursales')
-            ->activeSucursal()
-            ->where('es_activo', true)
-            ->when($busqueda !== '', function ($query, $busqueda) {
-                $query->where(function ($subQuery) use ($busqueda) {
-                    $subQuery->where('codigo_barras', 'like', "%{$busqueda}%")
-                        ->orWhere('id', $busqueda)
-                        ->orWhere('nombre_producto', 'like', "%{$busqueda}%");
-                });
-            })
-            ->orderBy('nombre_producto')
-            ->get();
+        $stockPorProducto = $selectedSucursal
+            ? Inventario::stockPorProducto((int) $selectedSucursal->id)
+            : [];
 
-        $stockTotal = (int) $productos->sum('stock');
-        $stockCritico = $productos->filter(fn (Producto $producto) => $producto->stock <= 15)->count();
-        $valorTotal = $productos->sum(fn (Producto $producto) => (float) $producto->stock * (float) $producto->precio);
+        $productos = Producto::query()
+            ->where('productos.es_activo', true)
+            ->when($busqueda !== '', fn (Builder $query) => $this->aplicarBusquedaProducto($query, $busqueda))
+            ->orderBy('productos.nombre_producto')
+            ->get()
+            ->each(fn (Producto $producto) => $producto->setAttribute(
+                'stock_sucursal',
+                (int) ($stockPorProducto[$producto->id] ?? 0)
+            ));
+
+        $stockTotal = (int) $productos->sum('stock_sucursal');
+        $stockCritico = $productos->filter(fn (Producto $producto) => (int) $producto->stock_sucursal <= 15)->count();
+        $valorTotal = $productos->sum(fn (Producto $producto) => (float) $producto->stock_sucursal * (float) $producto->precio);
 
         return view('pages.inventario.index', compact(
             'sucursales',
@@ -70,6 +76,24 @@ class InventarioController extends Controller
             'valorTotal',
             'busqueda',
         ));
+    }
+
+    /**
+     * Filtro de búsqueda compartido por las pestañas Stock y Productos.
+     *
+     * Busca por código de barras o nombre (los campos que promete el
+     * placeholder del formulario y que el filtrado en tiempo real usa en
+     * `data-buscar`), con columnas calificadas para evitar ambigüedades.
+     *
+     * Entrada: query Eloquent de productos y texto ya recortado (no vacío).
+     * Salida: ninguna, modifica el query recibido.
+     */
+    private function aplicarBusquedaProducto(Builder $query, string $busqueda): void
+    {
+        $query->where(function (Builder $subQuery) use ($busqueda) {
+            $subQuery->where('productos.codigo_barras', 'like', "%{$busqueda}%")
+                ->orWhere('productos.nombre_producto', 'like', "%{$busqueda}%");
+        });
     }
 
     /**
@@ -173,18 +197,18 @@ class InventarioController extends Controller
 
         $productos = Producto::query()
             ->with(['categoria', 'presentacionesPrecio.presentacion'])
-            ->withSum('inventarios', 'stock')
             ->withCount(['lotes', 'ventas'])
-            ->when($busqueda !== '', function ($query, $busqueda) {
-                $query->where(function ($subQuery) use ($busqueda) {
-                    $subQuery->where('codigo_barras', 'like', "%{$busqueda}%")
-                        ->orWhere('nombre_producto', 'like', "%{$busqueda}%");
-                });
-            })
-            ->orderBy('nombre_producto')
-            ->get()
-            ->map(function (Producto $producto) use ($presentacionCaja) {
-                $conStock = (int) $producto->stock > 0 || (int) $producto->sum_stock > 0;
+            ->when($busqueda !== '', fn (Builder $query) => $this->aplicarBusquedaProducto($query, $busqueda))
+            ->orderBy('productos.nombre_producto')
+            ->get();
+
+        // El stock en sucursales vive en `inventario` (por lote): se agrega en
+        // una sola consulta para no depender de columnas inexistentes.
+        $stockInventario = Inventario::stockPorProducto();
+
+        $productos = $productos
+            ->map(function (Producto $producto) use ($presentacionCaja, $stockInventario) {
+                $conStock = (int) $producto->stock > 0 || (int) ($stockInventario[$producto->id] ?? 0) > 0;
                 $conLotes = (int) $producto->lotes_count > 0;
                 $conVentas = (int) $producto->ventas_count > 0;
 
@@ -356,12 +380,13 @@ class InventarioController extends Controller
      * Determina si el producto tiene unidades disponibles.
      *
      * Entrada: producto.
-     * Salida: true si hay stock global o en alguna sucursal.
+     * Salida: true si hay stock global o en el inventario de alguna sucursal
+     * (el inventario se vincula al producto vía lote).
      */
     private function tieneStock(Producto $producto): bool
     {
         return (int) $producto->stock > 0
-            || (int) Inventario::where('id_producto', $producto->id)->sum('stock') > 0;
+            || (int) $producto->inventarios()->sum('inventario.stock') > 0;
     }
 
     /**

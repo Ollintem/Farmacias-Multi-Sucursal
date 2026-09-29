@@ -18,6 +18,10 @@
             'siglas' => 'En',
             'descripcion' => 'Aquí se registrarán las entradas de mercancía al almacén: recepción de proveedores, cantidades, lotes y documentos de respaldo.',
         ],
+        'Proveedores' => [
+            'siglas' => 'Pv',
+            'descripcion' => 'Aquí se administrará el catálogo de proveedores: datos de contacto, condiciones de entrega y su vínculo con pedidos y lotes.',
+        ],
         'Traspasos' => [
             'siglas' => 'Tr',
             'descripcion' => 'Aquí se gestionarán los traspasos de productos entre sucursales, con folios de salida, recepción y control de existencias.',

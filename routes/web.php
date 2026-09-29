@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LotesController;
 use App\Http\Controllers\PresentacionController;
+use App\Http\Controllers\ProveedoresController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\SucursalesController;
 use App\Http\Controllers\UsuariosController;
@@ -70,7 +71,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('/caja', 'pages.modulos.placeholder', ['tituloModulo' => 'Caja'])->name('caja.index')->middleware('checarPermisos:ver,caja');
     Route::view('/reportes', 'pages.modulos.placeholder', ['tituloModulo' => 'Reportes'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
     Route::view('/alertas', 'pages.modulos.placeholder', ['tituloModulo' => 'Alertas'])->name('alertas.index')->middleware('checarPermisos:ver,alertas');
-    Route::view('/traspasos', 'pages.modulos.placeholder', ['tituloModulo' => 'Traspasos'])->name('traspasos.index')->middleware('checarPermisos:ver,traspasos');
+
+    // Módulo: proveedores
+    Route::get('/proveedores', [ProveedoresController::class, 'index'])->name('proveedores.index')->middleware('checarPermisos:ver,proveedores');
+    Route::get('/proveedores/create', [ProveedoresController::class, 'create'])->name('proveedores.create')->middleware('checarPermisos:crear,proveedores');
+    Route::post('/proveedores', [ProveedoresController::class, 'store'])->name('proveedores.store')->middleware('checarPermisos:crear,proveedores');
+    Route::get('/proveedores/{proveedor}/edit', [ProveedoresController::class, 'edit'])->name('proveedores.edit')->middleware('checarPermisos:editar,proveedores');
+    Route::put('/proveedores/{proveedor}', [ProveedoresController::class, 'update'])->name('proveedores.update')->middleware('checarPermisos:editar,proveedores');
+
 });
 
 require __DIR__.'/settings.php';

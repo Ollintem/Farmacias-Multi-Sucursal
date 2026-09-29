@@ -76,3 +76,34 @@ it('permite el acceso cuando el usuario aún no tiene permisos configurados', fu
         ->get(route('usuarios.index'))
         ->assertOk();
 });
+
+it('muestra Proveedores en el sidebar y abre su ruta cuando el usuario puede verlo', function () {
+    $usuario = crearUsuarioConRol('Cajero');
+    otorgarPermiso($usuario, 'Dashboard');
+    otorgarPermiso($usuario, 'Proveedores');
+
+    $this->actingAs($usuario)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Proveedores')
+        ->assertSee(route('proveedores.index'), false);
+
+    $this->actingAs($usuario)
+        ->get(route('proveedores.index'))
+        ->assertOk()
+        ->assertSee('Proveedores');
+});
+
+it('oculta Proveedores del sidebar cuando el usuario no puede verlo', function () {
+    $usuario = crearUsuarioConRol('Cajero');
+    otorgarPermiso($usuario, 'Dashboard');
+
+    $this->actingAs($usuario)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertDontSee('Proveedores');
+
+    $this->actingAs($usuario)
+        ->get(route('proveedores.index'))
+        ->assertForbidden();
+});

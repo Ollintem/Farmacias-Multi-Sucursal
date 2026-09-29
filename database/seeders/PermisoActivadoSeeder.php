@@ -42,6 +42,25 @@ class PermisoActivadoSeeder extends Seeder
             );
         }
 
+        // Acceso explícito del admin al módulo Proveedores (complementa el
+        // acceso total del ciclo anterior para dejarlo garantizado).
+        $proveedores = $modulos->firstWhere('nombre_modulo', 'Proveedores');
+
+        if ($proveedores) {
+            PermisoActivado::updateOrCreate(
+                [
+                    'id_usuario' => $admin->id,
+                    'id_modulo' => $proveedores->id,
+                ],
+                [
+                    'puede_ver' => true,
+                    'puede_crear' => true,
+                    'puede_editar' => true,
+                    'puede_borrar' => true,
+                ]
+            );
+        }
+
         // Usuario 2 (pruebas): permisos limitados, solo operativo básico.
         $accesosLimitados = [
             'Dashboard' => ['puede_ver' => true, 'puede_crear' => false, 'puede_editar' => false, 'puede_borrar' => false],

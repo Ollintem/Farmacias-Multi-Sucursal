@@ -2,17 +2,15 @@
 
 namespace App\Models;
 
-use App\Models\Traits\BelongsToSucursal;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Producto extends Model
 {
-    use BelongsToSucursal;
-
     protected $table = 'productos';
 
     protected $fillable = [
@@ -50,16 +48,9 @@ class Producto extends Model
         return $this->belongsTo(Categoria::class, 'id_categoria');
     }
 
-    public function sucursales(): BelongsToMany
+    public function inventarios(): HasManyThrough
     {
-        return $this->belongsToMany(Sucursal::class, 'inventario', 'id_producto', 'id_sucursal')
-            ->withPivot('stock')
-            ->withTimestamps();
-    }
-
-    public function inventarios(): HasMany
-    {
-        return $this->hasMany(Inventario::class, 'id_producto');
+        return $this->hasManyThrough(Inventario::class, Lote::class, 'id_producto', 'id_lote', 'id', 'id');
     }
 
     public function presentacionesPrecio(): HasMany

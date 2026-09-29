@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
             PresentacionProductoSeeder::class,
             CategoriaSeeder::class,
             ProveedorSeeder::class,
-            LoteSeeder::class,
             UserSeeder::class,
             PermisoActivadoSeeder::class,
         ]);

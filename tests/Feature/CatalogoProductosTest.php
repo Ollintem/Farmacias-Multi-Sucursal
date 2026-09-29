@@ -145,7 +145,18 @@ test('no se puede desactivar un producto que tiene stock', function () {
         'nombre_producto' => 'Stock sucursal',
     ]);
 
-    Inventario::where('id_producto', $conStockSucursal->id)->update(['stock' => 6]);
+    $loteSucursal = Lote::create([
+        'folio' => 'L-STOCK-1',
+        'stock_lote' => 6,
+        'id_producto' => $conStockSucursal->id,
+        'fecha_caducidad' => '2027-01-01',
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $sucursal->id,
+        'id_lote' => $loteSucursal->id,
+        'stock' => 6,
+    ]);
 
     foreach ([$conStockGlobal, $conStockSucursal] as $producto) {
         $this->withSession(['active_sucursal_id' => $sucursal->id])

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Categoria;
+use App\Models\Inventario;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\Rol;
@@ -125,10 +126,9 @@ test('el inventario guarda un producto con categoria y presentaciones en la sucu
         'stock' => 0,
     ]);
 
-    $this->assertDatabaseHas('inventario', [
-        'id_producto' => $producto->id,
-        'id_sucursal' => $sucursal->id,
-    ]);
+    // El alta de producto no crea filas de inventario: el stock de la sucursal
+    // llega después con el registro de lotes (LotesController::store).
+    expect(Inventario::count())->toBe(0);
 
     $this->assertDatabaseHas('presentacion_producto', [
         'producto' => $producto->id,

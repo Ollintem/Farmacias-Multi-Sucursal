@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Inventario;
 use App\Models\Lote;
+use App\Models\Pedido;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
-use App\Models\Proveedor;
 use App\Models\Sucursal;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +19,10 @@ class LotesController extends Controller
     /**
      * Muestra lotes y su producto asociado, filtrados por sucursal vía inventario.
      *
+     * El vínculo con la sucursal vive en `inventario` (`id_sucursal`, `id_lote`).
+     * Los lotes sin filas de inventario (sin asignar) se muestran en todas las
+     * sucursales para no ocultar registros recién capturados.
+     *
      * Entrada: query string `sucursal` y `buscar`.
      * Salida: resources/views/pages/lotes/index.blade.php con estados de caducidad.
      */
@@ -29,16 +33,18 @@ class LotesController extends Controller
         $selectedSucursal = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
         $busqueda = trim((string) $request->query('buscar', ''));
 
-        $lotes = Lote::with(['producto.sucursales', 'proveedor', 'pedido'])
+        $lotes = Lote::with(['producto', 'pedido.proveedor', 'inventarios.sucursal'])
             ->when($selectedSucursal, function ($query, $sucursal) {
-                $query->whereHas('producto.sucursales', function ($subQuery) use ($sucursal) {
-                    $subQuery->where('sucursales.id', $sucursal->id);
+                $query->where(function ($subQuery) use ($sucursal) {
+                    $subQuery->whereHas('inventarios', function ($inventarioQuery) use ($sucursal) {
+                        $inventarioQuery->where('inventario.id_sucursal', $sucursal->id);
+                    })->orWhereDoesntHave('inventarios');
                 });
             })
             ->when($busqueda !== '', function ($query, $busqueda) {
                 $query->where(function ($subQuery) use ($busqueda) {
                     $subQuery->where('folio', 'like', "%{$busqueda}%")
-                        ->orWhereHas('proveedor', function ($proveedorQuery) use ($busqueda) {
+                        ->orWhereHas('pedido.proveedor', function ($proveedorQuery) use ($busqueda) {
                             $proveedorQuery->where('nombre_proveedor', 'like', "%{$busqueda}%");
                         })
                         ->orWhereHas('producto', function ($productoQuery) use ($busqueda) {
@@ -50,9 +56,11 @@ class LotesController extends Controller
             ->get()
             ->map(function ($lote) use ($selectedSucursal) {
                 $producto = $lote->producto;
-                $sucursal = $producto?->sucursales->first();
+                $inventarioSucursal = $selectedSucursal
+                    ? $lote->inventarios->firstWhere('id_sucursal', $selectedSucursal->id)
+                    : $lote->inventarios->first();
                 $nombreProducto = $producto?->nombre_producto ?? 'Producto sin nombre';
-                $nombreSucursal = $sucursal?->nombre_sucursal ?? $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal';
+                $nombreSucursal = $inventarioSucursal?->sucursal?->nombre_sucursal ?? $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal';
                 $fechaCaducidad = ($lote->fecha_de_caducidad ?? $lote->fecha_caducidad)
                     ? Carbon::parse($lote->fecha_de_caducidad ?? $lote->fecha_caducidad)
                     : null;
@@ -77,7 +85,7 @@ class LotesController extends Controller
                 return [
                     'folio' => $lote->folio,
                     'producto' => $nombreProducto,
-                    'marca' => $lote->proveedor?->nombre_proveedor ?? 'Sin proveedor',
+                    'marca' => $lote->pedido?->proveedor?->nombre_proveedor ?? 'Sin proveedor',
                     'sucursal' => $nombreSucursal,
                     'cantidad' => (int) $lote->stock_lote,
                     'fecha_entrada' => $lote->entregado_en ? Carbon::parse($lote->entregado_en)->format('Y-m-d') : '-',
@@ -114,11 +122,11 @@ class LotesController extends Controller
     public function create(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
-        $proveedores = Proveedor::orderBy('nombre_proveedor')->get();
+        $pedidos = Pedido::with(['proveedor', 'sucursal'])->orderByDesc('id')->get();
         $presentaciones = PresentacionProducto::orderBy('presentacion')->get();
         $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
 
-        return view('pages.lotes.create', compact('sucursales', 'proveedores', 'presentaciones', 'selectedSucursalId'));
+        return view('pages.lotes.create', compact('sucursales', 'pedidos', 'presentaciones', 'selectedSucursalId'));
     }
 
     /**
@@ -131,7 +139,7 @@ class LotesController extends Controller
     {
         $data = $request->validate([
             'folio' => ['required', 'string', 'max:20', 'unique:lotes,folio'],
-            'id_proveedor' => ['required', 'exists:proveedores,id'],
+            'id_pedido' => ['nullable', 'exists:pedidos,id'],
             'sucursal' => ['required', 'exists:sucursales,id'],
             'entregado_en' => ['required', 'date'],
             'fecha_caducidad' => ['required', 'date', 'after_or_equal:entregado_en'],
@@ -157,10 +165,10 @@ class LotesController extends Controller
                 'es_activo' => true,
             ]);
 
-            Lote::create([
+            $lote = Lote::create([
                 'folio' => $data['folio'],
                 'stock_lote' => $data['stock'],
-                'id_proveedor' => $data['id_proveedor'],
+                'id_pedido' => $data['id_pedido'] ?? null,
                 'id_producto' => $producto->id,
                 'entregado_en' => $data['entregado_en'],
                 'fecha_caducidad' => $data['fecha_caducidad'],
@@ -170,7 +178,7 @@ class LotesController extends Controller
             Inventario::updateOrCreate(
                 [
                     'id_sucursal' => $data['sucursal'],
-                    'id_producto' => $producto->id,
+                    'id_lote' => $lote->id,
                 ],
                 ['stock' => $data['stock']]
             );

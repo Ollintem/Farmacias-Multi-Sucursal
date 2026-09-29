@@ -13,7 +13,6 @@ return new class extends Migration
             $table->string('folio', 20);
             $table->integer('stock_lote')->default(0);
             $table->foreignId('id_pedido')->nullable()->constrained('pedidos')->nullOnDelete();
-            $table->foreignId('id_proveedor')->nullable()->constrained('proveedores')->cascadeOnDelete();
             // Columna sin constraint inline: `productos` aún no existe (se crea en
             // 000009). La FK se agrega en 000009 después de crear `productos`.
             $table->foreignId('id_producto')->nullable();

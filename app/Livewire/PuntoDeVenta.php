@@ -96,7 +96,6 @@ class PuntoDeVenta extends Component
     {
         $query = Producto::query()
             ->with(['presentacion', 'presentacionesPrecio.presentacion'])
-            ->activeSucursal()
             ->where('es_activo', true);
 
         if ($this->busqueda !== '') {

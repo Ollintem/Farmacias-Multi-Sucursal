@@ -19,6 +19,7 @@ class ModuloSeeder extends Seeder
                 'Inventario',
                 'Lotes y caducidades',
                 'Entradas de almacén',
+                'Proveedores',
                 'Traspasos',
                 'Sucursales',
                 'Usuarios y roles',

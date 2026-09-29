@@ -31,16 +31,16 @@
                     </div>
 
                     <div>
-                        <label class="mb-2 block text-sm font-medium">Proveedor</label>
-                        <select name="id_proveedor" class="theme-input" required>
-                            <option value="">Selecciona un proveedor</option>
-                            @foreach($proveedores as $proveedor)
-                                <option value="{{ $proveedor->id }}" {{ old('id_proveedor') == $proveedor->id ? 'selected' : '' }}>
-                                    {{ $proveedor->nombre_proveedor }}
+                        <label class="mb-2 block text-sm font-medium">Pedido de compra (opcional)</label>
+                        <select name="id_pedido" class="theme-input">
+                            <option value="">Sin pedido (registro directo)</option>
+                            @foreach($pedidos as $pedido)
+                                <option value="{{ $pedido->id }}" {{ old('id_pedido') == $pedido->id ? 'selected' : '' }}>
+                                    #{{ $pedido->id }} · {{ $pedido->proveedor?->nombre_proveedor ?? 'Sin proveedor' }} · {{ $pedido->sucursal?->nombre_sucursal ?? 'Sin sucursal' }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('id_proveedor')
+                        @error('id_pedido')
                             <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                         @enderror
                     </div>

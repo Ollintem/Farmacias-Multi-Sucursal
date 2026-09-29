@@ -16,8 +16,6 @@ return new class extends Migration
             $table->foreignId('recibido_por')->nullable()->constrained('usuarios')->nullOnDelete();
             $table->string('estado', 30)->default('pendiente');
             $table->timestamp('entregado_en')->nullable();
-            $table->timestamp('creado_en')->useCurrent();
-            $table->timestamp('actualizado_en')->useCurrent()->useCurrentOnUpdate();
             $table->timestamps();
         });
     }
