@@ -45,9 +45,10 @@ it('loads the lote creation form with pedido-driven proveedor and sucursal selec
         ->getContent();
 
     expect($contenido)
-        ->toContain('<input type="hidden" name="id_proveedor"')
-        ->toContain('<input type="hidden" name="sucursal"')
-        ->toContain('<input type="hidden" name="id_presentacion"')
+        ->toContain('name="id_pedido"')
+        ->toContain('name="id_proveedor"')
+        ->toContain('name="sucursal"')
+        ->toContain('vienen del pedido')
         ->toContain('Proveedor Demo')
         ->toContain('Lotes Create');
 });

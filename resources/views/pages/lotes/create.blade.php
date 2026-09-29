@@ -33,20 +33,7 @@
 
                     <div
                         class="md:col-span-2 grid gap-5 md:grid-cols-3"
-                        x-data="{
-                            pedido: '{{ old('id_pedido', '') }}',
-                            proveedor: '{{ old('id_proveedor', '') }}',
-                            sucursal: '{{ old('sucursal', $selectedSucursalId ?? '') }}',
-                            mapa: @json($mapaPedidos),
-                            get pedidoInfo() { return this.mapa[this.pedido] ?? null; },
-                            aplicarPedido() {
-                                const info = this.pedidoInfo;
-                                if (info) {
-                                    this.proveedor = info.proveedor_id !== null ? String(info.proveedor_id) : '';
-                                    this.sucursal = String(info.sucursal_id);
-                                }
-                            },
-                        }"
+                        x-data="lotePedido()"
                     >
                         <div>
                             <label class="mb-2 block text-sm font-medium">Pedido de compra (opcional)</label>
@@ -114,12 +101,7 @@
 
                     <div
                         class="md:col-span-2 grid gap-5 md:grid-cols-2"
-                        x-data="{
-                            producto: '{{ old('id_producto', '') }}',
-                            presentacion: '{{ old('id_presentacion', '') }}',
-                            mapa: @json($presentacionesPorProducto),
-                            get presentaciones() { return this.mapa[this.producto] ?? []; },
-                        }"
+                        x-data="loteProducto()"
                     >
                         <div>
                             <label class="mb-2 block text-sm font-medium">Producto</label>
@@ -166,5 +148,43 @@
             </form>
         </div>
     </div>
+
+    <script>
+        function lotePedido() {
+            return {
+                pedido: {!! json_encode((string) old('id_pedido', '')) !!},
+                proveedor: {!! json_encode((string) old('id_proveedor', '')) !!},
+                sucursal: {!! json_encode((string) old('sucursal', $selectedSucursalId ?? '')) !!},
+                mapa: {!! json_encode($mapaPedidos) !!},
+                get pedidoInfo() { return this.mapa[this.pedido] ?? null; },
+                aplicarPedido() {
+                    const info = this.pedidoInfo;
+                    if (info) {
+                        this.proveedor = info.proveedor_id !== null ? String(info.proveedor_id) : '';
+                        this.sucursal = String(info.sucursal_id);
+                    }
+                },
+            };
+        }
+
+        function loteProducto() {
+            return {
+                producto: {!! json_encode((string) old('id_producto', '')) !!},
+                presentacion: {!! json_encode((string) old('id_presentacion', '')) !!},
+                mapa: {!! json_encode($presentacionesPorProducto) !!},
+                get presentaciones() { return this.mapa[this.producto] ?? []; },
+            };
+        }
+
+        if (window.Alpine) {
+            window.Alpine.data('lotePedido', lotePedido);
+            window.Alpine.data('loteProducto', loteProducto);
+        }
+
+        document.addEventListener('alpine:init', () => {
+            window.Alpine.data('lotePedido', lotePedido);
+            window.Alpine.data('loteProducto', loteProducto);
+        });
+    </script>
 
 </x-layouts::app>
