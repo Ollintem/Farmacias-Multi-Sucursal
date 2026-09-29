@@ -97,17 +97,17 @@
                                 <p class="theme-subtle text-sm">Resumen de operación</p>
                                 <h3 class="mt-1 text-xl font-bold">Farmacia hoy</h3>
                             </div>
-                            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">Sin datos</span>
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-zinc-800 dark:text-zinc-300">Sin datos</span>
                         </div>
 
                         <div class="mt-5 grid gap-4 md:grid-cols-2">
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                <p class="text-sm text-slate-600">Ventas en línea</p>
-                                <p class="mt-2 text-2xl font-bold text-slate-400">Sin datos</p>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/60">
+                                <p class="text-sm font-medium text-slate-700 dark:text-zinc-300">Ventas en línea</p>
+                                <p class="mt-2 text-2xl font-bold text-slate-500 dark:text-zinc-400">Sin datos</p>
                             </div>
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                <p class="text-sm text-slate-600">Pedidos pendientes</p>
-                                <p class="mt-2 text-2xl font-bold text-slate-400">Sin datos</p>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/60">
+                                <p class="text-sm font-medium text-slate-700 dark:text-zinc-300">Pedidos pendientes</p>
+                                <p class="mt-2 text-2xl font-bold text-slate-500 dark:text-zinc-400">Sin datos</p>
                             </div>
                         </div>
                     </div>

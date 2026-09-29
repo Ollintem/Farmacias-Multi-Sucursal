@@ -46,15 +46,16 @@
                     </div>
 
                     <div>
+                        <label class="mb-2 block text-sm font-medium">Proveedor (referencia, opcional)</label>
+                        <x-option-pick name="id_proveedor" label="Proveedores" placeholder="Selecciona un proveedor" :options="$proveedores->pluck('nombre_proveedor', 'id')" />
+                        @error('id_proveedor')
+                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div>
                         <label class="mb-2 block text-sm font-medium">Sucursal</label>
-                        <select name="sucursal" class="theme-input" required>
-                            <option value="">Selecciona una sucursal</option>
-                            @foreach($sucursales as $sucursal)
-                                <option value="{{ $sucursal->id }}" {{ old('sucursal', $selectedSucursalId) == $sucursal->id ? 'selected' : '' }}>
-                                    {{ $sucursal->nombre_sucursal }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <x-option-pick name="sucursal" label="Sucursales" placeholder="Selecciona una sucursal" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="$selectedSucursalId ?? ''" />
                         @error('sucursal')
                             <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                         @enderror
@@ -94,14 +95,7 @@
 
                     <div>
                         <label class="mb-2 block text-sm font-medium">Presentación</label>
-                        <select name="id_presentacion" class="theme-input" required>
-                            <option value="">Selecciona una presentación</option>
-                            @foreach($presentaciones as $presentacion)
-                                <option value="{{ $presentacion->id }}" {{ old('id_presentacion') == $presentacion->id ? 'selected' : '' }}>
-                                    {{ $presentacion->presentacion }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <x-option-pick name="id_presentacion" label="Presentaciones" placeholder="Selecciona una presentación" :options="$presentaciones->pluck('presentacion', 'id')" />
                         @error('id_presentacion')
                             <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                         @enderror

@@ -72,12 +72,6 @@
 
             <div class="erp-sidebar-version px-3 pb-2 text-xs">v2.4.1 - Julio 2026</div>
 
-            {{-- Único interruptor de modo claro/oscuro: solo vive en el panel lateral
-                 y se aplica a todas las vistas hasta que el usuario lo cambie. --}}
-            <div class="px-3 pb-2">
-                <x-theme-toggle />
-            </div>
-
             {{-- Selector de Sucursal Global (mismo estilo que usuario) --}}
             <flux:dropdown position="bottom" align="start" class="erp-user-menu">
                 <flux:sidebar.profile
@@ -149,6 +143,8 @@
                 class="hidden sm:inline-block text-xs font-medium text-[#6b7280] font-mono mr-3"
             ></span>
 
+            <x-theme-toggle :compacto="true" />
+
             <flux:dropdown position="top" align="end">
                 <flux:profile
                     :initials="auth()->user()->initials()"
@@ -211,6 +207,13 @@
                 }
             }
         </script>
+
+        {{-- Barra superior de escritorio: el interruptor de tema vive aquí,
+             arriba a la derecha, visible en todas las vistas. --}}
+        <div class="farma-topbar hidden lg:flex">
+            <span x-text="currentDate" class="farma-topbar-fecha"></span>
+            <x-theme-toggle :compacto="true" />
+        </div>
 
         {{ $slot }}
 

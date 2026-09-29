@@ -47,7 +47,7 @@ test('el formulario de creacion carga con categorias y presentaciones', function
         ->assertDontSee('Stock inicial');
 });
 
-test('los desplegables de categoria y presentacion muestran la accion de crear nueva entrada', function () {
+test('los selectores de categoria y presentacion muestran la accion de crear nueva entrada', function () {
     $sucursal = Sucursal::create([
         'nombre_sucursal' => 'Sucursal Dropdown',
         'direccion' => 'Av. Dropdown 1',
@@ -71,8 +71,9 @@ test('los desplegables de categoria y presentacion muestran la accion de crear n
         ->toContain('Agregar nueva categoría')
         ->toContain('Agregar nueva presentación')
         ->toContain('x-on:click.capture.window')
-        ->toContain('data-dropdown')
-        ->toContain('bg-emerald-50')
+        ->toContain('role="listbox"')
+        ->toContain("abrirModal('categoria')")
+        ->toContain("abrirModal('presentacion'")
         ->not->toContain('value="__nueva"')
         ->not->toContain('chequearNuevaCategoria')
         ->not->toContain('insertBefore');

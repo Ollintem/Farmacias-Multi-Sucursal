@@ -71,14 +71,7 @@
 
                             <div>
                                 <label class="mb-2 block text-sm font-medium">Rol</label>
-                                <select name="id_rol" class="theme-input" required>
-                                    <option value="">Selecciona un rol</option>
-                                    @foreach($roles as $rol)
-                                        <option value="{{ $rol->id }}" {{ (int) old('id_rol', $usuario->id_rol) === $rol->id ? 'selected' : '' }}>
-                                            {{ $rol->tipo_rol }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <x-option-pick name="id_rol" label="Roles" placeholder="Selecciona un rol" :options="$roles->pluck('tipo_rol', 'id')" :value="$usuario->id_rol" />
                                 @error('id_rol')
                                     <span class="mt-1 block text-xs text-red-500">{{ $message }}</span>
                                 @enderror
@@ -86,14 +79,7 @@
 
                             <div>
                                 <label class="mb-2 block text-sm font-medium">Sucursal</label>
-                                <select name="id_sucursal" class="theme-input">
-                                    <option value="">Selecciona una sucursal</option>
-                                    @foreach($sucursales as $sucursal)
-                                        <option value="{{ $sucursal->id }}" {{ (int) old('id_sucursal', $usuario->id_sucursal) === $sucursal->id ? 'selected' : '' }}>
-                                            {{ $sucursal->nombre_sucursal }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <x-option-pick name="id_sucursal" label="Sucursales" placeholder="Selecciona una sucursal" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="$usuario->id_sucursal" />
                                 @error('id_sucursal')
                                     <span class="mt-1 block text-xs text-red-500">{{ $message }}</span>
                                 @enderror

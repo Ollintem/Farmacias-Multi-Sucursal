@@ -83,22 +83,22 @@
                             <tbody>
                                 @foreach($lotes as $lote)
                                     <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5" data-buscar="{{ $lote['folio'] }} {{ $lote['producto'] }} {{ $lote['marca'] }}">
-                                        <td class="px-4 py-3 font-medium text-slate-800">{{ $lote['folio'] }}</td>
+                                        <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $lote['folio'] }}</td>
                                         <td class="px-4 py-3">
-                                            <div class="font-medium text-slate-800">{{ $lote['producto'] }}</div>
+                                            <div class="font-medium text-slate-800 dark:text-slate-100">{{ $lote['producto'] }}</div>
                                         </td>
-                                        <td class="px-4 py-3 text-slate-600">{{ $lote['marca'] }}</td>
-                                        <td class="px-4 py-3 text-slate-700">{{ $lote['sucursal'] }}</td>
-                                        <td class="px-4 py-3 text-slate-700">{{ $lote['cantidad'] }} uds.</td>
-                                        <td class="px-4 py-3 text-slate-600">{{ $lote['fecha_entrada'] }}</td>
-                                        <td class="px-4 py-3 text-slate-600">{{ $lote['fecha_caducidad'] }}</td>
+                                        <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $lote['marca'] }}</td>
+                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $lote['sucursal'] }}</td>
+                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $lote['cantidad'] }} uds.</td>
+                                        <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $lote['fecha_entrada'] }}</td>
+                                        <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $lote['fecha_caducidad'] }}</td>
                                         <td class="px-4 py-3">
                                             <span class="status-badge {{ $lote['estado_class'] }}">{{ $lote['estado'] }}</span>
                                         </td>
                                     </tr>
                                 @endforeach
                                     <tr data-vacio @if($lotes->isNotEmpty()) style="display: none" @endif>
-                                        <td colspan="8" class="px-4 py-10 text-center text-slate-500">
+                                        <td colspan="8" class="px-4 py-10 text-center text-slate-500 dark:text-slate-400">
                                             No se encontraron lotes para la sucursal o búsqueda actual.
                                         </td>
                                     </tr>

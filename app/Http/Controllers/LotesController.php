@@ -7,6 +7,7 @@ use App\Models\Lote;
 use App\Models\Pedido;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
+use App\Models\Proveedor;
 use App\Models\Sucursal;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -123,10 +124,11 @@ class LotesController extends Controller
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $pedidos = Pedido::with(['proveedor', 'sucursal'])->orderByDesc('id')->get();
+        $proveedores = Proveedor::orderBy('nombre_proveedor')->get();
         $presentaciones = PresentacionProducto::orderBy('presentacion')->get();
         $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
 
-        return view('pages.lotes.create', compact('sucursales', 'pedidos', 'presentaciones', 'selectedSucursalId'));
+        return view('pages.lotes.create', compact('sucursales', 'pedidos', 'proveedores', 'presentaciones', 'selectedSucursalId'));
     }
 
     /**
@@ -140,6 +142,7 @@ class LotesController extends Controller
         $data = $request->validate([
             'folio' => ['required', 'string', 'max:20', 'unique:lotes,folio'],
             'id_pedido' => ['nullable', 'exists:pedidos,id'],
+            'id_proveedor' => ['nullable', 'exists:proveedores,id'],
             'sucursal' => ['required', 'exists:sucursales,id'],
             'entregado_en' => ['required', 'date'],
             'fecha_caducidad' => ['required', 'date', 'after_or_equal:entregado_en'],

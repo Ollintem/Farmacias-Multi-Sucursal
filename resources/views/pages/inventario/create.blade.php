@@ -153,7 +153,7 @@
 
                             <div>
                                 <label class="mb-2 block text-sm font-medium">Categoría</label>
-                                                <div class="relative" data-dropdown>
+                                <div data-dropdown>
                                     <input type="hidden" name="id_categoria" :value="categoriaSeleccionada">
 
                                     <button
@@ -163,35 +163,31 @@
                                         x-bind:aria-expanded="dropdownAbierto === 'categoria'"
                                         aria-haspopup="listbox"
                                     >
-                                        <span x-bind:class="categoriaSeleccionada === '' ? 'opacity-60' : ''" x-text="nombreCategoria"></span>
+                                        <span x-bind:class="categoriaSeleccionada === '' ? 'opacity-60' : 'font-semibold'" x-text="nombreCategoria"></span>
                                         <svg
                                             class="h-4 w-4 shrink-0 text-slate-400 transition-transform"
-                                            x-bind:class="dropdownAbierto === 'categoria' ? 'rotate-180' : ''"
+                                            x-bind:class="dropdownAbierto === 'categoria' && 'rotate-180'"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
+                                            aria-hidden="true"
                                         >
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                         </svg>
                                     </button>
 
-                                    <div
-                                        x-show="dropdownAbierto === 'categoria'"
-                                        x-cloak
-                                        x-transition
-                                        class="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl dark:border-zinc-700 dark:bg-slate-900"
-                                    >
-                                        <div role="listbox" aria-label="Categorías">
+                                    <div x-show="dropdownAbierto === 'categoria'" x-cloak x-transition>
+                                        <div class="farma-pick-scroll mt-2" role="listbox" aria-label="Categorías">
                                             <template x-for="categoria in categorias" :key="categoria.id">
                                                 <button
                                                     type="button"
                                                     role="option"
                                                     x-on:click="seleccionarCategoria(categoria.id)"
                                                     x-bind:aria-selected="String(categoriaSeleccionada) === String(categoria.id)"
-                                                    x-bind:class="String(categoriaSeleccionada) === String(categoria.id) ? 'bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'text-slate-700 hover:bg-slate-100 dark:text-zinc-200 dark:hover:bg-white/5'"
-                                                    class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition"
+                                                    x-bind:class="String(categoriaSeleccionada) === String(categoria.id) ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-[#0c9f9c]'"
+                                                    class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border-[1.5px] px-3 py-2 text-left text-sm font-semibold transition active:scale-[0.99]"
                                                 >
-                                                    <span x-text="categoria.nombre"></span>
+                                                    <span class="truncate" x-text="categoria.nombre"></span>
                                                     <svg
                                                         x-show="String(categoriaSeleccionada) === String(categoria.id)"
                                                         x-cloak
@@ -200,22 +196,19 @@
                                                         stroke="currentColor"
                                                         viewBox="0 0 24 24"
                                                     >
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                                     </svg>
                                                 </button>
                                             </template>
                                         </div>
-
-                                        <div class="mt-1 border-t border-slate-200 pt-1 dark:border-zinc-700">
-                                            <button
-                                                type="button"
-                                                x-on:click="dropdownAbierto = null; abrirModal('categoria')"
-                                                class="flex w-full cursor-pointer items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-left text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
-                                            >
-                                                <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-600 text-xs font-bold leading-none text-white">+</span>
-                                                Agregar nueva categoría
-                                            </button>
-                                        </div>
+                                        <button
+                                            type="button"
+                                            x-on:click="abrirModal('categoria')"
+                                            class="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-[#0e9384] px-3 py-2 text-sm font-bold text-[#0b6e68] transition hover:bg-emerald-50 active:scale-[0.99] dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+                                        >
+                                            <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#0e9384] text-xs font-bold leading-none text-white">+</span>
+                                            Agregar nueva categoría
+                                        </button>
                                     </div>
                                 </div>
                                 @error('id_categoria')
@@ -296,7 +289,7 @@
                                             </template>
 
                                             <template x-if="indice > 0">
-                                <div class="relative" data-dropdown>
+                                                <div data-dropdown>
                                                     <input
                                                         type="hidden"
                                                         :name="'presentaciones[' + indice + '][id_presentacion]'"
@@ -310,35 +303,31 @@
                                                         x-bind:aria-expanded="dropdownAbierto === ('presentacion-' + indice)"
                                                         aria-haspopup="listbox"
                                                     >
-                                                        <span x-bind:class="fila.id_presentacion === '' ? 'opacity-60' : ''" x-text="nombrePresentacion(fila.id_presentacion)"></span>
+                                                        <span x-bind:class="fila.id_presentacion === '' ? 'opacity-60' : 'font-semibold'" x-text="nombrePresentacion(fila.id_presentacion)"></span>
                                                         <svg
                                                             class="h-4 w-4 shrink-0 text-slate-400 transition-transform"
-                                                            x-bind:class="dropdownAbierto === ('presentacion-' + indice) ? 'rotate-180' : ''"
+                                                            x-bind:class="dropdownAbierto === ('presentacion-' + indice) && 'rotate-180'"
                                                             fill="none"
                                                             stroke="currentColor"
                                                             viewBox="0 0 24 24"
+                                                            aria-hidden="true"
                                                         >
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                                         </svg>
                                                     </button>
 
-                                                    <div
-                                                        x-show="dropdownAbierto === ('presentacion-' + indice)"
-                                                        x-cloak
-                                                        x-transition
-                                                        class="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl dark:border-zinc-700 dark:bg-slate-900"
-                                                    >
-                                                        <div role="listbox" aria-label="Presentaciones">
+                                                    <div x-show="dropdownAbierto === ('presentacion-' + indice)" x-cloak x-transition>
+                                                        <div class="farma-pick-scroll mt-2" role="listbox" aria-label="Presentaciones">
                                                             <template x-for="presentacion in catalogoPresentaciones" :key="presentacion.id">
                                                                 <button
                                                                     type="button"
                                                                     role="option"
                                                                     x-on:click="seleccionarPresentacion(indice, presentacion.id)"
                                                                     x-bind:aria-selected="String(fila.id_presentacion) === String(presentacion.id)"
-                                                                    x-bind:class="String(fila.id_presentacion) === String(presentacion.id) ? 'bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'text-slate-700 hover:bg-slate-100 dark:text-zinc-200 dark:hover:bg-white/5'"
-                                                                    class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition"
+                                                                    x-bind:class="String(fila.id_presentacion) === String(presentacion.id) ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-[#0c9f9c]'"
+                                                                    class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border-[1.5px] px-3 py-2 text-left text-sm font-semibold transition active:scale-[0.99]"
                                                                 >
-                                                                    <span x-text="presentacion.presentacion"></span>
+                                                                    <span class="truncate" x-text="presentacion.presentacion"></span>
                                                                     <svg
                                                                         x-show="String(fila.id_presentacion) === String(presentacion.id)"
                                                                         x-cloak
@@ -347,22 +336,19 @@
                                                                         stroke="currentColor"
                                                                         viewBox="0 0 24 24"
                                                                     >
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                                                     </svg>
                                                                 </button>
                                                             </template>
                                                         </div>
-
-                                                        <div class="mt-1 border-t border-slate-200 pt-1 dark:border-zinc-700">
-                                                            <button
-                                                                type="button"
-                                                                x-on:click="dropdownAbierto = null; abrirModal('presentacion', indice)"
-                                                                class="flex w-full cursor-pointer items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-left text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
-                                                            >
-                                                                <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-600 text-xs font-bold leading-none text-white">+</span>
-                                                                Agregar nueva presentación
-                                                            </button>
-                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            x-on:click="abrirModal('presentacion', indice)"
+                                                            class="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-[#0e9384] px-3 py-2 text-sm font-bold text-[#0b6e68] transition hover:bg-emerald-50 active:scale-[0.99] dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+                                                        >
+                                                            <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#0e9384] text-xs font-bold leading-none text-white">+</span>
+                                                            Agregar nueva presentación
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </template>
@@ -496,7 +482,7 @@
     <script>
         function formularioProducto() {
             return {
-                categoriaSeleccionada: '{{ old('id_categoria', $producto?->id_categoria ?? '') }}',
+                categoriaSeleccionada: @json((string) old('id_categoria', $producto?->id_categoria ?? '')),
                 dropdownAbierto: null,
                 errorCategoria: '',
                 categorias: @json($categorias->map(fn ($categoria) => ['id' => $categoria->id, 'nombre' => $categoria->nombre])->values(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT),

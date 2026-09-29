@@ -1,11 +1,11 @@
 @props(['compacto' => false])
 
-{{-- Interruptor de modo claro/oscuro. Solo se usa en el panel lateral.
-     Usa window.FarmaTheme de app.js y persiste en todas las vistas. --}}
+{{-- Interruptor de modo claro/oscuro. Vive en la barra superior derecha
+     (escritorio) y en el header móvil. Usa window.FarmaTheme de app.js. --}}
 <button
     type="button"
     data-farma-theme-toggle
-    class="farma-theme-toggle {{ $compacto ? 'px-2 py-1 text-xs' : '' }}"
+    class="farma-theme-toggle {{ $compacto ? 'farma-theme-toggle-compacto' : '' }}"
     title="Cambiar entre modo claro y oscuro"
     aria-label="Cambiar entre modo claro y oscuro"
 >

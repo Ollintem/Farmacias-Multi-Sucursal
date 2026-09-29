@@ -1,5 +1,5 @@
 <div
-    class="-m-6 flex h-screen flex-col overflow-hidden rounded-none border-0 bg-[rgba(245,246,243,0.96)] p-0 dark:bg-[rgba(15,23,42,0.78)] lg:-m-8"
+    class="module-page"
     x-data="{ successFolio: null }"
     @venta-completada.window="successFolio = $event.detail.folio; setTimeout(() => successFolio = null, 4000)"
 >
@@ -12,19 +12,18 @@
             x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="fixed right-4 top-4 z-[100] rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 shadow-lg dark:border-emerald-800 dark:bg-emerald-900/90"
+            class="fixed right-4 top-4 z-[100] rounded-2xl border border-emerald-300 bg-emerald-50 px-5 py-3 shadow-xl dark:border-emerald-700 dark:bg-emerald-900/90"
         >
             <div class="flex items-center gap-2">
-                <svg class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="text-sm font-semibold text-emerald-700 dark:text-emerald-200">Venta registrada: <span x-text="successFolio"></span></span>
+                <span class="grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-xs font-bold text-white">✓</span>
+                <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Venta registrada: <span x-text="successFolio"></span></span>
             </div>
         </div>
     </template>
 
+    <div class="module-page-inner">
     {{-- Barra de búsqueda --}}
-    <div class="shrink-0 border-b border-slate-200 bg-white/80 px-5 py-4 dark:border-zinc-700 dark:bg-zinc-900/80">
+    <div class="module-card p-4 sm:p-5">
         <div class="flex items-center gap-3">
             <div class="relative flex-1">
                 <svg class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,27 +33,26 @@
                         type="search"
                         wire:model.live.debounce.300ms="busqueda"
                         placeholder="Buscar producto o código de barras..."
-                        class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#0c9f9c] focus:ring-2 focus:ring-[#0c9f9c]/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500"
+                        class="theme-input !pl-11"
+                        aria-label="Buscar producto"
                     >
             </div>
         </div>
-    </div>
 
     {{-- Filtros por presentación --}}
-    <div class="shrink-0 border-b border-slate-100 bg-white/50 px-5 py-3 dark:border-zinc-800 dark:bg-zinc-900/50">
-        <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div class="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             <button
                 wire:click="$set('filtroPresentacion', '')"
-                class="shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition
-                    {{ $filtroPresentacion === '' ? 'bg-[#0c9f9c] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700' }}"
+                class="shrink-0 rounded-full border-[1.5px] px-4 py-2 text-xs font-bold transition
+                    {{ $filtroPresentacion === '' ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:text-white' }}"
             >
                 Todos
             </button>
             @foreach($presentaciones as $presentacion)
                 <button
                     wire:click="$set('filtroPresentacion', '{{ $presentacion->id }}')"
-                    class="shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition
-                        {{ $filtroPresentacion == $presentacion->id ? 'bg-[#0c9f9c] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700' }}"
+                    class="shrink-0 rounded-full border-[1.5px] px-4 py-2 text-xs font-bold transition
+                        {{ $filtroPresentacion == $presentacion->id ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:text-white' }}"
                 >
                     {{ ucfirst($presentacion->presentacion) }}
                 </button>
@@ -63,25 +61,32 @@
     </div>
 
     {{-- Área de productos + carrito --}}
-    <div class="flex min-h-0 flex-1">
+    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
         {{-- Grid de productos --}}
-        <div class="flex-1 overflow-y-auto p-5">
+        <div class="module-card min-w-0 p-4 sm:p-5">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-lg font-bold">Catálogo</h2>
+                <span class="theme-badge">{{ $productos->count() }} {{ Str::plural('producto', $productos->count()) }}</span>
+            </div>
             @if($productos->isEmpty())
-                <div class="flex flex-col items-center justify-center py-20 text-center">
-                    <p class="text-sm font-medium text-slate-500 dark:text-zinc-400">No se encontraron productos</p>
+                <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 px-4 py-20 text-center dark:border-zinc-600">
+                    <span class="grid h-14 w-14 place-items-center rounded-2xl bg-teal-700/10 text-2xl text-teal-800 dark:bg-teal-400/10 dark:text-teal-300">Rx</span>
+                    <p class="mt-3 text-sm font-semibold text-slate-600 dark:text-zinc-300">No se encontraron productos</p>
+                    <p class="mt-1 text-xs text-slate-400 dark:text-zinc-500">Prueba con otro nombre o código de barras</p>
                 </div>
             @else
-                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4">
                     @foreach($productos as $producto)
-                        <div class="group relative flex flex-col rounded-xl border border-slate-200 bg-white transition hover:border-[#0c9f9c]/40 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-[#0c9f9c]/40">
+                        <div class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-[#0e9384] hover:shadow-lg hover:shadow-teal-900/10 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:border-[#0c9f9c]">
                             @if($producto->es_controlado)
-                                <span class="absolute left-2 top-2 z-10 rounded-md bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">RX</span>
+                                <span class="absolute left-2 top-2 z-10 rounded-lg bg-red-600 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white shadow">RX</span>
+                            @endif
+                            @if($producto->stock <= 15)
+                                <span class="absolute right-2 top-2 z-10 rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">¡Últimas!</span>
                             @endif
 
-                            <div class="flex h-28 items-center justify-center rounded-t-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-zinc-700 dark:to-zinc-800">
-                                <svg class="h-12 w-12 text-[#0c9f9c]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                                </svg>
+                            <div class="flex h-24 items-center justify-center bg-gradient-to-br from-teal-50 via-emerald-50 to-slate-100 dark:from-teal-950/60 dark:via-zinc-800 dark:to-zinc-800">
+                                <span class="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-sm font-black text-white shadow-md shadow-teal-900/25 transition group-hover:scale-105">Rx</span>
                             </div>
 
                             <div class="flex flex-1 flex-col p-3">
@@ -90,19 +95,19 @@
                                 </h3>
 
                                 @if($producto->presentacion)
-                                    <p class="mt-1 text-xs text-slate-500 dark:text-zinc-400">
+                                    <p class="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400">
                                         {{ ucfirst($producto->presentacion->presentacion) }}
                                     </p>
                                 @endif
 
                                 <div class="mt-auto pt-2">
-                                    <div class="flex items-end justify-between">
+                                    <div class="flex items-end justify-between gap-2">
                                         @if($producto->precio !== null)
-                                            <span class="text-lg font-extrabold text-[#0c9f9c]">
+                                            <span class="text-lg font-extrabold text-[#0b6e68] dark:text-emerald-300">
                                                 ${{ number_format($producto->precio, 2) }}
                                             </span>
                                         @elseif($producto->presentacionesPrecio->isNotEmpty())
-                                            <span class="text-lg font-extrabold text-[#0c9f9c]">
+                                            <span class="text-base font-extrabold text-[#0b6e68] dark:text-emerald-300">
                                                 Desde ${{ number_format($producto->presentacionesPrecio->min('precio_presentacion'), 2) }}
                                             </span>
                                         @else
@@ -112,8 +117,9 @@
                                         <button
                                             wire:click="agregarAlCarrito({{ $producto->id }})"
                                             @disabled($producto->stock <= 0)
-                                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0c9f9c] text-white shadow-sm transition hover:bg-[#0a8582] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                                             title="Agregar al carrito"
+                                            aria-label="Agregar {{ $producto->nombre_producto }} al carrito"
                                         >
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
@@ -121,7 +127,7 @@
                                         </button>
                                     </div>
 
-                                    <p class="mt-1.5 text-xs {{ $producto->stock <= 15 ? 'font-semibold text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-zinc-400' }}">
+                                    <p class="mt-1.5 text-xs {{ $producto->stock <= 15 ? 'font-bold text-amber-700 dark:text-amber-300' : 'font-medium text-slate-500 dark:text-zinc-400' }}">
                                         {{ $producto->stock }} disp.
                                     </p>
                                 </div>
@@ -133,17 +139,17 @@
         </div>
 
         {{-- Panel derecho: Carrito (desktop) --}}
-        <div class="hidden w-80 shrink-0 flex-col border-l border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-900 lg:flex xl:w-96">
+        <div class="module-card hidden min-w-0 flex-col overflow-hidden !p-0 lg:flex">
             {{-- Header del carrito --}}
-            <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-zinc-700">
+            <div class="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-teal-700/5 to-transparent px-5 py-4 dark:border-zinc-700">
                 <div>
-                    <h2 class="text-sm font-bold text-slate-800 dark:text-white">Carrito</h2>
-                    <p class="text-xs text-slate-500 dark:text-zinc-400">{{ $cantidadArticulos }} {{ Str::plural('artículo', $cantidadArticulos) }}</p>
+                    <h2 class="text-base font-extrabold text-slate-800 dark:text-white">Carrito</h2>
+                    <p class="text-xs font-medium text-slate-500 dark:text-zinc-400">{{ $cantidadArticulos }} {{ Str::plural('artículo', $cantidadArticulos) }}</p>
                 </div>
                 @if(count($carrito) > 0)
                     <button
                         wire:click="limpiarCarrito"
-                        class="text-xs font-medium text-red-500 hover:text-red-600 transition"
+                        class="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 transition hover:bg-red-100 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300"
                         title="Vaciar carrito"
                     >
                         Vaciar
@@ -220,20 +226,20 @@
             </div>
 
             {{-- Resumen --}}
-            <div class="shrink-0 border-t border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-zinc-700 dark:bg-zinc-800/80">
+            <div class="shrink-0 border-t border-slate-200 bg-slate-50 px-5 py-4 dark:border-zinc-700 dark:bg-zinc-800/70">
                 <div class="space-y-2">
                     <div class="flex items-center justify-between text-sm">
-                        <span class="text-slate-500 dark:text-zinc-400">Subtotal</span>
-                        <span class="font-medium text-slate-700 dark:text-zinc-200">${{ number_format($subTotal, 2) }}</span>
+                        <span class="font-medium text-slate-500 dark:text-zinc-400">Subtotal</span>
+                        <span class="font-bold text-slate-700 dark:text-zinc-200">${{ number_format($subTotal, 2) }}</span>
                     </div>
                     <div class="flex items-center justify-between text-sm">
-                        <span class="text-slate-500 dark:text-zinc-400">Descuento</span>
-                        <span class="font-medium text-slate-700 dark:text-zinc-200">$0.00</span>
+                        <span class="font-medium text-slate-500 dark:text-zinc-400">Descuento</span>
+                        <span class="font-bold text-slate-700 dark:text-zinc-200">$0.00</span>
                     </div>
-                    <div class="border-t border-slate-200 pt-2 dark:border-zinc-600">
+                    <div class="rounded-xl bg-gradient-to-r from-teal-700/10 to-emerald-500/10 px-4 py-3 dark:from-teal-400/10 dark:to-emerald-400/10">
                         <div class="flex items-center justify-between">
-                            <span class="text-base font-bold text-slate-800 dark:text-white">Total</span>
-                            <span class="text-xl font-extrabold text-[#0c9f9c]">${{ number_format($total, 2) }}</span>
+                            <span class="text-base font-extrabold text-slate-800 dark:text-white">Total</span>
+                            <span class="text-2xl font-black text-[#0b6e68] dark:text-emerald-300">${{ number_format($total, 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -241,7 +247,7 @@
                 <button
                     wire:click="abrirCobro"
                     @disabled(empty($carrito))
-                    class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0c9f9c] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[#0c9f9c]/20 transition hover:bg-[#0a8582] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                    class="theme-button theme-button-primary mt-4 w-full"
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -251,12 +257,13 @@
             </div>
         </div>
     </div>
+    </div>
 
     {{-- Botón flotante carrito (móvil) --}}
     <div class="fixed bottom-5 right-5 z-40 sm:bottom-6 sm:right-6 lg:hidden">
         <button
             wire:click="$set('mostrandoCarrito', true)"
-            class="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#0c9f9c] text-white shadow-xl shadow-[#0c9f9c]/30 transition hover:bg-[#0a8582] active:scale-95"
+            class="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-white shadow-xl shadow-teal-900/30 transition hover:brightness-110 active:scale-95"
         >
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
@@ -406,9 +413,9 @@
                 x-transition:leave-end="opacity-0 scale-95"
             >
                 {{-- Header --}}
-                <div class="bg-slate-900 px-6 py-5 text-center dark:bg-zinc-800">
-                    <p class="text-sm font-medium text-slate-400 dark:text-zinc-400">Total a pagar</p>
-                    <p class="mt-1 text-3xl font-extrabold text-white">${{ number_format($total, 2) }}</p>
+                <div class="bg-gradient-to-r from-[#0c7569] to-[#245a6b] px-6 py-5 text-center">
+                    <p class="text-sm font-medium text-teal-100">Total a pagar</p>
+                    <p class="mt-1 text-3xl font-black text-white">${{ number_format($total, 2) }}</p>
                     <p class="mt-1 text-xs text-slate-500 dark:text-zinc-500">{{ $cantidadProductos }} {{ Str::plural('producto', $cantidadProductos) }} en carrito</p>
                 </div>
 
