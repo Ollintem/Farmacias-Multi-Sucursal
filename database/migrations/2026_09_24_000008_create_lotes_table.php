@@ -16,6 +16,7 @@ return new class extends Migration
             // Columna sin constraint inline: `productos` aún no existe (se crea en
             // 000009). La FK se agrega en 000009 después de crear `productos`.
             $table->foreignId('id_producto')->nullable();
+            $table->foreignId('id_presentacion')->nullable()->constrained('presentaciones')->nullOnDelete();
             $table->timestamp('entregado_en')->useCurrent();
             $table->timestamp('fecha_caducidad')->nullable();
             $table->timestamp('fecha_de_caducidad')->nullable();

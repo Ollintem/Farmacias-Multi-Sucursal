@@ -2,12 +2,15 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\EntradasController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LotesController;
+use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\PresentacionController;
 use App\Http\Controllers\ProveedoresController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\SucursalesController;
+use App\Http\Controllers\TraspasoController;
 use App\Http\Controllers\UsuariosController;
 use App\Livewire\PuntoDeVenta;
 use App\Models\Sucursal;
@@ -24,7 +27,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('dashboard')->middleware('checarPermisos:ver,dashboard');
 
-    Route::view('/entradas-de-almacen', 'pages.modulos.placeholder', ['tituloModulo' => 'Entradas de almacén'])->name('entradas-de-almacen.index')->middleware('checarPermisos:ver,entradas-de-almacen');
+    Route::get('/entradas-de-almacen', [EntradasController::class, 'index'])->name('entradas-de-almacen.index')->middleware('checarPermisos:ver,entradas-de-almacen');
+    Route::get('/pedidos', [PedidoController::class, 'index'])->name('pedidos.index')->middleware('checarPermisos:ver,entradas-de-almacen');
+    Route::get('/pedidos/create', [PedidoController::class, 'create'])->name('pedidos.create')->middleware('checarPermisos:crear,entradas-de-almacen');
+    Route::post('/pedidos', [PedidoController::class, 'store'])->name('pedidos.store')->middleware('checarPermisos:crear,entradas-de-almacen');
+    Route::get('/traspasos', [TraspasoController::class, 'index'])->name('traspasos.index')->middleware('checarPermisos:ver,entradas-de-almacen');
+    Route::get('/traspasos/create', [TraspasoController::class, 'create'])->name('traspasos.create')->middleware('checarPermisos:crear,entradas-de-almacen');
+    Route::post('/traspasos', [TraspasoController::class, 'store'])->name('traspasos.store')->middleware('checarPermisos:crear,entradas-de-almacen');
     Route::get('/lotes-y-caducidades', [LotesController::class, 'index'])->name('lotes.index')->middleware('checarPermisos:ver,lotes-y-caducidades');
     Route::get('/lotes-y-caducidades/create', [LotesController::class, 'create'])->name('lotes.create')->middleware('checarPermisos:crear,lotes-y-caducidades');
     Route::post('/lotes-y-caducidades', [LotesController::class, 'store'])->name('lotes.store')->middleware('checarPermisos:crear,lotes-y-caducidades');

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\Pedido;
-use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\Sucursal;
@@ -13,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class LotesController extends Controller
@@ -42,7 +42,7 @@ class LotesController extends Controller
                     })->orWhereDoesntHave('inventarios');
                 });
             })
-            ->when($busqueda !== '', function ($query, $busqueda) {
+            ->when($busqueda !== '', function ($query) use ($busqueda) {
                 $query->where(function ($subQuery) use ($busqueda) {
                     $subQuery->where('folio', 'like', "%{$busqueda}%")
                         ->orWhereHas('pedido.proveedor', function ($proveedorQuery) use ($busqueda) {
@@ -115,7 +115,11 @@ class LotesController extends Controller
     }
 
     /**
-     * Carga los catálogos para registrar un lote y su primer producto.
+     * Carga los catálogos para registrar un lote sobre un producto existente.
+     *
+     * El formulario elige el producto en un select y sus presentaciones en
+     * otro dependiente, por eso se envían los productos activos con sus
+     * presentaciones y el mapa producto → presentaciones.
      *
      * Entrada: query string opcional `sucursal`.
      * Salida: resources/views/pages/lotes/create.blade.php.
@@ -125,14 +129,35 @@ class LotesController extends Controller
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $pedidos = Pedido::with(['proveedor', 'sucursal'])->orderByDesc('id')->get();
         $proveedores = Proveedor::orderBy('nombre_proveedor')->get();
-        $presentaciones = PresentacionProducto::orderBy('presentacion')->get();
         $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
 
-        return view('pages.lotes.create', compact('sucursales', 'pedidos', 'proveedores', 'presentaciones', 'selectedSucursalId'));
+        $productos = Producto::query()
+            ->where('es_activo', true)
+            ->with('presentacionesPrecio.presentacion')
+            ->orderBy('nombre_producto')
+            ->get();
+
+        $presentacionesPorProducto = $productos->mapWithKeys(
+            fn (Producto $producto) => [
+                $producto->id => $producto->presentacionesPrecio
+                    ->map(fn ($presentacion) => [
+                        'id' => $presentacion->id_presentacion,
+                        'nombre' => $presentacion->presentacion?->presentacion ?? 'Presentación',
+                        'unidades' => (int) $presentacion->unidades,
+                    ])
+                    ->values(),
+            ]
+        );
+
+        return view('pages.lotes.create', compact('sucursales', 'pedidos', 'proveedores', 'productos', 'presentacionesPorProducto', 'selectedSucursalId'));
     }
 
     /**
-     * Valida y crea el producto, su lote y su vínculo con la sucursal.
+     * Valida y crea el lote vinculado a un producto existente y a la sucursal.
+     *
+     * El producto y su presentación llegan de los selects del formulario; la
+     * presentación debe pertenecer al producto elegido. El stock del lote se
+     * suma al stock global del producto para no perder el acumulado.
      *
      * Entrada: datos del formulario de alta de lote.
      * Salida: redirección a lotes.index con mensaje de resultado.
@@ -146,33 +171,25 @@ class LotesController extends Controller
             'sucursal' => ['required', 'exists:sucursales,id'],
             'entregado_en' => ['required', 'date'],
             'fecha_caducidad' => ['required', 'date', 'after_or_equal:entregado_en'],
-            'codigo_barras' => ['required', 'string', 'max:20'],
-            'nombre_producto' => ['required', 'string', 'max:120'],
-            'descripcion' => ['nullable', 'string'],
+            'id_producto' => ['required', 'exists:productos,id'],
+            'id_presentacion' => [
+                'required',
+                Rule::exists('presentacion_producto', 'id_presentacion')->where(
+                    fn ($query) => $query->where('producto', $request->input('id_producto'))
+                ),
+            ],
             'stock' => ['required', 'integer', 'min:1'],
-            'precio' => ['required', 'numeric', 'min:0'],
-            'id_presentacion' => ['required', 'exists:presentaciones,id'],
-            'es_controlado' => ['boolean'],
         ]);
 
-        DB::transaction(function () use ($data, $request) {
-            $producto = Producto::create([
-                'codigo_barras' => $data['codigo_barras'],
-                'nombre_producto' => $data['nombre_producto'],
-                'descripcion' => $data['descripcion'] ?? '',
-                'stock' => $data['stock'],
-                'precio' => $data['precio'],
-                'id_presentacion' => $data['id_presentacion'],
-                'es_controlado' => $request->boolean('es_controlado', false),
-                'entregado_en' => $data['entregado_en'],
-                'es_activo' => true,
-            ]);
+        DB::transaction(function () use ($data) {
+            $producto = Producto::findOrFail($data['id_producto']);
 
             $lote = Lote::create([
                 'folio' => $data['folio'],
                 'stock_lote' => $data['stock'],
                 'id_pedido' => $data['id_pedido'] ?? null,
                 'id_producto' => $producto->id,
+                'id_presentacion' => $data['id_presentacion'],
                 'entregado_en' => $data['entregado_en'],
                 'fecha_caducidad' => $data['fecha_caducidad'],
                 'fecha_de_caducidad' => $data['fecha_caducidad'],
@@ -185,6 +202,8 @@ class LotesController extends Controller
                 ],
                 ['stock' => $data['stock']]
             );
+
+            $producto->increment('stock', $data['stock']);
         });
 
         return redirect()->route('lotes.index', ['sucursal' => $data['sucursal']])

@@ -18,6 +18,7 @@ class Lote extends Model
         'stock_lote',
         'id_pedido',
         'id_producto',
+        'id_presentacion',
         'entregado_en',
         'fecha_caducidad',
         'fecha_de_caducidad',

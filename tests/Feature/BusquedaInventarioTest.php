@@ -6,6 +6,7 @@ use App\Models\Lote;
 use App\Models\Pedido;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
+use App\Models\ProductoPresentacion;
 use App\Models\Proveedor;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -154,6 +155,15 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
 
     $caja = PresentacionProducto::where('presentacion', 'Caja')->firstOrFail();
 
+    $producto = Producto::where('codigo_barras', '7500000000219')->firstOrFail();
+
+    ProductoPresentacion::create([
+        'id_presentacion' => $caja->id,
+        'producto' => $producto->id,
+        'precio_presentacion' => 25.0,
+        'unidades' => 10,
+    ]);
+
     $this->withSession(['active_sucursal_id' => $sucursalA->id])
         ->post(route('lotes.store'), [
             'folio' => 'L-BUSQ-2',
@@ -161,19 +171,17 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
             'sucursal' => $sucursalA->id,
             'entregado_en' => '2026-09-01',
             'fecha_caducidad' => '2027-09-01',
-            'codigo_barras' => '7500000000233',
-            'nombre_producto' => 'Aspirina 100mg',
-            'stock' => 10,
-            'precio' => 5.0,
+            'id_producto' => $producto->id,
             'id_presentacion' => $caja->id,
+            'stock' => 10,
         ])
         ->assertRedirect(route('lotes.index', ['sucursal' => $sucursalA->id]));
 
-    $producto = Producto::where('codigo_barras', '7500000000233')->firstOrFail();
     $lote = Lote::where('folio', 'L-BUSQ-2')->firstOrFail();
 
     expect($lote->id_producto)->toBe($producto->id)
-        ->and($lote->pedido?->proveedor?->nombre_proveedor)->toBe('Proveedor Busq');
+        ->and($lote->pedido?->proveedor?->nombre_proveedor)->toBe('Proveedor Busq')
+        ->and($producto->fresh()->stock)->toBe(10);
 
     $this->assertDatabaseHas('inventario', [
         'id_sucursal' => $sucursalA->id,
@@ -186,4 +194,37 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
         ->get(route('lotes.index', ['buscar' => 'L-BUSQ-2']))
         ->assertOk()
         ->assertSee('Proveedor Busq');
+});
+
+test('el formulario de lote ofrece los productos y sus presentaciones en selects', function () {
+    [$sucursalA] = contextoBusquedaInventario($this);
+
+    $this->withSession(['active_sucursal_id' => $sucursalA->id])
+        ->get(route('lotes.create'))
+        ->assertOk()
+        ->assertSee('name="id_producto"', false)
+        ->assertSee('name="id_presentacion"', false)
+        ->assertSee('Paracetamol 500mg')
+        ->assertSee('Ibuprofeno 400mg');
+});
+
+test('el alta de lote rechaza una presentacion que no pertenece al producto', function () {
+    [$sucursalA] = contextoBusquedaInventario($this);
+
+    $producto = Producto::where('codigo_barras', '7500000000219')->firstOrFail();
+    $frasco = PresentacionProducto::create(['presentacion' => 'Frasco', 'descripcion' => '']);
+
+    $this->withSession(['active_sucursal_id' => $sucursalA->id])
+        ->post(route('lotes.store'), [
+            'folio' => 'L-BUSQ-3',
+            'sucursal' => $sucursalA->id,
+            'entregado_en' => '2026-09-01',
+            'fecha_caducidad' => '2027-09-01',
+            'id_producto' => $producto->id,
+            'id_presentacion' => $frasco->id,
+            'stock' => 5,
+        ])
+        ->assertSessionHasErrors('id_presentacion');
+
+    $this->assertDatabaseMissing('lotes', ['folio' => 'L-BUSQ-3']);
 });
