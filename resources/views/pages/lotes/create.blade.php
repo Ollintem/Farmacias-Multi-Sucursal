@@ -8,6 +8,17 @@
                 </div>
             </div>
 
+@php
+    $mapaPedidos = $pedidos->mapWithKeys(fn ($pedido) => [
+        $pedido->id => [
+            'proveedor_id' => $pedido->id_proveedor,
+            'proveedor' => $pedido->proveedor?->nombre_proveedor ?? 'Sin proveedor',
+            'sucursal_id' => $pedido->id_sucursal,
+            'sucursal' => $pedido->sucursal?->nombre_sucursal ?? 'Sin sucursal',
+        ],
+    ])->all();
+@endphp
+
             <form action="{{ route('lotes.store') }}" method="POST" class="theme-card">
                 @csrf
 
@@ -20,35 +31,69 @@
                         @enderror
                     </div>
 
-                    <div>
-                        <label class="mb-2 block text-sm font-medium">Pedido de compra (opcional)</label>
-                        <select name="id_pedido" class="theme-input">
-                            <option value="">Sin pedido (registro directo)</option>
-                            @foreach($pedidos as $pedido)
-                                <option value="{{ $pedido->id }}" {{ old('id_pedido') == $pedido->id ? 'selected' : '' }}>
-                                    #{{ $pedido->id }} · {{ $pedido->proveedor?->nombre_proveedor ?? 'Sin proveedor' }} · {{ $pedido->sucursal?->nombre_sucursal ?? 'Sin sucursal' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('id_pedido')
-                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
-                        @enderror
-                    </div>
+                    <div
+                        class="md:col-span-2 grid gap-5 md:grid-cols-3"
+                        x-data="{
+                            pedido: '{{ old('id_pedido', '') }}',
+                            proveedor: '{{ old('id_proveedor', '') }}',
+                            sucursal: '{{ old('sucursal', $selectedSucursalId ?? '') }}',
+                            mapa: @json($mapaPedidos),
+                            get pedidoInfo() { return this.mapa[this.pedido] ?? null; },
+                            aplicarPedido() {
+                                const info = this.pedidoInfo;
+                                if (info) {
+                                    this.proveedor = info.proveedor_id !== null ? String(info.proveedor_id) : '';
+                                    this.sucursal = String(info.sucursal_id);
+                                }
+                            },
+                        }"
+                    >
+                        <div>
+                            <label class="mb-2 block text-sm font-medium">Pedido de compra (opcional)</label>
+                            <select name="id_pedido" class="theme-input" x-model="pedido" @change="aplicarPedido()">
+                                <option value="">Sin pedido (registro directo)</option>
+                                @foreach($pedidos as $pedido)
+                                    <option value="{{ $pedido->id }}">
+                                        #{{ $pedido->id }} · {{ $pedido->proveedor?->nombre_proveedor ?? 'Sin proveedor' }} · {{ $pedido->sucursal?->nombre_sucursal ?? 'Sin sucursal' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('id_pedido')
+                                <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                    <div>
-                        <label class="mb-2 block text-sm font-medium">Proveedor (referencia, opcional)</label>
-                        <x-option-pick name="id_proveedor" label="Proveedores" placeholder="Selecciona un proveedor" :options="$proveedores->pluck('nombre_proveedor', 'id')" />
-                        @error('id_proveedor')
-                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
-                        @enderror
-                    </div>
+                        <div>
+                            <label class="mb-2 block text-sm font-medium">Proveedor (opcional)</label>
+                            <select name="id_proveedor" class="theme-input" x-model="proveedor">
+                                <option value="">Selecciona un proveedor</option>
+                                @foreach($proveedores as $proveedor)
+                                    <option value="{{ $proveedor->id }}">{{ $proveedor->nombre_proveedor }}</option>
+                                @endforeach
+                            </select>
+                            <p x-show="pedidoInfo" x-cloak class="mt-1 text-xs text-slate-500">Se toma del pedido elegido; puedes ajustarlo.</p>
+                            @error('id_proveedor')
+                                <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                    <div>
-                        <label class="mb-2 block text-sm font-medium">Sucursal</label>
-                        <x-option-pick name="sucursal" label="Sucursales" placeholder="Selecciona una sucursal" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="$selectedSucursalId ?? ''" />
-                        @error('sucursal')
-                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
-                        @enderror
+                        <div>
+                            <label class="mb-2 block text-sm font-medium">Sucursal</label>
+                            <select name="sucursal" class="theme-input" x-model="sucursal" required>
+                                @foreach($sucursales as $sucursal)
+                                    <option value="{{ $sucursal->id }}">{{ $sucursal->nombre_sucursal }}</option>
+                                @endforeach
+                            </select>
+                            <p x-show="pedidoInfo" x-cloak class="mt-1 text-xs text-slate-500">Se toma del pedido elegido; puedes ajustarla.</p>
+                            @error('sucursal')
+                                <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <p x-show="pedidoInfo" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-slate-700 md:col-span-3 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-slate-200">
+                            El proveedor y la sucursal vienen del pedido <span class="font-bold" x-text="'#' + pedido"></span>
+                            (<span x-text="pedidoInfo?.proveedor"></span> · <span x-text="pedidoInfo?.sucursal"></span>).
+                        </p>
                     </div>
 
                     <div>

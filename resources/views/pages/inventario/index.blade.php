@@ -6,28 +6,37 @@
                     <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Catálogo</p>
                     <h1 class="mt-2 text-3xl font-bold">Inventario farmacéutico</h1>
                 </div>
-
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('inventario.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary">+ Agregar producto nuevo</a>
-                </div>
             </div>
 
-            <nav class="module-tabs" aria-label="Secciones de inventario">
-                <a href="{{ route('inventario.index', ['sucursal' => $selectedSucursal?->id]) }}" class="module-tab module-tab-active">Productos y stock</a>
-                @if(auth()->user()?->puedeVerModulo('Lotes y caducidades'))
-                    <a href="{{ route('lotes.index', ['sucursal' => $selectedSucursal?->id]) }}" class="module-tab">Lotes y caducidades</a>
-                @endif
-            </nav>
+            @include('pages.inventario.tabs', ['seccion' => 'stock', 'selectedSucursal' => $selectedSucursal])
 
             @if(session('success'))
-                <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200" role="status">
+                <div
+                    x-data="{ show: true }"
+                    x-init="setTimeout(() => show = false, 2000)"
+                    x-show="show"
+                    x-transition:leave="transition ease-in duration-300"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200"
+                    role="status"
+                >
                     <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-xs font-bold text-white">✓</span>
                     {{ session('success') }}
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200" role="alert">
+                <div
+                    x-data="{ show: true }"
+                    x-init="setTimeout(() => show = false, 2000)"
+                    x-show="show"
+                    x-transition:leave="transition ease-in duration-300"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+                    role="alert"
+                >
                     {{ session('error') }}
                 </div>
             @endif
@@ -78,21 +87,13 @@
                     </div>
 
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <form method="GET" action="{{ route('inventario.stock') }}" class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <label class="flex items-center gap-2 text-sm font-medium">
-                                <span class="theme-subtle">Sucursal:</span>
-                                <select name="sucursal" class="branch-select" aria-label="Seleccionar sucursal" onchange="this.form.submit()">
-                                    @forelse($sucursales as $sucursal)
-                                        <option value="{{ $sucursal->id }}" {{ $selectedSucursal && $selectedSucursal->id === $sucursal->id ? 'selected' : '' }}>
-                                            {{ $sucursal->nombre_sucursal }}
-                                        </option>
-                                    @empty
-                                        <option value="">Sin sucursales registradas</option>
-                                    @endforelse
-                                </select>
-                            </label>
-                            <input type="search" name="buscar" value="{{ old('buscar', $busqueda) }}" placeholder="Buscar código o nombre" class="theme-input w-full sm:w-64" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
-                            <button type="submit" class="theme-button theme-button-secondary whitespace-nowrap">Buscar</button>
+                        <form method="GET" action="{{ route('inventario.stock') }}" class="flex w-full flex-col gap-2">
+                            <span class="theme-subtle text-xs font-semibold uppercase tracking-[0.2em]">Sucursal</span>
+                            <x-option-pick name="sucursal" label="Sucursales" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="$selectedSucursal?->id" placeholder="Seleccionar sucursal" :autoSubmit="true" />
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre" class="theme-input w-full sm:w-64" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
+                                <button type="submit" class="theme-button theme-button-secondary whitespace-nowrap">Buscar</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -117,7 +118,7 @@
                                         <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $producto->nombre_producto }}</td>
                                         <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $producto->descripcion ?: 'Sin descripción' }}</td>
                                         <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $producto->stock_sucursal ?? $producto->stock }} uds.</td>
-                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $producto->precio !== null ? '$'.number_format($producto->precio, 2) : '—' }}</td>
+                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">${{ number_format($producto->precio, 2) }}</td>
                                         <td class="px-4 py-3">
                                             @if(($producto->stock_sucursal ?? $producto->stock) <= 15)
                                                 <span class="inventory-status inventory-status-low">Bajo</span>
@@ -127,11 +128,11 @@
                                         </td>
                                     </tr>
                                 @endforeach
-                                <tr data-vacio @if($productos->isNotEmpty()) style="display: none" @endif>
-                                    <td colspan="6" class="px-4 py-10 text-center text-slate-500 dark:text-slate-400">
-                                        No se encontraron productos para esta sucursal o búsqueda.
-                                    </td>
-                                </tr>
+                                    <tr data-vacio @if($productos->isNotEmpty()) style="display: none" @endif>
+                                        <td colspan="6" class="px-4 py-10 text-center text-slate-500 dark:text-slate-400">
+                                            No se encontraron productos para esta sucursal o búsqueda.
+                                        </td>
+                                    </tr>
                             </tbody>
                         </table>
                     </div>

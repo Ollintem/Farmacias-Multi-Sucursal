@@ -15,7 +15,7 @@ it('loads the lotes and expiry page', function () {
         ->assertOk();
 });
 
-it('loads the lote creation form with its option pickers', function () {
+it('loads the lote creation form with pedido-driven proveedor and sucursal selects', function () {
     $sucursal = Sucursal::create([
         'nombre_sucursal' => 'Lotes Create',
         'direccion' => 'Calle 1',
