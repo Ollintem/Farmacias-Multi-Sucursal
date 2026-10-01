@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -85,5 +86,33 @@ class Lote extends Model
     public function inventarios(): HasMany
     {
         return $this->hasMany(Inventario::class, 'id_lote');
+    }
+
+    /**
+     * Indica si el lote ya caducó (misma regla que el listado de lotes).
+     *
+     * La fecha efectiva es `fecha_de_caducidad` con respaldo a
+     * `fecha_caducidad`; sin fecha conocida no se considera caducado.
+     */
+    public function estaCaducado(): bool
+    {
+        $fecha = $this->fecha_de_caducidad ?? $this->fecha_caducidad;
+
+        if ($fecha === null || $fecha === '') {
+            return false;
+        }
+
+        return Carbon::parse($fecha)->isPast();
+    }
+
+    /**
+     * Stock del lote asignado a una sucursal vía inventario.
+     *
+     * Entrada: id de la sucursal.
+     * Salida: unidades disponibles (0 si no hay fila de inventario).
+     */
+    public function stockEnSucursal(int $idSucursal): int
+    {
+        return (int) $this->inventarios->where('id_sucursal', $idSucursal)->sum('stock');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pedido extends Model
@@ -48,5 +49,16 @@ class Pedido extends Model
     public function lotes(): HasMany
     {
         return $this->hasMany(Lote::class, 'id_pedido');
+    }
+
+    public function productos(): BelongsToMany
+    {
+        return $this->belongsToMany(Producto::class, 'detalles_pedido', 'pedido', 'producto')
+            ->withPivot('cantidad');
+    }
+
+    public function detalles(): HasMany
+    {
+        return $this->hasMany(DetallePedido::class, 'pedido');
     }
 }

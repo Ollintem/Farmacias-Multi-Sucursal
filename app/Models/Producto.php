@@ -94,4 +94,16 @@ class Producto extends Model
         return $this->belongsToMany(Venta::class, 'producto_venta', 'producto', 'venta')
             ->withPivot('cantidad', 'precio_unidad');
     }
+
+    public function pedidos(): BelongsToMany
+    {
+        return $this->belongsToMany(Pedido::class, 'detalles_pedido', 'producto', 'pedido')
+            ->withPivot('cantidad');
+    }
+
+    public function traspasos(): BelongsToMany
+    {
+        return $this->belongsToMany(Traspaso::class, 'detalles_traspaso', 'producto', 'traspaso')
+            ->withPivot('cantidad');
+    }
 }

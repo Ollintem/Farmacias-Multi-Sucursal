@@ -30,6 +30,10 @@ class TraspasoController extends Controller
     /**
      * Muestra el formulario de alta de traspasos entre sucursales.
      *
+     * Solo se envían los lotes con existencias en inventario y no
+     * caducados, para que el formulario no ofrezca mercancía que no
+     * puede moverse.
+     *
      * Entrada: query string opcional `sucursal` (destino preseleccionado).
      * Salida: resources/views/pages/entradas/create-traspaso.blade.php.
      */
@@ -50,7 +54,7 @@ class TraspasoController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate([
+        $validator = Validator::make($request->all(), [
             'sucursal_a' => ['required', 'exists:sucursales,id', 'different:sucursal_b'],
             'sucursal_b' => ['required', 'exists:sucursales,id', 'different:sucursal_a'],
             'id_producto' => ['required', 'exists:productos,id'],
