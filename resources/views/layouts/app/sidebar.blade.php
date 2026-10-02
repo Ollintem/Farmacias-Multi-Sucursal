@@ -62,7 +62,8 @@
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Alertas') ?? false)
-                <flux:sidebar.item icon="flag" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" wire:navigate>
+                @php($alertasTotal = \App\Support\AlertasResumen::counts((int) (session('active_sucursal_id', $usuarioActual?->id_sucursal ?? 0) ?: 0))['total'])
+                <flux:sidebar.item icon="flag" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" :badge="$alertasTotal > 0 ? $alertasTotal : null" wire:navigate>
                     Alertas
                 </flux:sidebar.item>
                 @endif
@@ -216,6 +217,8 @@
         </div>
 
         {{ $slot }}
+
+        @include('partials.alertas-toasts')
 
         @persist('toast')
             <flux:toast.group>

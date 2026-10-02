@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AlertasController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\EntradasController;
@@ -79,7 +80,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/presentaciones', [PresentacionController::class, 'store'])->name('presentaciones.store')->middleware('checarPermisos:crear,inventario');
     Route::view('/caja', 'pages.modulos.placeholder', ['tituloModulo' => 'Caja'])->name('caja.index')->middleware('checarPermisos:ver,caja');
     Route::view('/reportes', 'pages.modulos.placeholder', ['tituloModulo' => 'Reportes'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
-    Route::view('/alertas', 'pages.modulos.placeholder', ['tituloModulo' => 'Alertas'])->name('alertas.index')->middleware('checarPermisos:ver,alertas');
+    Route::get('/alertas', [AlertasController::class, 'index'])->name('alertas.index')->middleware('checarPermisos:ver,alertas');
+    Route::post('/traspasos/{traspaso}/aceptar', [TraspasoController::class, 'aceptar'])->name('traspasos.aceptar')->middleware('checarPermisos:editar,alertas');
+    Route::post('/traspasos/{traspaso}/rechazar', [TraspasoController::class, 'rechazar'])->name('traspasos.rechazar')->middleware('checarPermisos:editar,alertas');
 
     // Módulo: proveedores
     Route::get('/proveedores', [ProveedoresController::class, 'index'])->name('proveedores.index')->middleware('checarPermisos:ver,proveedores');
