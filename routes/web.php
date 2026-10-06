@@ -85,6 +85,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('/caja', 'pages.modulos.placeholder', ['tituloModulo' => 'Caja'])->name('caja.index')->middleware('checarPermisos:ver,caja');
     Route::view('/reportes', 'pages.modulos.placeholder', ['tituloModulo' => 'Reportes'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
     Route::get('/alertas', [AlertasController::class, 'index'])->name('alertas.index')->middleware('checarPermisos:ver,alertas');
+    Route::get('/alertas/feed', [AlertasController::class, 'feed'])->name('alertas.feed')->middleware('checarPermisos:ver,alertas');
+    Route::post('/alertas/leidas', [AlertasController::class, 'marcarLeidas'])->name('alertas.leidas')->middleware('checarPermisos:ver,alertas');
+    Route::post('/alertas/leer', [AlertasController::class, 'marcarLeida'])->name('alertas.leer')->middleware('checarPermisos:ver,alertas');
     Route::post('/traspasos/{traspaso}/aceptar', [TraspasoController::class, 'aceptar'])->name('traspasos.aceptar')->middleware('checarPermisos:editar,alertas');
     Route::post('/traspasos/{traspaso}/rechazar', [TraspasoController::class, 'rechazar'])->name('traspasos.rechazar')->middleware('checarPermisos:editar,alertas');
 

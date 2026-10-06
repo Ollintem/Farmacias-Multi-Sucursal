@@ -399,7 +399,7 @@ select.theme-input option {
 }
 
 .theme-light {
-    background: linear-gradient(180deg, #f5f5f2 0%, #f1f4f1 100%);
+    background: linear-gradient(180deg, #fbfdfc 0%, #eef3f0 100%);
     color: #0f172a;
 }
 
@@ -419,8 +419,8 @@ select.theme-input option {
 }
 
 .theme-light .theme-shell-inner {
-    background: rgba(245, 246, 243, 0.96);
-    border: 1px solid rgba(203, 214, 208, 0.9);
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(216, 228, 221, 0.9);
     box-shadow: none;
 }
 
@@ -514,16 +514,16 @@ select.theme-input option {
 }
 
 .theme-button-secondary {
-    background: #cfe9da;
+    background: #eef4f0;
     border-color: #0e9384;
     border-width: 1.5px;
     color: #0b3b35;
-    box-shadow: 0 4px 14px rgba(20, 60, 45, 0.12);
+    box-shadow: 0 4px 14px rgba(20, 60, 45, 0.08);
 }
 
 .theme-button-secondary:hover {
     border-color: #0c7569;
-    background: #ecfdf5;
+    background: #ffffff;
     color: #084e46;
     box-shadow: 0 8px 20px rgba(14, 147, 132, 0.18);
 }
@@ -572,8 +572,8 @@ select.theme-input option {
 .theme-input {
     width: 100%;
     border-radius: 0.9rem;
-    border: 1px solid #8fc7ab;
-    background: #dcf2e6;
+    border: 1px solid #c3d4cc;
+    background: #f7faf8;
     color: #1e3a2f;
     padding: 0.7rem 0.9rem;
     outline: none;
@@ -622,9 +622,9 @@ select.theme-input option {
 .theme-table {
     border-radius: 1.25rem;
     overflow: hidden;
-    border: 1px solid #93c9ae;
-    background: #d4efe1;
-    box-shadow: 0 10px 28px rgba(20, 60, 45, 0.12);
+    border: 1px solid #d8e4dd;
+    background: #ffffff;
+    box-shadow: 0 10px 28px rgba(20, 60, 45, 0.08);
 }
 
 /* Superficie compartida para los módulos operativos de FarmaERP. */
@@ -690,11 +690,11 @@ select.theme-input option {
 .module-hero {
     position: relative;
     overflow: hidden;
-    border: 1px solid #d9f1e5;
+    border: 1px solid #dfe8e3;
     border-radius: 1.75rem;
     padding: 1.75rem 2rem;
-    background: linear-gradient(120deg, #e5f8ef 0%, #f7fbfa 55%, #e7f1fb 100%);
-    box-shadow: 0 18px 45px rgba(15, 118, 110, 0.08);
+    background: linear-gradient(120deg, #ffffff 0%, #f2f6f3 55%, #e9f0fb 100%);
+    box-shadow: 0 18px 45px rgba(15, 118, 110, 0.06);
 }
 
 .dark .module-hero {
@@ -741,7 +741,7 @@ select.theme-input option {
 }
 
 .module-table thead {
-    background: #aeddc4;
+    background: #e9f1ec;
 }
 
 .dark .module-table thead {
@@ -1453,12 +1453,12 @@ input[type="checkbox"]:disabled {
    ========================================================================== */
 
 :root {
-    --farma-bg: #bfe8d6;
-    --farma-surface: #d6f0e3;
-    --farma-surface-2: #c9e6d4;
-    --farma-border: #93c9ae;
+    --farma-bg: #f2f6f3;
+    --farma-surface: #ffffff;
+    --farma-surface-2: #eaf1ec;
+    --farma-border: #d8e4dd;
     --farma-text: #1e3a2f;
-    --farma-muted: #3f6b5c;
+    --farma-muted: #5b7268;
     --farma-primary: #0e9384;
     --farma-primary-strong: #0c7569;
     --farma-primary-soft: rgba(14, 147, 132, 0.12);
@@ -1504,8 +1504,8 @@ body {
 }
 
 .module-hero {
-    border: 1px solid var(--farma-border);
-    background: linear-gradient(120deg, #a8dcc0 0%, #ccead9 55%, #9fd0b6 100%);
+    border: 1px solid #dfe8e3;
+    background: linear-gradient(120deg, #ffffff 0%, #f2f6f3 55%, #e9eefb 100%);
 }
 
 .dark .module-hero {
@@ -1627,18 +1627,44 @@ body {
     color: #ffffff;
 }
 
-.erp-sidebar [data-flux-sidebar-profile],
-.erp-sidebar [data-flux-sidebar-profile] span {
+.erp-sidebar [data-flux-sidebar-profile] {
     color: #e8f1ee;
 }
 
-.erp-sidebar [data-flux-sidebar-profile]:hover span {
+/* Nombre del perfil (hijo directo): claro sobre petróleo en ambos modos. */
+.erp-sidebar [data-flux-sidebar-profile] > span {
+    color: #e8f1ee;
+}
+
+.erp-sidebar [data-flux-sidebar-profile]:hover > span {
     color: #ffffff;
 }
 
+/* Iniciales del avatar: en modo claro el fondo de Flux es zinc-200 claro,
+   así que las iniciales deben ser petróleo oscuro para no perderse.
+   Solo modo claro — en oscuro se conserva el blanco actual. */
+.erp-sidebar [data-flux-sidebar-profile] [data-flux-avatar],
+.erp-sidebar [data-flux-sidebar-profile] [data-flux-avatar] span {
+    color: #0b3b35;
+    font-weight: 700;
+}
+
+.dark .erp-sidebar [data-flux-sidebar-profile] [data-flux-avatar],
+.dark .erp-sidebar [data-flux-sidebar-profile] [data-flux-avatar] span {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* Icono trailing (chevrons-up-down): más claro solo en modo claro. */
 .erp-sidebar [data-flux-sidebar-profile] svg,
 .erp-sidebar [data-flux-sidebar-collapse] button,
 .erp-sidebar [data-flux-sidebar-collapse] svg {
+    color: #d5e5e0;
+}
+
+.dark .erp-sidebar [data-flux-sidebar-profile] svg,
+.dark .erp-sidebar [data-flux-sidebar-collapse] button,
+.dark .erp-sidebar [data-flux-sidebar-collapse] svg {
     color: #a9c6bf;
 }
 
@@ -1650,6 +1676,15 @@ body {
 
 .erp-sidebar [data-flux-sidebar-collapse] button:hover {
     background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Versión del sidebar: más clara solo en modo claro. En oscuro se conserva. */
+.erp-sidebar-version {
+    color: #c3d4cf;
+}
+
+.dark .erp-sidebar-version {
+    color: #8fa9a3;
 }
 
 /* ==========================================================================
@@ -2038,27 +2073,27 @@ html:not(.dark) .hover\:bg-\[\#0a8582\]:hover {
    ========================================================================== */
 
 html:not(.dark) .module-page {
-    background: linear-gradient(180deg, #bfe8d6 0%, #a9dcc0 100%);
+    background: linear-gradient(180deg, #f7faf8 0%, #eef3f0 100%);
 }
 
 html:not(.dark) .module-card,
 html:not(.dark) .module-stat,
 html:not(.dark) .module-table {
-    background: #d6f0e3;
-    border-color: #8fc7ab;
-    box-shadow: 0 10px 26px rgba(20, 60, 45, 0.1);
+    background: #ffffff;
+    border-color: #d8e4dd;
+    box-shadow: 0 10px 26px rgba(20, 60, 45, 0.06);
 }
 
 html:not(.dark) .module-page .bg-white {
-    background-color: #e2f4ea !important;
+    background-color: #ffffff !important;
 }
 
 html:not(.dark) .module-page .bg-slate-50 {
-    background-color: #cde8d8 !important;
+    background-color: #f1f5f3 !important;
 }
 
 html:not(.dark) .module-page .bg-slate-100 {
-    background-color: #b7dcc6 !important;
+    background-color: #e6eeea !important;
 }
 
 html:not(.dark) .module-page .text-slate-800 {
@@ -2070,11 +2105,11 @@ html:not(.dark) .module-page .text-slate-900 {
 }
 
 html:not(.dark) .module-page .border-slate-200 {
-    border-color: #93c9ae !important;
+    border-color: #d8e4dd !important;
 }
 
 html:not(.dark) .farma-topbar {
-    background: color-mix(in srgb, #bfe8d6 88%, transparent);
+    background: color-mix(in srgb, #f2f6f3 88%, transparent);
 }
 
 /* Lista de selección con scroll delgado (categorías): filas tipo tabla.
@@ -2085,9 +2120,9 @@ html:not(.dark) .farma-topbar {
     gap: 0.5rem;
     max-height: 16.5rem;
     overflow-y: auto;
-    border: 1.5px solid #93c9ae;
+    border: 1.5px solid #c3d4cc;
     border-radius: 1rem;
-    background: color-mix(in srgb, #dcf2e6 60%, transparent);
+    background: color-mix(in srgb, #f7faf8 60%, transparent);
     padding: 0.5rem;
     scrollbar-width: thin;
     scrollbar-color: #0e9384 transparent;
@@ -2144,4 +2179,471 @@ html:not(.dark) .module-stat-filtro-activo,
 .module-stat-filtro:focus-visible {
     outline: 3px solid rgba(45, 212, 191, 0.4);
     outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Contraste de selección en modo oscuro (todas las ventanas).
+   - Los <select> nativos usan el highlight del SO: sin color-scheme oscuro
+     la opción resaltada queda blanca con letra clara y se vuelve ilegible.
+   - Las opciones personalizadas ([role=option]) y los filtros/píldoras con
+     ternarias Blade/Alpine sin rama dark: se refuerzan aquí como red de
+     seguridad, además de las clases dark: en cada vista.
+   ========================================================================== */
+
+.theme-dark {
+    color-scheme: dark;
+}
+
+::selection {
+    background: #0e9384;
+    color: #ffffff;
+}
+
+.dark ::selection {
+    background: #34d399;
+    color: #052e2b;
+}
+
+/* Nativos: opción marcada/enfocada siempre legible en ambos modos. */
+select.theme-input option:checked,
+.theme-input option:checked {
+    background-color: #0c7569;
+    color: #ffffff;
+}
+
+select.theme-input option:hover,
+select.theme-input option:focus,
+.theme-input option:hover,
+.theme-input option:focus {
+    background-color: #0e9384;
+    color: #ffffff;
+}
+
+.dark select.theme-input option:checked,
+.dark .theme-input option:checked,
+.theme-dark select.theme-input option:checked,
+.theme-dark .theme-input option:checked {
+    background-color: #34d399;
+    color: #052e2b;
+}
+
+.dark select.theme-input option:hover,
+.dark select.theme-input option:focus,
+.dark .theme-input option:hover,
+.dark .theme-input option:focus,
+.theme-dark select.theme-input option:hover,
+.theme-dark .theme-input option:focus,
+.theme-dark .theme-input option:hover,
+.theme-dark .theme-input option:focus {
+    background-color: rgba(14, 147, 132, 0.45);
+    color: #ffffff;
+}
+
+/* Teal #0c9f9c sobre fondos oscuros pierde contraste: se aclara solo
+   en oscuro (en claro ya se oscurece a #0b6e68 más arriba). */
+.dark .text-\[\#0c9f9c\] {
+    color: #5ec8b4 !important;
+}
+
+.dark .hover\:text-\[\#0c9f9c\]:hover {
+    color: #a7f3d0 !important;
+}
+
+.dark .hover\:border-\[\#0c9f9c\]:hover {
+    border-color: #5ec8b4 !important;
+}
+
+/* Opción personalizada seleccionada: en oscuro usa degradado brillante
+   con letra petróleo oscura (igual que .inventario-seg-btn-activo dark),
+   nunca blanco sobre blanco. */
+.dark .farma-pick-scroll [role="option"][aria-selected="true"] {
+    border-color: #6ee7b7 !important;
+    background: linear-gradient(135deg, #34d399, #0e9384) !important;
+    color: #052e2b !important;
+    text-shadow: none !important;
+}
+
+/* Opción no seleccionada al pasar el cursor en oscuro: fondo teal
+   translúcido con letra clara, nunca fondo blanco. */
+.dark .farma-pick-scroll [role="option"]:not([aria-selected="true"]):hover {
+    background: rgba(14, 147, 132, 0.3) !important;
+    border-color: #5ec8b4 !important;
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   Notificaciones estilo Facebook: campana con globo + panel + listado único.
+   ========================================================================== */
+
+.noti-campana {
+    position: relative;
+    display: inline-flex;
+}
+
+.noti-campana-btn {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    border: 1.5px solid var(--farma-primary);
+    background: var(--farma-surface);
+    color: var(--farma-text);
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(14, 147, 132, 0.22);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.noti-campana-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(14, 147, 132, 0.32);
+}
+
+.noti-campana-btn svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.noti-campana-globo {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.35rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3rem;
+    border-radius: 9999px;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--farma-surface);
+}
+
+.noti-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.6rem);
+    width: min(24rem, calc(100vw - 2rem));
+    max-height: 28rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    border: 1px solid var(--farma-border);
+    background: var(--farma-surface);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+    z-index: 80;
+}
+
+.noti-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--farma-border);
+}
+
+.noti-panel-titulo {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.noti-panel-acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.noti-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--farma-primary-strong);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.noti-link:hover {
+    text-decoration: underline;
+}
+
+.noti-link:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+.noti-panel-lista {
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.noti-vacio {
+    padding: 2rem 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--farma-muted);
+}
+
+.noti-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.7rem;
+    border-radius: 0.9rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.noti-item:hover {
+    background: var(--farma-primary-soft);
+}
+
+.noti-item.no-leida {
+    background: var(--farma-primary-soft);
+}
+
+.noti-icono {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    font-weight: 900;
+    color: #ffffff;
+}
+
+.noti-icono.grande {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.2rem;
+}
+
+.noti-icono.prioridad-alta {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.noti-icono.prioridad-media {
+    background: linear-gradient(135deg, #f59e0b, #c2410c);
+}
+
+.noti-icono.prioridad-baja {
+    background: linear-gradient(135deg, #0e9384, #0c7569);
+}
+
+.noti-texto {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.noti-titulo {
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.noti-detalle {
+    font-size: 0.8rem;
+    color: var(--farma-muted);
+    line-height: 1.4;
+}
+
+.noti-tiempo {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--farma-primary-strong);
+}
+
+.noti-punto {
+    flex-shrink: 0;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-top: 0.4rem;
+    border-radius: 9999px;
+    background: #0e9384;
+}
+
+.noti-punto.grande {
+    width: 0.85rem;
+    height: 0.85rem;
+    margin-top: 0.6rem;
+}
+
+.noti-feed .noti-fila {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--farma-border);
+}
+
+.noti-feed .noti-fila:last-child {
+    border-bottom: none;
+}
+
+.noti-feed .noti-fila.no-leida {
+    background: color-mix(in srgb, var(--farma-primary-soft) 55%, transparent);
+}
+
+.noti-filtro {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1.5px solid var(--farma-border);
+    background: var(--farma-surface);
+    padding: 0.5rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: inherit;
+}
+
+.noti-filtro:hover {
+    border-color: var(--farma-primary);
+}
+
+.noti-filtro.activo {
+    border-color: var(--farma-primary-strong);
+    background: linear-gradient(135deg, #0e9384 0%, #0c7569 100%);
+    color: #ffffff;
+}
+
+/* Fila estilo Facebook: avatar con insignia, texto corrido y menú •••. */
+.noti-avatar {
+    position: relative;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 9999px;
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #ffffff;
+}
+
+.noti-avatar.prioridad-alta {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.noti-avatar.prioridad-media {
+    background: linear-gradient(135deg, #f59e0b, #c2410c);
+}
+
+.noti-avatar.prioridad-baja {
+    background: linear-gradient(135deg, #0e9384, #0c7569);
+}
+
+.noti-insignia {
+    position: absolute;
+    right: -0.2rem;
+    bottom: -0.2rem;
+    display: grid;
+    place-items: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 9999px;
+    background: var(--farma-surface);
+    border: 2px solid var(--farma-surface);
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: var(--farma-primary-strong);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+}
+
+.noti-texto-fb {
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.noti-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.65rem;
+}
+
+@media (min-width: 640px) {
+    .noti-acciones {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+.noti-acciones .theme-button {
+    min-height: 0;
+    padding: 0.5rem 0.95rem;
+    font-size: 0.8rem;
+}
+
+.noti-menu {
+    position: relative;
+}
+
+.noti-menu summary {
+    list-style: none;
+    cursor: pointer;
+    border-radius: 9999px;
+    padding: 0.2rem 0.5rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: var(--farma-muted);
+}
+
+.noti-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.noti-menu summary:hover {
+    background: var(--farma-primary-soft);
+    color: var(--farma-text);
+}
+
+.noti-menu-lista {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 20;
+    min-width: 11rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--farma-border);
+    background: var(--farma-surface);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
+    padding: 0.35rem;
+}
+
+.noti-menu-lista a,
+.noti-menu-lista button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border-radius: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: inherit;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.noti-menu-lista a:hover,
+.noti-menu-lista button:hover {
+    background: var(--farma-primary-soft);
 }

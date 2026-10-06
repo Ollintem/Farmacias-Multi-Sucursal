@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Caja;
-use App\Models\Lote;
 use App\Models\Sucursal;
-use App\Models\Traspaso;
-use App\Models\Venta;
-use App\Support\EstadoCaducidad;
-use Carbon\Carbon;
+use App\Support\AlertasFeed;
+use App\Support\AlertasResumen;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class AlertasController extends Controller
 {
     /**
-     * Muestra la ventana de alertas con tres secciones: traspasos, caducidades y ventas del día.
+     * Muestra el centro de notificaciones estilo Facebook: un solo listado
+     * con traspasos, caducidades y ventas, nuevos primero.
      *
-     * Entrada: query `sucursal`, `seccion` (traspasos|caducidades|ventas) y `nivel` (todos|rojo|amarillo|verde).
+     * Entrada: query `sucursal`, `filtro` (todas|no_leidas|traspasos|caducidades|ventas).
+     * Acepta `seccion` y `nivel` viejos y los traduce al filtro nuevo.
      * Salida: resources/views/pages/alertas/index.blade.php.
      */
     public function index(Request $request): View
@@ -27,149 +26,128 @@ class AlertasController extends Controller
         $selectedSucursalId = (int) (session('active_sucursal_id') ?? $request->query('sucursal') ?? $request->user()?->id_sucursal ?? $sucursales->first()?->id ?? 0);
         $selectedSucursal = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
 
-        $seccion = strtolower(trim((string) $request->query('seccion', 'traspasos')));
-        $seccion = in_array($seccion, ['traspasos', 'caducidades', 'ventas'], true) ? $seccion : 'traspasos';
+        $filtro = strtolower(trim((string) $request->query('filtro', '')));
 
-        $nivel = strtolower(trim((string) $request->query('nivel', 'todos')));
-        $nivel = in_array($nivel, ['todos', 'rojo', 'amarillo', 'verde'], true) ? $nivel : 'todos';
+        if ($filtro === '') {
+            $seccionVieja = strtolower(trim((string) $request->query('seccion', '')));
+            $filtro = match ($seccionVieja) {
+                'traspasos' => 'traspasos',
+                'caducidades' => 'caducidades',
+                'ventas' => 'ventas',
+                default => 'todas',
+            };
+        }
 
-        $pendientesRecibidos = Traspaso::query()
-            ->with(['sucursalOrigen', 'sucursalDestino', 'producto', 'solicitadoPor'])
-            ->when($selectedSucursal, fn ($query) => $query->where('sucursal_b', $selectedSucursal->id))
-            ->whereIn('estado', ['pendiente', 'enviado'])
-            ->orderByDesc('id')
-            ->get();
+        $filtro = in_array($filtro, ['todas', 'no_leidas', 'traspasos', 'caducidades', 'ventas'], true) ? $filtro : 'todas';
 
-        $enviados = Traspaso::query()
-            ->with(['sucursalOrigen', 'sucursalDestino', 'producto'])
-            ->when($selectedSucursal, fn ($query) => $query->where('sucursal_a', $selectedSucursal->id))
-            ->orderByDesc('id')
-            ->limit(20)
-            ->get();
+        $sucursalId = $selectedSucursal?->id;
+        $usuarioId = $request->user()?->id;
+        $avisos = $sucursalId ? AlertasFeed::items($sucursalId) : [];
+        $leidas = $sucursalId ? AlertasFeed::leidas($sucursalId, $usuarioId) : [];
 
-        $historial = Traspaso::query()
-            ->with(['sucursalOrigen', 'sucursalDestino', 'producto'])
-            ->when($selectedSucursal, fn ($query) => $query->where(function ($sub) use ($selectedSucursal) {
-                $sub->where('sucursal_b', $selectedSucursal->id)->orWhere('sucursal_a', $selectedSucursal->id);
-            }))
-            ->whereIn('estado', ['aceptado', 'rechazado'])
-            ->orderByDesc('id')
-            ->limit(20)
-            ->get();
+        $avisos = array_map(function (array $aviso) use ($leidas) {
+            $aviso['leida'] = in_array($aviso['id'], $leidas, true);
 
-        $caducidades = $this->caducidades($selectedSucursal?->id);
-        $totalesCaducidad = [
-            'rojo' => $caducidades->where('nivel', 'rojo')->count(),
-            'amarillo' => $caducidades->where('nivel', 'amarillo')->count(),
-            'verde' => $caducidades->where('nivel', 'verde')->count(),
-            'todos' => $caducidades->count(),
+            return $aviso;
+        }, $avisos);
+
+        $noLeidas = collect($avisos)->where('leida', false)->count();
+
+        $notificaciones = match ($filtro) {
+            'no_leidas' => array_values(array_filter($avisos, fn (array $a) => ! $a['leida'])),
+            'traspasos', 'caducidades', 'ventas' => array_values(array_filter($avisos, fn (array $a) => $a['tipo'] === $filtro)),
+            default => $avisos,
+        };
+
+        $conteo = $sucursalId ? AlertasResumen::counts($sucursalId) : ['pendientes' => 0, 'rojos' => 0, 'total' => 0];
+        $tipos = [
+            'traspasos' => collect($avisos)->where('tipo', 'traspasos')->count(),
+            'caducidades' => collect($avisos)->where('tipo', 'caducidades')->count(),
+            'ventas' => collect($avisos)->where('tipo', 'ventas')->count(),
         ];
-
-        $caducidadesFiltradas = $nivel === 'todos'
-            ? $caducidades
-            : $caducidades->where('nivel', $nivel)->values();
-
-        $resumenVentas = $this->resumenVentasHoy($selectedSucursal?->id);
 
         return view('pages.alertas.index', [
             'sucursales' => $sucursales,
             'selectedSucursal' => $selectedSucursal,
-            'seccion' => $seccion,
-            'nivel' => $nivel,
-            'pendientesRecibidos' => $pendientesRecibidos,
-            'enviados' => $enviados,
-            'historial' => $historial,
-            'totalPendientes' => $pendientesRecibidos->count(),
-            'totalesCaducidad' => $totalesCaducidad,
-            'caducidades' => $caducidadesFiltradas,
-            'resumenVentas' => $resumenVentas,
+            'filtro' => $filtro,
+            'notificaciones' => $notificaciones,
+            'totalAvisos' => count($avisos),
+            'totalNoLeidas' => $noLeidas,
+            'tipos' => $tipos,
+            'conteo' => $conteo,
         ]);
     }
 
     /**
-     * Clasifica los lotes con existencia de la sucursal en rojo
-     * (≤30 días o caducado), amarillo (31-90 o sin fecha) y verde (>90).
-     *
-     * Los lotes sin existencia no generan alerta: un lote agotado ya no
-     * tiene riesgo de caducidad que mitigar.
-     *
-     * Entrada: id de sucursal opcional.
-     * Salida: colección con producto, lote, sucursal, fechas, días restantes y nivel.
+     * Devuelve las últimas notificaciones para la campana (polling cada 30 s).
      */
-    private function caducidades(?int $sucursalId): Collection
+    public function feed(Request $request): JsonResponse
     {
-        return Lote::query()
-            ->with(['producto', 'inventarios.sucursal'])
-            ->when($sucursalId, function ($query) use ($sucursalId) {
-                $query->whereHas('inventarios', function ($inventarioQuery) use ($sucursalId) {
-                    $inventarioQuery->where('inventario.id_sucursal', $sucursalId)
-                        ->where('stock', '>', 0);
-                });
-            })
-            ->when(! $sucursalId, function ($query) {
-                $query->whereHas('inventarios', fn ($inventarioQuery) => $inventarioQuery->where('stock', '>', 0));
-            })
-            ->orderByRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) ASC')
-            ->get()
-            ->map(function (Lote $lote) use ($sucursalId) {
-                $fecha = ($lote->fecha_de_caducidad ?? $lote->fecha_caducidad)
-                    ? Carbon::parse($lote->fecha_de_caducidad ?? $lote->fecha_caducidad)
-                    : null;
+        $sucursalId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
 
-                $estado = EstadoCaducidad::clasificar($fecha);
-                $dias = EstadoCaducidad::diasRestantes($fecha);
+        if (! $sucursalId || ! ($request->user()?->puedeVerModulo('Alertas') ?? false)) {
+            return response()->json(['total' => 0, 'no_leidas' => 0, 'avisos' => []]);
+        }
 
-                $inventarioSucursal = $sucursalId
-                    ? $lote->inventarios->firstWhere('id_sucursal', $sucursalId)
-                    : $lote->inventarios->first();
+        $avisos = AlertasFeed::items($sucursalId);
+        $leidas = AlertasFeed::leidas($sucursalId, $request->user()?->id);
 
+        $lista = collect($avisos)
+            ->take(10)
+            ->map(function (array $aviso) use ($leidas) {
                 return [
-                    'id' => $lote->id,
-                    'folio' => $lote->folio,
-                    'producto' => $lote->producto?->nombre_producto ?? 'Producto sin nombre',
-                    'sucursal' => $inventarioSucursal?->sucursal?->nombre_sucursal ?? 'Sin asignar',
-                    'stock' => $inventarioSucursal?->stock ?? (int) $lote->stock_lote,
-                    'fecha_caducidad' => $fecha?->format('Y-m-d') ?? '-',
-                    'dias_restantes' => $dias,
-                    'nivel' => $estado->nivelAlertas(),
-                    'etiqueta' => $estado->etiquetaAlertas($dias),
+                    'id' => $aviso['id'],
+                    'tipo' => $aviso['tipo'],
+                    'titulo' => $aviso['titulo'],
+                    'detalle' => $aviso['detalle'],
+                    'url' => $aviso['url'],
+                    'leida' => in_array($aviso['id'], $leidas, true),
+                    'tiempo' => $aviso['fecha']?->diffForHumans() ?? 'reciente',
+                    'icono' => $aviso['icono'],
+                    'prioridad' => $aviso['prioridad'],
                 ];
             })
             ->values();
+
+        return response()->json([
+            'total' => count($avisos),
+            'no_leidas' => collect($avisos)->reject(fn (array $a) => in_array($a['id'], $leidas, true))->count(),
+            'ver_todas' => route('alertas.index', ['sucursal' => $sucursalId]),
+            'avisos' => $lista,
+        ]);
     }
 
     /**
-     * Resume las ventas del día para la sucursal: conteo, total y ticket promedio.
-     *
-     * Entrada: id de sucursal opcional.
-     * Salida: arreglo con total_ventas, monto_total, ticket_promedio y última venta.
+     * Marca un solo aviso como leído desde el menú ••• de cada fila.
      */
-    private function resumenVentasHoy(?int $sucursalId): array
+    public function marcarLeida(Request $request): RedirectResponse
     {
-        if (! $sucursalId) {
-            return ['total_ventas' => 0, 'monto_total' => 0.0, 'ticket_promedio' => 0.0, 'ultima_venta' => null, 'por_metodo' => collect()];
+        $sucursalId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
+        $id = trim((string) $request->input('id', ''));
+
+        if ($sucursalId && $id !== '') {
+            AlertasFeed::marcarUna($sucursalId, $id, $request->user()?->id);
         }
 
-        $cajaIds = Caja::where('id_sucursal', $sucursalId)->pluck('id');
+        return back();
+    }
 
-        $ventasHoy = Venta::query()
-            ->with('pago')
-            ->whereIn('id_caja', $cajaIds)
-            ->whereDate('creado_en', Carbon::today())
-            ->orderByDesc('creado_en')
-            ->get();
+    /**
+     * Marca todos los avisos actuales como leídos (la campana deja de contarlos).
+     */
+    public function marcarLeidas(Request $request): RedirectResponse|JsonResponse
+    {
+        $sucursalId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
 
-        $total = (int) $ventasHoy->count();
-        $monto = (float) $ventasHoy->sum('total');
+        if ($sucursalId) {
+            $ids = collect(AlertasFeed::items($sucursalId))->pluck('id')->all();
+            AlertasFeed::marcarTodas($sucursalId, $ids, $request->user()?->id);
+        }
 
-        return [
-            'total_ventas' => $total,
-            'monto_total' => round($monto, 2),
-            'ticket_promedio' => $total > 0 ? round($monto / $total, 2) : 0.0,
-            'ultima_venta' => $ventasHoy->first(),
-            'por_metodo' => $ventasHoy->groupBy(fn (Venta $venta) => $venta->pago?->metodo ?? 'Sin método')
-                ->map(fn ($grupo) => ['ventas' => $grupo->count(), 'monto' => round((float) $grupo->sum('total'), 2)])
-                ->sortDesc(),
-        ];
+        if ($request->expectsJson()) {
+            return response()->json(['no_leidas' => 0]);
+        }
+
+        return back()->with('success', 'Todas las notificaciones marcadas como leídas.');
     }
 }
