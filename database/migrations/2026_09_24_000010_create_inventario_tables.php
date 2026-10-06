@@ -21,7 +21,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('id_presentacion')->constrained('presentaciones')->cascadeOnDelete();
             $table->foreignId('producto')->constrained('productos')->cascadeOnDelete();
-            $table->double('precio_presentacion');
+            $table->decimal('precio_presentacion', 12, 2);
+            $table->integer('unidades')->default(1);
             $table->timestamps();
             $table->unique(['id_presentacion', 'producto'], 'presentacion_producto_unique');
         });

@@ -35,29 +35,6 @@
                         @enderror
                     </div>
 
-                    <div>
-                        <label class="mb-2 block text-sm font-medium">Producto</label>
-                        <select name="id_producto" class="theme-input" required>
-                            <option value="">Selecciona el producto</option>
-                            @foreach($productos ?? [] as $producto)
-                                <option value="{{ $producto->id }}" {{ (string) old('id_producto') === (string) $producto->id ? 'selected' : '' }}>
-                                    {{ $producto->nombre_producto }} ({{ $producto->stock }} uds. global)
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('id_producto')
-                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block text-sm font-medium">Cantidad</label>
-                        <input type="number" name="cantidad" min="1" max="10000" value="{{ old('cantidad', 1) }}" class="theme-input" required>
-                        @error('cantidad')
-                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
-                        @enderror
-                    </div>
-
                     <div class="md:col-span-2">
                         <label class="mb-2 block text-sm font-medium">Mensaje para la sucursal destino</label>
                         <textarea name="mensaje" rows="3" maxlength="1000" placeholder="Ej. Urgente: necesitamos 20 uds. para cubrir la venta del fin de semana." class="theme-input">{{ old('mensaje') }}</textarea>
@@ -91,7 +68,7 @@
                         <span class="mt-2 block text-sm text-red-500">{{ $message }}</span>
                     @enderror
 
-                    @if($lotesDisponibles->isEmpty())
+                    @if(($lotesDisponibles ?? collect())->isEmpty())
                         <p class="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-slate-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-slate-200">
                             No hay lotes disponibles para traspasar: todos están sin existencias o caducados.
                         </p>
@@ -104,7 +81,7 @@
                                     <label class="mb-2 block text-sm font-medium">Lote</label>
                                     <select :name="`lotes[${index}][lote]`" x-model="row.lote" class="theme-input" required>
                                         <option value="">Selecciona un lote</option>
-                                        @foreach($lotesDisponibles as $lote)
+                                        @foreach(($lotesDisponibles ?? collect()) as $lote)
                                             <option value="{{ $lote->id }}">{{ $lote->folio }} · {{ $lote->producto?->nombre_producto ?? 'Sin producto' }} · {{ (int) $lote->inventarios->sum('stock') }} uds. · Caduca {{ $lote->fecha_de_caducidad ? \Carbon\Carbon::parse($lote->fecha_de_caducidad)->format('Y-m-d') : 'Sin fecha' }}</option>
                                         @endforeach
                                     </select>
@@ -134,7 +111,7 @@
         function traspasoLotes() {
             return {
                 rows: {!! json_encode(collect(old('lotes', [['lote' => '', 'cantidad' => 1]]))->map(fn ($item) => ['key' => uniqid(), 'lote' => (string) ($item['lote'] ?? ''), 'cantidad' => (int) ($item['cantidad'] ?? 1)])->values()) !!},
-                mapaStock: {!! json_encode($lotesDisponibles->mapWithKeys(fn ($lote) => [$lote->id => (int) $lote->inventarios->sum('stock')])) !!},
+                mapaStock: {!! json_encode(($lotesDisponibles ?? collect())->mapWithKeys(fn ($lote) => [$lote->id => (int) $lote->inventarios->sum('stock')])) !!},
                 agregar() {
                     this.rows.push({ key: `${Date.now()}-${this.rows.length}`, lote: '', cantidad: 1 });
                 },

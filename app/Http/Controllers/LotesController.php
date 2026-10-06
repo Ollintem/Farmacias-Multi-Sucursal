@@ -190,8 +190,7 @@ class LotesController extends Controller
      * Valida y crea el lote vinculado a un producto existente y a la sucursal.
      *
      * El producto y su presentación llegan de los selects del formulario; la
-     * presentación debe pertenecer al producto elegido. El stock del lote se
-     * suma al stock global del producto para no perder el acumulado.
+     * presentación debe pertenecer al producto elegido.
      *
      * Entrada: datos del formulario de alta de lote.
      * Salida: redirección a lotes.index con mensaje de resultado.
@@ -237,8 +236,6 @@ class LotesController extends Controller
                 ],
                 ['stock' => $data['stock']]
             );
-
-            Inventario::reflejarStockGlobal($producto->id);
         });
 
         return redirect()->route('lotes.index', ['sucursal' => $data['sucursal']])
@@ -248,9 +245,8 @@ class LotesController extends Controller
     /**
      * Da de baja unidades de un lote en la sucursal visible.
      *
-     * Resta del inventario de la sucursal, registra el motivo en `mermas`
-     * y recalcula el espejo de `productos.stock`. `lote.stock_lote` queda
-     * intacto como histórico de la entrada.
+     * Resta del inventario de la sucursal y registra el motivo en `mermas`.
+     * `lote.stock_lote` queda intacto como histórico de la entrada.
      *
      * Entrada: lote_id, sucursal, cantidad, motivo y nota del modal de Lotes.
      * Salida: redirección a lotes.index con éxito o con errores de validación.
@@ -306,8 +302,6 @@ class LotesController extends Controller
                 'nota' => $data['nota'] ?? null,
                 'id_usuario' => $request->user()->id,
             ]);
-
-            Inventario::reflejarStockGlobal($lote->id_producto);
         });
 
         return redirect()

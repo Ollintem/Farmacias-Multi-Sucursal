@@ -34,21 +34,21 @@ class AlertasController extends Controller
         $nivel = in_array($nivel, ['todos', 'rojo', 'amarillo', 'verde'], true) ? $nivel : 'todos';
 
         $pendientesRecibidos = Traspaso::query()
-            ->with(['sucursalOrigen', 'sucursalDestino', 'producto', 'solicitadoPor'])
+            ->with(['sucursalOrigen', 'sucursalDestino', 'detalles.lote.producto', 'solicitadoPor'])
             ->when($selectedSucursal, fn ($query) => $query->where('sucursal_b', $selectedSucursal->id))
             ->whereIn('estado', ['pendiente', 'enviado'])
             ->orderByDesc('id')
             ->get();
 
         $enviados = Traspaso::query()
-            ->with(['sucursalOrigen', 'sucursalDestino', 'producto'])
+            ->with(['sucursalOrigen', 'sucursalDestino', 'detalles.lote.producto'])
             ->when($selectedSucursal, fn ($query) => $query->where('sucursal_a', $selectedSucursal->id))
             ->orderByDesc('id')
             ->limit(20)
             ->get();
 
         $historial = Traspaso::query()
-            ->with(['sucursalOrigen', 'sucursalDestino', 'producto'])
+            ->with(['sucursalOrigen', 'sucursalDestino', 'detalles.lote.producto'])
             ->when($selectedSucursal, fn ($query) => $query->where(function ($sub) use ($selectedSucursal) {
                 $sub->where('sucursal_b', $selectedSucursal->id)->orWhere('sucursal_a', $selectedSucursal->id);
             }))

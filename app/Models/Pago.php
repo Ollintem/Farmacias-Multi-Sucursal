@@ -19,7 +19,7 @@ class Pago extends Model
     ];
 
     protected $casts = [
-        'monto' => 'double',
+        'monto' => 'decimal:2',
         'creado_en' => 'datetime',
     ];
 

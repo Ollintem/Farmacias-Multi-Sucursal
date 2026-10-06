@@ -20,7 +20,7 @@ class ProductoVenta extends Model
 
     protected $casts = [
         'cantidad' => 'integer',
-        'precio_unidad' => 'float',
+        'precio_unidad' => 'decimal:2',
     ];
 
     public function ventaRelacion(): BelongsTo

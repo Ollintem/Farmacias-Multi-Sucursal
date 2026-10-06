@@ -14,6 +14,11 @@ class PresentacionProducto extends Model
     protected $fillable = [
         'presentacion',
         'descripcion',
+        'es_activo',
+    ];
+
+    protected $casts = [
+        'es_activo' => 'boolean',
     ];
 
     public function preciosPorProducto(): HasMany
@@ -24,5 +29,10 @@ class PresentacionProducto extends Model
     public function productos(): HasMany
     {
         return $this->hasMany(Producto::class, 'id_presentacion');
+    }
+
+    public function scopeActivas($query)
+    {
+        return $query->where('es_activo', true);
     }
 }

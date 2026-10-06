@@ -55,8 +55,6 @@ function loteEnSucursalPos(Producto $producto, Sucursal $sucursal, int $unidades
         'stock' => $unidades,
     ]);
 
-    Inventario::reflejarStockGlobal($producto->id);
-
     return $lote;
 }
 
@@ -89,7 +87,7 @@ test('confirmar venta consume los lotes de la sucursal activa por caducidad mas 
     $component->assertSet('errorVenta', '');
     $this->assertSame(0, (int) Inventario::where('id_lote', $loteViejo->id)->value('stock'));
     $this->assertSame(5, (int) Inventario::where('id_lote', $loteNuevo->id)->value('stock'));
-    $this->assertSame(5, $producto->fresh()->stock);
+    $this->assertSame(5, $producto->fresh()->stockTotal());
 });
 
 test('la venta se bloquea si la sucursal activa no tiene stock aunque otra si tenga', function () {
@@ -140,7 +138,7 @@ test('la venta se bloquea si la sucursal activa no tiene stock aunque otra si te
         "Stock insuficiente para '{$producto->nombre_producto}' en esta sucursal. Disponible: 0, solicitado: 2 unidades."
     );
     $this->assertSame(10, (int) Inventario::where('id_lote', $loteAjeno->id)->value('stock'));
-    $this->assertSame(10, $producto->fresh()->stock);
+    $this->assertSame(10, $producto->fresh()->stockTotal());
 });
 
 test('las tarjetas del pos muestran el stock de la sucursal activa', function () {

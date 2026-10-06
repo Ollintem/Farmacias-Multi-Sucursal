@@ -717,11 +717,9 @@ class PuntoDeVenta extends Component
                         'precio_unidad' => $item['precio'],
                     ]);
 
-                    // Inventario de la sucursal consumiendo lotes FEFO y
-                    // espejo global del producto en la misma transacción.
+                    // Inventario de la sucursal consumiendo lotes FEFO.
                     $unidades = $this->unidadesRequeridas($item);
                     $this->consumirStockFefo((int) $sucursalId, $item['producto_id'], $unidades);
-                    Inventario::reflejarStockGlobal($item['producto_id']);
                 }
 
                 return $venta;

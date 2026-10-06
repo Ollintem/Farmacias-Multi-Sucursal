@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('id_caja')->constrained('cajas')->cascadeOnDelete();
             $table->string('folio', 20);
-            $table->double('descuento');
-            $table->double('total');
+            $table->decimal('descuento', 12, 2);
+            $table->decimal('total', 12, 2);
             $table->foreignId('id_pago')->constrained('pagos')->cascadeOnDelete();
             $table->string('estado', 20);
             $table->timestamp('creado_en')->useCurrent();
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreignId('venta')->constrained('ventas')->cascadeOnDelete();
             $table->foreignId('producto')->constrained('productos')->cascadeOnDelete();
             $table->integer('cantidad');
-            $table->double('precio_unidad');
+            $table->decimal('precio_unidad', 12, 2);
         });
     }
 

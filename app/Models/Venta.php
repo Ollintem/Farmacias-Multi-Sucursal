@@ -23,8 +23,8 @@ class Venta extends Model
     ];
 
     protected $casts = [
-        'descuento' => 'double',
-        'total' => 'double',
+        'descuento' => 'decimal:2',
+        'total' => 'decimal:2',
         'creado_en' => 'datetime',
     ];
 

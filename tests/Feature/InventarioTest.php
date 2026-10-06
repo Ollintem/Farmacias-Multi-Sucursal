@@ -129,7 +129,6 @@ test('el inventario guarda un producto con categoria y presentaciones en la sucu
         'nombre_producto' => 'Paracetamol 500mg',
         'id_categoria' => $categoria->id,
         'precio' => 2.5,
-        'stock' => 0,
     ]);
 
     // El alta de producto no crea filas de inventario: el stock de la sucursal

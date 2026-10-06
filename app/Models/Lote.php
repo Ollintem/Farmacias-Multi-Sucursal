@@ -88,6 +88,11 @@ class Lote extends Model
         return $this->hasMany(Inventario::class, 'id_lote');
     }
 
+    public function detallesTraspaso(): HasMany
+    {
+        return $this->hasMany(DetalleTraspaso::class, 'id_lote');
+    }
+
     /**
      * Indica si el lote ya caducó (misma regla que el listado de lotes).
      *

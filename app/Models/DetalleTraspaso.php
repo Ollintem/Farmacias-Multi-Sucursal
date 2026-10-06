@@ -13,7 +13,7 @@ class DetalleTraspaso extends Model
 
     protected $fillable = [
         'traspaso',
-        'producto',
+        'id_lote',
         'cantidad',
     ];
 
@@ -26,8 +26,8 @@ class DetalleTraspaso extends Model
         return $this->belongsTo(Traspaso::class, 'traspaso');
     }
 
-    public function productoRelacion(): BelongsTo
+    public function lote(): BelongsTo
     {
-        return $this->belongsTo(Producto::class, 'producto');
+        return $this->belongsTo(Lote::class, 'id_lote');
     }
 }

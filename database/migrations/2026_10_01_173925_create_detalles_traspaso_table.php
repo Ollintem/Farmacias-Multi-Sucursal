@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('detalles_traspaso', function (Blueprint $table) {
             $table->id();
             $table->foreignId('traspaso')->constrained('traspasos')->cascadeOnDelete();
-            $table->foreignId('producto')->constrained('productos')->cascadeOnDelete();
+            $table->foreignId('id_lote')->constrained('lotes')->cascadeOnDelete();
             $table->integer('cantidad');
         });
     }

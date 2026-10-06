@@ -64,24 +64,4 @@ class Inventario extends Model
             ->map(fn (mixed $total): int => (int) $total)
             ->all();
     }
-
-    /**
-     * Recalcula el stock global de un producto como espejo de su inventario.
-     *
-     * El total suma las unidades de todas las sucursales (vía lote), de modo
-     * que cualquier movimiento que toque `inventario` puede refrescar el
-     * espejo en la misma transacción.
-     *
-     * Entrada: id del producto.
-     * Salida: ninguna; escribe el total en `productos.stock`.
-     */
-    public static function reflejarStockGlobal(int $idProducto): void
-    {
-        $total = static::query()
-            ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
-            ->where('lotes.id_producto', $idProducto)
-            ->sum('inventario.stock');
-
-        Producto::where('id', $idProducto)->update(['stock' => (int) $total]);
-    }
 }

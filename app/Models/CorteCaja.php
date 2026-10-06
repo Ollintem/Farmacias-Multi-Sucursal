@@ -25,10 +25,10 @@ class CorteCaja extends Model
     ];
 
     protected $casts = [
-        'efectivo_inicial' => 'double',
-        'efectivo_declarado' => 'double',
-        'efectivo_esperado' => 'double',
-        'diferencia' => 'double',
+        'efectivo_inicial' => 'decimal:2',
+        'efectivo_declarado' => 'decimal:2',
+        'efectivo_esperado' => 'decimal:2',
+        'diferencia' => 'decimal:2',
         'fecha_inicio' => 'datetime',
         'fecha_cierre' => 'datetime',
         'creado_en' => 'datetime',

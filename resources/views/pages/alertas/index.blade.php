@@ -77,8 +77,8 @@
                                 </div>
                                 <div class="flex flex-col gap-4 p-4 lg:flex-row lg:items-start lg:justify-between">
                                     <div class="min-w-0 flex-1">
-                                        <h3 class="text-lg font-bold">{{ $traspaso->producto?->nombre_producto ?? 'Producto sin registro' }}</h3>
-                                        <p class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">{{ $traspaso->cantidad }} uds. solicitadas</p>
+                                        <h3 class="text-lg font-bold">{{ $traspaso->detalles->first()?->lote?->producto?->nombre_producto ?? 'Lotes solicitados' }}</h3>
+                                        <p class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300">{{ (int) $traspaso->detalles->sum('cantidad') }} uds. solicitadas en {{ $traspaso->detalles->count() }} lote(s)</p>
                                         <p class="mt-1 text-sm theme-subtle">Pidió {{ $traspaso->solicitadoPor?->name ?? 'usuario' }}</p>
                                         @if($traspaso->mensaje)
                                             <blockquote class="mt-3 rounded-xl border-l-4 border-amber-300 bg-amber-50 px-3 py-2 text-sm italic text-amber-900 dark:border-amber-500/50 dark:bg-amber-500/10 dark:text-amber-100">“{{ $traspaso->mensaje }}”</blockquote>
@@ -121,7 +121,7 @@
                                         <tr class="border-t border-slate-200 dark:border-slate-700">
                                             <td class="px-3 py-2 font-bold">T-{{ $t->id }}</td>
                                             <td class="px-3 py-2">{{ $t->sucursalOrigen?->nombre_sucursal }} → {{ $t->sucursalDestino?->nombre_sucursal }}</td>
-                                            <td class="px-3 py-2">{{ $t->producto?->nombre_producto ?? '—' }} × {{ $t->cantidad }}</td>
+                                            <td class="px-3 py-2">{{ $t->detalles->first()?->lote?->producto?->nombre_producto ?? '—' }} × {{ (int) $t->detalles->sum('cantidad') }}</td>
                                             <td class="px-3 py-2"><span class="status-badge {{ strtolower($t->estado) === 'aceptado' ? 'vigente' : 'expired' }}">{{ ucfirst($t->estado) }}</span></td>
                                         </tr>
                                     @empty

@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inventario;
-use App\Models\Producto;
+use App\Models\Lote;
 use App\Models\Sucursal;
 use App\Models\Traspaso;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class TraspasoController extends Controller
@@ -41,55 +42,113 @@ class TraspasoController extends Controller
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
-        $productos = Producto::where('es_activo', true)->orderBy('nombre_producto')->get(['id', 'nombre_producto', 'stock']);
 
-        return view('pages.entradas.create-traspaso', compact('sucursales', 'selectedSucursalId', 'productos'));
+        $lotesDisponibles = Lote::query()
+            ->with(['producto', 'inventarios'])
+            ->whereHas('inventarios', fn ($query) => $query->where('stock', '>', 0))
+            ->where(function ($query): void {
+                $query->whereNull('fecha_de_caducidad')
+                    ->orWhere('fecha_de_caducidad', '>=', now()->toDateString());
+            })
+            ->where(function ($query): void {
+                $query->whereNull('fecha_caducidad')
+                    ->orWhere('fecha_caducidad', '>=', now()->toDateString());
+            })
+            ->orderBy('folio')
+            ->get()
+            ->filter(fn (Lote $lote) => ! $lote->estaCaducado() && (int) $lote->inventarios->sum('stock') > 0)
+            ->values();
+
+        return view('pages.entradas.create-traspaso', compact('sucursales', 'selectedSucursalId', 'lotesDisponibles'));
     }
 
     /**
      * Valida y registra un traspaso entre dos sucursales distintas.
      *
-     * Entrada: sucursal origen, sucursal destino, producto, cantidad y mensaje.
+     * Entrada: sucursal origen, sucursal destino, mensaje opcional y
+     * listado de lotes con cantidades para `detalles_traspaso`.
      * Salida: redirección al listado de entradas filtrado por traspasos.
      */
     public function store(Request $request): RedirectResponse
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->validate([
             'sucursal_a' => ['required', 'exists:sucursales,id', 'different:sucursal_b'],
             'sucursal_b' => ['required', 'exists:sucursales,id', 'different:sucursal_a'],
-            'id_producto' => ['required', 'exists:productos,id'],
-            'cantidad' => ['required', 'integer', 'min:1', 'max:10000'],
             'mensaje' => ['nullable', 'string', 'max:1000'],
             'estado' => ['nullable', 'string', 'max:20'],
+            'lotes' => ['required', 'array', 'min:1'],
+            'lotes.*.lote' => ['required', 'exists:lotes,id'],
+            'lotes.*.cantidad' => ['required', 'integer', 'min:1', 'max:10000'],
         ]);
 
-        $stockOrigen = (int) Inventario::forSucursal((int) $data['sucursal_a'])
-            ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
-            ->where('lotes.id_producto', (int) $data['id_producto'])
-            ->sum('inventario.stock');
+        $lotes = Lote::query()
+            ->with('producto')
+            ->whereIn('id', collect($data['lotes'])->pluck('lote'))
+            ->get()
+            ->keyBy('id');
 
-        if ($stockOrigen < (int) $data['cantidad']) {
-            return back()->withInput()->with('error', "Stock insuficiente en origen. Disponible: {$stockOrigen} uds.");
+        $errores = [];
+
+        foreach (array_values($data['lotes']) as $indice => $item) {
+            $lote = $lotes->get($item['lote']);
+
+            if ($lote === null) {
+                continue;
+            }
+
+            if ($lote->estaCaducado()) {
+                $errores["lotes.{$indice}.lote"] = 'El lote está caducado y no puede traspasarse.';
+
+                continue;
+            }
+
+            $stockOrigen = (int) Inventario::query()
+                ->where('id_sucursal', (int) $data['sucursal_a'])
+                ->where('id_lote', $lote->id)
+                ->sum('stock');
+
+            if ($stockOrigen < (int) $item['cantidad']) {
+                $errores["lotes.{$indice}.cantidad"] = "Stock insuficiente en origen. Disponible: {$stockOrigen} uds.";
+            }
         }
 
-        Traspaso::create([
-            'sucursal_a' => $data['sucursal_a'],
-            'sucursal_b' => $data['sucursal_b'],
-            'id_producto' => $data['id_producto'],
-            'cantidad' => $data['cantidad'],
-            'mensaje' => $data['mensaje'] ?? null,
-            'pedido_por' => $request->user()->id,
-            'estado' => $data['estado'] ?? 'pendiente',
-        ]);
+        if ($errores !== []) {
+            throw ValidationException::withMessages($errores);
+        }
 
-        return redirect()->route('alertas.index', [
+        $detalles = collect($data['lotes'])
+            ->map(function (array $item) {
+                return [
+                    'id_lote' => (int) $item['lote'],
+                    'cantidad' => (int) $item['cantidad'],
+                ];
+            })
+            ->values();
+
+        DB::transaction(function () use ($data, $detalles, $request): void {
+            $traspaso = Traspaso::create([
+                'sucursal_a' => $data['sucursal_a'],
+                'sucursal_b' => $data['sucursal_b'],
+                'mensaje' => $data['mensaje'] ?? null,
+                'pedido_por' => $request->user()->id,
+                'estado' => $data['estado'] ?? 'pendiente',
+            ]);
+
+            $traspaso->detalles()->createMany($detalles->all());
+        });
+
+        return redirect()->route('entradas-de-almacen.index', [
             'sucursal' => $data['sucursal_b'],
-            'seccion' => 'traspasos',
+            'tipo' => 'traspasos',
         ])->with('success', 'Solicitud de traspaso enviada a la sucursal destino.');
     }
 
     /**
-     * Acepta un traspaso pendiente y mueve el inventario origen → destino (FIFO por caducidad).
+     * Acepta un traspaso pendiente y mueve el inventario origen → destino por lote.
+     *
+     * Cada detalle indica el lote exacto y sus unidades: se descuentan de la
+     * fila de inventario del origen y se suman en el destino. El lote viaja
+     * intacto (mismo id, caducidad y producto).
      *
      * Entrada: id del traspaso pendiente donde la sucursal activa es el destino.
      * Salida: redirección a alertas con mensaje de resultado.
@@ -104,13 +163,9 @@ class TraspasoController extends Controller
             return back()->with('error', 'Solo la sucursal destino puede aceptar este traspaso.');
         }
 
-        $cantidad = max(1, (int) $traspaso->cantidad);
-
         try {
-            DB::transaction(function () use ($traspaso, $cantidad, $request) {
-                if ($traspaso->id_producto) {
-                    $this->moverInventario((int) $traspaso->sucursal_a, (int) $traspaso->sucursal_b, (int) $traspaso->id_producto, $cantidad);
-                }
+            DB::transaction(function () use ($traspaso, $request) {
+                $this->moverLotes((int) $traspaso->sucursal_a, (int) $traspaso->sucursal_b, $traspaso);
 
                 $traspaso->update([
                     'estado' => 'aceptado',
@@ -178,44 +233,31 @@ class TraspasoController extends Controller
     }
 
     /**
-     * Mueve N unidades de un producto entre sucursales consumiendo lotes FIFO por caducidad.
+     * Mueve los lotes de un traspaso entre sucursales con bloqueo de filas.
      *
      * @throws \RuntimeException Cuando el stock en origen es insuficiente.
      */
-    private function moverInventario(int $origenId, int $destinoId, int $productoId, int $cantidad): void
+    private function moverLotes(int $origenId, int $destinoId, Traspaso $traspaso): void
     {
-        $filas = Inventario::query()
-            ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
-            ->where('inventario.id_sucursal', $origenId)
-            ->where('lotes.id_producto', $productoId)
-            ->where('inventario.stock', '>', 0)
-            ->orderByRaw('COALESCE(lotes.fecha_de_caducidad, lotes.fecha_caducidad) ASC')
-            ->select('inventario.*')
-            ->lockForUpdate()
-            ->get();
+        foreach ($traspaso->detalles()->lockForUpdate()->get() as $detalle) {
+            $fila = Inventario::query()
+                ->where('id_sucursal', $origenId)
+                ->where('id_lote', $detalle->id_lote)
+                ->lockForUpdate()
+                ->first();
 
-        $disponible = (int) $filas->sum('stock');
+            $disponible = (int) ($fila?->stock ?? 0);
 
-        if ($disponible < $cantidad) {
-            throw new \RuntimeException("Stock insuficiente en origen. Disponible: {$disponible} uds, solicitado: {$cantidad} uds.");
-        }
-
-        $restante = $cantidad;
-
-        foreach ($filas as $fila) {
-            if ($restante <= 0) {
-                break;
+            if ($disponible < (int) $detalle->cantidad) {
+                throw new \RuntimeException("Stock insuficiente en origen para el lote {$detalle->id_lote}. Disponible: {$disponible} uds, solicitado: {$detalle->cantidad} uds.");
             }
 
-            $tomar = min((int) $fila->stock, $restante);
-            $fila->decrement('stock', $tomar);
+            $fila->decrement('stock', (int) $detalle->cantidad);
 
             Inventario::updateOrCreate(
-                ['id_sucursal' => $destinoId, 'id_lote' => $fila->id_lote],
+                ['id_sucursal' => $destinoId, 'id_lote' => $detalle->id_lote],
                 ['stock' => 0]
-            )->increment('stock', $tomar);
-
-            $restante -= $tomar;
+            )->increment('stock', (int) $detalle->cantidad);
         }
     }
 }

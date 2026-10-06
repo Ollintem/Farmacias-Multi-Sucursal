@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('folio', 20);
             $table->integer('stock_lote')->default(0);
             $table->foreignId('id_pedido')->nullable()->constrained('pedidos')->nullOnDelete();
+            $table->foreignId('id_proveedor')->nullable()->constrained('proveedores')->nullOnDelete();
             // Columna sin constraint inline: `productos` aún no existe (se crea en
             // 000009). La FK se agrega en 000009 después de crear `productos`.
             $table->foreignId('id_producto')->nullable();
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->timestamp('entregado_en')->useCurrent();
             $table->timestamp('fecha_caducidad')->nullable();
             $table->timestamp('fecha_de_caducidad')->nullable();
+            $table->timestamp('anulado_en')->nullable();
         });
     }
 

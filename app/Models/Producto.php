@@ -17,7 +17,6 @@ class Producto extends Model
         'codigo_barras',
         'nombre_producto',
         'descripcion',
-        'stock',
         'precio',
         'id_presentacion',
         'id_categoria',
@@ -27,8 +26,7 @@ class Producto extends Model
     ];
 
     protected $casts = [
-        'stock' => 'integer',
-        'precio' => 'float',
+        'precio' => 'decimal:2',
         'id_presentacion' => 'integer',
         'id_categoria' => 'integer',
         'es_controlado' => 'boolean',
@@ -89,6 +87,26 @@ class Producto extends Model
         return $this->hasMany(Lote::class, 'id_producto');
     }
 
+    /**
+     * Stock total del producto en todas las sucursales.
+     *
+     * Suma `inventario.stock` vía lote. Reemplaza la antigua columna
+     * `productos.stock` (eliminada): el stock vive en `lotes.stock_lote`
+     * (histórico de entrada) e `inventario.stock` (disponible por sucursal).
+     */
+    public function stockTotal(): int
+    {
+        return (int) $this->inventarios()->sum('inventario.stock');
+    }
+
+    /**
+     * Stock disponible del producto en una sucursal.
+     */
+    public function stockEnSucursal(int $idSucursal): int
+    {
+        return (int) $this->inventarios()->where('inventario.id_sucursal', $idSucursal)->sum('inventario.stock');
+    }
+
     public function ventas(): BelongsToMany
     {
         return $this->belongsToMany(Venta::class, 'producto_venta', 'producto', 'venta')
@@ -98,12 +116,6 @@ class Producto extends Model
     public function pedidos(): BelongsToMany
     {
         return $this->belongsToMany(Pedido::class, 'detalles_pedido', 'producto', 'pedido')
-            ->withPivot('cantidad');
-    }
-
-    public function traspasos(): BelongsToMany
-    {
-        return $this->belongsToMany(Traspaso::class, 'detalles_traspaso', 'producto', 'traspaso')
             ->withPivot('cantidad');
     }
 }

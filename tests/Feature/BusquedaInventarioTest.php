@@ -181,8 +181,8 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
 
     expect($lote->id_producto)->toBe($producto->id)
         ->and($lote->pedido?->proveedor?->nombre_proveedor)->toBe('Proveedor Busq')
-        // Espejo global = suma del inventario: 6 del lote previo + 10 del nuevo.
-        ->and($producto->fresh()->stock)->toBe(16);
+        // Stock total = suma del inventario: 6 del lote previo + 10 del nuevo.
+        ->and($producto->fresh()->stockTotal())->toBe(16);
 
     $this->assertDatabaseHas('inventario', [
         'id_sucursal' => $sucursalA->id,

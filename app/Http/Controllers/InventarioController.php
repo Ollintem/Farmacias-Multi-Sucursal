@@ -161,7 +161,6 @@ class InventarioController extends Controller
             'nombre_producto' => $data['nombre_producto'],
             'id_categoria' => $data['id_categoria'],
             'descripcion' => $data['descripcion'] ?? '',
-            'stock' => 0,
             'precio' => $request->boolean('vender_por_unidad') ? $data['precio'] : null,
             'id_presentacion' => $data['presentaciones'][0]['id_presentacion'],
             'es_controlado' => $request->boolean('es_controlado', false),
@@ -208,7 +207,7 @@ class InventarioController extends Controller
 
         $productos = $productos
             ->map(function (Producto $producto) use ($presentacionCaja, $stockInventario) {
-                $conStock = (int) $producto->stock > 0 || (int) ($stockInventario[$producto->id] ?? 0) > 0;
+                $conStock = (int) ($stockInventario[$producto->id] ?? 0) > 0;
                 $conLotes = (int) $producto->lotes_count > 0;
                 $conVentas = (int) $producto->ventas_count > 0;
 
@@ -376,13 +375,12 @@ class InventarioController extends Controller
      * Determina si el producto tiene unidades disponibles.
      *
      * Entrada: producto.
-     * Salida: true si hay stock global o en el inventario de alguna sucursal
+     * Salida: true si hay stock en el inventario de alguna sucursal
      * (el inventario se vincula al producto vía lote).
      */
     private function tieneStock(Producto $producto): bool
     {
-        return (int) $producto->stock > 0
-            || (int) $producto->inventarios()->sum('inventario.stock') > 0;
+        return (int) $producto->inventarios()->sum('inventario.stock') > 0;
     }
 
     /**

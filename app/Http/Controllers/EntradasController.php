@@ -111,7 +111,7 @@ class EntradasController extends Controller
     private function entradasTraspasos(?int $sucursalId, string $busqueda): Collection
     {
         return Traspaso::query()
-            ->with(['sucursalOrigen', 'sucursalDestino'])
+            ->with(['sucursalOrigen', 'sucursalDestino', 'detalles'])
             ->when($sucursalId, fn ($query) => $query->where('sucursal_b', $sucursalId))
             ->when($busqueda !== '', function ($query) use ($busqueda) {
                 $query->where(function ($subQuery) use ($busqueda) {
@@ -136,7 +136,7 @@ class EntradasController extends Controller
                     'origen' => $origen,
                     'producto' => $origen,
                     'destino' => $destino,
-                    'unidades' => 0,
+                    'unidades' => (int) $traspaso->detalles->sum('cantidad'),
                     'fecha' => $traspaso->creado_en ? Carbon::parse($traspaso->creado_en)->format('Y-m-d') : '-',
                     'orden_fecha' => $traspaso->creado_en ? Carbon::parse($traspaso->creado_en)->timestamp : 0,
                     'estado' => ucfirst((string) $traspaso->estado),

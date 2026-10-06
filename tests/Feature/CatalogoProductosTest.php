@@ -165,7 +165,7 @@ test('se puede desactivar un producto que tiene stock sin tocar el inventario', 
             ->assertSessionHas('success');
     }
 
-    $this->assertDatabaseHas('productos', ['id' => $conStockGlobal->id, 'es_activo' => 0, 'stock' => 12]);
+    $this->assertDatabaseHas('productos', ['id' => $conStockGlobal->id, 'es_activo' => 0]);
     $this->assertDatabaseHas('inventario', ['id_lote' => $loteSucursal->id, 'stock' => 6]);
     $this->assertDatabaseHas('lotes', ['id' => $loteSucursal->id, 'stock_lote' => 6]);
 });
@@ -297,6 +297,18 @@ test('no se puede eliminar un producto con lotes o con stock', function () {
     $conStock = crearProductoCatalogo($categoria, $caja, [
         'codigo_barras' => '7500000000097',
         'nombre_producto' => 'Producto con stock',
+    ]);
+
+    $loteConStock = Lote::create([
+        'folio' => 'L-0003',
+        'stock_lote' => 4,
+        'id_producto' => $conStock->id,
+        'fecha_caducidad' => '2027-06-01',
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $sucursal->id,
+        'id_lote' => $loteConStock->id,
         'stock' => 4,
     ]);
 

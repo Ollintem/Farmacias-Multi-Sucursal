@@ -60,8 +60,6 @@ function registrarLotePos(Producto $producto, Sucursal $sucursal, int $unidades,
         'stock' => $unidades,
     ]);
 
-    Inventario::reflejarStockGlobal($producto->id);
-
     return $lote;
 }
 
@@ -164,7 +162,7 @@ test('confirmar venta descuenta stock por unidades al vender presentaciones', fu
     $component->call('confirmarVenta');
 
     $component->assertSet('errorVenta', '');
-    $this->assertSame(20, $producto->fresh()->stock);
+    $this->assertSame(20, $producto->fresh()->stockTotal());
 });
 
 test('no se puede superar el stock en presentaciones del carrito', function () {

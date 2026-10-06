@@ -32,11 +32,12 @@ return new class extends Migration
             $table->id();
             $table->string('presentacion', 20);
             $table->text('descripcion');
+            $table->boolean('es_activo')->default(true);
         });
 
         Schema::create('pagos', function (Blueprint $table) {
             $table->id();
-            $table->double('monto');
+            $table->decimal('monto', 12, 2);
             $table->string('metodo', 20);
             $table->string('estado', 20);
             $table->string('referencia', 50);
@@ -60,10 +61,17 @@ return new class extends Migration
             $table->timestamp('actualizado_en')->useCurrent()->useCurrentOnUpdate();
             $table->timestamps();
         });
+
+        Schema::create('categorias', function (Blueprint $table) {
+            $table->id();
+            $table->string('nombre', 60)->unique();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('categorias');
         Schema::dropIfExists('cajas');
         Schema::dropIfExists('configuracion_bancaria');
         Schema::dropIfExists('pagos');

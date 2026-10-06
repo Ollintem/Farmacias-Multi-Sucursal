@@ -17,7 +17,7 @@ class ProductoPresentacion extends Model
     ];
 
     protected $casts = [
-        'precio_presentacion' => 'float',
+        'precio_presentacion' => 'decimal:2',
         'unidades' => 'integer',
     ];
 

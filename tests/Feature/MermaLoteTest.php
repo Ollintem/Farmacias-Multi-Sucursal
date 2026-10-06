@@ -60,8 +60,7 @@ function sucursalMerma(string $nombre): Sucursal
 }
 
 /**
- * Crea un lote con su fila de inventario en la sucursal indicada
- * y refresca el espejo del producto.
+ * Crea un lote con su fila de inventario en la sucursal indicada.
  *
  * Entrada: sucursal, producto, folio, unidades en stock y fecha de caducidad.
  * Salida: el lote creado.
@@ -80,8 +79,6 @@ function loteMerma(Sucursal $sucursal, Producto $producto, string $folio, int $s
         'id_lote' => $lote->id,
         'stock' => $stock,
     ]);
-
-    Inventario::reflejarStockGlobal($producto->id);
 
     return $lote;
 }
@@ -103,7 +100,7 @@ test('da de baja existencia y deja trazabilidad de la merma', function () {
     $respuesta->assertRedirect()->assertSessionHas('success');
 
     expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(6)
-        ->and((int) $escenario['producto']->fresh()->stock)->toBe(6)
+        ->and($escenario['producto']->fresh()->stockTotal())->toBe(6)
         ->and((int) $lote->fresh()->stock_lote)->toBe(10)
         ->and(Merma::count())->toBe(1);
 
@@ -131,7 +128,7 @@ test('rechaza una cantidad mayor al restante sin tocar el stock', function () {
         ->assertSessionHasErrors('cantidad');
 
     expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(5)
-        ->and((int) $escenario['producto']->fresh()->stock)->toBe(5)
+        ->and($escenario['producto']->fresh()->stockTotal())->toBe(5)
         ->and(Merma::count())->toBe(0);
 });
 

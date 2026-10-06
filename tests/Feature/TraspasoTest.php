@@ -47,7 +47,6 @@ function crearContextoTraspaso(object $test): array
         'codigo_barras' => '7501112223369',
         'nombre_producto' => 'Ibuprofeno 400mg',
         'descripcion' => '',
-        'stock' => 0,
         'precio' => null,
         'id_presentacion' => $presentacion->id,
         'id_categoria' => $categoria->id,
@@ -123,7 +122,7 @@ test('el traspaso guarda lotes con cantidades en detalles_traspaso', function ()
     expect($traspaso)->not->toBeNull();
     $this->assertDatabaseHas('detalles_traspaso', [
         'traspaso' => $traspaso->id,
-        'producto' => $producto->id,
+        'id_lote' => $vigente->id,
         'cantidad' => 3,
     ]);
 });

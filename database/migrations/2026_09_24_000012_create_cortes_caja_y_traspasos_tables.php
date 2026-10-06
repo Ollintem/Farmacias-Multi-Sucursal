@@ -13,10 +13,10 @@ return new class extends Migration
             $table->foreignId('id_caja')->constrained('cajas')->cascadeOnDelete();
             $table->foreignId('id_usuario')->constrained('usuarios')->cascadeOnDelete();
             $table->string('turno', 20);
-            $table->double('efectivo_inicial');
-            $table->double('efectivo_declarado');
-            $table->double('efectivo_esperado');
-            $table->double('diferencia');
+            $table->decimal('efectivo_inicial', 12, 2);
+            $table->decimal('efectivo_declarado', 12, 2);
+            $table->decimal('efectivo_esperado', 12, 2);
+            $table->decimal('diferencia', 12, 2);
             $table->timestamp('fecha_inicio');
             $table->timestamp('fecha_cierre')->nullable();
             $table->string('estado', 20);
@@ -30,7 +30,10 @@ return new class extends Migration
             $table->foreignId('pedido_por')->constrained('usuarios')->cascadeOnDelete();
             $table->foreignId('recibido_por')->nullable()->constrained('usuarios')->nullOnDelete();
             $table->string('estado', 20);
+            $table->text('mensaje')->nullable();
+            $table->text('motivo_respuesta')->nullable();
             $table->timestamp('creado_en')->useCurrent();
+            $table->timestamp('respondido_en')->nullable();
         });
     }
 

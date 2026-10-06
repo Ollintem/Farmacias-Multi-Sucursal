@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Traspaso extends Model
 {
@@ -16,8 +16,6 @@ class Traspaso extends Model
     protected $fillable = [
         'sucursal_a',
         'sucursal_b',
-        'id_producto',
-        'cantidad',
         'mensaje',
         'motivo_respuesta',
         'respondido_en',
@@ -29,7 +27,6 @@ class Traspaso extends Model
     protected $casts = [
         'creado_en' => 'datetime',
         'respondido_en' => 'datetime',
-        'cantidad' => 'integer',
     ];
 
     public function sucursalOrigen(): BelongsTo
@@ -52,9 +49,14 @@ class Traspaso extends Model
         return $this->belongsTo(User::class, 'recibido_por');
     }
 
-    public function producto(): BelongsTo
+    public function detalles(): HasMany
     {
-        return $this->belongsTo(Producto::class, 'id_producto');
+        return $this->hasMany(DetalleTraspaso::class, 'traspaso');
+    }
+
+    public function lotes(): HasManyThrough
+    {
+        return $this->hasManyThrough(Lote::class, DetalleTraspaso::class, 'traspaso', 'id', 'id', 'id_lote');
     }
 
     public function esPendiente(): bool
