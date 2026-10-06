@@ -2115,3 +2115,33 @@ html:not(.dark) .farma-topbar {
 .dark .farma-pick-scroll::-webkit-scrollbar-thumb {
     background: #3fbda9;
 }
+
+/* ==========================================================================
+   Tarjetas de estado de Lotes: funcionan como filtro seleccionable.
+   Van al final del archivo para ganarle en cascada a los estilos de tema
+   (html:not(.dark) / .dark) que también pintan .module-stat.
+   ========================================================================== */
+.module-stat-filtro {
+    display: block;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.module-stat-filtro:hover,
+html:not(.dark) .module-stat-filtro:hover,
+.dark .module-stat-filtro:hover {
+    border-color: #0e9384;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(14, 147, 132, 0.18);
+}
+
+.module-stat-filtro-activo,
+html:not(.dark) .module-stat-filtro-activo,
+.dark .module-stat-filtro-activo {
+    border-color: #0e9384;
+    box-shadow: 0 0 0 3px rgba(14, 147, 132, 0.28), 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.module-stat-filtro:focus-visible {
+    outline: 3px solid rgba(45, 212, 191, 0.4);
+    outline-offset: 2px;
+}

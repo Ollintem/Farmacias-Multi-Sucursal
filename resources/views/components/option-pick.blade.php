@@ -9,15 +9,61 @@
 @php($etiquetaInicial = ($valorInicial !== '' && $mapa->has($valorInicial)) ? $mapa->get($valorInicial) : $placeholder)
 
 <div
-    x-data='{ valor: @json($valorInicial), etiqueta: @json($etiquetaInicial), abierto: false, auto: {{ $autoSubmit ? 'true' : 'false' }}, elegir(id, etiqueta) { this.valor = String(id); this.etiqueta = etiqueta; this.abierto = false; if (this.auto) { this.$el.closest("form").requestSubmit(); } } }'
-    @click.outside="abierto = false"
-    @keydown.escape.window="abierto = false"
+    class="relative"
+    x-data='{
+        valor: @json($valorInicial),
+        etiqueta: @json($etiquetaInicial),
+        abierto: false,
+        auto: {{ $autoSubmit ? "true" : "false" }},
+        elegir(id, etiqueta) {
+            this.valor = String(id);
+            this.etiqueta = etiqueta;
+            this.abierto = false;
+            this.detener();
+            if (this.auto) { this.$el.closest("form").requestSubmit(); }
+        },
+        alternar() {
+            this.abierto = ! this.abierto;
+            if (this.abierto) {
+                this.$nextTick(() => {
+                    if (! this.abierto) { return; }
+                    this.posicionar();
+                    this._alMover = () => this.posicionar();
+                    window.addEventListener("scroll", this._alMover, { passive: true, capture: true });
+                    window.addEventListener("resize", this._alMover);
+                });
+            } else {
+                this.detener();
+            }
+        },
+        posicionar() {
+            const rect = this.$refs.gatillo.getBoundingClientRect();
+            const panel = this.$refs.panel;
+            const alto = panel.offsetHeight;
+
+            panel.style.left = rect.left + "px";
+            panel.style.width = rect.width + "px";
+            panel.style.top = (window.innerHeight - rect.bottom < alto + 8 && rect.top > alto + 8)
+                ? (rect.top - 8 - alto) + "px"
+                : (rect.bottom + 8) + "px";
+        },
+        detener() {
+            if (this._alMover) {
+                window.removeEventListener("scroll", this._alMover, { capture: true });
+                window.removeEventListener("resize", this._alMover);
+                this._alMover = null;
+            }
+        }
+    }'
+    @click.outside="abierto = false; detener()"
+    @keydown.escape.window="abierto = false; detener()"
 >
     <input type="hidden" name="{{ $name }}" :value="valor">
 
     <button
         type="button"
-        @click="abierto = ! abierto"
+        x-ref="gatillo"
+        @click="alternar()"
         :aria-expanded="abierto"
         aria-haspopup="listbox"
         class="theme-input flex cursor-pointer items-center justify-between gap-2 text-left"
@@ -39,13 +85,17 @@
     </button>
 
     <div
+        x-ref="panel"
         x-show="abierto"
         x-cloak
-        x-transition
-        class="farma-pick-scroll mt-2"
-        role="listbox"
-        @if($label) aria-label="{{ $label }}" @endif
+        x-transition.opacity
+        class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-zinc-700 dark:bg-zinc-900"
     >
+        <div
+            class="farma-pick-scroll"
+            role="listbox"
+            @if($label) aria-label="{{ $label }}" @endif
+        >
         @forelse($options as $optValue => $optLabel)
             <button
                 type="button"
@@ -71,5 +121,6 @@
         @empty
             <p class="px-3 py-4 text-center text-sm theme-subtle">Sin opciones disponibles.</p>
         @endforelse
+        </div>
     </div>
 </div>

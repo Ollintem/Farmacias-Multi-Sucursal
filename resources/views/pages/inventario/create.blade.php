@@ -113,6 +113,7 @@
                 x-on:submit.prevent="validarFormulario()"
                 x-on:keydown.escape.window="dropdownAbierto = null"
                 x-on:click.capture.window="if (dropdownAbierto !== null && !$event.target.closest?.('[data-dropdown]')) { dropdownAbierto = null; }"
+                x-effect="seguirDesplegable()"
             >
                 @csrf
                 @if($esEdicion)
@@ -153,7 +154,7 @@
 
                             <div>
                                 <label class="mb-2 block text-sm font-medium">Categoría</label>
-                                <div data-dropdown>
+                                <div class="relative" data-dropdown="categoria">
                                     <input type="hidden" name="id_categoria" :value="categoriaSeleccionada">
 
                                     <button
@@ -176,8 +177,8 @@
                                         </svg>
                                     </button>
 
-                                    <div x-show="dropdownAbierto === 'categoria'" x-cloak x-transition>
-                                        <div class="farma-pick-scroll mt-2" role="listbox" aria-label="Categorías">
+                                    <div x-show="dropdownAbierto === 'categoria'" x-cloak x-transition.opacity class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-zinc-700 dark:bg-zinc-900">
+                                        <div class="farma-pick-scroll" role="listbox" aria-label="Categorías">
                                             <template x-for="categoria in categorias" :key="categoria.id">
                                                 <button
                                                     type="button"
@@ -289,7 +290,7 @@
                                             </template>
 
                                             <template x-if="indice > 0">
-                                                <div data-dropdown>
+                                                <div class="relative" :data-dropdown="'presentacion-' + indice">
                                                     <input
                                                         type="hidden"
                                                         :name="'presentaciones[' + indice + '][id_presentacion]'"
@@ -316,8 +317,8 @@
                                                         </svg>
                                                     </button>
 
-                                                    <div x-show="dropdownAbierto === ('presentacion-' + indice)" x-cloak x-transition>
-                                                        <div class="farma-pick-scroll mt-2" role="listbox" aria-label="Presentaciones">
+                                                    <div x-show="dropdownAbierto === ('presentacion-' + indice)" x-cloak x-transition.opacity class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-zinc-700 dark:bg-zinc-900">
+                                                        <div class="farma-pick-scroll" role="listbox" aria-label="Presentaciones">
                                                             <template x-for="presentacion in catalogoPresentaciones" :key="presentacion.id">
                                                                 <button
                                                                     type="button"
@@ -500,6 +501,61 @@
 
                 agregarFila() {
                     this.filas.push({ id_presentacion: '', unidades: '', precio: '', error: '' });
+                },
+
+                seguirDesplegable() {
+                    const raiz = this.$refs.formulario;
+                    const id = this.dropdownAbierto;
+
+                    if (raiz._seguidor) {
+                        window.removeEventListener('scroll', raiz._seguidor, { capture: true });
+                        window.removeEventListener('resize', raiz._seguidor);
+                        raiz._seguidor = null;
+                    }
+
+                    if (id === null) {
+                        return;
+                    }
+
+                    this.$nextTick(() => {
+                        if (this.dropdownAbierto !== id) {
+                            return;
+                        }
+
+                        if (raiz._seguidor) {
+                            window.removeEventListener('scroll', raiz._seguidor, { capture: true });
+                            window.removeEventListener('resize', raiz._seguidor);
+                        }
+
+                        this.ubicarDesplegable(id);
+                        raiz._seguidor = () => this.ubicarDesplegable(id);
+                        window.addEventListener('scroll', raiz._seguidor, { passive: true, capture: true });
+                        window.addEventListener('resize', raiz._seguidor);
+                    });
+                },
+
+                ubicarDesplegable(id) {
+                    const contenedor = this.$refs.formulario.querySelector('[data-dropdown="' + id + '"]');
+
+                    if (!contenedor) {
+                        return;
+                    }
+
+                    const gatillo = contenedor.querySelector('button');
+                    const panel = contenedor.lastElementChild;
+
+                    if (!gatillo || !panel) {
+                        return;
+                    }
+
+                    const rect = gatillo.getBoundingClientRect();
+                    const alto = panel.offsetHeight;
+
+                    panel.style.left = rect.left + 'px';
+                    panel.style.width = rect.width + 'px';
+                    panel.style.top = (window.innerHeight - rect.bottom < alto + 8 && rect.top > alto + 8)
+                        ? (rect.top - 8 - alto) + 'px'
+                        : (rect.bottom + 8) + 'px';
                 },
 
                 get nombreCategoria() {

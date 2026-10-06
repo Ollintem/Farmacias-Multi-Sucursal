@@ -301,20 +301,16 @@ class InventarioController extends Controller
     /**
      * Activa o desactiva un producto.
      *
+     * Desactivar es la alternativa al borrado: el producto desaparece de
+     * Punto de Venta y de Productos y stock conservando lotes, inventario
+     * y ventas; se reactiva desde el mismo botón.
+     *
      * Entrada: producto y nuevo estado (`es_activo`).
-     * Salida: misma página con mensaje de éxito o de bloqueo.
+     * Salida: misma página con mensaje de éxito.
      */
     public function cambiarEstado(Request $request, Producto $producto): RedirectResponse
     {
         $activo = $request->boolean('es_activo');
-
-        if (! $activo && $this->tieneStock($producto)) {
-            return back()->with('error', "No se puede desactivar «{$producto->nombre_producto}»: tiene stock registrado.");
-        }
-
-        if (! $activo && $this->tieneLotes($producto)) {
-            return back()->with('error', "No se puede desactivar «{$producto->nombre_producto}»: tiene lotes registrados.");
-        }
 
         $producto->update(['es_activo' => $activo]);
 
@@ -339,11 +335,11 @@ class InventarioController extends Controller
         }
 
         if ($this->tieneLotes($producto)) {
-            return back()->with('error', "No se puede eliminar «{$producto->nombre_producto}»: tiene lotes registrados.");
+            return back()->with('error', "No se puede eliminar «{$producto->nombre_producto}»: tiene lotes registrados. Desactívalo para ocultarlo del catálogo sin perder el historial.");
         }
 
         if ($this->tieneStock($producto)) {
-            return back()->with('error', "No se puede eliminar «{$producto->nombre_producto}»: tiene stock registrado.");
+            return back()->with('error', "No se puede eliminar «{$producto->nombre_producto}»: tiene stock registrado. Desactívalo para ocultarlo del catálogo.");
         }
 
         $producto->delete();

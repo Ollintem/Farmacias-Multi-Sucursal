@@ -297,3 +297,19 @@ it('muestra el modo edición con controles para modificar los permisos', functio
         ->assertOk()
         ->assertSee('Activar todo');
 });
+
+it('renderiza el selector option-pick como una lista flotante', function () {
+    $html = view('components.option-pick', [
+        'name' => 'id_rol',
+        'options' => [1 => 'Cajero'],
+        'value' => '',
+        'label' => 'Roles',
+    ])->render();
+
+    expect($html)
+        ->toContain('class="relative"')
+        ->toContain('fixed z-20')
+        ->toContain('x-transition.opacity')
+        ->toContain('farma-pick-scroll')
+        ->not->toContain('class="farma-pick-scroll mt-2"');
+});

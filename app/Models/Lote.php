@@ -17,11 +17,13 @@ class Lote extends Model
         'folio',
         'stock_lote',
         'id_pedido',
+        'id_proveedor',
         'id_producto',
         'id_presentacion',
         'entregado_en',
         'fecha_caducidad',
         'fecha_de_caducidad',
+        'anulado_en',
     ];
 
     protected $casts = [
@@ -29,6 +31,7 @@ class Lote extends Model
         'entregado_en' => 'datetime',
         'fecha_caducidad' => 'datetime',
         'fecha_de_caducidad' => 'datetime',
+        'anulado_en' => 'datetime',
     ];
 
     /**
@@ -58,12 +61,20 @@ class Lote extends Model
     }
 
     /**
-     * Pedido de compra que originó el lote. El proveedor se resuelve vía
-     * pedido (`$lote->pedido?->proveedor`).
+     * Pedido de compra que originó el lote (si vino de uno).
      */
     public function pedido(): BelongsTo
     {
         return $this->belongsTo(Pedido::class, 'id_pedido');
+    }
+
+    /**
+     * Proveedor registrado directamente en el lote. Para lotes previos
+     * a la columna sigue resolviéndose vía pedido (`$lote->pedido?->proveedor`).
+     */
+    public function proveedor(): BelongsTo
+    {
+        return $this->belongsTo(Proveedor::class, 'id_proveedor');
     }
 
     public function producto(): BelongsTo

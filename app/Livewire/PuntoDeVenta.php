@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Caja;
 use App\Models\ConfiguracionBancaria;
+use App\Models\Inventario;
 use App\Models\Pago;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
@@ -115,7 +116,13 @@ class PuntoDeVenta extends Component
             });
         }
 
-        return $query->orderBy('nombre_producto')->get();
+        $productos = $query->orderBy('nombre_producto')->get();
+        $stockSucursal = $this->stockPorSucursal();
+
+        return $productos->each(fn (Producto $producto) => $producto->setAttribute(
+            'stock_sucursal',
+            (int) ($stockSucursal[$producto->id] ?? 0)
+        ));
     }
 
     public function getCantidadArticulosProperty(): int
@@ -136,6 +143,46 @@ class PuntoDeVenta extends Component
             : 1;
 
         return (int) $item['cantidad'] * $unidades;
+    }
+
+    /**
+     * Stock disponible por producto en la sucursal activa.
+     *
+     * Entrada: ninguna (lee session('active_sucursal_id')).
+     * Salida: arreglo [id_producto => unidades] del inventario de la sucursal;
+     * vacío cuando no hay sucursal activa.
+     *
+     * @return array<int, int>
+     */
+    private function stockPorSucursal(): array
+    {
+        $sucursalId = (int) (session('active_sucursal_id') ?? 0);
+
+        if ($sucursalId <= 0) {
+            return [];
+        }
+
+        return Inventario::stockPorProducto($sucursalId);
+    }
+
+    /**
+     * Unidades disponibles de un producto en la sucursal activa.
+     *
+     * Entrada: id del producto.
+     * Salida: suma del inventario de la sucursal en sus lotes.
+     */
+    private function stockDisponibleEnSucursal(int $productoId): int
+    {
+        $sucursalId = (int) (session('active_sucursal_id') ?? 0);
+
+        if ($sucursalId <= 0) {
+            return 0;
+        }
+
+        return (int) Inventario::forSucursal($sucursalId)
+            ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
+            ->where('lotes.id_producto', $productoId)
+            ->sum('inventario.stock');
     }
 
     public function getCantidadProductosProperty(): int
@@ -219,10 +266,12 @@ class PuntoDeVenta extends Component
             return;
         }
 
+        $disponible = $this->stockDisponibleEnSucursal($productoId);
+
         $existe = false;
         foreach ($this->carrito as $index => $item) {
             if ($item['producto_id'] === $productoId && ($item['tipo_venta'] ?? 'unidad') === 'unidad') {
-                if ($this->carrito[$index]['cantidad'] < $producto->stock) {
+                if ($this->carrito[$index]['cantidad'] < $disponible) {
                     $this->carrito[$index]['cantidad']++;
                 }
                 $existe = true;
@@ -230,13 +279,13 @@ class PuntoDeVenta extends Component
             }
         }
 
-        if (! $existe && $producto->stock > 0) {
+        if (! $existe && $disponible > 0) {
             $this->carrito[] = [
                 'producto_id' => $producto->id,
                 'nombre' => $producto->nombre_producto,
                 'precio' => (float) $producto->precio,
                 'cantidad' => 1,
-                'stock' => $producto->stock,
+                'stock' => $disponible,
                 'presentacion' => $producto->presentacion?->presentacion ?? '',
                 'es_controlado' => $producto->es_controlado,
                 'tipo_venta' => 'unidad',
@@ -304,7 +353,8 @@ class PuntoDeVenta extends Component
         }
 
         $unidades = max(1, (int) $relacion->unidades);
-        $maxPresentaciones = (int) floor($producto->stock / $unidades);
+        $disponible = $this->stockDisponibleEnSucursal($productoId);
+        $maxPresentaciones = (int) floor($disponible / $unidades);
 
         if ($maxPresentaciones < 1) {
             return;
@@ -334,7 +384,7 @@ class PuntoDeVenta extends Component
                 'nombre' => $producto->nombre_producto,
                 'precio' => (float) $relacion->precio_presentacion,
                 'cantidad' => 1,
-                'stock' => $producto->stock,
+                'stock' => $disponible,
                 'presentacion' => $relacion->presentacion?->presentacion ?? '',
                 'es_controlado' => $producto->es_controlado,
                 'tipo_venta' => 'presentacion',
@@ -454,10 +504,12 @@ class PuntoDeVenta extends Component
         }
 
         // Add to cart with receta data
+        $disponible = $this->stockDisponibleEnSucursal($producto->id);
+
         $existe = false;
         foreach ($this->carrito as $index => $item) {
             if ($item['producto_id'] === $this->recetaProductoId && ($item['tipo_venta'] ?? 'unidad') === 'unidad') {
-                if ($this->carrito[$index]['cantidad'] < $producto->stock) {
+                if ($this->carrito[$index]['cantidad'] < $disponible) {
                     $this->carrito[$index]['cantidad']++;
                 }
                 $this->carrito[$index]['receta'] = $receta;
@@ -466,13 +518,13 @@ class PuntoDeVenta extends Component
             }
         }
 
-        if (! $existe && $producto->stock > 0) {
+        if (! $existe && $disponible > 0) {
             $this->carrito[] = [
                 'producto_id' => $producto->id,
                 'nombre' => $producto->nombre_producto,
                 'precio' => (float) $producto->precio,
                 'cantidad' => 1,
-                'stock' => $producto->stock,
+                'stock' => $disponible,
                 'presentacion' => $producto->presentacion?->presentacion ?? '',
                 'es_controlado' => $producto->es_controlado,
                 'tipo_venta' => 'unidad',
@@ -551,9 +603,10 @@ class PuntoDeVenta extends Component
         $this->procesando = true;
 
         try {
-            // Validate stock for all items
+            // Valida stock por sucursal para todos los ítems del carrito
+            $requerido = [];
             foreach ($this->carrito as $item) {
-                $producto = Producto::query()->withoutGlobalScope('sucursal')->find($item['producto_id']);
+                $producto = Producto::find($item['producto_id']);
 
                 if (! $producto) {
                     $this->errorVenta = "El producto '{$item['nombre']}' ya no existe.";
@@ -562,8 +615,16 @@ class PuntoDeVenta extends Component
                     return;
                 }
 
-                if ($producto->stock < $this->unidadesRequeridas($item)) {
-                    $this->errorVenta = "Stock insuficiente para '{$item['nombre']}'. Disponible: {$producto->stock}, solicitado: {$this->unidadesRequeridas($item)} unidades.";
+                $requerido[$item['producto_id']]['producto'] = $producto;
+                $requerido[$item['producto_id']]['unidades'] = ($requerido[$item['producto_id']]['unidades'] ?? 0)
+                    + $this->unidadesRequeridas($item);
+            }
+
+            foreach ($requerido as $pendiente) {
+                $disponible = $this->stockDisponibleEnSucursal($pendiente['producto']->id);
+
+                if ($disponible < $pendiente['unidades']) {
+                    $this->errorVenta = "Stock insuficiente para '{$pendiente['producto']->nombre_producto}' en esta sucursal. Disponible: {$disponible}, solicitado: {$pendiente['unidades']} unidades.";
                     $this->procesando = false;
 
                     return;
@@ -576,7 +637,7 @@ class PuntoDeVenta extends Component
             // Generate folio
             $folio = 'V-'.date('Ymd').'-'.str_pad(Venta::count() + 1, 5, '0', STR_PAD_LEFT);
 
-            $resultado = DB::transaction(function () use ($caja, $folio) {
+            $resultado = DB::transaction(function () use ($caja, $folio, $sucursalId) {
                 // Create payment(s)
                 $pagoPrincipal = null;
                 $pagosAdicionales = [];
@@ -656,9 +717,11 @@ class PuntoDeVenta extends Component
                         'precio_unidad' => $item['precio'],
                     ]);
 
-                    // Decrement stock (unidades: 1 caja de 10 und descuenta 10)
-                    Producto::where('id', $item['producto_id'])
-                        ->decrement('stock', $this->unidadesRequeridas($item));
+                    // Inventario de la sucursal consumiendo lotes FEFO y
+                    // espejo global del producto en la misma transacción.
+                    $unidades = $this->unidadesRequeridas($item);
+                    $this->consumirStockFefo((int) $sucursalId, $item['producto_id'], $unidades);
+                    Inventario::reflejarStockGlobal($item['producto_id']);
                 }
 
                 return $venta;
@@ -677,6 +740,45 @@ class PuntoDeVenta extends Component
             DB::rollBack();
             $this->errorVenta = 'Error al procesar la venta: '.$e->getMessage();
             $this->procesando = false;
+        }
+    }
+
+    /**
+     * Descuenta unidades del inventario de una sucursal consumiendo lotes FEFO.
+     *
+     * Entrada: id de sucursal, id de producto y unidades a consumir.
+     * Salida: ninguna; cada fila de inventario baja hasta cubrir el requerido.
+     *
+     * @throws \RuntimeException Cuando el inventario de la sucursal no alcanza.
+     */
+    private function consumirStockFefo(int $sucursalId, int $productoId, int $unidades): void
+    {
+        $filas = Inventario::query()
+            ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
+            ->where('inventario.id_sucursal', $sucursalId)
+            ->where('lotes.id_producto', $productoId)
+            ->where('inventario.stock', '>', 0)
+            ->orderByRaw('COALESCE(lotes.fecha_de_caducidad, lotes.fecha_caducidad) ASC')
+            ->select('inventario.*')
+            ->lockForUpdate()
+            ->get();
+
+        $disponible = (int) $filas->sum('stock');
+
+        if ($disponible < $unidades) {
+            throw new \RuntimeException("Stock insuficiente en la sucursal. Disponible: {$disponible} uds, solicitado: {$unidades} uds.");
+        }
+
+        $restante = $unidades;
+
+        foreach ($filas as $fila) {
+            if ($restante <= 0) {
+                break;
+            }
+
+            $tomar = min((int) $fila->stock, $restante);
+            $fila->decrement('stock', $tomar);
+            $restante -= $tomar;
         }
     }
 

@@ -38,6 +38,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/lotes-y-caducidades', [LotesController::class, 'index'])->name('lotes.index')->middleware('checarPermisos:ver,lotes-y-caducidades');
     Route::get('/lotes-y-caducidades/create', [LotesController::class, 'create'])->name('lotes.create')->middleware('checarPermisos:crear,lotes-y-caducidades');
     Route::post('/lotes-y-caducidades', [LotesController::class, 'store'])->name('lotes.store')->middleware('checarPermisos:crear,lotes-y-caducidades');
+    Route::post('/lotes-y-caducidades/merma', [LotesController::class, 'merma'])->name('lotes.merma')->middleware('checarPermisos:editar,lotes-y-caducidades');
+    Route::get('/lotes-y-caducidades/{lote}/edit', [LotesController::class, 'edit'])->name('lotes.edit')->middleware('checarPermisos:editar,lotes-y-caducidades');
+    Route::put('/lotes-y-caducidades/{lote}', [LotesController::class, 'update'])->name('lotes.update')->middleware('checarPermisos:editar,lotes-y-caducidades');
+    Route::post('/lotes-y-caducidades/{lote}/anular', [LotesController::class, 'anular'])->name('lotes.anular')->middleware('checarPermisos:eliminar,lotes-y-caducidades');
 
     /*
     Modulo de usuarios y roles

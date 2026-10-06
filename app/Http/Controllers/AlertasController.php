@@ -7,6 +7,7 @@ use App\Models\Lote;
 use App\Models\Sucursal;
 use App\Models\Traspaso;
 use App\Models\Venta;
+use App\Support\EstadoCaducidad;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -86,51 +87,37 @@ class AlertasController extends Controller
     }
 
     /**
-     * Clasifica los lotes de la sucursal en rojo (≤30 días o caducado), amarillo (31-90) y verde (>90).
+     * Clasifica los lotes con existencia de la sucursal en rojo
+     * (≤30 días o caducado), amarillo (31-90 o sin fecha) y verde (>90).
+     *
+     * Los lotes sin existencia no generan alerta: un lote agotado ya no
+     * tiene riesgo de caducidad que mitigar.
      *
      * Entrada: id de sucursal opcional.
      * Salida: colección con producto, lote, sucursal, fechas, días restantes y nivel.
      */
     private function caducidades(?int $sucursalId): Collection
     {
-        $hoy = Carbon::today();
-
         return Lote::query()
             ->with(['producto', 'inventarios.sucursal'])
             ->when($sucursalId, function ($query) use ($sucursalId) {
-                $query->where(function ($sub) use ($sucursalId) {
-                    $sub->whereHas('inventarios', fn ($q) => $q->where('inventario.id_sucursal', $sucursalId))
-                        ->orWhereDoesntHave('inventarios');
+                $query->whereHas('inventarios', function ($inventarioQuery) use ($sucursalId) {
+                    $inventarioQuery->where('inventario.id_sucursal', $sucursalId)
+                        ->where('stock', '>', 0);
                 });
+            })
+            ->when(! $sucursalId, function ($query) {
+                $query->whereHas('inventarios', fn ($inventarioQuery) => $inventarioQuery->where('stock', '>', 0));
             })
             ->orderByRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) ASC')
             ->get()
-            ->map(function (Lote $lote) use ($sucursalId, $hoy) {
-                $fecha = $lote->fecha_de_caducidad ?? $lote->fecha_caducidad
+            ->map(function (Lote $lote) use ($sucursalId) {
+                $fecha = ($lote->fecha_de_caducidad ?? $lote->fecha_caducidad)
                     ? Carbon::parse($lote->fecha_de_caducidad ?? $lote->fecha_caducidad)
                     : null;
 
-                if (! $fecha) {
-                    $nivel = 'amarillo';
-                    $dias = null;
-                    $etiqueta = 'Sin fecha';
-                } elseif ($fecha->lt($hoy)) {
-                    $nivel = 'rojo';
-                    $dias = $fecha->diffInDays($hoy) * -1;
-                    $etiqueta = 'Caducado';
-                } elseif ($fecha->diffInDays($hoy) <= 30) {
-                    $nivel = 'rojo';
-                    $dias = $fecha->diffInDays($hoy);
-                    $etiqueta = "Caduca en {$dias} días";
-                } elseif ($fecha->diffInDays($hoy) <= 90) {
-                    $nivel = 'amarillo';
-                    $dias = $fecha->diffInDays($hoy);
-                    $etiqueta = "Media vida · {$dias} días";
-                } else {
-                    $nivel = 'verde';
-                    $dias = $fecha->diffInDays($hoy);
-                    $etiqueta = "Vigente · {$dias} días";
-                }
+                $estado = EstadoCaducidad::clasificar($fecha);
+                $dias = EstadoCaducidad::diasRestantes($fecha);
 
                 $inventarioSucursal = $sucursalId
                     ? $lote->inventarios->firstWhere('id_sucursal', $sucursalId)
@@ -144,8 +131,8 @@ class AlertasController extends Controller
                     'stock' => $inventarioSucursal?->stock ?? (int) $lote->stock_lote,
                     'fecha_caducidad' => $fecha?->format('Y-m-d') ?? '-',
                     'dias_restantes' => $dias,
-                    'nivel' => $nivel,
-                    'etiqueta' => $etiqueta,
+                    'nivel' => $estado->nivelAlertas(),
+                    'etiqueta' => $estado->etiquetaAlertas($dias),
                 ];
             })
             ->values();

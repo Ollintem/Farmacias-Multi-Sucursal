@@ -131,7 +131,7 @@ test('los productos inactivos no aparecen en productos y stock ni en punto de ve
         ->assertDontSee('Naproxeno 250mg');
 });
 
-test('no se puede desactivar un producto que tiene stock', function () {
+test('se puede desactivar un producto que tiene stock sin tocar el inventario', function () {
     [$sucursal, $categoria, $caja] = crearContextoCatalogo($this);
 
     $conStockGlobal = crearProductoCatalogo($categoria, $caja, [
@@ -162,13 +162,15 @@ test('no se puede desactivar un producto que tiene stock', function () {
         $this->withSession(['active_sucursal_id' => $sucursal->id])
             ->from(route('inventario.productos'))
             ->patch(route('inventario.estado', $producto), ['es_activo' => 0])
-            ->assertSessionHas('error');
-
-        $this->assertDatabaseHas('productos', ['id' => $producto->id, 'es_activo' => 1]);
+            ->assertSessionHas('success');
     }
+
+    $this->assertDatabaseHas('productos', ['id' => $conStockGlobal->id, 'es_activo' => 0, 'stock' => 12]);
+    $this->assertDatabaseHas('inventario', ['id_lote' => $loteSucursal->id, 'stock' => 6]);
+    $this->assertDatabaseHas('lotes', ['id' => $loteSucursal->id, 'stock_lote' => 6]);
 });
 
-test('no se puede desactivar un producto que tiene lotes', function () {
+test('se puede desactivar un producto con lotes y desaparece de pos conservando el historial', function () {
     [$sucursal, $categoria, $caja] = crearContextoCatalogo($this);
 
     $producto = crearProductoCatalogo($categoria, $caja, [
@@ -176,7 +178,7 @@ test('no se puede desactivar un producto que tiene lotes', function () {
         'nombre_producto' => 'Con lote',
     ]);
 
-    Lote::create([
+    $lote = Lote::create([
         'folio' => 'L-0001',
         'stock_lote' => 5,
         'id_producto' => $producto->id,
@@ -186,7 +188,34 @@ test('no se puede desactivar un producto que tiene lotes', function () {
     $this->withSession(['active_sucursal_id' => $sucursal->id])
         ->from(route('inventario.productos'))
         ->patch(route('inventario.estado', $producto), ['es_activo' => 0])
-        ->assertSessionHas('error');
+        ->assertSessionHas('success');
+
+    $this->assertDatabaseHas('productos', ['id' => $producto->id, 'es_activo' => 0]);
+    $this->assertDatabaseHas('lotes', ['id' => $lote->id, 'stock_lote' => 5]);
+
+    // Desaparece de Punto de Venta...
+    // (un GET previo consume el toast del cambio de estado para que no
+    // contamine la revisión de la página.)
+    $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->get(route('inventario.productos'))
+        ->assertOk();
+
+    $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->get(route('punto-venta.index'))
+        ->assertOk()
+        ->assertDontSee('Con lote');
+
+    // ...pero su lote sigue listado en Lotes y caducidades.
+    $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->get(route('lotes.index'))
+        ->assertOk()
+        ->assertSee('L-0001');
+
+    // Se puede reactivar desde el mismo botón.
+    $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->from(route('inventario.productos'))
+        ->patch(route('inventario.estado', $producto), ['es_activo' => 1])
+        ->assertSessionHas('success');
 
     $this->assertDatabaseHas('productos', ['id' => $producto->id, 'es_activo' => 1]);
 });

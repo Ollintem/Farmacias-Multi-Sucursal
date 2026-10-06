@@ -11,8 +11,9 @@ class AlertasResumen
     /**
      * Cuenta lo pendiente de alertas para una sucursal.
      *
-     * Suma traspasos pendientes recibidos más lotes en rojo
-     * (caducados o con 30 días o menos de vida).
+     * Suma traspasos pendientes recibidos más lotes con existencia en rojo
+     * (caducados o con 30 días o menos de vida). Los lotes sin existencia
+     * se excluyen: ya no hay riesgo de caducidad que mitigar.
      *
      * @return array{pendientes: int, rojos: int, total: int}
      */
@@ -30,9 +31,9 @@ class AlertasResumen
         $limite = Carbon::today()->addDays(30)->endOfDay();
 
         $rojos = Lote::query()
-            ->where(function ($subQuery) use ($sucursalId) {
-                $subQuery->whereHas('inventarios', fn ($query) => $query->where('inventario.id_sucursal', $sucursalId))
-                    ->orWhereDoesntHave('inventarios');
+            ->whereHas('inventarios', function ($query) use ($sucursalId) {
+                $query->where('inventario.id_sucursal', $sucursalId)
+                    ->where('stock', '>', 0);
             })
             ->whereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) IS NOT NULL')
             ->whereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) <= ?', [$limite])

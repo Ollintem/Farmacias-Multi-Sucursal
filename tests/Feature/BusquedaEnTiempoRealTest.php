@@ -96,7 +96,7 @@ test('la pestana de lotes marca las filas con folio producto y proveedor', funct
     $this->withSession(['active_sucursal_id' => $sucursal->id])
         ->get(route('lotes.index'))
         ->assertOk()
-        ->assertSee('x-data="buscadorTabla()"', false)
+        ->assertSee('buscadorTabla()', false)
         ->assertSee('@input.debounce.200ms="texto = $event.target.value"', false)
         ->assertSee('data-buscar="L-9001 Paracetamol 500mg Sin proveedor"', false)
         ->assertSee('data-vacio', false);

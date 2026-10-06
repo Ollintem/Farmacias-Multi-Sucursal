@@ -2,6 +2,8 @@
 
 use App\Livewire\PuntoDeVenta;
 use App\Models\Caja;
+use App\Models\Inventario;
+use App\Models\Lote;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\Rol;
@@ -39,6 +41,30 @@ function crearContextoPos(object $test): array
     return [$sucursal, $user, $caja];
 }
 
+/**
+ * Registra stock real de un producto: lote + inventario en la sucursal + espejo global.
+ */
+function registrarLotePos(Producto $producto, Sucursal $sucursal, int $unidades, string $caducidad = '2027-12-31'): Lote
+{
+    $lote = Lote::create([
+        'folio' => uniqid('L-POS-'),
+        'stock_lote' => $unidades,
+        'id_producto' => $producto->id,
+        'entregado_en' => now(),
+        'fecha_caducidad' => $caducidad,
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $sucursal->id,
+        'id_lote' => $lote->id,
+        'stock' => $unidades,
+    ]);
+
+    Inventario::reflejarStockGlobal($producto->id);
+
+    return $lote;
+}
+
 test('un producto sin precio unitario abre el selector de presentaciones', function () {
     [, , $caja] = crearContextoPos($this);
 
@@ -71,7 +97,7 @@ test('un producto sin precio unitario abre el selector de presentaciones', funct
 });
 
 test('elegir presentacion agrega el item al carrito con su precio', function () {
-    [, , $caja] = crearContextoPos($this);
+    [$sucursal, , $caja] = crearContextoPos($this);
 
     $producto = Producto::create([
         'codigo_barras' => '7500000000002',
@@ -90,6 +116,8 @@ test('elegir presentacion agrega el item al carrito con su precio', function () 
         'precio_presentacion' => 85.0,
     ]);
 
+    registrarLotePos($producto, $sucursal, 30);
+
     $component = Livewire::test(PuntoDeVenta::class);
 
     $component->call('abrirSelector', $producto->id);
@@ -104,7 +132,7 @@ test('elegir presentacion agrega el item al carrito con su precio', function () 
 });
 
 test('confirmar venta descuenta stock por unidades al vender presentaciones', function () {
-    [, , $caja] = crearContextoPos($this);
+    [$sucursal, , $caja] = crearContextoPos($this);
 
     $producto = Producto::create([
         'codigo_barras' => '7500000000003',
@@ -123,6 +151,8 @@ test('confirmar venta descuenta stock por unidades al vender presentaciones', fu
         'precio_presentacion' => 85.0,
     ]);
 
+    registrarLotePos($producto, $sucursal, 30);
+
     $component = Livewire::test(PuntoDeVenta::class);
 
     $component->call('abrirSelector', $producto->id);
@@ -138,7 +168,7 @@ test('confirmar venta descuenta stock por unidades al vender presentaciones', fu
 });
 
 test('no se puede superar el stock en presentaciones del carrito', function () {
-    [, , $caja] = crearContextoPos($this);
+    [$sucursal, , $caja] = crearContextoPos($this);
 
     $producto = Producto::create([
         'codigo_barras' => '7500000000004',
@@ -157,6 +187,8 @@ test('no se puede superar el stock en presentaciones del carrito', function () {
         'precio_presentacion' => 70.0,
     ]);
 
+    registrarLotePos($producto, $sucursal, 15);
+
     $component = Livewire::test(PuntoDeVenta::class);
 
     $component->call('abrirSelector', $producto->id);
@@ -169,7 +201,7 @@ test('no se puede superar el stock en presentaciones del carrito', function () {
 });
 
 test('el producto con precio unitario se agrega por unidad como antes', function () {
-    [, , $caja] = crearContextoPos($this);
+    [$sucursal, , $caja] = crearContextoPos($this);
 
     $producto = Producto::create([
         'codigo_barras' => '7500000000005',
@@ -181,6 +213,8 @@ test('el producto con precio unitario se agrega por unidad como antes', function
         'es_controlado' => false,
         'es_activo' => true,
     ]);
+
+    registrarLotePos($producto, $sucursal, 50);
 
     $component = Livewire::test(PuntoDeVenta::class);
 

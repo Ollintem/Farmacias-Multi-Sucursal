@@ -81,7 +81,7 @@
                             @if($producto->es_controlado)
                                 <span class="absolute left-2 top-2 z-10 rounded-lg bg-red-600 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white shadow">RX</span>
                             @endif
-                            @if($producto->stock <= 15)
+                            @if($producto->stock_sucursal <= 15)
                                 <span class="absolute right-2 top-2 z-10 rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">¡Últimas!</span>
                             @endif
 
@@ -116,7 +116,7 @@
 
                                         <button
                                             wire:click="agregarAlCarrito({{ $producto->id }})"
-                                            @disabled($producto->stock <= 0)
+                                            @disabled($producto->stock_sucursal <= 0)
                                             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                                             title="Agregar al carrito"
                                             aria-label="Agregar {{ $producto->nombre_producto }} al carrito"
@@ -127,8 +127,8 @@
                                         </button>
                                     </div>
 
-                                    <p class="mt-1.5 text-xs {{ $producto->stock <= 15 ? 'font-bold text-amber-700 dark:text-amber-300' : 'font-medium text-slate-500 dark:text-zinc-400' }}">
-                                        {{ $producto->stock }} disp.
+                                    <p class="mt-1.5 text-xs {{ $producto->stock_sucursal <= 15 ? 'font-bold text-amber-700 dark:text-amber-300' : 'font-medium text-slate-500 dark:text-zinc-400' }}">
+                                        {{ $producto->stock_sucursal }} disp.
                                     </p>
                                 </div>
                             </div>

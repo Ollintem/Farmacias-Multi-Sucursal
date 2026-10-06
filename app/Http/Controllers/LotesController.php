@@ -4,15 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Inventario;
 use App\Models\Lote;
+use App\Models\Merma;
 use App\Models\Pedido;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\Sucursal;
+use App\Support\EstadoCaducidad;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class LotesController extends Controller
@@ -24,7 +28,7 @@ class LotesController extends Controller
      * Los lotes sin filas de inventario (sin asignar) se muestran en todas las
      * sucursales para no ocultar registros recién capturados.
      *
-     * Entrada: query string `sucursal` y `buscar`.
+     * Entrada: query string `sucursal`, `buscar` y `estado` (filtro de tarjetas).
      * Salida: resources/views/pages/lotes/index.blade.php con estados de caducidad.
      */
     public function index(Request $request): View
@@ -33,8 +37,13 @@ class LotesController extends Controller
         $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
         $selectedSucursal = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
         $busqueda = trim((string) $request->query('buscar', ''));
+        $filtroEstado = $request->query('estado', 'todos');
 
-        $lotes = Lote::with(['producto', 'pedido.proveedor', 'inventarios.sucursal'])
+        if (! is_string($filtroEstado) || ! in_array($filtroEstado, ['todos', 'vigentes', 'por-caducar', 'caducados'], true)) {
+            $filtroEstado = 'todos';
+        }
+
+        $lotes = Lote::with(['producto', 'pedido.proveedor', 'proveedor', 'inventarios.sucursal'])
             ->when($selectedSucursal, function ($query, $sucursal) {
                 $query->where(function ($subQuery) use ($sucursal) {
                     $subQuery->whereHas('inventarios', function ($inventarioQuery) use ($sucursal) {
@@ -45,6 +54,9 @@ class LotesController extends Controller
             ->when($busqueda !== '', function ($query) use ($busqueda) {
                 $query->where(function ($subQuery) use ($busqueda) {
                     $subQuery->where('folio', 'like', "%{$busqueda}%")
+                        ->orWhereHas('proveedor', function ($proveedorQuery) use ($busqueda) {
+                            $proveedorQuery->where('nombre_proveedor', 'like', "%{$busqueda}%");
+                        })
                         ->orWhereHas('pedido.proveedor', function ($proveedorQuery) use ($busqueda) {
                             $proveedorQuery->where('nombre_proveedor', 'like', "%{$busqueda}%");
                         })
@@ -66,29 +78,38 @@ class LotesController extends Controller
                     ? Carbon::parse($lote->fecha_de_caducidad ?? $lote->fecha_caducidad)
                     : null;
 
-                if (! $fechaCaducidad) {
-                    $estado = 'Sin fecha';
-                    $estadoClass = 'warning';
-                } elseif ($fechaCaducidad->isPast()) {
-                    $estado = 'Caducado';
+                $clase = EstadoCaducidad::clasificar($fechaCaducidad);
+                $estado = $clase->estadoLotes();
+                $estadoClass = $clase->claseLotes();
+
+                $anulado = $lote->anulado_en !== null;
+
+                // El lote anulado dejó de ser válido: se muestra como «Anulado»
+                // y cuenta en la tarjeta Caducados (mantiene la partición
+                // Total = Vigentes + Por caducar + Caducados).
+                if ($anulado) {
+                    $estado = 'Anulado';
                     $estadoClass = 'expired';
-                } elseif ($fechaCaducidad->diffInDays(Carbon::now()) <= 30) {
-                    $estado = 'Caduca < 30 días';
-                    $estadoClass = 'danger';
-                } elseif ($fechaCaducidad->diffInDays(Carbon::now()) <= 90) {
-                    $estado = 'Caduca < 90 días';
-                    $estadoClass = 'warning';
-                } else {
-                    $estado = 'Vigente';
-                    $estadoClass = 'vigente';
                 }
 
+                // Sin filas de inventario el lote no está ubicado: el restante
+                // se muestra como «—» en lugar de inventar una cifra.
+                $restante = $inventarioSucursal !== null
+                    ? (int) $inventarioSucursal->stock
+                    : ($lote->inventarios->isEmpty() ? null : (int) $lote->inventarios->sum('stock'));
+
                 return [
+                    'id' => $lote->id,
                     'folio' => $lote->folio,
                     'producto' => $nombreProducto,
-                    'marca' => $lote->pedido?->proveedor?->nombre_proveedor ?? 'Sin proveedor',
+                    'marca' => $lote->proveedor?->nombre_proveedor
+                        ?? $lote->pedido?->proveedor?->nombre_proveedor
+                        ?? 'Sin proveedor',
                     'sucursal' => $nombreSucursal,
                     'cantidad' => (int) $lote->stock_lote,
+                    'restante' => $restante,
+                    'restante_global' => (int) $lote->inventarios->sum('stock'),
+                    'anulado' => $anulado,
                     'fecha_entrada' => $lote->entregado_en ? Carbon::parse($lote->entregado_en)->format('Y-m-d') : '-',
                     'fecha_caducidad' => $fechaCaducidad ? $fechaCaducidad->format('Y-m-d') : '-',
                     'estado' => $estado,
@@ -97,16 +118,29 @@ class LotesController extends Controller
             })
             ->values();
 
+        // Contadores sobre el conjunto completo de la sucursal (incluye lo que
+        // filtre `buscar`); la tabla muestra solo la categoría de las tarjetas.
+        // Cada lote cae en exacto un cubeta: vigente → Vigentes,
+        // warning/danger → Por caducar (incluye «Sin fecha»), expired → Caducados.
+        $porEstado = fn (string $filtro): Collection => (match ($filtro) {
+            'vigentes' => $lotes->filter(fn (array $lote) => $lote['estado_class'] === 'vigente'),
+            'por-caducar' => $lotes->filter(fn (array $lote) => in_array($lote['estado_class'], ['warning', 'danger'], true)),
+            'caducados' => $lotes->filter(fn (array $lote) => $lote['estado_class'] === 'expired'),
+            default => $lotes,
+        })->values();
+
         $totalLotes = $lotes->count();
-        $vigentes = $lotes->filter(fn (array $lote) => $lote['estado_class'] === 'vigente')->count();
-        $porCaducar = $lotes->filter(fn (array $lote) => in_array($lote['estado_class'], ['warning', 'danger'], true))->count();
-        $caducados = $lotes->filter(fn (array $lote) => $lote['estado_class'] === 'expired')->count();
+        $vigentes = $porEstado('vigentes')->count();
+        $porCaducar = $porEstado('por-caducar')->count();
+        $caducados = $porEstado('caducados')->count();
+        $lotes = $porEstado($filtroEstado);
 
         return view('pages.lotes.index', compact(
             'lotes',
             'sucursales',
             'selectedSucursal',
             'busqueda',
+            'filtroEstado',
             'totalLotes',
             'vigentes',
             'porCaducar',
@@ -188,6 +222,7 @@ class LotesController extends Controller
                 'folio' => $data['folio'],
                 'stock_lote' => $data['stock'],
                 'id_pedido' => $data['id_pedido'] ?? null,
+                'id_proveedor' => $data['id_proveedor'] ?? null,
                 'id_producto' => $producto->id,
                 'id_presentacion' => $data['id_presentacion'],
                 'entregado_en' => $data['entregado_en'],
@@ -203,10 +238,159 @@ class LotesController extends Controller
                 ['stock' => $data['stock']]
             );
 
-            $producto->increment('stock', $data['stock']);
+            Inventario::reflejarStockGlobal($producto->id);
         });
 
         return redirect()->route('lotes.index', ['sucursal' => $data['sucursal']])
             ->with('success', 'Lote registrado correctamente.');
+    }
+
+    /**
+     * Da de baja unidades de un lote en la sucursal visible.
+     *
+     * Resta del inventario de la sucursal, registra el motivo en `mermas`
+     * y recalcula el espejo de `productos.stock`. `lote.stock_lote` queda
+     * intacto como histórico de la entrada.
+     *
+     * Entrada: lote_id, sucursal, cantidad, motivo y nota del modal de Lotes.
+     * Salida: redirección a lotes.index con éxito o con errores de validación.
+     */
+    public function merma(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'lote_id' => ['required', 'integer', 'exists:lotes,id'],
+            'sucursal' => ['required', 'integer', 'exists:sucursales,id'],
+            'cantidad' => ['required', 'integer', 'min:1'],
+            'motivo' => ['required', Rule::in(['caducado', 'danado', 'otro'])],
+            'nota' => ['nullable', 'string', 'max:500', 'required_if:motivo,otro'],
+        ], [
+            'lote_id.required' => 'Selecciona el lote a dar de baja.',
+            'lote_id.exists' => 'El lote indicado ya no existe.',
+            'sucursal.exists' => 'La sucursal indicada ya no existe.',
+            'cantidad.required' => 'Indica la cantidad a dar de baja.',
+            'cantidad.integer' => 'La cantidad debe ser un número entero.',
+            'cantidad.min' => 'La cantidad debe ser al menos 1.',
+            'motivo.required' => 'Selecciona el motivo de la baja.',
+            'motivo.in' => 'El motivo seleccionado no es válido.',
+            'nota.required_if' => 'Explica el motivo de la baja.',
+        ]);
+
+        $lote = Lote::findOrFail($data['lote_id']);
+
+        DB::transaction(function () use ($lote, $data, $request) {
+            $fila = Inventario::query()
+                ->where('id_sucursal', $data['sucursal'])
+                ->where('id_lote', $lote->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($fila === null) {
+                throw ValidationException::withMessages([
+                    'cantidad' => 'El lote no tiene existencia registrada en esta sucursal.',
+                ]);
+            }
+
+            if ($fila->stock < $data['cantidad']) {
+                throw ValidationException::withMessages([
+                    'cantidad' => "La cantidad ({$data['cantidad']}) supera el restante ({$fila->stock}) en esta sucursal.",
+                ]);
+            }
+
+            $fila->decrement('stock', $data['cantidad']);
+
+            Merma::create([
+                'id_sucursal' => $data['sucursal'],
+                'id_lote' => $lote->id,
+                'cantidad' => $data['cantidad'],
+                'motivo' => $data['motivo'],
+                'nota' => $data['nota'] ?? null,
+                'id_usuario' => $request->user()->id,
+            ]);
+
+            Inventario::reflejarStockGlobal($lote->id_producto);
+        });
+
+        return redirect()
+            ->route('lotes.index', ['sucursal' => $data['sucursal']])
+            ->with('success', "Se dieron de baja {$data['cantidad']} unidades del lote {$lote->folio}.");
+    }
+
+    /**
+     * Formulario para editar lo mutable de un lote: caducidad y proveedor.
+     *
+     * Existencias, `stock_lote` y fecha de entrada no se ofrecen: son
+     * datos históricos que solo cambian por venta, merma o traspaso.
+     *
+     * Entrada: lote a editar.
+     * Salida: resources/views/pages/lotes/edit.blade.php.
+     */
+    public function edit(Lote $lote): View
+    {
+        $proveedores = Proveedor::orderBy('nombre_proveedor')->get();
+        $restanteGlobal = (int) Inventario::where('id_lote', $lote->id)->sum('stock');
+
+        return view('pages.lotes.edit', compact('lote', 'proveedores', 'restanteGlobal'));
+    }
+
+    /**
+     * Actualiza la caducidad y el proveedor del lote.
+     *
+     * `fecha_de_caducidad` se replica desde el modelo para no romper el
+     * espejo de columnas. Entrada: fechas y proveedor del formulario.
+     * Salida: redirección a lotes.index con mensaje de resultado.
+     */
+    public function update(Request $request, Lote $lote): RedirectResponse
+    {
+        $data = $request->validate([
+            'fecha_caducidad' => ['required', 'date', 'after_or_equal:'.$lote->entregado_en->toDateString()],
+            'id_proveedor' => ['nullable', 'exists:proveedores,id'],
+        ], [
+            'fecha_caducidad.required' => 'Indica la fecha de caducidad.',
+            'fecha_caducidad.date' => 'La fecha de caducidad no es válida.',
+            'fecha_caducidad.after_or_equal' => 'La caducidad no puede ser anterior a la fecha de entrega del lote.',
+            'id_proveedor.exists' => 'El proveedor indicado ya no existe.',
+        ]);
+
+        $lote->update([
+            'fecha_caducidad' => $data['fecha_caducidad'],
+            'fecha_de_caducidad' => $data['fecha_caducidad'],
+            'id_proveedor' => $data['id_proveedor'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('lotes.index')
+            ->with('success', "Lote {$lote->folio} actualizado correctamente.");
+    }
+
+    /**
+     * Anula un lote que ya no tiene existencias en ninguna sucursal.
+     *
+     * Marca `anulado_en` sin borrar el registro: el historial de entradas,
+     * ventas y mermas permanece. Solo lotes sin existencias son anulables.
+     *
+     * Entrada: lote a anular.
+     * Salida: redirección con éxito o mensaje de bloqueo.
+     */
+    public function anular(Lote $lote): RedirectResponse
+    {
+        [$anulado, $mensaje] = DB::transaction(function () use ($lote) {
+            $vigente = Lote::query()->whereKey($lote->id)->lockForUpdate()->firstOrFail();
+
+            if ($vigente->anulado_en !== null) {
+                return [false, "El lote {$vigente->folio} ya está anulado."];
+            }
+
+            $existencias = (int) Inventario::where('id_lote', $vigente->id)->sum('stock');
+
+            if ($existencias > 0) {
+                return [false, "No se puede anular el lote {$vigente->folio}: aún tiene {$existencias} unidades en existencia. Da de baja las unidades primero."];
+            }
+
+            $vigente->update(['anulado_en' => now()]);
+
+            return [true, "El lote {$vigente->folio} quedó anulado."];
+        });
+
+        return back()->with($anulado ? 'success' : 'error', $mensaje);
     }
 }
