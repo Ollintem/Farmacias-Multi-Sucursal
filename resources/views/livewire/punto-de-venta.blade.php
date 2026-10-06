@@ -44,7 +44,7 @@
             <button
                 wire:click="$set('filtroPresentacion', '')"
                 class="shrink-0 rounded-full border-[1.5px] px-4 py-2 text-xs font-bold transition
-                    {{ $filtroPresentacion === '' ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:text-white' }}"
+                    {{ $filtroPresentacion === '' ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100' }}"
             >
                 Todos
             </button>
@@ -52,7 +52,7 @@
                 <button
                     wire:click="$set('filtroPresentacion', '{{ $presentacion->id }}')"
                     class="shrink-0 rounded-full border-[1.5px] px-4 py-2 text-xs font-bold transition
-                        {{ $filtroPresentacion == $presentacion->id ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:text-white' }}"
+                        {{ $filtroPresentacion == $presentacion->id ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100' }}"
                 >
                     {{ ucfirst($presentacion->presentacion) }}
                 </button>
@@ -416,7 +416,7 @@
                 <div class="bg-gradient-to-r from-[#0c7569] to-[#245a6b] px-6 py-5 text-center">
                     <p class="text-sm font-medium text-teal-100">Total a pagar</p>
                     <p class="mt-1 text-3xl font-black text-white">${{ number_format($total, 2) }}</p>
-                    <p class="mt-1 text-xs text-slate-500 dark:text-zinc-500">{{ $cantidadProductos }} {{ Str::plural('producto', $cantidadProductos) }} en carrito</p>
+                    <p class="mt-1 text-xs text-teal-100">{{ $cantidadProductos }} {{ Str::plural('producto', $cantidadProductos) }} en carrito</p>
                 </div>
 
                 {{-- Error --}}
@@ -433,7 +433,7 @@
                         <button
                             wire:click="seleccionarMetodo('efectivo')"
                             class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
-                                {{ $metodoPago === 'efectivo' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400' }}"
+                                {{ $metodoPago === 'efectivo' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200' }}"
                         >
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                             Efectivo
@@ -441,7 +441,7 @@
                         <button
                             wire:click="seleccionarMetodo('tarjeta')"
                             class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
-                                {{ $metodoPago === 'tarjeta' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400' }}"
+                                {{ $metodoPago === 'tarjeta' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200' }}"
                         >
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                             Tarjeta
@@ -449,7 +449,7 @@
                         <button
                             wire:click="seleccionarMetodo('transferencia')"
                             class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
-                                {{ $metodoPago === 'transferencia' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400' }}"
+                                {{ $metodoPago === 'transferencia' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200' }}"
                         >
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                             Transf.
@@ -457,7 +457,7 @@
                         <button
                             wire:click="seleccionarMetodo('mixto')"
                             class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
-                                {{ $metodoPago === 'mixto' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400' }}"
+                                {{ $metodoPago === 'mixto' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200' }}"
                         >
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                             Mixto
@@ -646,7 +646,7 @@
                                     @click="toggle('efectivo')"
                                     class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
                                         "
-                                    :class="activoEfectivo ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'"
+                                    :class="activoEfectivo ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200'"
                                 >
                                     &#x1F4B5; Efectivo
                                 </button>
@@ -654,7 +654,7 @@
                                     @click="toggle('tarjeta')"
                                     class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
                                         "
-                                    :class="activoTarjeta ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'"
+                                    :class="activoTarjeta ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200'"
                                 >
                                     &#x1F4B3; Tarjeta
                                 </button>
@@ -662,7 +662,7 @@
                                     @click="toggle('transferencia')"
                                     class="flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
                                         "
-                                    :class="activoTransferencia ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'"
+                                    :class="activoTransferencia ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200'"
                                 >
                                     &#x1F4F2; Transf.
                                 </button>

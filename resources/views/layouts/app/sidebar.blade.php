@@ -62,9 +62,9 @@
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Alertas') ?? false)
-                @php($alertasTotal = \App\Support\AlertasResumen::counts((int) (session('active_sucursal_id', $usuarioActual?->id_sucursal ?? 0) ?: 0))['total'])
-                <flux:sidebar.item icon="flag" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" :badge="$alertasTotal > 0 ? $alertasTotal : null" wire:navigate>
-                    Alertas
+                @php($alertasTotal = \App\Support\AlertasFeed::noLeidasCount((int) (session('active_sucursal_id', $usuarioActual?->id_sucursal ?? 0) ?: 0), $usuarioActual?->id))
+                <flux:sidebar.item icon="bell" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" :badge="$alertasTotal > 0 ? $alertasTotal : null" wire:navigate>
+                    Notificaciones
                 </flux:sidebar.item>
                 @endif
             </flux:sidebar.nav>
@@ -144,6 +144,8 @@
                 class="hidden sm:inline-block text-xs font-medium text-[#6b7280] font-mono mr-3"
             ></span>
 
+            @include('partials.notificaciones-campana')
+
             <x-theme-toggle :compacto="true" />
 
             <flux:dropdown position="top" align="end">
@@ -213,6 +215,7 @@
              arriba a la derecha, visible en todas las vistas. --}}
         <div class="farma-topbar hidden lg:flex">
             <span x-text="currentDate" class="farma-topbar-fecha"></span>
+            @include('partials.notificaciones-campana')
             <x-theme-toggle :compacto="true" />
         </div>
 

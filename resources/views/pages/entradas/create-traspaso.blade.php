@@ -100,7 +100,7 @@
                 </div>
 
                 <div class="mt-8 flex justify-end gap-3">
-                    <a href="{{ route('alertas.index', ['sucursal' => old('sucursal_b', $selectedSucursalId), 'seccion' => 'traspasos']) }}" class="theme-button theme-button-secondary">Cancelar</a>
+                    <a href="{{ route('alertas.index', ['sucursal' => old('sucursal_b', $selectedSucursalId), 'filtro' => 'traspasos']) }}" class="theme-button theme-button-secondary">Cancelar</a>
                     <button type="submit" class="theme-button theme-button-primary">Enviar solicitud</button>
                 </div>
             </form>

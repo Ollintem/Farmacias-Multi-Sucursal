@@ -1,11 +1,13 @@
 <?php
 
 use App\Models\Modulo;
+use App\Models\NotificacionLeida;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\Traspaso;
 use App\Models\User;
+use App\Support\AlertasFeed;
 use App\Support\AlertasResumen;
 
 function crearSucursalAlertas(string $nombre): Sucursal
@@ -73,4 +75,61 @@ it('oculta el numero cuando no hay notificaciones', function () {
         ->getContent();
 
     expect($contenido)->not->toContain('data-flux-navlist-badge>');
+});
+
+it('marca una sola notificacion como leida desde su menu', function () {
+    $origen = crearSucursalAlertas('Origen Leer');
+    $destino = crearSucursalAlertas('Destino Leer');
+    $usuario = usuarioConAlertas($destino);
+
+    $traspaso = Traspaso::create(['sucursal_a' => $origen->id, 'sucursal_b' => $destino->id, 'pedido_por' => $usuario->id, 'estado' => 'pendiente']);
+
+    $this->actingAs($usuario)
+        ->withSession(['active_sucursal_id' => $destino->id])
+        ->post(route('alertas.leer'), ['id' => "traspaso:{$traspaso->id}"])
+        ->assertRedirect();
+
+    expect(AlertasFeed::leidas($destino->id, $usuario->id))->toContain("traspaso:{$traspaso->id}");
+});
+
+it('persiste lo leido en base de datos por usuario y sucursal', function () {
+    $origen = crearSucursalAlertas('Origen BD');
+    $destino = crearSucursalAlertas('Destino BD');
+    $usuario = usuarioConAlertas($destino);
+
+    $traspaso = Traspaso::create(['sucursal_a' => $origen->id, 'sucursal_b' => $destino->id, 'pedido_por' => $usuario->id, 'estado' => 'pendiente']);
+
+    expect(AlertasFeed::noLeidasCount($destino->id, $usuario->id))->toBe(1);
+
+    AlertasFeed::marcarUna($destino->id, "traspaso:{$traspaso->id}", $usuario->id);
+
+    expect(AlertasFeed::noLeidasCount($destino->id, $usuario->id))->toBe(0)
+        ->and(NotificacionLeida::where('id_usuario', $usuario->id)->where('aviso_id', "traspaso:{$traspaso->id}")->exists())->toBeTrue();
+});
+
+it('formatea el tiempo corto estilo red social', function () {
+    expect(AlertasFeed::tiempoCorto(null))->toBe('reciente')
+        ->and(AlertasFeed::tiempoCorto(now()->subMinutes(5)))->toBe('5 min')
+        ->and(AlertasFeed::tiempoCorto(now()->subHours(4)))->toBe('4 h')
+        ->and(AlertasFeed::tiempoCorto(now()->subDays(3)))->toBe('3 d');
+});
+
+it('muestra el listado estilo facebook con avatar, tiempo y menu', function () {
+    $origen = crearSucursalAlertas('Origen FB');
+    $destino = crearSucursalAlertas('Destino FB');
+    $usuario = usuarioConAlertas($destino);
+
+    Traspaso::create(['sucursal_a' => $origen->id, 'sucursal_b' => $destino->id, 'pedido_por' => $usuario->id, 'estado' => 'pendiente']);
+
+    $contenido = $this->actingAs($usuario)
+        ->withSession(['active_sucursal_id' => $destino->id])
+        ->get(route('alertas.index'))
+        ->assertOk()
+        ->getContent();
+
+    expect($contenido)
+        ->toContain('noti-avatar')
+        ->toContain('noti-insignia')
+        ->toContain('•••')
+        ->toContain('alertas/leer');
 });

@@ -2,10 +2,76 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
 <head>
     @include('partials.head', ['title' => __('Iniciar sesión')])
+    <style>
+        /* Parallax sutil del panel lateral: 3 profundidades, opacidades bajas,
+           sin saturar. La animación idle va en el hijo interno para no pelear
+           con el translate que aplica el JS en la capa externa. */
+        .login-aside {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            background: linear-gradient(180deg, #234e56 0%, #20444c 45%, #1b3a42 100%);
+        }
+        .login-fondo { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+        .login-capa { position: absolute; will-change: transform; }
+        .login-reticula {
+            inset: -2.5rem;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 44px 44px;
+            -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 28%, black 25%, transparent 75%);
+            mask-image: radial-gradient(ellipse 90% 80% at 50% 28%, black 25%, transparent 75%);
+            opacity: 0.55;
+        }
+        .login-resplandor-a { left: -11rem; top: -11rem; width: 34rem; height: 34rem; }
+        .login-resplandor-a > div {
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(14, 147, 132, 0.32) 0%, transparent 65%);
+            filter: blur(12px);
+            animation: login-deriva-a 16s ease-in-out infinite alternate;
+        }
+        .login-resplandor-b { right: -9rem; bottom: -7rem; width: 29rem; height: 29rem; }
+        .login-resplandor-b > div {
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(94, 200, 180, 0.20) 0%, transparent 65%);
+            filter: blur(14px);
+            animation: login-deriva-b 20s ease-in-out infinite alternate;
+        }
+        .login-aro {
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 9999px;
+        }
+        .login-aro-1 { top: 21%; right: 11%; width: 11rem; height: 11rem; }
+        .login-aro-2 { bottom: 26%; left: 52%; width: 5.5rem; height: 5.5rem; border-color: rgba(94, 200, 180, 0.22); }
+        .login-punto { border-radius: 9999px; background: rgba(94, 200, 180, 0.35); filter: blur(1px); }
+        .login-punto-1 { top: 14%; left: 46%; width: 0.45rem; height: 0.45rem; }
+        @keyframes login-deriva-a {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(2.2rem, 1.6rem) scale(1.06); }
+        }
+        @keyframes login-deriva-b {
+            from { transform: translate(0, 0) scale(1.05); }
+            to { transform: translate(-1.8rem, -1.4rem) scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .login-resplandor-a > div, .login-resplandor-b > div { animation: none; }
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-[#e9efec] text-[#22332f] antialiased dark:bg-[#1a2a32] dark:text-[#e6efec]">
     <div class="flex min-h-screen w-full">
-        <aside class="hidden w-[42%] flex-col justify-between bg-[#20444c] px-10 py-12 text-white lg:flex xl:w-[39%] xl:px-14">
+        <aside id="login-aside" class="login-aside hidden w-[42%] flex-col justify-between px-10 py-12 text-white lg:flex xl:w-[39%] xl:px-14">
+            <div class="login-fondo" aria-hidden="true">
+                <div class="login-capa login-reticula" data-depth="0.015"></div>
+                <div class="login-capa login-resplandor-a" data-depth="0.04"><div></div></div>
+                <div class="login-capa login-resplandor-b" data-depth="0.065"><div></div></div>
+                <div class="login-capa login-aro login-aro-1" data-depth="0.10"></div>
+                <div class="login-capa login-aro login-aro-2" data-depth="0.13"></div>
+                <div class="login-capa login-punto login-punto-1" data-depth="0.13"></div>
+            </div>
+
+            <div class="relative z-10 flex h-full flex-col justify-between">
             <div class="flex items-center gap-4">
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0e9384] shadow-[0_10px_30px_rgba(14,147,132,0.35)]">
                     <span class="text-2xl font-black text-white">Rx</span>
@@ -55,6 +121,7 @@
                     </div>
                     <span class="text-xl font-medium text-white">POS optimizado para cajeros</span>
                 </div>
+            </div>
             </div>
         </aside>
 
@@ -189,6 +256,55 @@
                 hiddenIcon.classList.add('hidden');
             }
         }
+
+        // Parallax del panel lateral: desplazamiento máximo ~14px, con
+        // interpolación para que el movimiento sea suave. Se desactiva con
+        // prefers-reduced-motion y en táctil.
+        (() => {
+            const aside = document.getElementById('login-aside');
+            if (!aside) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            const capas = aside.querySelectorAll('[data-depth]');
+            if (!capas.length) return;
+
+            let objetivoX = 0, objetivoY = 0, actualX = 0, actualY = 0, raf = null;
+
+            function animar() {
+                actualX += (objetivoX - actualX) * 0.06;
+                actualY += (objetivoY - actualY) * 0.06;
+
+                capas.forEach((capa) => {
+                    const profundidad = parseFloat(capa.dataset.depth || '0');
+                    const x = (actualX * profundidad * 220).toFixed(2);
+                    const y = (actualY * profundidad * 220).toFixed(2);
+                    capa.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                });
+
+                if (Math.abs(objetivoX - actualX) > 0.0005 || Math.abs(objetivoY - actualY) > 0.0005) {
+                    raf = requestAnimationFrame(animar);
+                } else {
+                    raf = null;
+                }
+            }
+
+            function solicitar() {
+                if (!raf) raf = requestAnimationFrame(animar);
+            }
+
+            window.addEventListener('pointermove', (evento) => {
+                if (evento.pointerType === 'touch') return;
+                objetivoX = evento.clientX / window.innerWidth - 0.5;
+                objetivoY = evento.clientY / window.innerHeight - 0.5;
+                solicitar();
+            }, { passive: true });
+
+            document.addEventListener('pointerleave', () => {
+                objetivoX = 0;
+                objetivoY = 0;
+                solicitar();
+            });
+        })();
     </script>
 
     @fluxScripts

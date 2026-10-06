@@ -179,7 +179,7 @@ class TraspasoController extends Controller
 
         return redirect()->route('alertas.index', [
             'sucursal' => $traspaso->sucursal_b,
-            'seccion' => 'traspasos',
+            'filtro' => 'traspasos',
         ])->with('success', "Traspaso T-{$traspaso->id} aceptado. Inventario actualizado.");
     }
 
@@ -212,7 +212,7 @@ class TraspasoController extends Controller
 
         return redirect()->route('alertas.index', [
             'sucursal' => $traspaso->sucursal_b,
-            'seccion' => 'traspasos',
+            'filtro' => 'traspasos',
         ])->with('success', "Traspaso T-{$traspaso->id} rechazado.");
     }
 
