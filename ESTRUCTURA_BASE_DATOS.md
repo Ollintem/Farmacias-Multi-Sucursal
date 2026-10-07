@@ -19,6 +19,8 @@ sucursales ─┬─ usuarios ─┬─ pedidos ── lotes ── productos �
              └─ cajas / inventario / pedidos / traspasos
 roles ── usuarios
 pagos ── ventas
+modulos ── tipo_alerta ── alertas ── alertas_usuarios ── usuarios
+sucursales ── alertas
 ```
 
 ## Organización y accesos
@@ -247,6 +249,59 @@ Relaciones: `productos` (1:N vía `productos.id_lote`).
 | recibido_por → `usuarios.id` | FK | Sí | NULL | `nullOnDelete` |
 | estado | varchar(20) | No | — | |
 | creado_en | timestamp | No | current | |
+
+## Alertas
+
+Sistema persistido en BD (modelos `TipoAlerta`, `Alerta`, `AlertaUsuario`).
+Reemplaza a la antigua tabla `notificaciones_leidas` (eliminada): la lectura
+ahora vive en `alertas_usuarios` (`estado` + `fecha_leido`).
+
+### `tipo_alerta` (catálogo, seeder `TipoAlertaSeeder`)
+| Columna | Tipo | Nulo | Default | Notas |
+|---|---|---|---|---|
+| id | bigint unsigned PK AI | No | — | |
+| nombre | varchar(60) unique | No | — | p. ej. STOCK_BAJO, TRASPASO_PENDIENTE |
+| id_modulo → `modulos.id` | FK | No | — | cascade |
+| nivel | enum('INFO','ADVERTENCIA','CRITICA') | No | `'INFO'` | |
+| activo | boolean | No | true | |
+| created_at / updated_at | timestamp | Sí | NULL | Índices en `id_modulo`, `nivel`, `activo` |
+
+Tipos iniciales (todos activos): `STOCK_BAJO` (Inventario, ADVERTENCIA),
+`CADUCIDAD_PROXIMA` (Lotes y caducidades, ADVERTENCIA),
+`PRODUCTO_CADUCADO` (Lotes y caducidades, CRITICA),
+`TRASPASO_PENDIENTE` (Traspasos, ADVERTENCIA),
+`TRASPASO_RECIBIDO` (Traspasos, INFO),
+`TRASPASO_RECHAZADO` (Traspasos, ADVERTENCIA).
+`VENTAS_RESUMEN` (Alertas, INFO) se crea automáticamente al generar el resumen diario de ventas.
+
+### `alertas`
+| Columna | Tipo | Nulo | Default | Notas |
+|---|---|---|---|---|
+| id | bigint unsigned PK AI | No | — | |
+| id_tipo_alerta → `tipo_alerta.id` | FK | No | — | cascade |
+| id_sucursal → `sucursales.id` | FK | No | — | cascade |
+| entidad_tipo | varchar(60) | No | — | Origen dinámico: `traspaso`, `lote`, `producto`, `ventas` |
+| entidad_id | bigint unsigned | Sí | NULL | Id de la entidad origen |
+| estado | enum('ACTIVA','RESUELTA','CANCELADA') | No | `'ACTIVA'` | |
+| fecha_creado | timestamp | No | current | |
+| fecha_resuelto | timestamp | Sí | NULL | |
+| created_at / updated_at | timestamp | Sí | NULL | Índices en `id_tipo_alerta`, `id_sucursal`, `estado`, (`entidad_tipo`, `entidad_id`), `fecha_creado` |
+
+### `alertas_usuarios` (lectura por usuario)
+| Columna | Tipo | Nulo | Default | Notas |
+|---|---|---|---|---|
+| id | bigint unsigned PK AI | No | — | |
+| id_alerta → `alertas.id` | FK | No | — | cascade |
+| id_usuario → `usuarios.id` | FK | No | — | cascade |
+| fecha_enviado | timestamp | No | current | |
+| fecha_leido | timestamp | Sí | NULL | |
+| estado | enum('PENDIENTE','LEIDA') | No | `'PENDIENTE'` | Una alerta está leída si `estado` = LEIDA o `fecha_leido` no es NULL |
+| created_at / updated_at | timestamp | Sí | NULL | Unique (`id_alerta`, `id_usuario`); índices en `id_alerta`, `id_usuario`, `estado` |
+
+Clasificación del centro de alertas por `tipo_alerta.nombre`:
+Stock (`STOCK_BAJO`), Caducidad (`CADUCIDAD_PROXIMA`, `PRODUCTO_CADUCADO`),
+Traspasos (`TRASPASO_PENDIENTE`, `TRASPASO_RECIBIDO`, `TRASPASO_RECHAZADO`),
+Ventas (`VENTAS_RESUMEN`).
 
 ## Tablas de sistema (Laravel)
 
