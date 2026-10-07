@@ -1,7 +1,7 @@
 <?php
 
+use App\Models\AlertaUsuario;
 use App\Models\Modulo;
-use App\Models\NotificacionLeida;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -104,7 +104,7 @@ it('persiste lo leido en base de datos por usuario y sucursal', function () {
     AlertasFeed::marcarUna($destino->id, "traspaso:{$traspaso->id}", $usuario->id);
 
     expect(AlertasFeed::noLeidasCount($destino->id, $usuario->id))->toBe(0)
-        ->and(NotificacionLeida::where('id_usuario', $usuario->id)->where('aviso_id', "traspaso:{$traspaso->id}")->exists())->toBeTrue();
+        ->and(AlertaUsuario::where('id_usuario', $usuario->id)->where('estado', AlertaUsuario::ESTADO_LEIDA)->whereNotNull('fecha_leido')->exists())->toBeTrue();
 });
 
 it('formatea el tiempo corto estilo red social', function () {

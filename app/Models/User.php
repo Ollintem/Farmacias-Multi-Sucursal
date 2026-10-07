@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -147,6 +148,22 @@ class User extends Authenticatable
     public function traspasosRecibidos(): HasMany
     {
         return $this->hasMany(Traspaso::class, 'recibido_por');
+    }
+
+    /**
+     * @return HasMany<AlertaUsuario, $this>
+     */
+    public function alertasUsuarios(): HasMany
+    {
+        return $this->hasMany(AlertaUsuario::class, 'id_usuario');
+    }
+
+    /**
+     * @return BelongsToMany<Alerta, $this>
+     */
+    public function alertas(): BelongsToMany
+    {
+        return $this->belongsToMany(Alerta::class, 'alertas_usuarios', 'id_usuario', 'id_alerta');
     }
 
     /** @var array<int, string>|null */

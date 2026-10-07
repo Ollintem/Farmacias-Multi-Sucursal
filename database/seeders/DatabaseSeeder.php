@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             ProveedorSeeder::class,
             UserSeeder::class,
             PermisoActivadoSeeder::class,
+            TipoAlertaSeeder::class,
         ]);
     }
 }

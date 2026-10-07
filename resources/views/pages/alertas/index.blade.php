@@ -49,8 +49,9 @@
                 @foreach([
                     'todas' => "Todas ({$totalAvisos})",
                     'no_leidas' => "No leídas ({$totalNoLeidas})",
+                    'stock' => "Stock ({$tipos['stock']})",
+                    'caducidad' => "Caducidad ({$tipos['caducidad']})",
                     'traspasos' => "Traspasos ({$tipos['traspasos']})",
-                    'caducidades' => "Caducidades ({$tipos['caducidades']})",
                     'ventas' => "Ventas ({$tipos['ventas']})",
                 ] as $valor => $etiqueta)
                     <a href="{{ route('alertas.index', ['sucursal' => $selectedSucursal?->id, 'filtro' => $valor]) }}"

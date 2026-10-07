@@ -45,4 +45,14 @@ class Modulo extends Model
     {
         return $this->hasMany(PermisoActivado::class, 'id_modulo');
     }
+
+    /**
+     * Tipos de alerta asociados a este módulo.
+     *
+     * @return HasMany<TipoAlerta, $this>
+     */
+    public function tiposAlerta(): HasMany
+    {
+        return $this->hasMany(TipoAlerta::class, 'id_modulo');
+    }
 }

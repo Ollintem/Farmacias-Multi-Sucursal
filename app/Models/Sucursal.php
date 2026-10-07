@@ -84,4 +84,12 @@ class Sucursal extends Model
     {
         return $this->hasMany(Traspaso::class, 'sucursal_b');
     }
+
+    /**
+     * @return HasMany<Alerta, $this>
+     */
+    public function alertas(): HasMany
+    {
+        return $this->hasMany(Alerta::class, 'id_sucursal');
+    }
 }
