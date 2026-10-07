@@ -3,6 +3,8 @@
 use App\Models\Categoria;
 use App\Models\Inventario;
 use App\Models\Lote;
+use App\Models\Modulo;
+use App\Models\PermisoActivado;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\Rol;
@@ -90,7 +92,7 @@ function crearContextoTraspaso(object $test): array
 test('el formulario de traspaso solo muestra lotes disponibles y no caducados', function () {
     [$origen, $destino] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $destino->id])
+    $response = $this->withSession(['active_sucursal_id' => $origen->id])
         ->get(route('traspasos.create'));
 
     $response->assertOk()
@@ -102,7 +104,7 @@ test('el formulario de traspaso solo muestra lotes disponibles y no caducados', 
 test('el traspaso guarda lotes con cantidades en detalles_traspaso', function () {
     [$origen, $destino, $producto, $vigente] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $destino->id])
+    $response = $this->withSession(['active_sucursal_id' => $origen->id])
         ->post(route('traspasos.store'), [
             'sucursal_a' => $origen->id,
             'sucursal_b' => $destino->id,
@@ -130,7 +132,7 @@ test('el traspaso guarda lotes con cantidades en detalles_traspaso', function ()
 test('el traspaso rechaza el guardado sin lotes', function () {
     [$origen, $destino] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $destino->id])
+    $response = $this->withSession(['active_sucursal_id' => $origen->id])
         ->post(route('traspasos.store'), [
             'sucursal_a' => $origen->id,
             'sucursal_b' => $destino->id,
@@ -145,7 +147,7 @@ test('el traspaso rechaza el guardado sin lotes', function () {
 test('el traspaso rechaza lotes caducados', function () {
     [$origen, $destino, , , $caduco] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $destino->id])
+    $response = $this->withSession(['active_sucursal_id' => $origen->id])
         ->post(route('traspasos.store'), [
             'sucursal_a' => $origen->id,
             'sucursal_b' => $destino->id,
@@ -162,7 +164,7 @@ test('el traspaso rechaza lotes caducados', function () {
 test('el traspaso rechaza cantidades mayores al stock del origen', function () {
     [$origen, $destino, , $vigente] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $destino->id])
+    $response = $this->withSession(['active_sucursal_id' => $origen->id])
         ->post(route('traspasos.store'), [
             'sucursal_a' => $origen->id,
             'sucursal_b' => $destino->id,
@@ -174,4 +176,156 @@ test('el traspaso rechaza cantidades mayores al stock del origen', function () {
 
     $response->assertSessionHasErrors('lotes.0.cantidad');
     expect(Traspaso::count())->toBe(0);
+});
+
+test('el traspaso rechaza destino igual al origen', function () {
+    [$origen, , , $vigente] = crearContextoTraspaso($this);
+
+    $response = $this->withSession(['active_sucursal_id' => $origen->id])
+        ->post(route('traspasos.store'), [
+            'sucursal_b' => $origen->id,
+            'lotes' => [
+                ['lote' => $vigente->id, 'cantidad' => 1],
+            ],
+        ]);
+
+    $response->assertSessionHasErrors('sucursal_b');
+    expect(Traspaso::count())->toBe(0);
+});
+
+test('el traspaso siempre nace pendiente desde la sucursal de sesion', function () {
+    [$origen, $destino, , $vigente] = crearContextoTraspaso($this);
+
+    $response = $this->withSession(['active_sucursal_id' => $origen->id])
+        ->post(route('traspasos.store'), [
+            'sucursal_a' => $destino->id,
+            'sucursal_b' => $destino->id,
+            'estado' => 'enviado',
+            'lotes' => [
+                ['lote' => $vigente->id, 'cantidad' => 2],
+            ],
+        ]);
+
+    $response->assertRedirect(route('entradas-de-almacen.index', [
+        'sucursal' => $destino->id,
+        'tipo' => 'traspasos',
+    ]));
+
+    $traspaso = Traspaso::latest('id')->first();
+
+    expect($traspaso)->not->toBeNull()
+        ->and((int) $traspaso->sucursal_a)->toBe((int) $origen->id)
+        ->and($traspaso->estado)->toBe('pendiente');
+});
+
+test('la sucursal origen cancela su traspaso pendiente', function () {
+    [$origen, $destino] = crearContextoTraspaso($this);
+    $usuario = User::where('id_sucursal', $origen->id)->first();
+
+    $traspaso = Traspaso::create([
+        'sucursal_a' => $origen->id,
+        'sucursal_b' => $destino->id,
+        'pedido_por' => $usuario->id,
+        'estado' => 'pendiente',
+    ]);
+
+    $response = $this->actingAs($usuario)
+        ->withSession(['active_sucursal_id' => $origen->id])
+        ->post(route('traspasos.cancelar', $traspaso));
+
+    $response->assertRedirect(route('entradas-de-almacen.index', [
+        'sucursal' => $origen->id,
+        'tipo' => 'traspasos',
+    ]));
+
+    expect($traspaso->fresh()->estado)->toBe('cancelado');
+});
+
+test('no se cancela un traspaso ya respondido', function () {
+    [$origen, $destino] = crearContextoTraspaso($this);
+    $usuario = User::where('id_sucursal', $origen->id)->first();
+
+    $traspaso = Traspaso::create([
+        'sucursal_a' => $origen->id,
+        'sucursal_b' => $destino->id,
+        'pedido_por' => $usuario->id,
+        'estado' => 'aceptado',
+    ]);
+
+    $response = $this->actingAs($usuario)
+        ->withSession(['active_sucursal_id' => $origen->id])
+        ->post(route('traspasos.cancelar', $traspaso));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('error');
+    expect($traspaso->fresh()->estado)->toBe('aceptado');
+});
+
+test('solo la sucursal origen puede cancelar el traspaso', function () {
+    [$origen, $destino] = crearContextoTraspaso($this);
+    $solicitante = User::where('id_sucursal', $origen->id)->first();
+
+    $traspaso = Traspaso::create([
+        'sucursal_a' => $origen->id,
+        'sucursal_b' => $destino->id,
+        'pedido_por' => $solicitante->id,
+        'estado' => 'pendiente',
+    ]);
+
+    $rolCajero = Rol::firstOrCreate(['tipo_rol' => 'Cajero'], ['descripcion' => 'Ventas']);
+    $ajeno = User::factory()->create(['id_rol' => $rolCajero->id, 'id_sucursal' => $destino->id]);
+    $modulo = Modulo::firstOrCreate(['nombre_modulo' => 'Entradas de almacén']);
+    PermisoActivado::create([
+        'id_modulo' => $modulo->id,
+        'id_usuario' => $ajeno->id,
+        'puede_ver' => true,
+        'puede_crear' => false,
+        'puede_editar' => true,
+        'puede_borrar' => false,
+    ]);
+
+    $response = $this->actingAs($ajeno)
+        ->withSession(['active_sucursal_id' => $destino->id])
+        ->post(route('traspasos.cancelar', $traspaso));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('error');
+    expect($traspaso->fresh()->estado)->toBe('pendiente');
+});
+
+test('entradas separa solicitudes recibidas y traspasos solicitados', function () {
+    [$origen, $destino] = crearContextoTraspaso($this);
+    $usuario = User::where('id_sucursal', $origen->id)->first();
+
+    $recibido = Traspaso::create([
+        'sucursal_a' => $origen->id,
+        'sucursal_b' => $destino->id,
+        'pedido_por' => $usuario->id,
+        'estado' => 'pendiente',
+    ]);
+    $solicitado = Traspaso::create([
+        'sucursal_a' => $destino->id,
+        'sucursal_b' => $origen->id,
+        'pedido_por' => $usuario->id,
+        'estado' => 'pendiente',
+    ]);
+
+    $contenido = $this->actingAs($usuario)
+        ->withSession(['active_sucursal_id' => $destino->id])
+        ->get(route('entradas-de-almacen.index', ['sucursal' => $destino->id, 'tipo' => 'traspasos']))
+        ->assertOk()
+        ->getContent();
+
+    $posRecibido = strpos($contenido, "T-{$recibido->id}");
+    $posSolicitado = strpos($contenido, "T-{$solicitado->id}");
+    $posSolicitudes = strpos($contenido, 'Solicitudes de traspasos');
+    $posSolicitados = strpos($contenido, 'Traspasos solicitados');
+
+    expect($posRecibido)->not->toBeFalse()
+        ->and($posSolicitado)->not->toBeFalse()
+        ->and($posSolicitudes)->not->toBeFalse()
+        ->and($posSolicitados)->not->toBeFalse()
+        ->and($posSolicitudes < $posRecibido)->toBeTrue()
+        ->and($posRecibido < $posSolicitados)->toBeTrue()
+        ->and($posSolicitados < $posSolicitado)->toBeTrue();
 });

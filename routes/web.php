@@ -90,6 +90,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/alertas/leer', [AlertasController::class, 'marcarLeida'])->name('alertas.leer')->middleware('checarPermisos:ver,alertas');
     Route::post('/traspasos/{traspaso}/aceptar', [TraspasoController::class, 'aceptar'])->name('traspasos.aceptar')->middleware('checarPermisos:editar,alertas');
     Route::post('/traspasos/{traspaso}/rechazar', [TraspasoController::class, 'rechazar'])->name('traspasos.rechazar')->middleware('checarPermisos:editar,alertas');
+    Route::post('/traspasos/{traspaso}/enviar', [TraspasoController::class, 'enviar'])->name('traspasos.enviar')->middleware('checarPermisos:editar,entradas-de-almacen');
+    Route::post('/traspasos/{traspaso}/cancelar', [TraspasoController::class, 'cancelar'])->name('traspasos.cancelar')->middleware('checarPermisos:editar,entradas-de-almacen');
 
     // Módulo: proveedores
     Route::get('/proveedores', [ProveedoresController::class, 'index'])->name('proveedores.index')->middleware('checarPermisos:ver,proveedores');

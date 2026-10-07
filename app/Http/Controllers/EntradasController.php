@@ -36,6 +36,8 @@ class EntradasController extends Controller
 
         $pedidos = $this->entradasPedidos($selectedSucursal?->id, $busqueda);
         $traspasos = $this->entradasTraspasos($selectedSucursal?->id, $busqueda);
+        $solicitudes = $this->traspasosRecibidos($selectedSucursal?->id, $busqueda);
+        $solicitados = $this->traspasosSolicitados($selectedSucursal?->id, $busqueda);
 
         $totalPedidos = $pedidos->count();
         $totalTraspasos = $traspasos->count();
@@ -50,6 +52,8 @@ class EntradasController extends Controller
             'sucursales' => $sucursales,
             'selectedSucursal' => $selectedSucursal,
             'entradas' => $entradas,
+            'solicitudes' => $solicitudes,
+            'solicitados' => $solicitados,
             'busqueda' => $busqueda,
             'tipo' => $tipo,
             'totalEntradas' => $entradas->count(),
@@ -100,6 +104,86 @@ class EntradasController extends Controller
                 ];
             })
             ->values();
+    }
+
+    /**
+     * Solicitudes recibidas: traspasos que otras sucursales piden a la
+     * sucursal actual (destino). Se aceptan o rechazan desde aquí.
+     *
+     * Entrada: id de sucursal destino (nullable) y texto de búsqueda.
+     * Salida: colección de arreglos con folio, origen, destino,
+     * solicitado por, fecha, estado y si sigue pendiente.
+     */
+    private function traspasosRecibidos(?int $sucursalId, string $busqueda): Collection
+    {
+        return $this->consultaTraspasos($busqueda)
+            ->when($sucursalId, fn ($query) => $query->where('sucursal_b', $sucursalId))
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (Traspaso $traspaso) => $this->mapeaTraspaso($traspaso))
+            ->values();
+    }
+
+    /**
+     * Traspasos solicitados: traspasos que la sucursal actual pidió a
+     * otras sucursales (origen). Solo se cancelan mientras siguen pendientes.
+     *
+     * Entrada: id de sucursal origen (nullable) y texto de búsqueda.
+     * Salida: misma forma que las solicitudes recibidas.
+     */
+    private function traspasosSolicitados(?int $sucursalId, string $busqueda): Collection
+    {
+        return $this->consultaTraspasos($busqueda)
+            ->when($sucursalId, fn ($query) => $query->where('sucursal_a', $sucursalId))
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (Traspaso $traspaso) => $this->mapeaTraspaso($traspaso))
+            ->values();
+    }
+
+    /**
+     * Base de consulta de traspasos con relaciones y búsqueda.
+     */
+    private function consultaTraspasos(string $busqueda)
+    {
+        return Traspaso::query()
+            ->with(['sucursalOrigen', 'sucursalDestino', 'detalles', 'solicitadoPor'])
+            ->when($busqueda !== '', function ($query) use ($busqueda) {
+                $query->where(function ($subQuery) use ($busqueda) {
+                    $subQuery->where('estado', 'like', "%{$busqueda}%")
+                        ->orWhereHas('sucursalOrigen', fn ($q) => $q->where('nombre_sucursal', 'like', "%{$busqueda}%"))
+                        ->orWhereHas('sucursalDestino', fn ($q) => $q->where('nombre_sucursal', 'like', "%{$busqueda}%"));
+                    if (is_numeric($busqueda)) {
+                        $subQuery->orWhere('id', (int) $busqueda);
+                    }
+                });
+            });
+    }
+
+    /**
+     * Mapea un traspaso al formato de las tablas de entradas.
+     */
+    private function mapeaTraspaso(Traspaso $traspaso): array
+    {
+        $origen = $traspaso->sucursalOrigen?->nombre_sucursal ?? 'Sin origen';
+        $destino = $traspaso->sucursalDestino?->nombre_sucursal ?? 'Sin destino';
+
+        return [
+            'id' => $traspaso->id,
+            'folio' => "T-{$traspaso->id}",
+            'tipo' => 'traspaso',
+            'origen' => $origen,
+            'producto' => $origen,
+            'destino' => $destino,
+            'solicitado_por' => $traspaso->solicitadoPor?->name ?? '—',
+            'unidades' => (int) $traspaso->detalles->sum('cantidad'),
+            'fecha' => $traspaso->creado_en ? Carbon::parse($traspaso->creado_en)->format('Y-m-d') : '-',
+            'orden_fecha' => $traspaso->creado_en ? Carbon::parse($traspaso->creado_en)->timestamp : 0,
+            'estado' => ucfirst((string) $traspaso->estado),
+            'estado_class' => $this->claseEstado((string) $traspaso->estado),
+            'estado_raw' => strtolower((string) $traspaso->estado),
+            'pendiente' => $traspaso->esPendiente(),
+        ];
     }
 
     /**

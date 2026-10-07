@@ -149,6 +149,129 @@
                     </div>
                 </div>
 
+                @if($tipoActual === 'traspasos')
+                    <div class="mt-6 flex flex-col gap-6">
+                        <section class="module-table" aria-label="Solicitudes de traspasos">
+                            <div class="px-4 pt-4">
+                                <h3 class="text-lg font-bold">Solicitudes de traspasos</h3>
+                                <p class="mt-1 text-sm theme-subtle">Lo que otras sucursales solicitan a {{ $selectedSucursal?->nombre_sucursal ?? 'esta sucursal' }}.</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-left text-sm">
+                                    <thead class="text-slate-600 dark:text-slate-300">
+                                        <tr>
+                                            <th class="px-4 py-3 font-semibold">Folio</th>
+                                            <th class="px-4 py-3 font-semibold">Sucursal origen</th>
+                                            <th class="px-4 py-3 font-semibold">Sucursal destino</th>
+                                            <th class="px-4 py-3 font-semibold">Solicitado por</th>
+                                            <th class="px-4 py-3 font-semibold">Fecha</th>
+                                            <th class="px-4 py-3 font-semibold">Estado</th>
+                                            <th class="px-4 py-3 font-semibold">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($solicitudes ?? [] as $solicitud)
+                                            <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5">
+                                                <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $solicitud['folio'] }}</td>
+                                                <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $solicitud['origen'] }}</td>
+                                                <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $solicitud['destino'] }}</td>
+                                                <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $solicitud['solicitado_por'] }}</td>
+                                                <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $solicitud['fecha'] }}</td>
+                                                <td class="px-4 py-3">
+                                                    <span class="status-badge {{ $solicitud['estado_class'] }}">{{ $solicitud['estado'] }}</span>
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    @if(($solicitud['estado_raw'] ?? '') === 'enviado')
+                                                        <div class="flex flex-wrap gap-2">
+                                                            <form method="POST" action="{{ route('traspasos.aceptar', $solicitud['id']) }}">
+                                                                @csrf
+                                                                <button type="submit" class="theme-button theme-button-primary">Aceptar</button>
+                                                            </form>
+                                                            <form method="POST" action="{{ route('traspasos.rechazar', $solicitud['id']) }}">
+                                                                @csrf
+                                                                <button type="submit" class="theme-button theme-button-secondary">Rechazar</button>
+                                                            </form>
+                                                        </div>
+                                                    @elseif(($solicitud['estado_raw'] ?? '') === 'pendiente')
+                                                        <span class="text-slate-400 dark:text-slate-500">En espera de envío</span>
+                                                    @else
+                                                        <span class="text-slate-400 dark:text-slate-500">—</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="px-4 py-10 text-center text-slate-500 dark:text-slate-400">
+                                                    No hay solicitudes de traspasos para esta sucursal.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="module-table" aria-label="Traspasos solicitados">
+                            <div class="px-4 pt-4">
+                                <h3 class="text-lg font-bold">Traspasos solicitados</h3>
+                                <p class="mt-1 text-sm theme-subtle">Lo que {{ $selectedSucursal?->nombre_sucursal ?? 'esta sucursal' }} solicitó a otras sucursales.</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-left text-sm">
+                                    <thead class="text-slate-600 dark:text-slate-300">
+                                        <tr>
+                                            <th class="px-4 py-3 font-semibold">Folio</th>
+                                            <th class="px-4 py-3 font-semibold">Sucursal origen</th>
+                                            <th class="px-4 py-3 font-semibold">Sucursal destino</th>
+                                            <th class="px-4 py-3 font-semibold">Solicitado por</th>
+                                            <th class="px-4 py-3 font-semibold">Fecha</th>
+                                            <th class="px-4 py-3 font-semibold">Estado</th>
+                                            <th class="px-4 py-3 font-semibold">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($solicitados ?? [] as $solicitado)
+                                            <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5">
+                                                <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $solicitado['folio'] }}</td>
+                                                <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $solicitado['origen'] }}</td>
+                                                <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $solicitado['destino'] }}</td>
+                                                <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $solicitado['solicitado_por'] }}</td>
+                                                <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $solicitado['fecha'] }}</td>
+                                                <td class="px-4 py-3">
+                                                    <span class="status-badge {{ $solicitado['estado_class'] }}">{{ $solicitado['estado'] }}</span>
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    @if($solicitado['pendiente'])
+                                                        <div class="flex flex-wrap gap-2">
+                                                            @if(($solicitado['estado_raw'] ?? '') === 'pendiente')
+                                                                <form method="POST" action="{{ route('traspasos.enviar', $solicitado['id']) }}">
+                                                                    @csrf
+                                                                    <button type="submit" class="theme-button theme-button-primary">Enviar</button>
+                                                                </form>
+                                                            @endif
+                                                            <form method="POST" action="{{ route('traspasos.cancelar', $solicitado['id']) }}">
+                                                                @csrf
+                                                                <button type="submit" class="theme-button theme-button-secondary">Cancelar</button>
+                                                            </form>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-slate-400 dark:text-slate-500">—</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="px-4 py-10 text-center text-slate-500 dark:text-slate-400">
+                                                    Esta sucursal no ha solicitado traspasos.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                @else
                 <div class="module-table mt-6">
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-left text-sm">
@@ -194,6 +317,7 @@
                         </table>
                     </div>
                 </div>
+                @endif
             </div>
         </div>
     </div>

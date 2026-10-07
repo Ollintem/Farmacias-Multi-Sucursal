@@ -21,15 +21,14 @@
                 <div class="grid gap-5 md:grid-cols-2">
                     <div>
                         <label class="mb-2 block text-sm font-medium">Sucursal origen</label>
-                        <x-option-pick name="sucursal_a" label="Sucursal origen" placeholder="Selecciona el origen" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="old('sucursal_a')" />
-                        @error('sucursal_a')
-                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
-                        @enderror
+                        <input type="hidden" name="sucursal_a" value="{{ $origenSucursal?->id }}">
+                        <p class="theme-input flex items-center font-semibold" aria-readonly="true">{{ $origenSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                        <p class="mt-1 text-xs theme-subtle">El origen es tu sucursal activa y el traspaso nace en estado Pendiente.</p>
                     </div>
 
                     <div>
                         <label class="mb-2 block text-sm font-medium">Sucursal destino</label>
-                        <x-option-pick name="sucursal_b" label="Sucursal destino" placeholder="Selecciona el destino" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="old('sucursal_b', $selectedSucursalId ?? '')" />
+                        <x-option-pick name="sucursal_b" label="Sucursal destino" placeholder="Selecciona el destino" :options="$sucursalesDestino->pluck('nombre_sucursal', 'id')" :value="old('sucursal_b', $selectedSucursalId ?? '')" />
                         @error('sucursal_b')
                             <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                         @enderror
@@ -39,17 +38,6 @@
                         <label class="mb-2 block text-sm font-medium">Mensaje para la sucursal destino</label>
                         <textarea name="mensaje" rows="3" maxlength="1000" placeholder="Ej. Urgente: necesitamos 20 uds. para cubrir la venta del fin de semana." class="theme-input">{{ old('mensaje') }}</textarea>
                         @error('mensaje')
-                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block text-sm font-medium">Estado inicial</label>
-                        <select name="estado" class="theme-input">
-                            <option value="pendiente" {{ old('estado', 'pendiente') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                            <option value="enviado" {{ old('estado') === 'enviado' ? 'selected' : '' }}>Enviado</option>
-                        </select>
-                        @error('estado')
                             <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                         @enderror
                     </div>

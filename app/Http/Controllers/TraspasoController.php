@@ -9,6 +9,7 @@ use App\Models\Traspaso;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -31,9 +32,10 @@ class TraspasoController extends Controller
     /**
      * Muestra el formulario de alta de traspasos entre sucursales.
      *
-     * Solo se envían los lotes con existencias en inventario y no
-     * caducados, para que el formulario no ofrezca mercancía que no
-     * puede moverse.
+     * La sucursal origen es la de la sesión actual (no se elige) y no se
+     * ofrece como destino. Solo se envían los lotes con existencias en
+     * inventario y no caducados, para que el formulario no ofrezca
+     * mercancía que no puede moverse.
      *
      * Entrada: query string opcional `sucursal` (destino preseleccionado).
      * Salida: resources/views/pages/entradas/create-traspaso.blade.php.
@@ -41,7 +43,9 @@ class TraspasoController extends Controller
     public function create(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
-        $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
+        $origenId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? $sucursales->first()?->id ?? 0);
+        $origenSucursal = $sucursales->firstWhere('id', $origenId) ?? $sucursales->first();
+        $sucursalesDestino = $sucursales->where('id', '!==', $origenSucursal?->id)->values();
 
         $lotesDisponibles = Lote::query()
             ->with(['producto', 'inventarios'])
@@ -59,26 +63,41 @@ class TraspasoController extends Controller
             ->filter(fn (Lote $lote) => ! $lote->estaCaducado() && (int) $lote->inventarios->sum('stock') > 0)
             ->values();
 
-        return view('pages.entradas.create-traspaso', compact('sucursales', 'selectedSucursalId', 'lotesDisponibles'));
+        return view('pages.entradas.create-traspaso', [
+            'sucursales' => $sucursales,
+            'origenSucursal' => $origenSucursal,
+            'sucursalesDestino' => $sucursalesDestino,
+            'selectedSucursalId' => $request->query('sucursal'),
+            'lotesDisponibles' => $lotesDisponibles,
+        ]);
     }
 
     /**
      * Valida y registra un traspaso entre dos sucursales distintas.
      *
-     * Entrada: sucursal origen, sucursal destino, mensaje opcional y
-     * listado de lotes con cantidades para `detalles_traspaso`.
+     * La sucursal origen se toma de la sesión actual y el estado siempre
+     * nace como pendiente: no se confía en lo enviado desde el frontend.
+     *
+     * Entrada: sucursal destino, mensaje opcional y listado de lotes con
+     * cantidades para `detalles_traspaso`.
      * Salida: redirección al listado de entradas filtrado por traspasos.
      */
     public function store(Request $request): RedirectResponse
     {
+        $origenId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
+
+        if ($origenId <= 0) {
+            return back()->with('error', 'No se pudo determinar tu sucursal origen. Vuelve a elegir sucursal activa.')->withInput();
+        }
+
         $data = $request->validate([
-            'sucursal_a' => ['required', 'exists:sucursales,id', 'different:sucursal_b'],
-            'sucursal_b' => ['required', 'exists:sucursales,id', 'different:sucursal_a'],
+            'sucursal_b' => ['required', 'exists:sucursales,id', Rule::notIn([$origenId])],
             'mensaje' => ['nullable', 'string', 'max:1000'],
-            'estado' => ['nullable', 'string', 'max:20'],
             'lotes' => ['required', 'array', 'min:1'],
             'lotes.*.lote' => ['required', 'exists:lotes,id'],
             'lotes.*.cantidad' => ['required', 'integer', 'min:1', 'max:10000'],
+        ], [
+            'sucursal_b.not_in' => 'La sucursal destino debe ser diferente a la sucursal origen.',
         ]);
 
         $lotes = Lote::query()
@@ -103,7 +122,7 @@ class TraspasoController extends Controller
             }
 
             $stockOrigen = (int) Inventario::query()
-                ->where('id_sucursal', (int) $data['sucursal_a'])
+                ->where('id_sucursal', $origenId)
                 ->where('id_lote', $lote->id)
                 ->sum('stock');
 
@@ -125,13 +144,13 @@ class TraspasoController extends Controller
             })
             ->values();
 
-        DB::transaction(function () use ($data, $detalles, $request): void {
+        DB::transaction(function () use ($data, $detalles, $request, $origenId): void {
             $traspaso = Traspaso::create([
-                'sucursal_a' => $data['sucursal_a'],
+                'sucursal_a' => $origenId,
                 'sucursal_b' => $data['sucursal_b'],
                 'mensaje' => $data['mensaje'] ?? null,
                 'pedido_por' => $request->user()->id,
-                'estado' => $data['estado'] ?? 'pendiente',
+                'estado' => 'pendiente',
             ]);
 
             $traspaso->detalles()->createMany($detalles->all());
@@ -144,18 +163,75 @@ class TraspasoController extends Controller
     }
 
     /**
-     * Acepta un traspaso pendiente y mueve el inventario origen → destino por lote.
+     * Envía un traspaso pendiente: descuenta el origen y deja la mercancía en tránsito.
      *
-     * Cada detalle indica el lote exacto y sus unidades: se descuentan de la
-     * fila de inventario del origen y se suman en el destino. El lote viaja
-     * intacto (mismo id, caducidad y producto).
+     * Flujo: PENDIENTE → ENVIADO. El destino NO incrementa su inventario en
+     * este momento. Solo la sucursal origen (o SuperAdmin) puede enviarlo y
+     * solo una vez: un segundo envío devuelve error sin tocar el stock.
      *
-     * Entrada: id del traspaso pendiente donde la sucursal activa es el destino.
+     * Entrada: id del traspaso pendiente donde la sucursal activa es el origen.
+     * Salida: redirección a entradas filtrado por traspasos.
+     */
+    public function enviar(Request $request, Traspaso $traspaso): RedirectResponse
+    {
+        if (strtolower((string) $traspaso->estado) !== 'pendiente') {
+            return back()->with('error', 'El traspaso ya fue enviado o procesado.');
+        }
+
+        if (! $this->puedeEnviar($request, $traspaso)) {
+            return back()->with('error', 'Solo la sucursal origen puede enviar este traspaso.');
+        }
+
+        try {
+            DB::transaction(function () use ($traspaso): void {
+                app(LotesController::class)->descontarOrigen($traspaso);
+
+                $traspaso->update(['estado' => 'enviado']);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('entradas-de-almacen.index', [
+            'sucursal' => $traspaso->sucursal_a,
+            'tipo' => 'traspasos',
+        ])->with('success', "Traspaso T-{$traspaso->id} enviado. Mercancía en tránsito.");
+    }
+
+    /**
+     * Indica si el usuario actual puede enviar el traspaso (es origen o SuperAdmin).
+     */
+    private function puedeEnviar(Request $request, Traspaso $traspaso): bool
+    {
+        $usuario = $request->user();
+
+        if ($usuario?->rol?->tipo_rol === 'SuperAdmin') {
+            return true;
+        }
+
+        $sucursalActiva = (int) (session('active_sucursal_id') ?? $usuario?->id_sucursal ?? 0);
+
+        return $sucursalActiva > 0 && $sucursalActiva === (int) $traspaso->sucursal_a;
+    }
+
+    /**
+     * Recibe un traspaso en tránsito e incrementa el inventario destino.
+     *
+     * Flujo: ENVIADO → ACEPTADO (recibido). El origen NO vuelve a
+     * descontarse: la salida ya ocurrió al enviar. Solo procede una vez.
+     *
+     * Entrada: id del traspaso en tránsito donde la sucursal activa es el destino.
      * Salida: redirección a alertas con mensaje de resultado.
      */
     public function aceptar(Request $request, Traspaso $traspaso): RedirectResponse
     {
-        if (! $traspaso->esPendiente()) {
+        $estado = strtolower((string) $traspaso->estado);
+
+        if ($estado === 'pendiente') {
+            return back()->with('error', 'El traspaso aún no fue enviado. La sucursal origen debe enviarlo primero.');
+        }
+
+        if ($estado !== 'enviado') {
             return back()->with('error', 'El traspaso ya fue respondido.');
         }
 
@@ -165,7 +241,7 @@ class TraspasoController extends Controller
 
         try {
             DB::transaction(function () use ($traspaso, $request) {
-                $this->moverLotes((int) $traspaso->sucursal_a, (int) $traspaso->sucursal_b, $traspaso);
+                app(LotesController::class)->incrementarDestino($traspaso);
 
                 $traspaso->update([
                     'estado' => 'aceptado',
@@ -184,7 +260,10 @@ class TraspasoController extends Controller
     }
 
     /**
-     * Rechaza un traspaso pendiente con motivo opcional.
+     * Rechaza un traspaso pendiente o en tránsito con motivo opcional.
+     *
+     * Si ya se había enviado, la mercancía se devuelve al origen antes de
+     * marcarlo rechazado; si sigue pendiente no hay nada que devolver.
      *
      * Entrada: id del traspaso y motivo de rechazo opcional.
      * Salida: redirección a alertas con mensaje de resultado.
@@ -195,7 +274,9 @@ class TraspasoController extends Controller
             'motivo_respuesta' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        if (! $traspaso->esPendiente()) {
+        $estado = strtolower((string) $traspaso->estado);
+
+        if (! in_array($estado, ['pendiente', 'enviado'], true)) {
             return back()->with('error', 'El traspaso ya fue respondido.');
         }
 
@@ -203,17 +284,86 @@ class TraspasoController extends Controller
             return back()->with('error', 'Solo la sucursal destino puede rechazar este traspaso.');
         }
 
-        $traspaso->update([
-            'estado' => 'rechazado',
-            'recibido_por' => $request->user()->id,
-            'motivo_respuesta' => $data['motivo_respuesta'] ?? null,
-            'respondido_en' => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($traspaso, $data, $request, $estado): void {
+                if ($estado === 'enviado') {
+                    app(LotesController::class)->restaurarOrigen($traspaso);
+                }
+
+                $traspaso->update([
+                    'estado' => 'rechazado',
+                    'recibido_por' => $request->user()->id,
+                    'motivo_respuesta' => $data['motivo_respuesta'] ?? null,
+                    'respondido_en' => now(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return redirect()->route('alertas.index', [
             'sucursal' => $traspaso->sucursal_b,
             'filtro' => 'traspasos',
         ])->with('success', "Traspaso T-{$traspaso->id} rechazado.");
+    }
+
+    /**
+     * Cancela un traspaso pendiente o en tránsito solicitado por la sucursal origen.
+     *
+     * Si ya se había enviado, la mercancía se devuelve al origen antes de
+     * marcarlo cancelado; si sigue pendiente no hay nada que devolver porque
+     * la mercancía aún no salió del origen.
+     *
+     * Entrada: id del traspaso donde la sucursal activa es el origen.
+     * Salida: redirección a entradas filtrado por traspasos.
+     */
+    public function cancelar(Request $request, Traspaso $traspaso): RedirectResponse
+    {
+        $estado = strtolower((string) $traspaso->estado);
+
+        if (! in_array($estado, ['pendiente', 'enviado'], true)) {
+            return back()->with('error', 'El traspaso ya fue respondido y no puede cancelarse.');
+        }
+
+        if (! $this->puedeCancelar($request, $traspaso)) {
+            return back()->with('error', 'Solo la sucursal origen puede cancelar este traspaso.');
+        }
+
+        try {
+            DB::transaction(function () use ($traspaso, $estado): void {
+                if ($estado === 'enviado') {
+                    app(LotesController::class)->restaurarOrigen($traspaso);
+                }
+
+                $traspaso->update([
+                    'estado' => 'cancelado',
+                    'respondido_en' => now(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('entradas-de-almacen.index', [
+            'sucursal' => $traspaso->sucursal_a,
+            'tipo' => 'traspasos',
+        ])->with('success', "Traspaso T-{$traspaso->id} cancelado.");
+    }
+
+    /**
+     * Indica si el usuario actual puede cancelar el traspaso (es origen o SuperAdmin).
+     */
+    private function puedeCancelar(Request $request, Traspaso $traspaso): bool
+    {
+        $usuario = $request->user();
+
+        if ($usuario?->rol?->tipo_rol === 'SuperAdmin') {
+            return true;
+        }
+
+        $sucursalActiva = (int) (session('active_sucursal_id') ?? $usuario?->id_sucursal ?? 0);
+
+        return $sucursalActiva > 0 && $sucursalActiva === (int) $traspaso->sucursal_a;
     }
 
     /**
@@ -230,34 +380,5 @@ class TraspasoController extends Controller
         $sucursalActiva = (int) (session('active_sucursal_id') ?? $usuario?->id_sucursal ?? 0);
 
         return $sucursalActiva > 0 && $sucursalActiva === (int) $traspaso->sucursal_b;
-    }
-
-    /**
-     * Mueve los lotes de un traspaso entre sucursales con bloqueo de filas.
-     *
-     * @throws \RuntimeException Cuando el stock en origen es insuficiente.
-     */
-    private function moverLotes(int $origenId, int $destinoId, Traspaso $traspaso): void
-    {
-        foreach ($traspaso->detalles()->lockForUpdate()->get() as $detalle) {
-            $fila = Inventario::query()
-                ->where('id_sucursal', $origenId)
-                ->where('id_lote', $detalle->id_lote)
-                ->lockForUpdate()
-                ->first();
-
-            $disponible = (int) ($fila?->stock ?? 0);
-
-            if ($disponible < (int) $detalle->cantidad) {
-                throw new \RuntimeException("Stock insuficiente en origen para el lote {$detalle->id_lote}. Disponible: {$disponible} uds, solicitado: {$detalle->cantidad} uds.");
-            }
-
-            $fila->decrement('stock', (int) $detalle->cantidad);
-
-            Inventario::updateOrCreate(
-                ['id_sucursal' => $destinoId, 'id_lote' => $detalle->id_lote],
-                ['stock' => 0]
-            )->increment('stock', (int) $detalle->cantidad);
-        }
     }
 }

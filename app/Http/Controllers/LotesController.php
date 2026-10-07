@@ -9,6 +9,7 @@ use App\Models\Pedido;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\Sucursal;
+use App\Models\Traspaso;
 use App\Support\EstadoCaducidad;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -386,5 +387,175 @@ class LotesController extends Controller
         });
 
         return back()->with($anulado ? 'success' : 'error', $mensaje);
+    }
+
+    /**
+     * Salida de mercancía: descuenta el origen cuando el traspaso se envía.
+     *
+     * Flujo: PENDIENTE → ENVIADO. Por cada detalle se descuenta la cantidad
+     * de `inventario` (origen) y de `lotes.stock_lote`; el destino NO se
+     * incrementa: la mercancía queda en tránsito. Es idempotente: solo
+     * procede en estado pendiente, así un segundo envío del mismo traspaso
+     * devuelve error sin tocar el stock.
+     *
+     * Entrada: traspaso con sus detalles (`detalle_traspaso.id_lote`).
+     * Salida: nada; lanza RuntimeException con mensaje controlado si algo falla.
+     *
+     * @throws \RuntimeException Cuando el traspaso no existe, no tiene detalles, ya fue procesado o falta stock.
+     */
+    public function descontarOrigen(Traspaso $traspaso): void
+    {
+        $this->validarTransicion($traspaso, 'pendiente', 'El traspaso ya fue procesado y no puede descontarse de nuevo.');
+
+        DB::transaction(function () use ($traspaso): void {
+            $movimientos = $this->bloquearDisponibilidad($traspaso);
+
+            foreach ($movimientos as [$fila, $lote, $cantidad]) {
+                $fila->decrement('stock', $cantidad);
+                $lote->decrement('stock_lote', $cantidad);
+            }
+        });
+    }
+
+    /**
+     * Recepción de mercancía: incrementa el destino al recibir el traspaso.
+     *
+     * Flujo: ENVIADO → ACEPTADO (recibido). Por cada detalle se suma la
+     * cantidad al `inventario` del destino (creando la fila si no existe) y
+     * se conserva el `id_lote` original para trazabilidad
+     * (Traspaso → DetalleTraspaso → Lote → Producto). El origen NO se vuelve
+     * a descontar. Es idempotente: solo procede en estado enviado.
+     *
+     * Entrada: traspaso en tránsito con sus detalles.
+     * Salida: nada; lanza RuntimeException con mensaje controlado si algo falla.
+     *
+     * @throws \RuntimeException Cuando el traspaso no existe, no tiene detalles o ya fue recibido.
+     */
+    public function incrementarDestino(Traspaso $traspaso): void
+    {
+        $this->validarTransicion($traspaso, 'enviado', 'El traspaso no está en tránsito y no puede recibirse de nuevo.');
+
+        DB::transaction(function () use ($traspaso): void {
+            $destinoId = (int) $traspaso->sucursal_b;
+
+            foreach ($traspaso->detalles as $detalle) {
+                $lote = Lote::query()->whereKey($detalle->id_lote)->first();
+
+                if ($lote === null || $lote->producto === null) {
+                    throw new \RuntimeException("El lote {$detalle->id_lote} del traspaso ya no existe.");
+                }
+
+                Inventario::firstOrCreate(
+                    ['id_sucursal' => $destinoId, 'id_lote' => $lote->id],
+                    ['stock' => 0]
+                )->increment('stock', (int) $detalle->cantidad);
+            }
+        });
+    }
+
+    /**
+     * Devolución de mercancía: restaura el origen si el traspaso en tránsito
+     * se rechaza o se cancela.
+     *
+     * Solo procede en estado enviado. Suma de vuelta cada cantidad al
+     * `inventario` del origen y a `lotes.stock_lote`.
+     *
+     * Entrada: traspaso en tránsito con sus detalles.
+     * Salida: nada; lanza RuntimeException con mensaje controlado si algo falla.
+     *
+     * @throws \RuntimeException Cuando el traspaso no existe, no tiene detalles o no está en tránsito.
+     */
+    public function restaurarOrigen(Traspaso $traspaso): void
+    {
+        $this->validarTransicion($traspaso, 'enviado', 'El traspaso no está en tránsito y su mercancía no puede devolverse.');
+
+        DB::transaction(function () use ($traspaso): void {
+            $origenId = (int) $traspaso->sucursal_a;
+
+            foreach ($traspaso->detalles as $detalle) {
+                $lote = Lote::query()->whereKey($detalle->id_lote)->lockForUpdate()->first();
+
+                if ($lote === null) {
+                    throw new \RuntimeException("El lote {$detalle->id_lote} del traspaso ya no existe.");
+                }
+
+                Inventario::firstOrCreate(
+                    ['id_sucursal' => $origenId, 'id_lote' => $lote->id],
+                    ['stock' => 0]
+                )->increment('stock', (int) $detalle->cantidad);
+
+                $lote->increment('stock_lote', (int) $detalle->cantidad);
+            }
+        });
+    }
+
+    /**
+     * Valida lo común a toda transición: existencia, detalles y estado.
+     *
+     * @throws \RuntimeException
+     */
+    private function validarTransicion(Traspaso $traspaso, string $estadoRequerido, string $mensajeEstado): void
+    {
+        if (! $traspaso->exists) {
+            throw new \RuntimeException('El traspaso no existe.');
+        }
+
+        $traspaso->loadMissing(['detalles.lote.producto', 'sucursalOrigen', 'sucursalDestino']);
+
+        if ($traspaso->detalles->isEmpty()) {
+            throw new \RuntimeException('El traspaso no tiene detalles de mercancía.');
+        }
+
+        if (strtolower((string) $traspaso->estado) !== $estadoRequerido) {
+            throw new \RuntimeException($mensajeEstado);
+        }
+    }
+
+    /**
+     * Bloquea y valida la disponibilidad de todos los detalles en origen.
+     *
+     * Revisa lote por lote (existencia del lote y de su producto, stock en
+     * `lotes.stock_lote` y en `inventario` del origen) ANTES de descontar
+     * nada, para que la operación se rechace completa si algo falta.
+     * Debe llamarse dentro de una transacción.
+     *
+     * @return array<int, array{Inventario, Lote, int}>
+     *
+     * @throws \RuntimeException
+     */
+    private function bloquearDisponibilidad(Traspaso $traspaso): array
+    {
+        $origenId = (int) $traspaso->sucursal_a;
+        $movimientos = [];
+
+        foreach ($traspaso->detalles as $detalle) {
+            $cantidad = (int) $detalle->cantidad;
+
+            $lote = Lote::query()->whereKey($detalle->id_lote)->lockForUpdate()->first();
+
+            if ($lote === null || $lote->producto === null) {
+                throw new \RuntimeException("El lote {$detalle->id_lote} del traspaso ya no existe.");
+            }
+
+            if ((int) $lote->stock_lote < $cantidad) {
+                throw new \RuntimeException("Stock insuficiente en el lote {$lote->folio}. Disponible: {$lote->stock_lote} uds, solicitado: {$cantidad} uds.");
+            }
+
+            $fila = Inventario::query()
+                ->where('id_sucursal', $origenId)
+                ->where('id_lote', $lote->id)
+                ->lockForUpdate()
+                ->first();
+
+            $disponible = (int) ($fila?->stock ?? 0);
+
+            if ($fila === null || $disponible < $cantidad) {
+                throw new \RuntimeException("Stock insuficiente en origen para el lote {$lote->folio}. Disponible: {$disponible} uds, solicitado: {$cantidad} uds.");
+            }
+
+            $movimientos[] = [$fila, $lote, $cantidad];
+        }
+
+        return $movimientos;
     }
 }
