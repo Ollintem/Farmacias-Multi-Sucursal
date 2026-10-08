@@ -179,15 +179,16 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
 
     $lote = Lote::where('folio', 'L-BUSQ-2')->firstOrFail();
 
+    // 10 Cajas x 10 uds = 100 unidades; total = 6 del lote previo + 100 del nuevo.
     expect($lote->id_producto)->toBe($producto->id)
         ->and($lote->pedido?->proveedor?->nombre_proveedor)->toBe('Proveedor Busq')
-        // Stock total = suma del inventario: 6 del lote previo + 10 del nuevo.
-        ->and($producto->fresh()->stockTotal())->toBe(16);
+        ->and($lote->stock_lote)->toBe(100)
+        ->and($producto->fresh()->stockTotal())->toBe(106);
 
     $this->assertDatabaseHas('inventario', [
         'id_sucursal' => $sucursalA->id,
         'id_lote' => $lote->id,
-        'stock' => 10,
+        'stock' => 100,
     ]);
 
     // El proveedor del lote se resuelve vía pedido en el listado.

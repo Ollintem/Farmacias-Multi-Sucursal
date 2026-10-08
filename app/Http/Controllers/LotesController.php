@@ -191,13 +191,18 @@ class LotesController extends Controller
      * Valida y crea el lote vinculado a un producto existente y a la sucursal.
      *
      * El producto y su presentación llegan de los selects del formulario; la
-     * presentación debe pertenecer al producto elegido.
+     * presentación debe pertenecer al producto elegido y es obligatoria solo
+     * cuando el producto tiene presentaciones. La cantidad capturada es la
+     * física de la presentación elegida: se guarda convertida a unidades base
+     * (cantidad × unidades). Sin presentación la cantidad ya son unidades.
      *
      * Entrada: datos del formulario de alta de lote.
      * Salida: redirección a lotes.index con mensaje de resultado.
      */
     public function store(Request $request): RedirectResponse
     {
+        $conPresentaciones = $this->productoConPresentaciones($request->input('id_producto'));
+
         $data = $request->validate([
             'folio' => ['required', 'string', 'max:20', 'unique:lotes,folio'],
             'id_pedido' => ['nullable', 'exists:pedidos,id'],
@@ -207,7 +212,7 @@ class LotesController extends Controller
             'fecha_caducidad' => ['required', 'date', 'after_or_equal:entregado_en'],
             'id_producto' => ['required', 'exists:productos,id'],
             'id_presentacion' => [
-                'required',
+                $conPresentaciones ? 'required' : 'nullable',
                 Rule::exists('presentacion_producto', 'id_presentacion')->where(
                     fn ($query) => $query->where('producto', $request->input('id_producto'))
                 ),
@@ -217,14 +222,23 @@ class LotesController extends Controller
 
         DB::transaction(function () use ($data) {
             $producto = Producto::findOrFail($data['id_producto']);
+            $idPresentacion = $data['id_presentacion'] ?? null;
+
+            $unidades = $idPresentacion === null
+                ? 1
+                : max(1, (int) $producto->presentacionesPrecio()
+                    ->where('id_presentacion', $idPresentacion)
+                    ->value('unidades'));
+
+            $cantidadBase = (int) $data['stock'] * $unidades;
 
             $lote = Lote::create([
                 'folio' => $data['folio'],
-                'stock_lote' => $data['stock'],
+                'stock_lote' => $cantidadBase,
                 'id_pedido' => $data['id_pedido'] ?? null,
                 'id_proveedor' => $data['id_proveedor'] ?? null,
                 'id_producto' => $producto->id,
-                'id_presentacion' => $data['id_presentacion'],
+                'id_presentacion' => $idPresentacion,
                 'entregado_en' => $data['entregado_en'],
                 'fecha_caducidad' => $data['fecha_caducidad'],
                 'fecha_de_caducidad' => $data['fecha_caducidad'],
@@ -235,12 +249,24 @@ class LotesController extends Controller
                     'id_sucursal' => $data['sucursal'],
                     'id_lote' => $lote->id,
                 ],
-                ['stock' => $data['stock']]
+                ['stock' => $cantidadBase]
             );
         });
 
         return redirect()->route('lotes.index', ['sucursal' => $data['sucursal']])
             ->with('success', 'Lote registrado correctamente.');
+    }
+
+    /**
+     * Indica si un producto tiene presentaciones registradas.
+     *
+     * Entrada: identificador del producto (puede ser nulo o inválido).
+     * Salida: true solo si existe el producto y al menos una presentación.
+     */
+    private function productoConPresentaciones(mixed $idProducto): bool
+    {
+        return ctype_digit((string) $idProducto)
+            && Producto::whereKey((int) $idProducto)->whereHas('presentacionesPrecio')->exists();
     }
 
     /**

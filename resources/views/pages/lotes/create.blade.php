@@ -120,12 +120,18 @@
 
                         <div>
                             <label class="mb-2 block text-sm font-medium">Presentación</label>
-                            <select name="id_presentacion" class="theme-input" x-model="presentacion" :disabled="presentaciones.length === 0" required>
+                            <select name="id_presentacion" class="theme-input" x-model="presentacion" :disabled="presentaciones.length === 0" x-bind:required="presentaciones.length > 0">
                                 <option value="">Selecciona una presentación</option>
                                 <template x-for="item in presentaciones" :key="item.id">
                                     <option :value="item.id" x-text="`${item.nombre} · ${item.unidades} uds.`"></option>
                                 </template>
                             </select>
+                            <p x-show="presentaciones.length === 0" x-cloak class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Este producto se vende por unidad: la cantidad del lote ya son unidades.
+                            </p>
+                            <p x-show="presentaciones.length > 0" x-cloak class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                La cantidad se captura en la presentación elegida y se guarda convertida a unidades base.
+                            </p>
                             @error('id_presentacion')
                                 <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                             @enderror
