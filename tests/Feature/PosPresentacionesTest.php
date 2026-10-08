@@ -222,3 +222,76 @@ test('el producto con precio unitario se agrega por unidad como antes', function
     $component->assertSet('carrito.0.tipo_venta', 'unidad');
     $component->assertSet('carrito.0.precio', 2.5);
 });
+
+test('el producto divisible abre el selector y ofrece caja o unidad', function () {
+    [$sucursal, , $caja] = crearContextoPos($this);
+
+    $producto = Producto::create([
+        'codigo_barras' => '7500000000006',
+        'nombre_producto' => 'Diclofenaco 50mg',
+        'descripcion' => '',
+        'stock' => 30,
+        'precio' => 2.5,
+        'id_presentacion' => $caja->id,
+        'es_controlado' => false,
+        'es_activo' => true,
+    ]);
+
+    $producto->presentacionesPrecio()->create([
+        'id_presentacion' => $caja->id,
+        'unidades' => 10,
+        'precio_presentacion' => 25.0,
+    ]);
+
+    registrarLotePos($producto, $sucursal, 30);
+
+    $component = Livewire::test(PuntoDeVenta::class);
+
+    $component->call('agregarAlCarrito', $producto->id);
+
+    $component->assertSet('selectorProductoId', $producto->id);
+    $component->assertSet('selectorPrecioUnidad', 2.5);
+    $component->assertSet('selectorPresentaciones.0.unidades', 10);
+    $component->assertSet('selectorPresentaciones.0.precio', 25.0);
+    $component->assertSet('carrito', []);
+    $this->assertStringContainsString('elegirUnidad()', $component->html());
+
+    $component->call('elegirUnidad');
+
+    $component->assertSet('selectorProductoId', null);
+    $component->assertSet('selectorPrecioUnidad', null);
+    $component->assertSet('carrito.0.tipo_venta', 'unidad');
+    $component->assertSet('carrito.0.precio', 2.5);
+    $component->assertSet('carrito.0.cantidad', 1);
+    $component->assertSet('carrito.0.presentacion', '');
+});
+
+test('el producto que solo se vende en caja no ofrece la unidad en el selector', function () {
+    [, , $caja] = crearContextoPos($this);
+
+    $producto = Producto::create([
+        'codigo_barras' => '7500000000007',
+        'nombre_producto' => 'Amoxicilina 500mg Caja',
+        'descripcion' => '',
+        'stock' => 30,
+        'precio' => null,
+        'id_presentacion' => $caja->id,
+        'es_controlado' => false,
+        'es_activo' => true,
+    ]);
+
+    $producto->presentacionesPrecio()->create([
+        'id_presentacion' => $caja->id,
+        'unidades' => 10,
+        'precio_presentacion' => 85.0,
+    ]);
+
+    $component = Livewire::test(PuntoDeVenta::class);
+
+    $component->call('agregarAlCarrito', $producto->id);
+
+    $component->assertSet('selectorProductoId', $producto->id);
+    $component->assertSet('selectorPrecioUnidad', null);
+    $component->assertSet('carrito', []);
+    $this->assertStringNotContainsString('elegirUnidad()', $component->html());
+});

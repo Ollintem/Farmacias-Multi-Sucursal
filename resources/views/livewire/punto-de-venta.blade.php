@@ -937,7 +937,7 @@
     @endif
 
     {{-- ═══════════════════════════════════════════════════════════ --}}
-    {{-- Modal Selector de Presentación (productos sin precio unitario) --}}
+    {{-- Modal Selector de venta (presentaciones y/o unidad suelta) --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($selectorProductoId)
         <div class="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -949,36 +949,58 @@
                     <svg class="mx-auto h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
-                    <h3 class="mt-2 text-lg font-bold text-white">Seleccionar presentación</h3>
+                    <h3 class="mt-2 text-lg font-bold text-white">
+                        {{ $selectorPrecioUnidad !== null ? 'Elegir cómo se vende' : 'Seleccionar presentación' }}
+                    </h3>
                     <p class="mt-1 text-sm font-medium text-emerald-100">{{ $selectorNombreProducto }}</p>
                 </div>
 
                 <div class="px-6 py-5">
-                    @if(empty($selectorPresentaciones))
+                    @php
+                        $opcionesVenta = collect($selectorPresentaciones)->map(fn (array $presentacion) => [
+                            'etiqueta' => ucfirst($presentacion['presentacion']),
+                            'detalle' => $presentacion['unidades'].' und',
+                            'precio' => $presentacion['precio'],
+                            'accion' => 'elegirPresentacion('.$presentacion['id'].')',
+                        ]);
+
+                        if ($selectorPrecioUnidad !== null) {
+                            $opcionesVenta->prepend([
+                                'etiqueta' => 'Unidad',
+                                'detalle' => '1 und',
+                                'precio' => $selectorPrecioUnidad,
+                                'accion' => 'elegirUnidad()',
+                            ]);
+                        }
+                    @endphp
+
+                    @if($opcionesVenta->isEmpty())
                         <p class="text-center text-sm text-slate-500 dark:text-zinc-400">
                             Este producto no tiene presentaciones registradas.
                         </p>
                     @else
                         <p class="mb-4 text-xs text-slate-500 dark:text-zinc-400">
-                            Elige la presentación con la que se venderá este producto.
+                            {{ $selectorPrecioUnidad !== null
+                                ? 'Elige si se venderá por presentación o por unidad suelta.'
+                                : 'Elige la presentación con la que se venderá este producto.' }}
                         </p>
 
                         <div class="flex flex-col gap-2">
-                            @foreach($selectorPresentaciones as $presentacion)
+                            @foreach($opcionesVenta as $opcion)
                                 <button
-                                    wire:click="elegirPresentacion({{ $presentacion['id'] }})"
+                                    wire:click="{{ $opcion['accion'] }}"
                                     class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-[#0c9f9c] hover:bg-[#0c9f9c]/5 active:scale-[0.99] dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-[#0c9f9c]"
                                 >
                                     <div>
                                         <p class="text-sm font-bold text-slate-800 dark:text-white">
-                                            {{ ucfirst($presentacion['presentacion']) }}
+                                            {{ $opcion['etiqueta'] }}
                                         </p>
                                         <p class="text-xs text-slate-500 dark:text-zinc-400">
-                                            {{ $presentacion['unidades'] }} und
+                                            {{ $opcion['detalle'] }}
                                         </p>
                                     </div>
                                     <span class="text-base font-extrabold text-[#0c9f9c]">
-                                        ${{ number_format($presentacion['precio'], 2) }}
+                                        ${{ number_format($opcion['precio'], 2) }}
                                     </span>
                                 </button>
                             @endforeach

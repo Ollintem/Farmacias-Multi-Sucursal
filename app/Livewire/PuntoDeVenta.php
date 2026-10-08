@@ -55,6 +55,9 @@ class PuntoDeVenta extends Component
 
     public array $selectorPresentaciones = [];
 
+    // Precio unitario cuando el selector también ofrece vender por unidad.
+    public ?float $selectorPrecioUnidad = null;
+
     // Receta modal (controlled meds)
     public bool $mostrandoReceta = false;
 
@@ -254,7 +257,8 @@ class PuntoDeVenta extends Component
     {
         $producto = Producto::with('presentacionesPrecio.presentacion')->findOrFail($productoId);
 
-        if ($producto->precio === null) {
+        // Divisible (caja + unidad) o solo caja: el selector decide la vía de venta.
+        if ($producto->precio === null || $producto->presentacionesPrecio->isNotEmpty()) {
             $this->abrirSelector($productoId);
 
             return;
@@ -266,6 +270,13 @@ class PuntoDeVenta extends Component
             return;
         }
 
+        $this->agregarUnidadAlCarrito($productoId);
+    }
+
+    private function agregarUnidadAlCarrito(int $productoId, ?array $receta = null): void
+    {
+        $producto = Producto::with('presentacionesPrecio.presentacion')->findOrFail($productoId);
+
         $disponible = $this->stockDisponibleEnSucursal($productoId);
 
         $existe = false;
@@ -274,28 +285,37 @@ class PuntoDeVenta extends Component
                 if ($this->carrito[$index]['cantidad'] < $disponible) {
                     $this->carrito[$index]['cantidad']++;
                 }
+                if ($receta !== null) {
+                    $this->carrito[$index]['receta'] = $receta;
+                }
                 $existe = true;
                 break;
             }
         }
 
         if (! $existe && $disponible > 0) {
-            $this->carrito[] = [
+            $item = [
                 'producto_id' => $producto->id,
                 'nombre' => $producto->nombre_producto,
                 'precio' => (float) $producto->precio,
                 'cantidad' => 1,
                 'stock' => $disponible,
-                'presentacion' => $producto->presentacion?->presentacion ?? '',
+                'presentacion' => '',
                 'es_controlado' => $producto->es_controlado,
                 'tipo_venta' => 'unidad',
             ];
+
+            if ($receta !== null) {
+                $item['receta'] = $receta;
+            }
+
+            $this->carrito[] = $item;
         }
 
         $this->guardarCarrito();
     }
 
-    // ─── Selector de presentación (productos sin precio unitario) ──
+    // ─── Selector de venta (presentaciones y/o unidad) ──
 
     public function abrirSelector(int $productoId): void
     {
@@ -303,6 +323,7 @@ class PuntoDeVenta extends Component
 
         $this->selectorProductoId = $producto->id;
         $this->selectorNombreProducto = $producto->nombre_producto;
+        $this->selectorPrecioUnidad = $producto->precio !== null ? (float) $producto->precio : null;
         $this->selectorPresentaciones = $producto->presentacionesPrecio
             ->map(fn ($rel) => [
                 'id' => $rel->id,
@@ -318,6 +339,7 @@ class PuntoDeVenta extends Component
     {
         $this->selectorProductoId = null;
         $this->selectorNombreProducto = '';
+        $this->selectorPrecioUnidad = null;
         $this->selectorPresentaciones = [];
     }
 
@@ -340,6 +362,34 @@ class PuntoDeVenta extends Component
         }
 
         $this->agregarItemPresentacion($productoId, $presentacionPrecioId);
+        $this->cerrarSelector();
+    }
+
+    public function elegirUnidad(): void
+    {
+        $productoId = $this->selectorProductoId;
+
+        if (! $productoId) {
+            return;
+        }
+
+        $producto = Producto::find($productoId);
+
+        if ($producto === null || $producto->precio === null) {
+            $this->cerrarSelector();
+
+            return;
+        }
+
+        if ($producto->es_controlado) {
+            $this->recetaPresentacionId = null;
+            $this->cerrarSelector();
+            $this->abrirReceta($productoId);
+
+            return;
+        }
+
+        $this->agregarUnidadAlCarrito($productoId);
         $this->cerrarSelector();
     }
 
@@ -503,36 +553,8 @@ class PuntoDeVenta extends Component
             return;
         }
 
-        // Add to cart with receta data
-        $disponible = $this->stockDisponibleEnSucursal($producto->id);
-
-        $existe = false;
-        foreach ($this->carrito as $index => $item) {
-            if ($item['producto_id'] === $this->recetaProductoId && ($item['tipo_venta'] ?? 'unidad') === 'unidad') {
-                if ($this->carrito[$index]['cantidad'] < $disponible) {
-                    $this->carrito[$index]['cantidad']++;
-                }
-                $this->carrito[$index]['receta'] = $receta;
-                $existe = true;
-                break;
-            }
-        }
-
-        if (! $existe && $disponible > 0) {
-            $this->carrito[] = [
-                'producto_id' => $producto->id,
-                'nombre' => $producto->nombre_producto,
-                'precio' => (float) $producto->precio,
-                'cantidad' => 1,
-                'stock' => $disponible,
-                'presentacion' => $producto->presentacion?->presentacion ?? '',
-                'es_controlado' => $producto->es_controlado,
-                'tipo_venta' => 'unidad',
-                'receta' => $receta,
-            ];
-        }
-
-        $this->guardarCarrito();
+        // Venta unitaria de un producto controlado, ya validada la receta
+        $this->agregarUnidadAlCarrito($producto->id, $receta);
         $this->mostrandoReceta = false;
     }
 
