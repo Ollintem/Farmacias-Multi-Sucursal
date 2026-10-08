@@ -32,73 +32,119 @@ class TraspasoController extends Controller
     /**
      * Muestra el formulario de alta de traspasos entre sucursales.
      *
-     * La sucursal origen es la de la sesión actual (no se elige) y no se
-     * ofrece como destino. Solo se envían los lotes con existencias en
-     * inventario y no caducados, para que el formulario no ofrezca
-     * mercancía que no puede moverse.
+     * Solo el SuperAdmin elige la sucursal origen (el destino es su
+     * sucursal activa); los demás usuarios tienen el origen fijo en su
+     * sucursal activa y eligen el destino. Los lotes se filtran por el
+     * inventario del origen (Lotes → Producto → Inventario → Sucursal
+     * origen) y el stock mostrado es `inventario.stock` de esa sucursal,
+     * nunca `lotes.stock` ni sumas globales.
      *
-     * Entrada: query string opcional `sucursal` (destino preseleccionado).
+     * La sucursal elegible viaja en `?origen=` (SuperAdmin) o `?destino=`
+     * (el parámetro `?sucursal` lo reserva el middleware para la sucursal
+     * activa). Sin elección no se ofrecen lotes en el SELECT.
+     *
+     * Entrada: query string opcional `origen` o `destino` según el rol.
      * Salida: resources/views/pages/entradas/create-traspaso.blade.php.
      */
     public function create(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
-        $origenId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? $sucursales->first()?->id ?? 0);
-        $origenSucursal = $sucursales->firstWhere('id', $origenId) ?? $sucursales->first();
-        $sucursalesDestino = $sucursales->where('id', '!==', $origenSucursal?->id)->values();
+        $activaId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? $sucursales->first()?->id ?? 0);
+        $fija = $sucursales->firstWhere('id', $activaId) ?? $sucursales->first();
+        $opciones = $sucursales->where('id', '!==', $fija?->id)->values();
 
-        $lotesDisponibles = Lote::query()
-            ->with(['producto', 'inventarios'])
-            ->whereHas('inventarios', fn ($query) => $query->where('stock', '>', 0))
-            ->where(function ($query): void {
-                $query->whereNull('fecha_de_caducidad')
-                    ->orWhere('fecha_de_caducidad', '>=', now()->toDateString());
-            })
-            ->where(function ($query): void {
-                $query->whereNull('fecha_caducidad')
-                    ->orWhere('fecha_caducidad', '>=', now()->toDateString());
-            })
-            ->orderBy('folio')
-            ->get()
-            ->filter(fn (Lote $lote) => ! $lote->estaCaducado() && (int) $lote->inventarios->sum('stock') > 0)
-            ->values();
+        $esSuperAdmin = ($request->user()?->rol?->tipo_rol ?? null) === 'SuperAdmin';
+        $campoPicker = $esSuperAdmin ? 'sucursal_a' : 'sucursal_b';
+        $campoFijo = $esSuperAdmin ? 'sucursal_b' : 'sucursal_a';
+        $paramQuery = $esSuperAdmin ? 'origen' : 'destino';
+
+        $elegidoId = (int) old($campoPicker, $request->query($paramQuery, 0));
+        $elegidoValido = $elegidoId > 0 && $opciones->contains('id', $elegidoId);
+
+        $origenLotesId = $esSuperAdmin ? ($elegidoValido ? $elegidoId : null) : $fija?->id;
+
+        $lotesDisponibles = ($elegidoValido && $origenLotesId)
+            ? Lote::query()
+                ->with(['producto', 'inventarios' => fn ($query) => $query->where('id_sucursal', $origenLotesId)])
+                ->whereHas('inventarios', fn ($query) => $query->where('id_sucursal', $origenLotesId)->where('stock', '>', 0))
+                ->where(function ($query): void {
+                    $query->whereNull('fecha_de_caducidad')
+                        ->orWhere('fecha_de_caducidad', '>=', now()->toDateString());
+                })
+                ->where(function ($query): void {
+                    $query->whereNull('fecha_caducidad')
+                        ->orWhere('fecha_caducidad', '>=', now()->toDateString());
+                })
+                ->orderBy('folio')
+                ->get()
+                ->filter(fn (Lote $lote) => ! $lote->estaCaducado() && (int) $lote->inventarios->sum('stock') > 0)
+                ->values()
+            : collect();
 
         return view('pages.entradas.create-traspaso', [
-            'sucursales' => $sucursales,
-            'origenSucursal' => $origenSucursal,
-            'sucursalesDestino' => $sucursalesDestino,
-            'selectedSucursalId' => $request->query('sucursal'),
+            'esSuperAdmin' => $esSuperAdmin,
+            'fija' => $fija,
+            'fijaEsDestino' => $esSuperAdmin,
+            'opcionesSucursal' => $opciones,
+            'campoPicker' => $campoPicker,
+            'campoFijo' => $campoFijo,
+            'paramQuery' => $paramQuery,
+            'valorPicker' => old($campoPicker, $request->query($paramQuery, '')),
+            'mostrarLotes' => $elegidoValido,
+            'origenLotesId' => $origenLotesId,
+            'nombreOrigenLotes' => $sucursales->firstWhere('id', $origenLotesId)?->nombre_sucursal ?? 'la sucursal origen elegida',
             'lotesDisponibles' => $lotesDisponibles,
+            'sucursalLink' => old($esSuperAdmin ? 'sucursal_a' : 'sucursal_b', $request->query($paramQuery, '')) ?: $activaId,
         ]);
     }
 
     /**
      * Valida y registra un traspaso entre dos sucursales distintas.
      *
-     * La sucursal origen se toma de la sesión actual y el estado siempre
-     * nace como pendiente: no se confía en lo enviado desde el frontend.
+     * Para el SuperAdmin el destino es su sucursal activa y elige el
+     * origen; para los demás el origen es su sucursal activa y eligen el
+     * destino. El estado siempre nace como pendiente: no se confía en lo
+     * enviado desde el frontend.
      *
-     * Entrada: sucursal destino, mensaje opcional y listado de lotes con
+     * Entrada: sucursal elegible, mensaje opcional y listado de lotes con
      * cantidades para `detalles_traspaso`.
      * Salida: redirección al listado de entradas filtrado por traspasos.
      */
     public function store(Request $request): RedirectResponse
     {
-        $origenId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
+        $activaId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
 
-        if ($origenId <= 0) {
-            return back()->with('error', 'No se pudo determinar tu sucursal origen. Vuelve a elegir sucursal activa.')->withInput();
+        if ($activaId <= 0) {
+            return back()->with('error', 'No se pudo determinar tu sucursal activa. Vuelve a elegir sucursal activa.')->withInput();
         }
 
-        $data = $request->validate([
-            'sucursal_b' => ['required', 'exists:sucursales,id', Rule::notIn([$origenId])],
-            'mensaje' => ['nullable', 'string', 'max:1000'],
-            'lotes' => ['required', 'array', 'min:1'],
-            'lotes.*.lote' => ['required', 'exists:lotes,id'],
-            'lotes.*.cantidad' => ['required', 'integer', 'min:1', 'max:10000'],
-        ], [
-            'sucursal_b.not_in' => 'La sucursal destino debe ser diferente a la sucursal origen.',
-        ]);
+        $esSuperAdmin = ($request->user()?->rol?->tipo_rol ?? null) === 'SuperAdmin';
+
+        if ($esSuperAdmin) {
+            $destinoId = $activaId;
+            $data = $request->validate([
+                'sucursal_a' => ['required', 'exists:sucursales,id', Rule::notIn([$destinoId])],
+                'mensaje' => ['nullable', 'string', 'max:1000'],
+                'lotes' => ['required', 'array', 'min:1'],
+                'lotes.*.lote' => ['required', 'exists:lotes,id'],
+                'lotes.*.cantidad' => ['required', 'integer', 'min:1', 'max:10000'],
+            ], [
+                'sucursal_a.not_in' => 'La sucursal origen debe ser diferente a la sucursal destino.',
+            ]);
+            $origenId = (int) $data['sucursal_a'];
+        } else {
+            $origenId = $activaId;
+            $data = $request->validate([
+                'sucursal_b' => ['required', 'exists:sucursales,id', Rule::notIn([$origenId])],
+                'mensaje' => ['nullable', 'string', 'max:1000'],
+                'lotes' => ['required', 'array', 'min:1'],
+                'lotes.*.lote' => ['required', 'exists:lotes,id'],
+                'lotes.*.cantidad' => ['required', 'integer', 'min:1', 'max:10000'],
+            ], [
+                'sucursal_b.not_in' => 'La sucursal destino debe ser diferente a la sucursal origen.',
+            ]);
+            $destinoId = (int) $data['sucursal_b'];
+        }
 
         $lotes = Lote::query()
             ->with('producto')
@@ -144,10 +190,10 @@ class TraspasoController extends Controller
             })
             ->values();
 
-        DB::transaction(function () use ($data, $detalles, $request, $origenId): void {
+        DB::transaction(function () use ($data, $detalles, $request, $origenId, $destinoId): void {
             $traspaso = Traspaso::create([
                 'sucursal_a' => $origenId,
-                'sucursal_b' => $data['sucursal_b'],
+                'sucursal_b' => $destinoId,
                 'mensaje' => $data['mensaje'] ?? null,
                 'pedido_por' => $request->user()->id,
                 'estado' => 'pendiente',
@@ -157,9 +203,9 @@ class TraspasoController extends Controller
         });
 
         return redirect()->route('entradas-de-almacen.index', [
-            'sucursal' => $data['sucursal_b'],
+            'sucursal' => $activaId,
             'tipo' => 'traspasos',
-        ])->with('success', 'Solicitud de traspaso enviada a la sucursal destino.');
+        ])->with('success', 'Solicitud de traspaso registrada. La sucursal origen debe enviarla.');
     }
 
     /**

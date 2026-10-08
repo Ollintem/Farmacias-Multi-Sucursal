@@ -92,8 +92,8 @@ function crearContextoTraspaso(object $test): array
 test('el formulario de traspaso solo muestra lotes disponibles y no caducados', function () {
     [$origen, $destino] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $origen->id])
-        ->get(route('traspasos.create'));
+    $response = $this->withSession(['active_sucursal_id' => $destino->id])
+        ->get(route('traspasos.create', ['origen' => $origen->id]));
 
     $response->assertOk()
         ->assertSee('Lotes a traspasar')
@@ -101,23 +101,68 @@ test('el formulario de traspaso solo muestra lotes disponibles y no caducados', 
         ->assertDontSee('LOTCAD001');
 });
 
+test('el formulario muestra el stock de inventario de la sucursal origen', function () {
+    [$origen, $destino, $producto, $vigente] = crearContextoTraspaso($this);
+
+    Inventario::create([
+        'id_sucursal' => $destino->id,
+        'id_lote' => $vigente->id,
+        'stock' => 50,
+    ]);
+
+    $response = $this->withSession(['active_sucursal_id' => $destino->id])
+        ->get(route('traspasos.create', ['origen' => $origen->id]));
+
+    $response->assertOk()
+        ->assertSee('LOTVIG001 ·')
+        ->assertSee('10 uds.')
+        ->assertDontSee('60 uds.');
+});
+
+test('el formulario no ofrece lotes sin existencia en el origen', function () {
+    [$origen, $destino, $producto] = crearContextoTraspaso($this);
+
+    $ajeno = Lote::create([
+        'folio' => 'LOTSOLODEST',
+        'stock_lote' => 5,
+        'id_producto' => $producto->id,
+        'fecha_caducidad' => Carbon::now()->addDays(60)->format('Y-m-d'),
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $destino->id,
+        'id_lote' => $ajeno->id,
+        'stock' => 5,
+    ]);
+
+    $response = $this->withSession(['active_sucursal_id' => $destino->id])
+        ->get(route('traspasos.create', ['origen' => $origen->id]));
+
+    $response->assertOk()
+        ->assertDontSee('LOTSOLODEST ·');
+});
+
+test('sin origen seleccionado el select de lotes queda vacio', function () {
+    [$origen] = crearContextoTraspaso($this);
+
+    $response = $this->withSession(['active_sucursal_id' => $origen->id])
+        ->get(route('traspasos.create'));
+
+    $response->assertOk()
+        ->assertSee('Selecciona primero la sucursal origen')
+        ->assertDontSee('LOTVIG001 ·');
+});
+
 test('el traspaso guarda lotes con cantidades en detalles_traspaso', function () {
     [$origen, $destino, $producto, $vigente] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $origen->id])
+    $response = $this->withSession(['active_sucursal_id' => $destino->id])
         ->post(route('traspasos.store'), [
             'sucursal_a' => $origen->id,
-            'sucursal_b' => $destino->id,
-            'estado' => 'pendiente',
             'lotes' => [
                 ['lote' => $vigente->id, 'cantidad' => 3],
             ],
         ]);
-
-    $response->assertRedirect(route('entradas-de-almacen.index', [
-        'sucursal' => $destino->id,
-        'tipo' => 'traspasos',
-    ]));
 
     $traspaso = Traspaso::latest('id')->first();
 
@@ -132,11 +177,9 @@ test('el traspaso guarda lotes con cantidades en detalles_traspaso', function ()
 test('el traspaso rechaza el guardado sin lotes', function () {
     [$origen, $destino] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $origen->id])
+    $response = $this->withSession(['active_sucursal_id' => $destino->id])
         ->post(route('traspasos.store'), [
             'sucursal_a' => $origen->id,
-            'sucursal_b' => $destino->id,
-            'estado' => 'pendiente',
             'lotes' => [],
         ]);
 
@@ -147,11 +190,9 @@ test('el traspaso rechaza el guardado sin lotes', function () {
 test('el traspaso rechaza lotes caducados', function () {
     [$origen, $destino, , , $caduco] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $origen->id])
+    $response = $this->withSession(['active_sucursal_id' => $destino->id])
         ->post(route('traspasos.store'), [
             'sucursal_a' => $origen->id,
-            'sucursal_b' => $destino->id,
-            'estado' => 'pendiente',
             'lotes' => [
                 ['lote' => $caduco->id, 'cantidad' => 1],
             ],
@@ -164,11 +205,9 @@ test('el traspaso rechaza lotes caducados', function () {
 test('el traspaso rechaza cantidades mayores al stock del origen', function () {
     [$origen, $destino, , $vigente] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $origen->id])
+    $response = $this->withSession(['active_sucursal_id' => $destino->id])
         ->post(route('traspasos.store'), [
             'sucursal_a' => $origen->id,
-            'sucursal_b' => $destino->id,
-            'estado' => 'pendiente',
             'lotes' => [
                 ['lote' => $vigente->id, 'cantidad' => 99],
             ],
@@ -178,28 +217,28 @@ test('el traspaso rechaza cantidades mayores al stock del origen', function () {
     expect(Traspaso::count())->toBe(0);
 });
 
-test('el traspaso rechaza destino igual al origen', function () {
-    [$origen, , , $vigente] = crearContextoTraspaso($this);
+test('el traspaso rechaza origen igual al destino', function () {
+    [$origen, $destino, , $vigente] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $origen->id])
+    $response = $this->withSession(['active_sucursal_id' => $destino->id])
         ->post(route('traspasos.store'), [
-            'sucursal_b' => $origen->id,
+            'sucursal_a' => $destino->id,
             'lotes' => [
                 ['lote' => $vigente->id, 'cantidad' => 1],
             ],
         ]);
 
-    $response->assertSessionHasErrors('sucursal_b');
+    $response->assertSessionHasErrors('sucursal_a');
     expect(Traspaso::count())->toBe(0);
 });
 
-test('el traspaso siempre nace pendiente desde la sucursal de sesion', function () {
+test('el traspaso siempre nace pendiente hacia la sucursal de sesion', function () {
     [$origen, $destino, , $vigente] = crearContextoTraspaso($this);
 
-    $response = $this->withSession(['active_sucursal_id' => $origen->id])
+    $response = $this->withSession(['active_sucursal_id' => $destino->id])
         ->post(route('traspasos.store'), [
-            'sucursal_a' => $destino->id,
-            'sucursal_b' => $destino->id,
+            'sucursal_a' => $origen->id,
+            'sucursal_b' => $origen->id,
             'estado' => 'enviado',
             'lotes' => [
                 ['lote' => $vigente->id, 'cantidad' => 2],
@@ -215,6 +254,7 @@ test('el traspaso siempre nace pendiente desde la sucursal de sesion', function 
 
     expect($traspaso)->not->toBeNull()
         ->and((int) $traspaso->sucursal_a)->toBe((int) $origen->id)
+        ->and((int) $traspaso->sucursal_b)->toBe((int) $destino->id)
         ->and($traspaso->estado)->toBe('pendiente');
 });
 
@@ -328,4 +368,101 @@ test('entradas separa solicitudes recibidas y traspasos solicitados', function (
         ->and($posSolicitudes < $posRecibido)->toBeTrue()
         ->and($posRecibido < $posSolicitados)->toBeTrue()
         ->and($posSolicitados < $posSolicitado)->toBeTrue();
+});
+
+function usuarioCajeroEntradas(Sucursal $sucursal): User
+{
+    $rol = Rol::firstOrCreate(['tipo_rol' => 'Cajero'], ['descripcion' => 'Ventas']);
+    $usuario = User::factory()->create(['id_rol' => $rol->id, 'id_sucursal' => $sucursal->id]);
+    $modulo = Modulo::firstOrCreate(['nombre_modulo' => 'Entradas de almacén']);
+    PermisoActivado::create([
+        'id_modulo' => $modulo->id,
+        'id_usuario' => $usuario->id,
+        'puede_ver' => true,
+        'puede_crear' => true,
+        'puede_editar' => false,
+        'puede_borrar' => false,
+    ]);
+
+    return $usuario;
+}
+
+test('usuarios normales ven el origen fijo en su sucursal activa', function () {
+    [$origen, $destino] = crearContextoTraspaso($this);
+    $cajero = usuarioCajeroEntradas($origen);
+
+    $contenido = $this->actingAs($cajero)
+        ->withSession(['active_sucursal_id' => $origen->id])
+        ->get(route('traspasos.create'))
+        ->assertOk()
+        ->getContent();
+
+    expect($contenido)
+        ->toContain('name="sucursal_a" value="'.$origen->id.'"')
+        ->toContain('Selecciona primero la sucursal destino')
+        ->toContain($destino->nombre_sucursal);
+});
+
+test('usuarios normales ven el stock del origen fijo con destino elegido', function () {
+    [$origen, $destino, , $vigente] = crearContextoTraspaso($this);
+    $cajero = usuarioCajeroEntradas($origen);
+
+    Inventario::create([
+        'id_sucursal' => $destino->id,
+        'id_lote' => $vigente->id,
+        'stock' => 50,
+    ]);
+
+    $response = $this->actingAs($cajero)
+        ->withSession(['active_sucursal_id' => $origen->id])
+        ->get(route('traspasos.create', ['destino' => $destino->id]));
+
+    $response->assertOk()
+        ->assertSee('LOTVIG001 ·')
+        ->assertSee('10 uds.')
+        ->assertDontSee('60 uds.');
+});
+
+test('el origen manipulado se ignora para usuarios normales', function () {
+    [$origen, $destino, , $vigente] = crearContextoTraspaso($this);
+    $cajero = usuarioCajeroEntradas($origen);
+
+    $response = $this->actingAs($cajero)
+        ->withSession(['active_sucursal_id' => $origen->id])
+        ->post(route('traspasos.store'), [
+            'sucursal_a' => $destino->id,
+            'sucursal_b' => $destino->id,
+            'lotes' => [
+                ['lote' => $vigente->id, 'cantidad' => 2],
+            ],
+        ]);
+
+    $response->assertRedirect(route('entradas-de-almacen.index', [
+        'sucursal' => $origen->id,
+        'tipo' => 'traspasos',
+    ]));
+
+    $traspaso = Traspaso::latest('id')->first();
+
+    expect($traspaso)->not->toBeNull()
+        ->and((int) $traspaso->sucursal_a)->toBe((int) $origen->id)
+        ->and((int) $traspaso->sucursal_b)->toBe((int) $destino->id)
+        ->and($traspaso->estado)->toBe('pendiente');
+});
+
+test('usuarios normales no piden hacia su propia sucursal', function () {
+    [$origen, $destino, , $vigente] = crearContextoTraspaso($this);
+    $cajero = usuarioCajeroEntradas($origen);
+
+    $response = $this->actingAs($cajero)
+        ->withSession(['active_sucursal_id' => $origen->id])
+        ->post(route('traspasos.store'), [
+            'sucursal_b' => $origen->id,
+            'lotes' => [
+                ['lote' => $vigente->id, 'cantidad' => 1],
+            ],
+        ]);
+
+    $response->assertSessionHasErrors('sucursal_b');
+    expect(Traspaso::count())->toBe(0);
 });
