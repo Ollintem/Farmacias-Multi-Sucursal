@@ -1,7 +1,7 @@
 @php
     $producto = $producto ?? null;
     $esEdicion = $producto !== null;
-    $venderPorUnidad = old('vender_por_unidad', $esEdicion && $producto->precio !== null);
+    $venderPorUnidad = old('vender_por_unidad', $esEdicion && $producto->vender_por_unidad);
     $valorPrecio = old('precio', $esEdicion ? $producto->precio : '');
     $valorVolver = route('inventario.productos', ['sucursal' => $selectedSucursalId]);
 @endphp
@@ -36,7 +36,8 @@
 
             @php
                 $faltanCatalogos = $sucursales->isEmpty() || $presentaciones->isEmpty() || $categorias->isEmpty() || $presentacionCaja === null;
-                $filasBase = [['id_presentacion' => $presentacionCaja?->id ?? '', 'unidades' => '', 'precio' => '']];
+                $sinPresentaciones = $esEdicion && $producto->presentacionesPrecio->isEmpty();
+                $filasBase = $sinPresentaciones ? [] : [['id_presentacion' => $presentacionCaja?->id ?? '', 'unidades' => '', 'precio' => '']];
 
                 if ($esEdicion) {
                     $filasDelProducto = $producto->presentacionesPrecio
@@ -62,11 +63,13 @@
                     ->values()
                     ->all();
 
-                if ($filasIniciales === []) {
+                if ($filasIniciales === [] && $filasBase !== []) {
                     $filasIniciales = $filasBase;
                 }
 
-                $filasIniciales[0]['id_presentacion'] = $presentacionCaja?->id ?? '';
+                if ($filasIniciales !== []) {
+                    $filasIniciales[0]['id_presentacion'] = $presentacionCaja?->id ?? '';
+                }
             @endphp
 
             @if($faltanCatalogos)
@@ -393,12 +396,11 @@
                                     <div class="mt-3 flex justify-end">
                                         <button
                                             type="button"
-                                            x-show="filas.length > 1 && indice > 0"
-                                            x-on:click="filas.splice(indice, 1); dropdownAbierto = null"
+                                            x-show="indice === 0 || filas.length > 1"
+                                            x-on:click="indice === 0 ? confirmarUnitario = true : quitarFila(indice)"
                                             class="text-xs font-medium text-red-500 transition hover:text-red-600"
-                                        >
-                                            Eliminar presentación
-                                        </button>
+                                            x-text="indice === 0 ? 'Quitar presentaciones' : 'Eliminar presentación'"
+                                        ></button>
                                     </div>
                                 </div>
                             </template>
@@ -420,9 +422,46 @@
                     <button
                         type="submit"
                         class="theme-button theme-button-primary"
-                        x-bind:disabled="!presentacionCajaId"
-                        x-bind:aria-disabled="!presentacionCajaId"
+                        x-bind:disabled="(filas.length === 0 && !venderPorUnidad) || (filas.length > 0 && !presentacionCajaId)"
+                        x-bind:aria-disabled="(filas.length === 0 && !venderPorUnidad) || (filas.length > 0 && !presentacionCajaId)"
                     >{{ $esEdicion ? 'Guardar cambios' : 'Guardar producto' }}</button>
+                </div>
+
+                {{-- Modal: confirmar quitar todas las presentaciones --}}
+                <div
+                    x-show="confirmarUnitario"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style="display:none;"
+                    x-cloak
+                >
+                    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="confirmarUnitario = false"></div>
+
+                    <div
+                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        x-on:click.stop
+                    >
+                        <div class="mb-5 flex items-center justify-between">
+                            <h2 class="text-lg font-bold">Quitar presentaciones</h2>
+                            <button type="button" x-on:click="confirmarUnitario = false" class="opacity-50 transition hover:opacity-100">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+
+                        <p class="text-sm text-slate-600 dark:text-slate-300">
+                            ¿Estás consciente de que este producto no se vende por presentación y su única venta es unitaria?
+                        </p>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button type="button" x-on:click="confirmarUnitario = false" class="theme-button theme-button-secondary">Cancelar</button>
+                            <button type="button" x-on:click="quitarTodasPresentaciones()" class="theme-button theme-button-primary">Sí, quitar</button>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Modal: nueva categoría / nueva presentación --}}
@@ -498,9 +537,32 @@
                 modalError: '',
                 guardando: false,
                 indiceFilaOrigen: null,
+                confirmarUnitario: false,
 
                 agregarFila() {
+                    if (this.filas.length === 0) {
+                        this.filas.push({
+                            id_presentacion: this.presentacionCajaId ? String(this.presentacionCajaId) : '',
+                            unidades: '',
+                            precio: '',
+                            error: '',
+                        });
+                        return;
+                    }
+
                     this.filas.push({ id_presentacion: '', unidades: '', precio: '', error: '' });
+                },
+
+                quitarFila(indice) {
+                    this.filas.splice(indice, 1);
+                    this.dropdownAbierto = null;
+                },
+
+                quitarTodasPresentaciones() {
+                    this.filas = [];
+                    this.venderPorUnidad = true;
+                    this.dropdownAbierto = null;
+                    this.confirmarUnitario = false;
                 },
 
                 seguirDesplegable() {

@@ -142,32 +142,38 @@ class InventarioController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $presentacionCaja = $this->presentacionCaja();
+        $venderPorUnidad = $request->boolean('vender_por_unidad');
+        $data = $request->validate($this->reglasProducto($venderPorUnidad));
 
-        if (! $presentacionCaja) {
-            return back()
-                ->withInput()
-                ->withErrors(['presentaciones' => 'No existe la presentación «Caja» en el catálogo. Créala antes de registrar productos.']);
+        $presentaciones = array_values($data['presentaciones'] ?? []);
+
+        if ($presentaciones !== []) {
+            $presentacionCaja = $this->presentacionCaja();
+
+            if (! $presentacionCaja) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['presentaciones' => 'No existe la presentación «Caja» en el catálogo. Créala antes de registrar productos.']);
+            }
+
+            // La primera presentación siempre es Caja: es la que alimenta el
+            // control de caja abierta/cerrada, por lo que se fija del lado servidor.
+            $presentaciones[0]['id_presentacion'] = $presentacionCaja->id;
         }
-
-        $data = $request->validate($this->reglasProducto());
-
-        // La primera presentación siempre es Caja: es la que alimenta el
-        // control de caja abierta/cerrada, por lo que se fija del lado servidor.
-        $data['presentaciones'][0]['id_presentacion'] = $presentacionCaja->id;
 
         $producto = Producto::create([
             'codigo_barras' => $data['codigo_barras'],
             'nombre_producto' => $data['nombre_producto'],
             'id_categoria' => $data['id_categoria'],
             'descripcion' => $data['descripcion'] ?? '',
-            'precio' => $request->boolean('vender_por_unidad') ? $data['precio'] : null,
-            'id_presentacion' => $data['presentaciones'][0]['id_presentacion'],
+            'precio' => $venderPorUnidad ? $data['precio'] : null,
+            'vender_por_unidad' => $venderPorUnidad,
+            'id_presentacion' => $presentaciones[0]['id_presentacion'] ?? null,
             'es_controlado' => $request->boolean('es_controlado', false),
             'es_activo' => true,
         ]);
 
-        foreach ($data['presentaciones'] as $presentacion) {
+        foreach ($presentaciones as $presentacion) {
             $producto->presentacionesPrecio()->create([
                 'id_presentacion' => $presentacion['id_presentacion'],
                 'unidades' => $presentacion['unidades'],
@@ -260,38 +266,48 @@ class InventarioController extends Controller
      */
     public function update(Request $request, Producto $producto): RedirectResponse
     {
-        $presentacionCaja = $this->presentacionCaja();
+        $venderPorUnidad = $request->boolean('vender_por_unidad');
+        $data = $request->validate($this->reglasProducto($venderPorUnidad));
 
-        if (! $presentacionCaja) {
-            return back()
-                ->withInput()
-                ->withErrors(['presentaciones' => 'No existe la presentación «Caja» en el catálogo. Créala antes de editar productos.']);
+        $presentaciones = array_values($data['presentaciones'] ?? []);
+
+        if ($presentaciones !== []) {
+            $presentacionCaja = $this->presentacionCaja();
+
+            if (! $presentacionCaja) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['presentaciones' => 'No existe la presentación «Caja» en el catálogo. Créala antes de editar productos.']);
+            }
+
+            $presentaciones[0]['id_presentacion'] = $presentacionCaja->id;
         }
-
-        $data = $request->validate($this->reglasProducto());
-
-        $data['presentaciones'][0]['id_presentacion'] = $presentacionCaja->id;
 
         $producto->update([
             'codigo_barras' => $data['codigo_barras'],
             'nombre_producto' => $data['nombre_producto'],
             'id_categoria' => $data['id_categoria'],
             'descripcion' => $data['descripcion'] ?? '',
-            'precio' => $request->boolean('vender_por_unidad') ? $data['precio'] : null,
-            'id_presentacion' => $data['presentaciones'][0]['id_presentacion'],
+            'precio' => $venderPorUnidad ? $data['precio'] : null,
+            'vender_por_unidad' => $venderPorUnidad,
+            'id_presentacion' => $presentaciones[0]['id_presentacion'] ?? null,
             'es_controlado' => $request->boolean('es_controlado', false),
         ]);
 
-        foreach ($data['presentaciones'] as $presentacion) {
+        foreach ($presentaciones as $presentacion) {
             $producto->presentacionesPrecio()->updateOrCreate(
                 ['id_presentacion' => $presentacion['id_presentacion']],
                 ['unidades' => $presentacion['unidades'], 'precio_presentacion' => $presentacion['precio']]
             );
         }
 
-        $producto->presentacionesPrecio()
-            ->whereNotIn('id_presentacion', array_column($data['presentaciones'], 'id_presentacion'))
-            ->delete();
+        if ($presentaciones === []) {
+            $producto->presentacionesPrecio()->delete();
+        } else {
+            $producto->presentacionesPrecio()
+                ->whereNotIn('id_presentacion', array_column($presentaciones, 'id_presentacion'))
+                ->delete();
+        }
 
         return redirect()->route('inventario.productos', ['sucursal' => session('active_sucursal_id')])
             ->with('success', 'Producto actualizado correctamente.');
@@ -349,12 +365,17 @@ class InventarioController extends Controller
     /**
      * Reglas compartidas entre el alta y la edición de productos.
      *
-     * Entrada: ninguna.
+     * Sin presentaciones el producto solo se vende por unidad, así que
+     * `presentaciones` deja de ser obligatoria solo cuando
+     * `vender_por_unidad` está activo; sin unidad y sin presentaciones el
+     * producto no sería vendible y la validación lo rechaza.
+     *
+     * Entrada: si el producto se vende también por unidad suelta.
      * Salida: arreglo de reglas de validación.
      *
      * @return array<string, array<int, mixed>>
      */
-    private function reglasProducto(): array
+    private function reglasProducto(bool $venderPorUnidad): array
     {
         return [
             'codigo_barras' => ['required', 'string', 'max:255'],
@@ -364,7 +385,7 @@ class InventarioController extends Controller
             'vender_por_unidad' => ['nullable', 'boolean'],
             'precio' => ['required_if:vender_por_unidad,1', 'nullable', 'numeric', 'min:0'],
             'es_controlado' => ['boolean'],
-            'presentaciones' => ['required', 'array', 'min:1'],
+            'presentaciones' => $venderPorUnidad ? ['nullable', 'array'] : ['required', 'array', 'min:1'],
             'presentaciones.*.id_presentacion' => ['required', 'distinct', 'exists:presentaciones,id'],
             'presentaciones.*.unidades' => ['required', 'integer', 'min:2'],
             'presentaciones.*.precio' => ['required', 'numeric', 'min:0'],

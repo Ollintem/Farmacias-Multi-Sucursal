@@ -44,7 +44,7 @@ function crearContextoCatalogo(object $test): array
 
 function crearProductoCatalogo(Categoria $categoria, PresentacionProducto $caja, array $atributos = []): Producto
 {
-    $producto = Producto::create(array_merge([
+    $datos = array_merge([
         'codigo_barras' => '7501112223345',
         'nombre_producto' => 'Paracetamol 500mg',
         'descripcion' => '',
@@ -54,7 +54,13 @@ function crearProductoCatalogo(Categoria $categoria, PresentacionProducto $caja,
         'id_categoria' => $categoria->id,
         'es_controlado' => false,
         'es_activo' => true,
-    ], $atributos));
+    ], $atributos);
+
+    $datos['vender_por_unidad'] = array_key_exists('vender_por_unidad', $atributos)
+        ? (bool) $atributos['vender_por_unidad']
+        : $datos['precio'] !== null;
+
+    $producto = Producto::create($datos);
 
     $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
@@ -479,6 +485,29 @@ test('sin presentaciones adicionales ni precio unitario no se muestra el despleg
         ->assertSee('$22.50')
         ->assertDontSee('presentaciones-'.$producto->id, false)
         ->assertDontSee('presentación');
+});
+
+test('un producto sin presentaciones se muestra como venta unitaria en el catalogo', function () {
+    [$sucursal, $categoria, $caja] = crearContextoCatalogo($this);
+
+    $producto = crearProductoCatalogo($categoria, $caja, [
+        'codigo_barras' => '7500000000999',
+        'nombre_producto' => 'Solución inyectable',
+        'precio' => 8.5,
+        'id_presentacion' => null,
+    ]);
+
+    $producto->presentacionesPrecio()->delete();
+
+    $response = $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->get(route('inventario.productos'));
+
+    $response->assertOk()
+        ->assertSee('Unidad')
+        ->assertSee('Se vende por unidad suelta')
+        ->assertSee('$8.50')
+        ->assertSee('+ 1 presentación')
+        ->assertDontSee('Sin presentación Caja');
 });
 
 test('la edicion actualiza los datos y agrega presentaciones', function () {

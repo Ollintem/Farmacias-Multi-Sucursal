@@ -79,7 +79,8 @@
                                         $presentacionesLista = $presentaciones
                                             ->reject(fn ($presentacion) => $presentacionCaja !== null && $presentacion->id_presentacion === $presentacionCaja->id)
                                             ->values();
-                                        $totalDesplegable = $presentacionesLista->count() + ($producto->precio !== null ? 1 : 0);
+                                        $tieneUnitario = $producto->vender_por_unidad && $producto->precio !== null;
+                                        $totalDesplegable = $presentacionesLista->count() + ($tieneUnitario ? 1 : 0);
                                     @endphp
                                     <tbody x-data="{ abierta: false }" data-buscar="{{ $producto->codigo_barras }} {{ $producto->nombre_producto }}">
                                         <tr @class([
@@ -99,6 +100,9 @@
                                                 @if($producto->presentacionCaja && $presentacionCaja)
                                                     <span class="block font-medium text-slate-800 dark:text-slate-100">{{ $presentacionCaja->presentacion }}</span>
                                                     <span class="block text-xs theme-subtle">{{ $producto->presentacionCaja->unidades }} uds. por caja</span>
+                                                @elseif($tieneUnitario)
+                                                    <span class="block font-medium text-slate-800 dark:text-slate-100">Unidad</span>
+                                                    <span class="block text-xs theme-subtle">Se vende por unidad suelta</span>
                                                 @else
                                                     <span class="block theme-subtle">Sin presentación Caja</span>
                                                 @endif
@@ -122,6 +126,8 @@
                                             <td class="px-4 py-3">
                                                 @if($producto->presentacionCaja && $presentacionCaja)
                                                     <span class="font-semibold text-emerald-600 dark:text-emerald-400">${{ number_format((float) $producto->presentacionCaja->precio_presentacion, 2) }}</span>
+                                                @elseif($tieneUnitario)
+                                                    <span class="font-semibold text-emerald-600 dark:text-emerald-400">${{ number_format((float) $producto->precio, 2) }}</span>
                                                 @else
                                                     <span class="theme-subtle">—</span>
                                                 @endif
@@ -202,7 +208,7 @@
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                @if($producto->precio !== null)
+                                                                @if($tieneUnitario)
                                                                     <tr class="border-t border-slate-200/70 dark:border-slate-700/60">
                                                                         <td class="py-1.5 pr-4 text-slate-700 dark:text-slate-200">Unitario</td>
                                                                         <td class="py-1.5 pr-4 theme-subtle">1 ud.</td>

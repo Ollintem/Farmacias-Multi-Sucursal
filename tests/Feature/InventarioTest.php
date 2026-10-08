@@ -411,6 +411,168 @@ test('el formulario de producto incluye el lector de camara de codigos', functio
         ->assertSee('Escanear con cámara', false);
 });
 
+test('el store registra un producto solo por unidad sin presentaciones', function () {
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal Unitaria',
+        'direccion' => 'Av. Unitaria 7',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+    ]);
+
+    $categoria = Categoria::create(['nombre' => 'Inyectables']);
+    PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
+
+    $this->actingAs(crearUsuarioDePrueba($sucursal));
+
+    $response = $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->post(route('inventario.store'), [
+            'codigo_barras' => '7503334445556',
+            'nombre_producto' => 'Solución fisiológica',
+            'id_categoria' => $categoria->id,
+            'vender_por_unidad' => '1',
+            'precio' => 8.5,
+        ]);
+
+    $response->assertRedirect(route('inventario.productos', ['sucursal' => $sucursal->id]));
+
+    $producto = Producto::where('codigo_barras', '7503334445556')->firstOrFail();
+
+    expect($producto->vender_por_unidad)->toBeTrue()
+        ->and((float) $producto->precio)->toBe(8.5)
+        ->and($producto->id_presentacion)->toBeNull();
+
+    $this->assertDatabaseMissing('presentacion_producto', ['producto' => $producto->id]);
+});
+
+test('el store rechaza un producto sin presentaciones ni venta por unidad', function () {
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal Invendible',
+        'direccion' => 'Av. Invendible 8',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+    ]);
+
+    $categoria = Categoria::create(['nombre' => 'Dermatológicos']);
+    PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
+
+    $this->actingAs(crearUsuarioDePrueba($sucursal));
+
+    $response = $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->from(route('inventario.create'))
+        ->post(route('inventario.store'), [
+            'codigo_barras' => '7503334447778',
+            'nombre_producto' => 'Producto invendible',
+            'id_categoria' => $categoria->id,
+        ]);
+
+    $response->assertSessionHasErrors('presentaciones');
+    $this->assertDatabaseMissing('productos', ['codigo_barras' => '7503334447778']);
+});
+
+test('la edicion puede quitar todas las presentaciones y dejar el producto solo por unidad', function () {
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal QuitarFracciones',
+        'direccion' => 'Av. Quitar 9',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+    ]);
+
+    $categoria = Categoria::create(['nombre' => 'Soluciones']);
+    $caja = PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
+
+    $producto = Producto::create([
+        'codigo_barras' => '7503334449990',
+        'nombre_producto' => 'Amoxicilina suspensión',
+        'descripcion' => '',
+        'precio' => null,
+        'vender_por_unidad' => false,
+        'id_presentacion' => $caja->id,
+        'id_categoria' => $categoria->id,
+        'es_controlado' => false,
+        'es_activo' => true,
+    ]);
+
+    $producto->presentacionesPrecio()->create([
+        'id_presentacion' => $caja->id,
+        'unidades' => 10,
+        'precio_presentacion' => 90,
+    ]);
+
+    $this->actingAs(crearUsuarioDePrueba($sucursal));
+
+    $response = $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->put(route('inventario.update', $producto), [
+            'codigo_barras' => $producto->codigo_barras,
+            'nombre_producto' => $producto->nombre_producto,
+            'id_categoria' => $categoria->id,
+            'vender_por_unidad' => '1',
+            'precio' => 9,
+        ]);
+
+    $response->assertRedirect(route('inventario.productos', ['sucursal' => $sucursal->id]));
+
+    $producto->refresh();
+
+    expect($producto->vender_por_unidad)->toBeTrue()
+        ->and((float) $producto->precio)->toBe(9.0)
+        ->and($producto->id_presentacion)->toBeNull();
+
+    $this->assertDatabaseMissing('presentacion_producto', ['producto' => $producto->id]);
+});
+
+test('el formulario avisa que quitar presentaciones deja la venta solo unitaria', function () {
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal ModalUnitaria',
+        'direccion' => 'Av. Modal 10',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+    ]);
+
+    Categoria::create(['nombre' => 'Vitaminas']);
+    PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
+
+    $this->actingAs(crearUsuarioDePrueba($sucursal));
+
+    $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->get(route('inventario.create'))
+        ->assertOk()
+        ->assertSee('¿Estás consciente de que este producto no se vende por presentación y su única venta es unitaria?', false)
+        ->assertSee('confirmarUnitario', false)
+        ->assertSee('quitarTodasPresentaciones()', false);
+});
+
+test('el formulario de edicion abre vacio un producto sin presentaciones', function () {
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal EdicionUnitaria',
+        'direccion' => 'Av. Edición 11',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+    ]);
+
+    $categoria = Categoria::create(['nombre' => 'Oftálmicos']);
+    PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
+
+    $producto = Producto::create([
+        'codigo_barras' => '7503334441112',
+        'nombre_producto' => 'Lágrimas artificiales',
+        'descripcion' => '',
+        'precio' => 12,
+        'vender_por_unidad' => true,
+        'id_presentacion' => null,
+        'id_categoria' => $categoria->id,
+        'es_controlado' => false,
+        'es_activo' => true,
+    ]);
+
+    $this->actingAs(crearUsuarioDePrueba($sucursal));
+
+    $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->get(route('inventario.edit', $producto))
+        ->assertOk()
+        ->assertSee('filas: []', false)
+        ->assertSee('venderPorUnidad: true', false);
+});
+
 test('el modulo inventario abre productos por defecto y stock queda en su propia ruta', function () {
     $sucursal = Sucursal::create([
         'nombre_sucursal' => 'Sucursal Defecto',

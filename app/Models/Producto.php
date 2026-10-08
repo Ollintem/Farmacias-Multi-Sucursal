@@ -18,6 +18,7 @@ class Producto extends Model
         'nombre_producto',
         'descripcion',
         'precio',
+        'vender_por_unidad',
         'id_presentacion',
         'id_categoria',
         'es_controlado',
@@ -27,6 +28,7 @@ class Producto extends Model
 
     protected $casts = [
         'precio' => 'decimal:2',
+        'vender_por_unidad' => 'boolean',
         'id_presentacion' => 'integer',
         'id_categoria' => 'integer',
         'es_controlado' => 'boolean',
