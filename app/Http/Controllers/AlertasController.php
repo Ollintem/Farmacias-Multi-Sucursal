@@ -50,6 +50,9 @@ class AlertasController extends Controller
 
         $filtro = in_array($filtro, ['todas', 'no_leidas', 'stock', 'caducidad', 'traspasos', 'ventas'], true) ? $filtro : 'todas';
 
+        $nivel = strtolower(trim((string) $request->query('nivel', 'todos')));
+        $nivel = in_array($nivel, ['todos', 'rojo', 'amarillo', 'verde'], true) ? $nivel : 'todos';
+
         $sucursalId = $selectedSucursal?->id;
         $usuarioId = $request->user()?->id;
         $avisos = $sucursalId ? AlertasFeed::listado($sucursalId, $usuarioId) : [];
@@ -58,7 +61,8 @@ class AlertasController extends Controller
 
         $notificaciones = match ($filtro) {
             'no_leidas' => array_values(array_filter($avisos, fn (array $a) => ! $a['leida'])),
-            'stock', 'caducidad', 'traspasos', 'ventas' => array_values(array_filter($avisos, fn (array $a) => $a['grupo'] === $filtro)),
+            'caducidad' => array_values(array_filter($avisos, fn (array $a) => ($a['grupo'] ?? $a['tipo'] ?? '') === 'caducidad' && ($nivel === 'todos' || ($a['nivel'] ?? 'todos') === $nivel))),
+            'stock', 'traspasos', 'ventas' => array_values(array_filter($avisos, fn (array $a) => ($a['grupo'] ?? $a['tipo'] ?? '') === $filtro)),
             default => $avisos,
         };
 
@@ -74,6 +78,7 @@ class AlertasController extends Controller
             'sucursales' => $sucursales,
             'selectedSucursal' => $selectedSucursal,
             'filtro' => $filtro,
+            'nivel' => $nivel,
             'notificaciones' => $notificaciones,
             'totalAvisos' => count($avisos),
             'totalNoLeidas' => $noLeidas,
@@ -99,13 +104,18 @@ class AlertasController extends Controller
             ->take(10)
             ->map(fn (array $aviso) => [
                 'id' => $aviso['id'],
-                'alerta_id' => $aviso['alerta_id'],
-                'tipo' => $aviso['tipo'],
-                'grupo' => $aviso['grupo'],
-                'subtipo' => $aviso['subtipo'],
+                'alerta_id' => $aviso['alerta_id'] ?? null,
+                'tipo' => $aviso['tipo'] ?? $aviso['grupo'] ?? '',
+                'grupo' => $aviso['grupo'] ?? $aviso['tipo'] ?? '',
+                'subtipo' => $aviso['subtipo'] ?? '',
                 'titulo' => $aviso['titulo'],
                 'detalle' => $aviso['detalle'],
+                'mensaje' => $aviso['mensaje'] ?? null,
+                'avatar' => $aviso['avatar'] ?? '•',
+                'nivel' => $aviso['nivel'] ?? null,
                 'url' => $aviso['url'],
+                'destino_url' => $aviso['destino_url'] ?? $aviso['url'],
+                'destino_etiqueta' => $aviso['destino_etiqueta'] ?? 'Ir al apartado',
                 'leida' => $aviso['leida'],
                 'tiempo' => $aviso['fecha']?->diffForHumans() ?? 'reciente',
                 'icono' => $aviso['icono'],
@@ -122,15 +132,37 @@ class AlertasController extends Controller
     }
 
     /**
-     * Marca una sola alerta como leída desde el menú ••• de cada fila.
+     * Devuelve el breve detalle de una notificación para el modal.
      *
-     * Acepta el id numérico de la alerta o el id estable anterior
-     * ("traspaso:5", "caducidad:3").
+     * Entrada: query `id` (ej. `traspaso:5`). Salida: JSON con título,
+     * detalle, mensaje, destino y estado de lectura.
      */
-    public function marcarLeida(Request $request): RedirectResponse
+    public function detalle(Request $request): JsonResponse
     {
         $sucursalId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
-        $id = trim((string) $request->input('id', ''));
+
+        if (! $sucursalId || ! ($request->user()?->puedeVerModulo('Alertas') ?? false)) {
+            return response()->json(['message' => 'Sin acceso.'], 403);
+        }
+
+        $aviso = AlertasFeed::encontrar($sucursalId, (string) $request->query('id', ''), $request->user()?->id);
+
+        if (! $aviso) {
+            return response()->json(['message' => 'Notificación no encontrada.'], 404);
+        }
+
+        return response()->json([
+            'aviso' => AlertasFeed::serializar($aviso, (bool) ($aviso['leida'] ?? false)),
+        ]);
+    }
+
+    /**
+     * Marca un solo aviso como leído desde el menú ••• de cada fila.
+     */
+    public function marcarLeida(Request $request): RedirectResponse|JsonResponse
+    {
+        $sucursalId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
+        $id = trim((string) $request->input('id', $request->query('id', '')));
 
         if ($sucursalId && $id !== '') {
             if (ctype_digit($id)) {
@@ -138,6 +170,29 @@ class AlertasController extends Controller
             } else {
                 AlertasFeed::marcarUna($sucursalId, $id, $request->user()?->id);
             }
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['leida' => true, 'no_leidas' => AlertasFeed::noLeidasCount($sucursalId, $request->user()?->id)]);
+        }
+
+        return back();
+    }
+
+    /**
+     * Desmarca un aviso (lo regresa a no leído) para volver a atenderlo.
+     */
+    public function marcarNoLeida(Request $request): RedirectResponse|JsonResponse
+    {
+        $sucursalId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
+        $id = trim((string) $request->input('id', $request->query('id', '')));
+
+        if ($sucursalId && $id !== '') {
+            AlertasFeed::desmarcarUna($sucursalId, $id, $request->user()?->id);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['leida' => false, 'no_leidas' => AlertasFeed::noLeidasCount($sucursalId, $request->user()?->id)]);
         }
 
         return back();

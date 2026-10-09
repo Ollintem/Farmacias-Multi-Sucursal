@@ -62,22 +62,40 @@
                 @endforeach
             </div>
 
+            @if($filtro === 'caducidad')
+                <div class="flex flex-wrap gap-2" role="tablist" aria-label="Filtrar por semáforo">
+                    @foreach(['todos' => 'Todos', 'rojo' => '🔴 Rojo · ≤30 días', 'amarillo' => '🟡 Amarillo · 31-90', 'verde' => '🟢 Verde · >90'] as $valor => $etiqueta)
+                        <a href="{{ route('alertas.index', ['sucursal' => $selectedSucursal?->id, 'filtro' => 'caducidad', 'nivel' => $valor]) }}"
+                           @class(['noti-filtro', 'activo' => $nivel === $valor])>
+                            {{ $etiqueta }}
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+
             <section class="module-card overflow-hidden p-0" aria-label="Listado de notificaciones">
                 @forelse($notificaciones as $aviso)
-                    <article @class(['noti-fila', 'no-leida' => ! $aviso['leida']])>
+                    <article @class(['noti-fila', 'no-leida' => ! $aviso['leida']]) data-noti-fila="{{ $aviso['id'] }}">
                         <span class="noti-avatar prioridad-{{ $aviso['prioridad'] }}" aria-hidden="true">
                             {{ $aviso['avatar'] ?? '•' }}
                             <span class="noti-insignia">{{ $aviso['icono'] }}</span>
                         </span>
                         <div class="min-w-0 flex-1">
-                            <p class="noti-texto-fb">
-                                <strong>{{ $aviso['titulo'] }}</strong>
-                                <span class="theme-subtle">{{ $aviso['detalle'] }}</span>
-                            </p>
+                            <button type="button" data-noti-detalle="{{ $aviso['id'] }}" class="noti-titulo-boton" aria-label="Ver breve detalle de {{ $aviso['titulo'] }}">
+                                <span class="noti-texto-fb">
+                                    <strong>{{ $aviso['titulo'] }}</strong>
+                                    <span class="theme-subtle">{{ $aviso['detalle'] }}</span>
+                                </span>
+                            </button>
                             @if(! empty($aviso['mensaje']))
                                 <blockquote class="mt-2 rounded-xl border-l-4 border-amber-300 bg-amber-50 px-3 py-2 text-sm italic text-amber-900 dark:border-amber-500/50 dark:bg-amber-500/10 dark:text-amber-100">“{{ $aviso['mensaje'] }}”</blockquote>
                             @endif
-                            <p class="noti-tiempo" title="{{ $aviso['fecha']?->format('Y-m-d H:i') ?? '' }}">{{ \App\Support\AlertasFeed::tiempoCorto($aviso['fecha']) }}</p>
+                            <p class="noti-tiempo" title="{{ $aviso['fecha']?->format('Y-m-d H:i') ?? '' }}">{{ \App\Support\AlertasFeed::tiempoCorto($aviso['fecha']) }} · {{ $aviso['leida'] ? 'Leída' : 'No leída' }}</p>
+
+                            <div class="noti-acciones">
+                                <button type="button" data-noti-detalle="{{ $aviso['id'] }}" class="theme-button theme-button-secondary">Ver detalle</button>
+                                <a href="{{ $aviso['destino_url'] ?? $aviso['url'] }}" data-noti-ir="{{ $aviso['id'] }}" class="theme-button theme-button-primary">{{ $aviso['destino_etiqueta'] ?? 'Ir al apartado' }}</a>
+                            </div>
 
                             @if($aviso['tipo'] === 'traspasos' && isset($aviso['traspaso_id']))
                                 <div class="noti-acciones">
@@ -95,17 +113,24 @@
                         </div>
                         <div class="flex shrink-0 items-start gap-2">
                             @if(! $aviso['leida'])
-                                <span class="noti-punto" aria-label="No leída"></span>
+                                <span class="noti-punto" aria-label="No leída" data-noti-punto></span>
                             @endif
                             <details class="noti-menu">
                                 <summary aria-label="Opciones">•••</summary>
                                 <div class="noti-menu-lista">
-                                    <a href="{{ $aviso['url'] }}">Ver detalle</a>
+                                    <button type="button" data-noti-detalle="{{ $aviso['id'] }}">Ver detalle</button>
+                                    <a href="{{ $aviso['destino_url'] ?? $aviso['url'] }}" data-noti-ir="{{ $aviso['id'] }}">{{ $aviso['destino_etiqueta'] ?? 'Ir al apartado' }}</a>
                                     @if(! $aviso['leida'])
                                         <form method="POST" action="{{ route('alertas.leer') }}">
                                             @csrf
                                             <input type="hidden" name="id" value="{{ $aviso['id'] }}">
                                             <button type="submit">Marcar como leída</button>
+                                        </form>
+                                    @else
+                                        <form method="POST" action="{{ route('alertas.no-leida') }}">
+                                            @csrf
+                                            <input type="hidden" name="id" value="{{ $aviso['id'] }}">
+                                            <button type="submit">Desmarcar (no leída)</button>
                                         </form>
                                     @endif
                                 </div>
@@ -122,4 +147,24 @@
             </section>
         </div>
     </div>
+
+    <script>
+        // Refleja en la fila el cambio de leída/no leída sin recargar la página.
+        document.addEventListener('notificacion:actualizada', (evento) => {
+            const { id, leida } = evento.detail || {};
+            if (!id) {
+                return;
+            }
+            const fila = document.querySelector('[data-noti-fila="' + CSS.escape(id) + '"]');
+            if (!fila) {
+                return;
+            }
+            fila.classList.toggle('no-leida', !leida);
+            fila.querySelector('[data-noti-punto]')?.remove();
+            const tiempo = fila.querySelector('.noti-tiempo');
+            if (tiempo) {
+                tiempo.textContent = tiempo.textContent.replace(leida ? 'No leída' : 'Leída', leida ? 'Leída' : 'No leída');
+            }
+        });
+    </script>
 </x-layouts::app>

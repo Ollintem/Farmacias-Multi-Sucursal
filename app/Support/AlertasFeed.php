@@ -89,24 +89,22 @@ class AlertasFeed
                 'mensaje' => $traspaso->mensaje,
                 'avatar' => mb_strtoupper(mb_substr($traspaso->sucursalOrigen?->nombre_sucursal ?? '?', 0, 1)),
                 'url' => route('alertas.index', ['sucursal' => $sucursalId, 'filtro' => 'traspasos']),
+                'destino_url' => route('entradas-de-almacen.index', ['sucursal' => $sucursalId, 'tipo' => 'traspasos']),
+                'destino_etiqueta' => 'Ir a traspasos',
                 'fecha' => $traspaso->creado_en ? Carbon::parse($traspaso->creado_en) : null,
                 'prioridad' => 'alta',
                 'icono' => '⇄',
             ];
         }
 
-        $limiteProximo = Carbon::today()->addDays(90)->endOfDay();
-
         $proximos = Lote::query()
             ->with(['producto', 'inventarios.sucursal'])
-            ->where(function ($sub) use ($sucursalId) {
-                $sub->whereHas('inventarios', fn ($q) => $q->where('inventario.id_sucursal', $sucursalId))
-                    ->orWhereDoesntHave('inventarios');
+            ->whereHas('inventarios', function ($query) use ($sucursalId) {
+                $query->where('inventario.id_sucursal', $sucursalId)
+                    ->where('inventario.stock', '>', 0);
             })
-            ->whereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) IS NOT NULL')
-            ->whereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) <= ?', [$limiteProximo])
             ->orderByRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) ASC')
-            ->limit(30)
+            ->limit(60)
             ->get();
 
         foreach ($proximos as $lote) {
@@ -118,14 +116,26 @@ class AlertasFeed
             if ($fecha && $fecha->lt($hoy)) {
                 $etiqueta = 'Caducado';
                 $prioridad = 'alta';
+                $nivel = 'rojo';
             } elseif ($fecha && (int) $hoy->diffInDays($fecha) <= 30) {
                 $dias = (int) $hoy->diffInDays($fecha);
                 $etiqueta = "Caduca en {$dias} días · {$fecha->format('Y-m-d')}";
                 $prioridad = 'alta';
-            } else {
-                $dias = (int) $hoy->diffInDays($fecha ?? $hoy);
-                $etiqueta = "Media vida · {$dias} días · {$fecha?->format('Y-m-d')}";
+                $nivel = 'rojo';
+            } elseif ($fecha && (int) $hoy->diffInDays($fecha) <= 90) {
+                $dias = (int) $hoy->diffInDays($fecha);
+                $etiqueta = "Media vida · {$dias} días · {$fecha->format('Y-m-d')}";
                 $prioridad = 'media';
+                $nivel = 'amarillo';
+            } elseif ($fecha) {
+                $dias = (int) $hoy->diffInDays($fecha);
+                $etiqueta = "Vigente · {$dias} días · {$fecha->format('Y-m-d')}";
+                $prioridad = 'baja';
+                $nivel = 'verde';
+            } else {
+                $etiqueta = 'Sin fecha de caducidad';
+                $prioridad = 'media';
+                $nivel = 'amarillo';
             }
 
             $avisos[] = [
@@ -135,7 +145,10 @@ class AlertasFeed
                 'detalle' => "Lote {$lote->folio} · {$etiqueta}",
                 'mensaje' => null,
                 'avatar' => mb_strtoupper(mb_substr($nombre, 0, 1)),
+                'nivel' => $nivel,
                 'url' => route('alertas.index', ['sucursal' => $sucursalId, 'filtro' => 'caducidad']),
+                'destino_url' => route('lotes.index', ['sucursal' => $sucursalId]),
+                'destino_etiqueta' => 'Ir a lotes y caducidades',
                 'fecha' => $fecha,
                 'prioridad' => $prioridad,
                 'icono' => '●',
@@ -153,6 +166,8 @@ class AlertasFeed
                 'mensaje' => null,
                 'avatar' => '$',
                 'url' => route('alertas.index', ['sucursal' => $sucursalId, 'filtro' => 'ventas']),
+                'destino_url' => route('punto-venta.index'),
+                'destino_etiqueta' => 'Ir a punto de venta',
                 'fecha' => $resumenVentas['ultima_venta']?->creado_en ? Carbon::parse($resumenVentas['ultima_venta']->creado_en) : Carbon::today(),
                 'prioridad' => 'baja',
                 'icono' => '▣',
@@ -226,6 +241,107 @@ class AlertasFeed
             $lectura->fecha_leido = now();
             $lectura->save();
         }
+    }
+
+    /**
+     * Desmarca un aviso (lo regresa a no leído) borrando su registro en alertas_usuarios.
+     */
+    public static function desmarcarUna(int $sucursalId, string $id, ?int $usuarioId): void
+    {
+        if (! $usuarioId || trim($id) === '') {
+            return;
+        }
+
+        $id = trim($id);
+
+        if (ctype_digit($id)) {
+            AlertaUsuario::query()
+                ->where('id_alerta', (int) $id)
+                ->where('id_usuario', $usuarioId)
+                ->delete();
+
+            return;
+        }
+
+        $origen = self::resolverAviso($id);
+
+        if (! $origen) {
+            return;
+        }
+
+        $alertasIds = Alerta::query()
+            ->where('id_sucursal', $sucursalId)
+            ->where('entidad_tipo', $origen['entidad_tipo'])
+            ->where('entidad_id', $origen['entidad_id'])
+            ->pluck('id');
+
+        if ($alertasIds->isEmpty()) {
+            return;
+        }
+
+        AlertaUsuario::query()
+            ->whereIn('id_alerta', $alertasIds)
+            ->where('id_usuario', $usuarioId)
+            ->delete();
+    }
+
+    /**
+     * Busca un aviso por su id estable y le agrega estado de lectura.
+     *
+     * @return array{id: string, tipo: string, titulo: string, detalle: string, url: string, destino_url: string, destino_etiqueta: string, fecha: Carbon|null, prioridad: string, icono: string, leida: bool}|null
+     */
+    public static function encontrar(int $sucursalId, string $id, ?int $usuarioId): ?array
+    {
+        $id = trim($id);
+
+        if ($sucursalId <= 0 || $id === '') {
+            return null;
+        }
+
+        foreach (self::items($sucursalId) as $aviso) {
+            if ($aviso['id'] === $id) {
+                $aviso['leida'] = in_array($id, self::leidas($sucursalId, $usuarioId), true);
+                $aviso['tiempo'] = self::tiempoCorto($aviso['fecha'] ?? null);
+                $aviso['fecha_texto'] = isset($aviso['fecha']) && $aviso['fecha'] instanceof CarbonInterface
+                    ? $aviso['fecha']->format('Y-m-d H:i')
+                    : null;
+
+                return $aviso;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Serializa un aviso para el feed y el modal de detalle.
+     *
+     * @param  array<string, mixed>  $aviso
+     * @return array<string, mixed>
+     */
+    public static function serializar(array $aviso, bool $leida): array
+    {
+        return [
+            'id' => $aviso['id'],
+            'tipo' => $aviso['tipo'],
+            'titulo' => $aviso['titulo'],
+            'detalle' => $aviso['detalle'],
+            'mensaje' => $aviso['mensaje'] ?? null,
+            'avatar' => $aviso['avatar'] ?? '•',
+            'nivel' => $aviso['nivel'] ?? null,
+            'url' => $aviso['url'],
+            'destino_url' => $aviso['destino_url'] ?? $aviso['url'],
+            'destino_etiqueta' => $aviso['destino_etiqueta'] ?? 'Ir al apartado',
+            'leida' => $leida,
+            'tiempo' => isset($aviso['fecha']) && $aviso['fecha'] instanceof CarbonInterface
+                ? $aviso['fecha']->diffForHumans()
+                : 'reciente',
+            'tiempo_corto' => self::tiempoCorto($aviso['fecha'] ?? null),
+            'fecha_texto' => $aviso['fecha_texto']
+                ?? (isset($aviso['fecha']) && $aviso['fecha'] instanceof CarbonInterface ? $aviso['fecha']->format('Y-m-d H:i') : null),
+            'icono' => $aviso['icono'],
+            'prioridad' => $aviso['prioridad'],
+        ];
     }
 
     /**
@@ -461,7 +577,7 @@ class AlertasFeed
             default => $grupo === self::GRUPO_VENTAS ? 'baja' : 'media',
         };
 
-        return array_merge([
+        $fila = array_merge([
             'id' => "alerta:{$alerta->id}",
             'alerta_id' => $alerta->id,
             'grupo' => $grupo,
@@ -477,6 +593,12 @@ class AlertasFeed
             'icono' => '●',
             'leida' => $leida,
         ], array_filter($generica ?? []));
+
+        if (! $fila['fecha'] instanceof Carbon) {
+            $fila['fecha'] = $fila['fecha'] ? Carbon::parse($fila['fecha']) : now();
+        }
+
+        return $fila;
     }
 
     /**

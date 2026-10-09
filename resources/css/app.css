@@ -124,13 +124,11 @@
         height: 20px;
     }
 
-    .erp-sidebar [data-flux-sidebar-badge] {
-        min-width: 1.15rem;
-        border-radius: 9999px;
-        background: #c0564b;
-        color: white;
-        font-size: 0.68rem;
-        font-weight: 700;
+    /* Contador de notificaciones: el estilo final vive fuera de capas al
+       final del archivo para imponerse a las utilidades de Flux. */
+    .erp-sidebar [data-flux-sidebar-badge],
+    .erp-sidebar [data-flux-navlist-badge] {
+        min-width: 1.4rem;
     }
 
     /* Marca y textos del encabezado del panel */
@@ -1799,6 +1797,244 @@ body {
     outline-offset: 2px;
 }
 
+/* Contador dentro del botón segmentado: pastilla sutil que hereda el
+   contraste del botón (legible en claro, oscuro, activo e inactivo). */
+.inventario-seg-btn .seg-contador {
+    border-radius: 9999px;
+    border: 1px solid var(--farma-border);
+    background: var(--farma-primary-soft);
+    color: var(--farma-primary-strong);
+    padding: 0.1rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.inventario-seg-btn-activo .seg-contador {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: inherit;
+}
+
+/* ==========================================================================
+   Entradas de almacén: tarjetas de resumen, secciones y tablas.
+   ========================================================================== */
+
+.entradas-stat {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+}
+
+.entradas-stat-icono {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--farma-border);
+}
+
+.entradas-stat-icono svg {
+    width: 1.35rem;
+    height: 1.35rem;
+}
+
+.entradas-stat-icono.info {
+    color: #1e40af;
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+.entradas-stat-icono.positive {
+    color: #065f46;
+    background: #d1fae5;
+    border-color: #6ee7b7;
+}
+
+.entradas-stat-icono.warning {
+    color: #92400e;
+    background: #fef3c7;
+    border-color: #fcd34d;
+}
+
+.entradas-stat-icono.total {
+    color: var(--farma-primary-strong);
+    background: var(--farma-primary-soft);
+    border-color: var(--farma-border);
+}
+
+.dark .entradas-stat-icono.info {
+    color: #bfdbfe;
+    background: rgba(96, 165, 250, 0.16);
+    border-color: rgba(96, 165, 250, 0.4);
+}
+
+.dark .entradas-stat-icono.positive {
+    color: #a7f3d0;
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(52, 211, 153, 0.4);
+}
+
+.dark .entradas-stat-icono.warning {
+    color: #fed7aa;
+    background: rgba(249, 115, 22, 0.16);
+    border-color: rgba(249, 115, 22, 0.45);
+}
+
+.dark .entradas-stat-icono.total {
+    color: #5ec8b4;
+    background: rgba(63, 189, 169, 0.15);
+    border-color: rgba(94, 200, 180, 0.4);
+}
+
+.entradas-stat-numero {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.entradas-stat-etiqueta {
+    margin: 0.15rem 0 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.entradas-seccion {
+    background: var(--farma-surface);
+    border: 1px solid var(--farma-border);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+.entradas-seccion-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--farma-border);
+}
+
+.entradas-seccion-head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.entradas-seccion-head .seg-contador {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.entradas-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    text-align: left;
+}
+
+.entradas-tabla thead th {
+    padding: 0.8rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--farma-muted);
+    background: var(--farma-surface-2);
+    border-bottom: 1px solid var(--farma-border);
+    white-space: nowrap;
+}
+
+.entradas-tabla thead th.entradas-num,
+.entradas-tabla tbody td.entradas-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.entradas-tabla tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+}
+
+.entradas-tabla tbody tr + tr td {
+    border-top: 1px solid var(--farma-border);
+}
+
+.entradas-tabla tbody tr {
+    transition: background 0.15s ease;
+}
+
+.entradas-tabla tbody tr:hover {
+    background: var(--farma-primary-soft);
+}
+
+.entradas-folio {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.6rem;
+    background: var(--farma-primary-soft);
+    color: var(--farma-primary-strong);
+    font-weight: 800;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.entradas-fecha {
+    white-space: nowrap;
+    color: var(--farma-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.entradas-mudo {
+    color: var(--farma-muted);
+    font-size: 0.82rem;
+}
+
+.entradas-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.entradas-acciones .theme-button {
+    min-height: 0;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.78rem;
+}
+
+.entradas-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    text-align: center;
+}
+
+.entradas-vacio-icono {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background: var(--farma-primary-soft);
+    color: var(--farma-primary-strong);
+}
+
+.entradas-vacio-icono svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.entradas-vacio-titulo {
+    margin: 0.4rem 0 0;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
 .dark .inventario-segment {
     background: #22353f;
     border-color: #33505c;
@@ -2646,4 +2882,243 @@ select.theme-input option:focus,
 .noti-menu-lista a:hover,
 .noti-menu-lista button:hover {
     background: var(--farma-primary-soft);
+}
+
+.noti-item-boton {
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+}
+
+.noti-titulo-boton {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+}
+
+.noti-titulo-boton:hover .noti-texto-fb strong {
+    text-decoration: underline;
+}
+
+/* Diálogo centrado de breve detalle de notificación. */
+.noti-modal[hidden] {
+    display: none !important;
+}
+
+.noti-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.noti-modal-fondo {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(3px);
+}
+
+.noti-modal-caja {
+    position: relative;
+    width: min(36rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    border-radius: 1.5rem;
+    border: 1px solid var(--farma-border);
+    background: var(--farma-surface);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: noti-modal-entrar 0.22s ease;
+}
+
+@keyframes noti-modal-entrar {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.noti-modal-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.noti-modal-tipo {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--farma-primary-strong);
+}
+
+.noti-modal-titulo {
+    margin: 0.15rem 0 0;
+    font-size: 1.2rem;
+    line-height: 1.35;
+    font-weight: 800;
+}
+
+.noti-estado-pill {
+    flex-shrink: 0;
+    border-radius: 9999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
+}
+
+.noti-estado-pill.no-leida {
+    color: #92400e;
+    background: #fef3c7;
+    border-color: #fcd34d;
+}
+
+.noti-estado-pill.leida {
+    color: #065f46;
+    background: #d1fae5;
+    border-color: #6ee7b7;
+}
+
+.dark .noti-estado-pill.no-leida {
+    color: #fcd34d;
+    background: rgba(245, 158, 11, 0.16);
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.dark .noti-estado-pill.leida {
+    color: #a7f3d0;
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(52, 211, 153, 0.4);
+}
+
+.noti-modal-cerrar {
+    flex-shrink: 0;
+    margin-left: auto;
+    border: 1px solid var(--farma-border);
+    background: transparent;
+    color: inherit;
+    border-radius: 9999px;
+    width: 2.25rem;
+    height: 2.25rem;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.noti-modal-cerrar:hover {
+    background: var(--farma-primary-soft);
+}
+
+.noti-modal-cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.noti-modal-detalle {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+.noti-modal-mensaje {
+    margin: 0;
+    border-radius: 0.9rem;
+    border-left: 4px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 0.75rem 0.9rem;
+    font-size: 0.88rem;
+    font-style: italic;
+}
+
+.noti-modal-meta {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+
+@media (max-width: 480px) {
+    .noti-modal-meta {
+        grid-template-columns: 1fr;
+    }
+}
+
+.noti-modal-meta-celda {
+    border: 1px solid var(--farma-border);
+    border-radius: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    background: color-mix(in srgb, var(--farma-primary-soft) 35%, transparent);
+}
+
+.noti-modal-meta-celda dt {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--farma-muted);
+}
+
+.noti-modal-meta-celda dd {
+    margin: 0.2rem 0 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.noti-modal-error {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #b91c1c;
+}
+
+.noti-modal-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+body.noti-modal-abierto {
+    overflow: hidden;
+}
+
+/* Contador de notificaciones del lateral: regla SIN capa para imponerse a
+   las utilidades de Flux en modo claro y oscuro. Píldora roja de alto
+   contraste sobre el lateral verde petróleo. */
+.erp-sidebar [data-flux-sidebar-badge],
+.erp-sidebar [data-flux-navlist-badge] {
+    min-width: 1.4rem;
+    height: 1.4rem;
+    display: inline-grid;
+    place-items: center;
+    padding: 0 0.4rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: 1.5px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.45);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
 }

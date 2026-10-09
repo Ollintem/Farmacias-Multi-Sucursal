@@ -40,15 +40,21 @@
             </template>
 
             <template x-for="aviso in avisos" :key="aviso.id">
-                <a :href="aviso.url" class="noti-item" :class="{ 'no-leida': !aviso.leida }">
+                <button
+                    type="button"
+                    class="noti-item noti-item-boton"
+                    :class="{ 'no-leida': !aviso.leida }"
+                    :data-noti-detalle="aviso.id"
+                    @click="abierto = false"
+                >
                     <span class="noti-icono" :class="'prioridad-' + aviso.prioridad" x-text="aviso.icono"></span>
                     <span class="noti-texto">
                         <span class="noti-titulo" x-text="aviso.titulo"></span>
                         <span class="noti-detalle" x-text="aviso.detalle"></span>
-                        <span class="noti-tiempo" x-text="aviso.tiempo"></span>
+                        <span class="noti-tiempo" x-text="(aviso.leida ? '' : '● ') + aviso.tiempo"></span>
                     </span>
                     <span x-show="!aviso.leida" class="noti-punto" aria-hidden="true"></span>
-                </a>
+                </button>
             </template>
         </div>
     </div>
@@ -64,6 +70,13 @@ function campanaNotificaciones(inicial) {
         init() {
             this.cargar();
             this.timer = setInterval(() => this.cargar(), 30000);
+            document.addEventListener('notificacion:actualizada', (evento) => {
+                const { id, leida, no_leidas } = evento.detail || {};
+                this.avisos = this.avisos.map((aviso) => (aviso.id === id ? { ...aviso, leida } : aviso));
+                if (typeof no_leidas === 'number') {
+                    this.noLeidas = no_leidas;
+                }
+            });
         },
         toggle() {
             this.abierto = !this.abierto;

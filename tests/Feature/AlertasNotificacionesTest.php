@@ -133,3 +133,59 @@ it('muestra el listado estilo facebook con avatar, tiempo y menu', function () {
         ->toContain('•••')
         ->toContain('alertas/leer');
 });
+
+it('ofrece ver detalle e ir al apartado desde el listado', function () {
+    $origen = crearSucursalAlertas('Origen Botones');
+    $destino = crearSucursalAlertas('Destino Botones');
+    $usuario = usuarioConAlertas($destino);
+
+    $traspaso = Traspaso::create(['sucursal_a' => $origen->id, 'sucursal_b' => $destino->id, 'pedido_por' => $usuario->id, 'estado' => 'pendiente']);
+
+    $contenido = $this->actingAs($usuario)
+        ->withSession(['active_sucursal_id' => $destino->id])
+        ->get(route('alertas.index'))
+        ->assertOk()
+        ->getContent();
+
+    expect($contenido)
+        ->toContain('data-noti-detalle="traspaso:'.$traspaso->id.'"')
+        ->toContain('data-noti-ir="traspaso:'.$traspaso->id.'"');
+});
+
+it('devuelve el breve detalle con boton al apartado segun el tipo', function () {
+    $origen = crearSucursalAlertas('Origen Detalle');
+    $destino = crearSucursalAlertas('Destino Detalle');
+    $usuario = usuarioConAlertas($destino);
+
+    $traspaso = Traspaso::create(['sucursal_a' => $origen->id, 'sucursal_b' => $destino->id, 'pedido_por' => $usuario->id, 'estado' => 'pendiente']);
+
+    $respuesta = $this->actingAs($usuario)
+        ->withSession(['active_sucursal_id' => $destino->id])
+        ->getJson(route('alertas.detalle', ['id' => "traspaso:{$traspaso->id}"]))
+        ->assertOk()
+        ->json('aviso');
+
+    expect($respuesta['id'])->toBe("traspaso:{$traspaso->id}")
+        ->and($respuesta['titulo'])->toContain("T-{$traspaso->id}")
+        ->and($respuesta['destino_url'])->toContain('entradas-de-almacen')
+        ->and($respuesta['destino_etiqueta'])->toBe('Ir a traspasos');
+});
+
+it('permite desmarcar una notificacion para regresarla a no leida', function () {
+    $origen = crearSucursalAlertas('Origen Desmarcar');
+    $destino = crearSucursalAlertas('Destino Desmarcar');
+    $usuario = usuarioConAlertas($destino);
+
+    $traspaso = Traspaso::create(['sucursal_a' => $origen->id, 'sucursal_b' => $destino->id, 'pedido_por' => $usuario->id, 'estado' => 'pendiente']);
+
+    AlertasFeed::marcarUna($destino->id, "traspaso:{$traspaso->id}", $usuario->id);
+    expect(AlertasFeed::noLeidasCount($destino->id, $usuario->id))->toBe(0);
+
+    $this->actingAs($usuario)
+        ->withSession(['active_sucursal_id' => $destino->id])
+        ->postJson(route('alertas.no-leida'), ['id' => "traspaso:{$traspaso->id}"])
+        ->assertOk()
+        ->assertJson(['leida' => false]);
+
+    expect(AlertasFeed::noLeidasCount($destino->id, $usuario->id))->toBe(1);
+});

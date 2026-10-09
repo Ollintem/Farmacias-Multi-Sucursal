@@ -222,6 +222,7 @@
         {{ $slot }}
 
         @include('partials.alertas-toasts')
+        @include('partials.notificacion-detalle-modal')
 
         @persist('toast')
             <flux:toast.group>
