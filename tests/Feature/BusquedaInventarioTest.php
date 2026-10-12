@@ -53,7 +53,7 @@ function contextoBusquedaInventario(object $test): array
         'es_activo' => true,
     ]);
 
-    Producto::create([
+    $ibuprofeno = Producto::create([
         'codigo_barras' => '7500000000226',
         'nombre_producto' => 'Ibuprofeno 400mg',
         'descripcion' => '',
@@ -64,6 +64,10 @@ function contextoBusquedaInventario(object $test): array
         'es_controlado' => false,
         'es_activo' => true,
     ]);
+
+    // Ambos productos están dados de alta en la sucursal A (pivot).
+    $paracetamol->sucursales()->attach($sucursalA->id);
+    $ibuprofeno->sucursales()->attach($sucursalA->id);
 
     $lote = Lote::create([
         'folio' => 'L-BUSQ-1',
@@ -76,6 +80,27 @@ function contextoBusquedaInventario(object $test): array
         'id_sucursal' => $sucursalA->id,
         'id_lote' => $lote->id,
         'stock' => 6,
+    ]);
+
+    // El mismo lote existe en la sucursal B sin existencias: Stock muestra 0.
+    Inventario::create([
+        'id_sucursal' => $sucursalB->id,
+        'id_lote' => $lote->id,
+        'stock' => 0,
+    ]);
+
+    // Ibuprofeno también tiene inventario en la sucursal A (4 uds.).
+    $loteIbuprofeno = Lote::create([
+        'folio' => 'L-BUSQ-IBU',
+        'stock_lote' => 4,
+        'id_producto' => $ibuprofeno->id,
+        'fecha_caducidad' => '2027-02-01',
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $sucursalA->id,
+        'id_lote' => $loteIbuprofeno->id,
+        'stock' => 4,
     ]);
 
     $test->actingAs($user);
@@ -168,6 +193,7 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
         ->post(route('lotes.store'), [
             'folio' => 'L-BUSQ-2',
             'id_pedido' => $pedido->id,
+            'id_proveedor' => $proveedor->id,
             'sucursal' => $sucursalA->id,
             'entregado_en' => '2026-09-01',
             'fecha_caducidad' => '2027-09-01',
@@ -198,7 +224,7 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
         ->assertSee('Proveedor Busq');
 });
 
-test('el formulario de lote ofrece los productos y sus presentaciones en selects', function () {
+test('el formulario de lote ofrece los productos y su presentacion fija', function () {
     [$sucursalA] = contextoBusquedaInventario($this);
 
     $this->withSession(['active_sucursal_id' => $sucursalA->id])
@@ -215,10 +241,18 @@ test('el alta de lote rechaza una presentacion que no pertenece al producto', fu
 
     $producto = Producto::where('codigo_barras', '7500000000219')->firstOrFail();
     $frasco = PresentacionProducto::create(['presentacion' => 'Frasco', 'descripcion' => '']);
+    $proveedor = Proveedor::create([
+        'nombre_proveedor' => 'Proveedor Busq',
+        'direccion' => 'Calle 1',
+        'unidad_entrega' => 'Caja',
+        'telefono' => '5550001',
+        'correo' => 'busq@example.com',
+    ]);
 
     $this->withSession(['active_sucursal_id' => $sucursalA->id])
         ->post(route('lotes.store'), [
             'folio' => 'L-BUSQ-3',
+            'id_proveedor' => $proveedor->id,
             'sucursal' => $sucursalA->id,
             'entregado_en' => '2026-09-01',
             'fecha_caducidad' => '2027-09-01',

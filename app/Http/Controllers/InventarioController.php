@@ -30,12 +30,14 @@ class InventarioController extends Controller
     }
 
     /**
-     * Muestra la pestaña Stock: todos los productos activos con su stock en la
-     * sucursal seleccionada (0 si no tienen inventario ahí).
+     * Muestra la pestaña Stock: los productos que tienen inventario real en
+     * la sucursal seleccionada, con su existencia en unidades base.
      *
      * El stock por sucursal vive en `inventario` y llega al producto vía lote,
      * por eso se agrega con Inventario::stockPorProducto() en lugar de usar el
-     * stock global de `productos`.
+     * stock global de `productos`. Solo se listan los productos con filas de
+     * inventario en la sucursal: el catálogo puede contener productos sin
+     * existencias y esos no pertenecen a esta pestaña.
      *
      * Entrada: query string `sucursal` y `buscar`.
      * Salida: resources/views/pages/inventario/index.blade.php.
@@ -53,18 +55,38 @@ class InventarioController extends Controller
             ? Inventario::stockPorProducto((int) $selectedSucursal->id)
             : [];
 
+        $lotesPorProducto = $selectedSucursal
+            ? Inventario::lotesPorProducto((int) $selectedSucursal->id)
+            : [];
+
         $productos = Producto::query()
             ->where('productos.es_activo', true)
+            ->with('presentacionesPrecio')
+            ->when($selectedSucursal !== null, fn (Builder $query) => $query->whereHas(
+                'inventarios',
+                fn (Builder $inventarioQuery) => $inventarioQuery->where('inventario.id_sucursal', $selectedSucursal->id)
+            ))
             ->when($busqueda !== '', fn (Builder $query) => $this->aplicarBusquedaProducto($query, $busqueda))
             ->orderBy('productos.nombre_producto')
             ->get()
-            ->each(fn (Producto $producto) => $producto->setAttribute(
-                'stock_sucursal',
-                (int) ($stockPorProducto[$producto->id] ?? 0)
-            ));
+            ->each(function (Producto $producto) use ($stockPorProducto, $lotesPorProducto) {
+                $stock = (int) ($stockPorProducto[$producto->id] ?? 0);
+                $lotes = $lotesPorProducto[$producto->id] ?? ['total' => 0, 'con_existencia' => 0];
+                $cajas = $producto->estadoDeCajas($stock);
+
+                $producto->setAttribute('stock_sucursal', $stock);
+                $producto->setAttribute('lotes_sucursal', $lotes['con_existencia']);
+                $producto->setAttribute('cajas_cerradas', $cajas['selladas'] ?? null);
+                $producto->setAttribute('caja_abierta', $cajas !== null && $cajas['sueltas'] > 0
+                    ? $cajas['sueltas'].' uds.'
+                    : null);
+                $producto->setAttribute('unidades_por_caja', $cajas['unidades_por_caja'] ?? null);
+            });
 
         $stockTotal = (int) $productos->sum('stock_sucursal');
-        $stockCritico = $productos->filter(fn (Producto $producto) => (int) $producto->stock_sucursal <= 15)->count();
+        $stockCritico = $productos
+            ->filter(fn (Producto $producto) => (int) $producto->stock_sucursal <= 15)
+            ->count();
         $valorTotal = $productos->sum(fn (Producto $producto) => (float) $producto->stock_sucursal * (float) $producto->precio);
 
         return view('pages.inventario.index', compact(
@@ -181,13 +203,46 @@ class InventarioController extends Controller
             ]);
         }
 
+        // El alta es en la sucursal activa: se asocia al pivot sin crear filas
+        // de `inventario` (esas nacen con el primer lote).
+        $sucursalId = $this->sucursalAlta($request);
+
+        if ($sucursalId !== null) {
+            $producto->sucursales()->syncWithoutDetaching([$sucursalId]);
+        }
+
         return redirect()->route('inventario.productos', ['sucursal' => session('active_sucursal_id')])
             ->with('success', 'Producto agregado correctamente al inventario.');
     }
 
     /**
+     * Sucursal donde se da de alta el producto: la activa del sidebar, con el
+     * query string como respaldo y la primera sucursal como último recurso.
+     *
+     * Entrada: petición del alta de producto.
+     * Salida: id de la sucursal vigente o null si no hay ninguna válida.
+     */
+    private function sucursalAlta(Request $request): ?int
+    {
+        $candidata = $request->session()->get('active_sucursal_id')
+            ?? $request->query('sucursal')
+            ?? Sucursal::query()->orderBy('id')->value('id');
+
+        if (! is_numeric($candidata)) {
+            return null;
+        }
+
+        $sucursalId = (int) $candidata;
+
+        return Sucursal::query()->whereKey($sucursalId)->exists() ? $sucursalId : null;
+    }
+
+    /**
      * Catálogo de la pestaña "Productos": nombre, categoría, presentación por
      * caja, controlado, estado y acciones.
+     *
+     * Solo se listan los productos dados de alta en la sucursal activa (pivot
+     * `producto_sucursal`): cada sucursal tiene su propia tabla Productos.
      *
      * Entrada: query string `sucursal` y `buscar`.
      * Salida: resources/views/pages/inventario/productos.blade.php.
@@ -203,12 +258,17 @@ class InventarioController extends Controller
         $productos = Producto::query()
             ->with(['categoria', 'presentacionesPrecio.presentacion'])
             ->withCount(['lotes', 'ventas'])
+            ->when($selectedSucursal !== null, fn (Builder $query) => $query->whereHas(
+                'sucursales',
+                fn (Builder $sucursalQuery) => $sucursalQuery->whereKey($selectedSucursal->id)
+            ))
             ->when($busqueda !== '', fn (Builder $query) => $this->aplicarBusquedaProducto($query, $busqueda))
             ->orderBy('productos.nombre_producto')
             ->get();
 
-        // El stock en sucursales vive en `inventario` (por lote): se agrega en
-        // una sola consulta para no depender de columnas inexistentes.
+        // El stock global vive en `inventario` (por lote): se agrega en una
+        // sola consulta para saber qué productos pueden darse de baja o
+        // eliminarse. La existencia por sucursal se muestra en la pestaña Stock.
         $stockInventario = Inventario::stockPorProducto();
 
         $productos = $productos

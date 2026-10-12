@@ -62,6 +62,10 @@ function crearProductoCatalogo(Categoria $categoria, PresentacionProducto $caja,
 
     $producto = Producto::create($datos);
 
+    // Los tests de esta pestaña trabajan en la única sucursal existente; el
+    // producto queda dado de alta en todas las sucursales del catálogo.
+    $producto->sucursales()->syncWithoutDetaching(Sucursal::query()->pluck('id')->all());
+
     $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
         'unidades' => 10,
@@ -109,7 +113,7 @@ test('el boton de agregar producto nuevo se mueve a la pestana productos', funct
 test('los productos inactivos no aparecen en productos y stock ni en punto de venta', function () {
     [$sucursal, $categoria, $caja] = crearContextoCatalogo($this);
 
-    crearProductoCatalogo($categoria, $caja, [
+    $activo = crearProductoCatalogo($categoria, $caja, [
         'codigo_barras' => '7500000000011',
         'nombre_producto' => 'Ibuprofeno 400mg',
     ]);
@@ -117,6 +121,20 @@ test('los productos inactivos no aparecen en productos y stock ni en punto de ve
         'codigo_barras' => '7500000000028',
         'nombre_producto' => 'Naproxeno 250mg',
         'es_activo' => false,
+    ]);
+
+    // Stock y POS solo muestran productos con inventario en la sucursal.
+    $lote = Lote::create([
+        'folio' => 'L-INACT-1',
+        'stock_lote' => 3,
+        'id_producto' => $activo->id,
+        'fecha_caducidad' => '2027-01-01',
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $sucursal->id,
+        'id_lote' => $lote->id,
+        'stock' => 3,
     ]);
 
     $this->withSession(['active_sucursal_id' => $sucursal->id])
@@ -506,7 +524,8 @@ test('un producto sin presentaciones se muestra como venta unitaria en el catalo
         ->assertSee('Unidad')
         ->assertSee('Se vende por unidad suelta')
         ->assertSee('$8.50')
-        ->assertSee('+ 1 presentación')
+        ->assertDontSee('+ 1 presentación')
+        ->assertDontSee('presentaciones-'.$producto->id, false)
         ->assertDontSee('Sin presentación Caja');
 });
 
@@ -620,4 +639,55 @@ test('la edicion elimina las presentaciones que ya no se envian', function () {
         'unidades' => 15,
         'precio_presentacion' => 30,
     ]);
+});
+
+test('el catalogo no muestra selladas ni sueltas porque esa existencia vive en stock', function () {
+    [$sucursal, $categoria, $caja] = crearContextoCatalogo($this);
+
+    $producto = crearProductoCatalogo($categoria, $caja, [
+        'codigo_barras' => '7500000000061',
+        'nombre_producto' => 'Ibuprofeno 400mg',
+    ]);
+
+    $lote = Lote::create([
+        'folio' => 'L-CAJAS-1',
+        'stock_lote' => 26,
+        'id_producto' => $producto->id,
+        'fecha_caducidad' => '2027-06-30',
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $sucursal->id,
+        'id_lote' => $lote->id,
+        'stock' => 26,
+    ]);
+
+    $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->get(route('inventario.productos'))
+        ->assertOk()
+        ->assertSee('10 uds. por caja')
+        ->assertDontSee('selladas')
+        ->assertDontSee('sueltas');
+});
+
+test('estadoDeCajas separa cajas selladas de unidades sueltas y no aplica sin caja', function () {
+    [, $categoria, $caja] = crearContextoCatalogo($this);
+
+    $enCajas = crearProductoCatalogo($categoria, $caja, ['codigo_barras' => '7500000000062']);
+
+    $sinCajas = crearProductoCatalogo($categoria, $caja, [
+        'codigo_barras' => '7500000000063',
+        'nombre_producto' => 'Solo unidad',
+        'precio' => 3.5,
+        'vender_por_unidad' => true,
+        'id_presentacion' => null,
+    ]);
+
+    $this->assertSame([
+        'unidades_por_caja' => 10,
+        'selladas' => 2,
+        'sueltas' => 6,
+    ], $enCajas->estadoDeCajas(26));
+
+    $this->assertNull($sinCajas->estadoDeCajas(26));
 });

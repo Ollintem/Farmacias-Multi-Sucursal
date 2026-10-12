@@ -4,6 +4,7 @@ use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
+use App\Models\ProductoPresentacion;
 use App\Models\Proveedor;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -52,7 +53,7 @@ it('loads the lote creation form with pedido-driven proveedor and sucursal selec
         ->toContain('name="id_pedido"')
         ->toContain('name="id_proveedor"')
         ->toContain('name="sucursal"')
-        ->toContain('vienen del pedido')
+        ->toContain('viene del pedido')
         ->toContain('Proveedor Demo')
         ->toContain('Lotes Create');
 });
@@ -106,6 +107,64 @@ test('la tabla de lotes muestra la cantidad inicial y el restante de la sucursal
         ->toContain('Restante')
         ->toContain('100 uds.')
         ->toContain('60 uds.');
+});
+
+test('la tabla muestra las cantidades en cajas con su equivalencia en unidades', function () {
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Lotes En Cajas',
+        'direccion' => 'Calle 10',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+    ]);
+
+    $rol = Rol::firstOrCreate(['tipo_rol' => 'SuperAdmin'], ['descripcion' => 'Acceso total']);
+    $user = User::factory()->create(['id_rol' => $rol->id, 'id_sucursal' => $sucursal->id]);
+    $caja = PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
+
+    $producto = Producto::create([
+        'codigo_barras' => '7500000000203',
+        'nombre_producto' => 'Lote En Cajas Demo',
+        'descripcion' => '',
+        'stock' => 0,
+        'precio' => 10.0,
+        'id_presentacion' => $caja->id,
+        'es_controlado' => false,
+        'es_activo' => true,
+    ]);
+
+    ProductoPresentacion::create([
+        'id_presentacion' => $caja->id,
+        'producto' => $producto->id,
+        'precio_presentacion' => 100.0,
+        'unidades' => 10,
+    ]);
+
+    $lote = Lote::create([
+        'folio' => 'L-CAJA-001',
+        'stock_lote' => 100,
+        'id_producto' => $producto->id,
+        'id_presentacion' => $caja->id,
+        'entregado_en' => now(),
+        'fecha_caducidad' => '2027-12-31',
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $sucursal->id,
+        'id_lote' => $lote->id,
+        'stock' => 35,
+    ]);
+
+    $contenido = $this->actingAs($user)
+        ->withSession(['active_sucursal_id' => $sucursal->id])
+        ->get(route('lotes.index'))
+        ->assertOk()
+        ->getContent();
+
+    expect($contenido)
+        ->toContain('10 cajas')
+        ->toContain('(100 uds.)')
+        ->toContain('3 cajas · 5 sueltas')
+        ->toContain('(35 uds.)');
 });
 
 test('un lote sin filas de inventario muestra el restante sin datos', function () {

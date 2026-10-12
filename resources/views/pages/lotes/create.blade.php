@@ -51,8 +51,8 @@
                         </div>
 
                         <div>
-                            <label class="mb-2 block text-sm font-medium">Proveedor (opcional)</label>
-                            <select name="id_proveedor" class="theme-input" x-model="proveedor">
+                            <label class="mb-2 block text-sm font-medium">Proveedor</label>
+                            <select name="id_proveedor" class="theme-input" x-model="proveedor" required>
                                 <option value="">Selecciona un proveedor</option>
                                 @foreach($proveedores as $proveedor)
                                     <option value="{{ $proveedor->id }}">{{ $proveedor->nombre_proveedor }}</option>
@@ -66,20 +66,32 @@
 
                         <div>
                             <label class="mb-2 block text-sm font-medium">Sucursal</label>
-                            <select name="sucursal" class="theme-input" x-model="sucursal" required>
-                                @foreach($sucursales as $sucursal)
-                                    <option value="{{ $sucursal->id }}">{{ $sucursal->nombre_sucursal }}</option>
-                                @endforeach
-                            </select>
-                            <p x-show="pedidoInfo" x-cloak class="mt-1 text-xs text-slate-500">Se toma del pedido elegido; puedes ajustarla.</p>
+                            <input type="hidden" name="sucursal" value="{{ $selectedSucursalId }}">
+                            <input
+                                type="text"
+                                value="{{ $sucursalActiva?->nombre_sucursal ?? 'Sin sucursal activa' }}"
+                                class="theme-input cursor-not-allowed opacity-70"
+                                readonly
+                                disabled
+                            >
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Se registra en la sucursal activa; para cambiarla usa el selector del menú lateral.
+                            </p>
                             @error('sucursal')
                                 <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                             @enderror
                         </div>
 
                         <p x-show="pedidoInfo" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-slate-700 md:col-span-3 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-slate-200">
-                            El proveedor y la sucursal vienen del pedido <span class="font-bold" x-text="'#' + pedido"></span>
-                            (<span x-text="pedidoInfo?.proveedor"></span> · <span x-text="pedidoInfo?.sucursal"></span>).
+                            El proveedor viene del pedido <span class="font-bold" x-text="'#' + pedido"></span>
+                            (<span x-text="pedidoInfo?.proveedor"></span>);
+                            el lote se guardará en {{ $sucursalActiva?->nombre_sucursal ?? 'la sucursal activa' }}.
+                        </p>
+
+                        <p x-show="pedidoInfo && String(pedidoInfo.sucursal_id) !== String(sucursalActivaId)" x-cloak class="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-800 md:col-span-3 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                            El pedido pertenece a <span class="font-bold" x-text="pedidoInfo?.sucursal"></span>,
+                            pero el lote se registrará en la sucursal activa
+                            (<span class="font-bold">{{ $sucursalActiva?->nombre_sucursal ?? 'la sucursal activa' }}</span>).
                         </p>
                     </div>
 
@@ -105,7 +117,7 @@
                     >
                         <div>
                             <label class="mb-2 block text-sm font-medium">Producto</label>
-                            <select name="id_producto" class="theme-input" x-model="producto" @change="presentacion = ''" required>
+                            <select name="id_producto" class="theme-input" x-model="producto" required>
                                 <option value="">Selecciona un producto</option>
                                 @foreach($productos as $producto)
                                     <option value="{{ $producto->id }}">
@@ -120,35 +132,39 @@
 
                         <div>
                             <label class="mb-2 block text-sm font-medium">Presentación</label>
-                            <select name="id_presentacion" class="theme-input" x-model="presentacion" :disabled="presentaciones.length === 0" x-bind:required="presentaciones.length > 0">
-                                <option value="">Selecciona una presentación</option>
-                                <template x-for="item in presentaciones" :key="item.id">
-                                    <option :value="item.id" x-text="`${item.nombre} · ${item.unidades} uds.`"></option>
-                                </template>
-                            </select>
-                            <p x-show="presentaciones.length === 0" x-cloak class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                Este producto se vende por unidad: la cantidad del lote ya son unidades.
-                            </p>
-                            <p x-show="presentaciones.length > 0" x-cloak class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            <input type="hidden" name="id_presentacion" :value="presentacion?.id ?? ''">
+                            <input
+                                type="text"
+                                :value="presentacionTexto"
+                                placeholder="Selecciona un producto"
+                                class="theme-input cursor-not-allowed opacity-70"
+                                readonly
+                                disabled
+                            >
+                            <p x-show="presentacion !== null" x-cloak class="mt-2 text-xs text-slate-500 dark:text-slate-400">
                                 La cantidad se captura en la presentación elegida y se guarda convertida a unidades base.
+                            </p>
+                            <p x-show="producto !== '' && presentacion === null" x-cloak class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                Este producto se vende por unidad: la cantidad del lote ya son unidades.
                             </p>
                             @error('id_presentacion')
                                 <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                             @enderror
                         </div>
-                    </div>
 
-                    <div>
-                        <label class="mb-2 block text-sm font-medium">Cantidad del lote</label>
-                        <input type="number" min="1" name="stock" value="{{ old('stock', 1) }}" class="theme-input" required>
-                        @error('stock')
-                            <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
-                        @enderror
+                        <div>
+                            <label class="mb-2 block text-sm font-medium">Cantidad del lote</label>
+                            <input type="number" min="1" name="stock" value="{{ old('stock', 1) }}" x-model="cantidad" class="theme-input" required>
+                            <p x-show="equivalencia !== ''" x-cloak class="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300" x-text="equivalencia"></p>
+                            @error('stock')
+                                <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
                 </div>
 
                 <div class="mt-8 flex justify-end gap-3">
-                    <a href="{{ route('lotes.index', ['sucursal' => old('sucursal', $selectedSucursalId)]) }}" class="theme-button theme-button-secondary">Cancelar</a>
+                    <a href="{{ route('lotes.index', ['sucursal' => $selectedSucursalId]) }}" class="theme-button theme-button-secondary">Cancelar</a>
                     <button type="submit" class="theme-button theme-button-primary">Guardar lote</button>
                 </div>
             </form>
@@ -160,14 +176,13 @@
             return {
                 pedido: {!! json_encode((string) old('id_pedido', '')) !!},
                 proveedor: {!! json_encode((string) old('id_proveedor', '')) !!},
-                sucursal: {!! json_encode((string) old('sucursal', $selectedSucursalId ?? '')) !!},
+                sucursalActivaId: {!! json_encode((string) $selectedSucursalId) !!},
                 mapa: {!! json_encode($mapaPedidos) !!},
                 get pedidoInfo() { return this.mapa[this.pedido] ?? null; },
                 aplicarPedido() {
                     const info = this.pedidoInfo;
                     if (info) {
                         this.proveedor = info.proveedor_id !== null ? String(info.proveedor_id) : '';
-                        this.sucursal = String(info.sucursal_id);
                     }
                 },
             };
@@ -176,9 +191,30 @@
         function loteProducto() {
             return {
                 producto: {!! json_encode((string) old('id_producto', '')) !!},
-                presentacion: {!! json_encode((string) old('id_presentacion', '')) !!},
-                mapa: {!! json_encode($presentacionesPorProducto) !!},
-                get presentaciones() { return this.mapa[this.producto] ?? []; },
+                cantidad: {!! json_encode((string) old('stock', 1)) !!},
+                mapa: {!! json_encode($presentacionPorProducto) !!},
+                get presentacion() { return this.mapa[this.producto] ?? null; },
+                get presentacionTexto() {
+                    if (this.producto === '') {
+                        return '';
+                    }
+
+                    return this.presentacion
+                        ? `${this.presentacion.nombre} · ${this.presentacion.unidades} uds.`
+                        : 'Producto unitario';
+                },
+                get equivalencia() {
+                    const elegida = this.presentacion;
+                    const cantidad = parseInt(this.cantidad, 10);
+
+                    if (!elegida || !Number.isFinite(cantidad) || cantidad < 1) {
+                        return '';
+                    }
+
+                    const porUnidad = parseInt(elegida.unidades, 10) || 1;
+
+                    return `${cantidad} × ${elegida.nombre} (${porUnidad} und) = ${cantidad * porUnidad} unidades base`;
+                },
             };
         }
 

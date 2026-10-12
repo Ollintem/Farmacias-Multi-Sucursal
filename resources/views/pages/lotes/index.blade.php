@@ -77,6 +77,11 @@
                          lote: @js(old('lote_id', '')),
                          folio: @js(old('folio', '')),
                          restante: @js((int) old('restante', 0)),
+                         porCaja: @js((int) old('por_caja', 0)),
+                         presentacion: @js(old('presentacion', 'caja')),
+                         unidades: @js(old('cantidad', '')),
+                         cajas: @js(old('cantidad_cajas', 0)),
+                         sueltas: @js(old('cantidad_sueltas', 0)),
                      },
                      anular: {
                          abierto: false,
@@ -87,12 +92,57 @@
                          this.merma.lote = datos.lote;
                          this.merma.folio = datos.folio;
                          this.merma.restante = Number(datos.restante);
+                         this.merma.porCaja = Number(datos.porCaja);
+                         this.merma.presentacion = datos.presentacion;
+                         this.merma.unidades = '';
+                         this.merma.cajas = 0;
+                         this.merma.sueltas = 0;
                          this.merma.abierto = true;
                      },
                      abrirAnular(datos) {
                          this.anular.folio = datos.folio;
                          this.anular.accion = datos.accion;
                          this.anular.abierto = true;
+                     },
+                     formatoUnidades(unidades, etiqueta) {
+                         if (this.merma.porCaja <= 0) {
+                             return unidades + ' uds.';
+                         }
+
+                         const cajas = Math.floor(unidades / this.merma.porCaja);
+                         const sueltas = unidades % this.merma.porCaja;
+                         const partes = [];
+
+                         if (cajas > 0) {
+                             partes.push(cajas + ' ' + (cajas === 1 ? etiqueta : etiqueta + 's'));
+                         }
+
+                         if (sueltas > 0) {
+                             partes.push(sueltas + ' ' + (sueltas === 1 ? 'suelta' : 'sueltas'));
+                         }
+
+                         return partes.length
+                             ? partes.join(' · ') + ' (' + unidades + ' uds.)'
+                             : unidades + ' uds.';
+                     },
+                     get existenciaTexto() {
+                         return this.formatoUnidades(this.merma.restante, this.merma.presentacion);
+                     },
+                     get unidadesAMermear() {
+                         if (this.merma.porCaja > 0) {
+                             return (Number(this.merma.cajas) || 0) * this.merma.porCaja + (Number(this.merma.sueltas) || 0);
+                         }
+
+                         return Number(this.merma.unidades) || 0;
+                     },
+                     get mermaTexto() {
+                         return this.formatoUnidades(this.unidadesAMermear, this.merma.presentacion);
+                     },
+                     get maxCajas() {
+                         return this.merma.porCaja > 0 ? Math.floor(this.merma.restante / this.merma.porCaja) : 0;
+                     },
+                     get maxSueltas() {
+                         return this.merma.porCaja > 0 ? this.merma.restante % this.merma.porCaja : 0;
                      },
                  }"
                  x-effect="filtrar($el)"
@@ -138,8 +188,22 @@
                                         </td>
                                         <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $lote['marca'] }}</td>
                                         <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $lote['sucursal'] }}</td>
-                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $lote['cantidad'] }} uds.</td>
-                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $lote['restante'] === null ? '—' : $lote['restante'].' uds.' }}</td>
+                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">
+                                            {{ $lote['cantidad_texto']['unidad'] }}
+                                            @if($lote['cantidad_texto']['base'] !== null)
+                                                <span class="theme-subtle text-xs">({{ $lote['cantidad_texto']['base'] }})</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">
+                                            @if($lote['restante_texto'] === null)
+                                                —
+                                            @else
+                                                {{ $lote['restante_texto']['unidad'] }}
+                                                @if($lote['restante_texto']['base'] !== null)
+                                                    <span class="theme-subtle text-xs">({{ $lote['restante_texto']['base'] }})</span>
+                                                @endif
+                                            @endif
+                                        </td>
                                         <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $lote['fecha_entrada'] }}</td>
                                         <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $lote['fecha_caducidad'] }}</td>
                                         <td class="px-4 py-3">
@@ -156,6 +220,8 @@
                                                         data-lote="{{ $lote['id'] }}"
                                                         data-folio="{{ $lote['folio'] }}"
                                                         data-restante="{{ $lote['restante'] }}"
+                                                        data-por-caja="{{ $lote['por_caja'] }}"
+                                                        data-presentacion="{{ $lote['presentacion'] }}"
                                                         x-on:click="abrirMerma($event.currentTarget.dataset)"
                                                     >Dar de baja</button>
                                                 @endif
@@ -212,7 +278,7 @@
                                 <h2 class="text-lg font-bold">Dar de baja</h2>
                                 <p class="mt-1 text-sm theme-subtle">
                                     Lote <span class="font-semibold" x-text="merma.folio"></span> ·
-                                    existencia <span class="font-semibold" x-text="merma.restante"></span> uds.
+                                    existencia <span class="font-semibold" x-text="existenciaTexto"></span>
                                 </p>
                             </div>
                             <button type="button" x-on:click="merma.abierto = false" class="opacity-50 transition hover:opacity-100" aria-label="Cerrar">
@@ -225,20 +291,68 @@
                             <input type="hidden" name="lote_id" :value="merma.lote">
                             <input type="hidden" name="folio" :value="merma.folio">
                             <input type="hidden" name="restante" :value="merma.restante">
+                            <input type="hidden" name="por_caja" :value="merma.porCaja">
+                            <input type="hidden" name="presentacion" :value="merma.presentacion">
                             <input type="hidden" name="sucursal" value="{{ $selectedSucursal?->id }}">
 
                             <div class="space-y-4">
                                 <div>
-                                    <label class="mb-2 block text-sm font-medium">Cantidad a dar de baja (uds.)</label>
-                                    <input
-                                        type="number"
-                                        name="cantidad"
-                                        min="1"
-                                        :max="merma.restante"
-                                        value="{{ old('cantidad') }}"
-                                        class="theme-input"
-                                        required
-                                    >
+                                    <div x-show="merma.porCaja > 0" class="space-y-3">
+                                        <div>
+                                            <label class="mb-2 block text-sm font-medium">Cajas a dar de baja</label>
+                                            <input
+                                                type="number"
+                                                name="cantidad_cajas"
+                                                min="0"
+                                                :max="maxCajas"
+                                                x-model.number="merma.cajas"
+                                                :disabled="merma.porCaja === 0"
+                                                value="{{ old('cantidad_cajas', 0) }}"
+                                                class="theme-input"
+                                            >
+                                            <p class="mt-1 text-xs theme-subtle">
+                                                Máximo <span x-text="maxCajas"></span> cajas · existencia
+                                                <span x-text="existenciaTexto"></span>
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label class="mb-2 block text-sm font-medium">Unidades sueltas</label>
+                                            <input
+                                                type="number"
+                                                name="cantidad_sueltas"
+                                                min="0"
+                                                :max="maxSueltas"
+                                                x-model.number="merma.sueltas"
+                                                :disabled="merma.porCaja === 0"
+                                                value="{{ old('cantidad_sueltas', 0) }}"
+                                                class="theme-input"
+                                            >
+                                            <p class="mt-1 text-xs theme-subtle">
+                                                Máximo <span x-text="maxSueltas"></span> sueltas (resto de la última caja).
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div x-show="merma.porCaja === 0">
+                                        <label class="mb-2 block text-sm font-medium">Cantidad a dar de baja (uds.)</label>
+                                        <input
+                                            type="number"
+                                            name="cantidad"
+                                            min="1"
+                                            :max="merma.restante"
+                                            x-model.number="merma.unidades"
+                                            :disabled="merma.porCaja > 0"
+                                            :required="merma.porCaja === 0"
+                                            value="{{ old('cantidad') }}"
+                                            class="theme-input"
+                                        >
+                                    </div>
+
+                                    <p class="mt-3 text-sm theme-subtle" x-show="unidadesAMermear > 0">
+                                        Se dará de baja <span class="font-semibold" x-text="mermaTexto"></span>.
+                                    </p>
+
                                     @error('cantidad')
                                         <span class="mt-1 block text-xs text-red-500">{{ $message }}</span>
                                     @enderror

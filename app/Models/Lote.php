@@ -83,6 +83,14 @@ class Lote extends Model
         return $this->belongsTo(Producto::class, 'id_producto');
     }
 
+    /**
+     * Presentación con la que se registró el lote (su caja).
+     */
+    public function presentacion(): BelongsTo
+    {
+        return $this->belongsTo(PresentacionProducto::class, 'id_presentacion');
+    }
+
     public function inventarios(): HasMany
     {
         return $this->hasMany(Inventario::class, 'id_lote');
@@ -119,5 +127,68 @@ class Lote extends Model
     public function stockEnSucursal(int $idSucursal): int
     {
         return (int) $this->inventarios->where('id_sucursal', $idSucursal)->sum('stock');
+    }
+
+    /**
+     * Unidades base que trae cada unidad de la presentación del lote.
+     *
+     * Sale null cuando el lote se maneja en unidades base: no tiene
+     * presentación o su producto ya no registra esa presentación con
+     * su equivalencia (datos heredados).
+     */
+    public function unidadesPresentacion(): ?int
+    {
+        if ($this->id_presentacion === null) {
+            return null;
+        }
+
+        $unidades = (int) ($this->producto?->presentacionesPrecio
+            ->firstWhere('id_presentacion', $this->id_presentacion)?->unidades ?? 0);
+
+        return $unidades >= 2 ? $unidades : null;
+    }
+
+    /**
+     * Partes para mostrar una cantidad de unidades base en la unidad del lote.
+     *
+     * Entrada: cantidad en unidades base.
+     *
+     * @return array{etiqueta: string, unidad: string, base: ?string}
+     *                                                                `unidad` es la medida en la presentación del lote («10 cajas»,
+     *                                                                «3 cajas · 5 sueltas»), `base` la equivalencia entre paréntesis
+     *                                                                («100 uds.») y `etiqueta` la presentación en minúsculas. Sin
+     *                                                                presentación la cantidad ya son unidades: `base` queda null para
+     *                                                                no repetir la misma cifra.
+     */
+    public function partesDeUnidades(int $unidadesBase): array
+    {
+        $etiqueta = strtolower($this->presentacion?->presentacion ?? 'caja');
+        $porCaja = $this->unidadesPresentacion();
+
+        if ($porCaja === null || $unidadesBase <= 0) {
+            return [
+                'etiqueta' => $etiqueta,
+                'unidad' => max(0, $unidadesBase).' uds.',
+                'base' => null,
+            ];
+        }
+
+        $cajas = intdiv($unidadesBase, $porCaja);
+        $sueltas = $unidadesBase % $porCaja;
+        $partes = [];
+
+        if ($cajas > 0) {
+            $partes[] = "{$cajas} ".($cajas === 1 ? $etiqueta : $etiqueta.'s');
+        }
+
+        if ($sueltas > 0) {
+            $partes[] = "{$sueltas} ".($sueltas === 1 ? 'suelta' : 'sueltas');
+        }
+
+        return [
+            'etiqueta' => $etiqueta,
+            'unidad' => implode(' · ', $partes),
+            'base' => $unidadesBase.' uds.',
+        ];
     }
 }

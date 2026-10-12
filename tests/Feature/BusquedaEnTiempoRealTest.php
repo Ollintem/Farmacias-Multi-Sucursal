@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Categoria;
+use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
@@ -36,9 +37,9 @@ function contextoBusquedaTiempoReal(object $test): array
     return [$sucursal, $categoria, $caja];
 }
 
-function productoBusquedaTiempoReal(Categoria $categoria, PresentacionProducto $caja): Producto
+function productoBusquedaTiempoReal(Categoria $categoria, PresentacionProducto $caja, Sucursal $sucursal): Producto
 {
-    return Producto::create([
+    $producto = Producto::create([
         'codigo_barras' => '7501112223345',
         'nombre_producto' => 'Paracetamol 500mg',
         'descripcion' => '',
@@ -49,11 +50,36 @@ function productoBusquedaTiempoReal(Categoria $categoria, PresentacionProducto $
         'es_controlado' => false,
         'es_activo' => true,
     ]);
+
+    $producto->sucursales()->attach($sucursal->id);
+
+    return $producto;
+}
+
+/**
+ * Crea un lote con su fila de inventario en la sucursal indicada.
+ */
+function loteBusquedaTiempoReal(Sucursal $sucursal, Producto $producto, string $folio, int $stock): Lote
+{
+    $lote = Lote::create([
+        'folio' => $folio,
+        'stock_lote' => $stock,
+        'id_producto' => $producto->id,
+        'fecha_caducidad' => '2027-03-01',
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $sucursal->id,
+        'id_lote' => $lote->id,
+        'stock' => $stock,
+    ]);
+
+    return $lote;
 }
 
 test('la pestana productos marca las filas para el filtrado en tiempo real', function () {
     [$sucursal, $categoria, $caja] = contextoBusquedaTiempoReal($this);
-    productoBusquedaTiempoReal($categoria, $caja);
+    productoBusquedaTiempoReal($categoria, $caja, $sucursal);
 
     $this->withSession(['active_sucursal_id' => $sucursal->id])
         ->get(route('inventario.productos'))
@@ -68,7 +94,10 @@ test('la pestana productos marca las filas para el filtrado en tiempo real', fun
 
 test('la pestana stock marca las filas y deja un solo buscador', function () {
     [$sucursal, $categoria, $caja] = contextoBusquedaTiempoReal($this);
-    productoBusquedaTiempoReal($categoria, $caja);
+    $producto = productoBusquedaTiempoReal($categoria, $caja, $sucursal);
+
+    // La pestaña Stock solo lista productos con inventario en la sucursal.
+    loteBusquedaTiempoReal($sucursal, $producto, 'L-BUSQ-RT-1', 5);
 
     $response = $this->withSession(['active_sucursal_id' => $sucursal->id])
         ->get(route('inventario.stock'));
@@ -84,7 +113,7 @@ test('la pestana stock marca las filas y deja un solo buscador', function () {
 
 test('la pestana de lotes marca las filas con folio producto y proveedor', function () {
     [$sucursal, $categoria, $caja] = contextoBusquedaTiempoReal($this);
-    $producto = productoBusquedaTiempoReal($categoria, $caja);
+    $producto = productoBusquedaTiempoReal($categoria, $caja, $sucursal);
 
     Lote::create([
         'folio' => 'L-9001',

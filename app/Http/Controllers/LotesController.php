@@ -44,7 +44,7 @@ class LotesController extends Controller
             $filtroEstado = 'todos';
         }
 
-        $lotes = Lote::with(['producto', 'pedido.proveedor', 'proveedor', 'inventarios.sucursal'])
+        $lotes = Lote::with(['producto.presentacionesPrecio', 'presentacion', 'pedido.proveedor', 'proveedor', 'inventarios.sucursal'])
             ->when($selectedSucursal, function ($query, $sucursal) {
                 $query->where(function ($subQuery) use ($sucursal) {
                     $subQuery->whereHas('inventarios', function ($inventarioQuery) use ($sucursal) {
@@ -99,6 +99,10 @@ class LotesController extends Controller
                     ? (int) $inventarioSucursal->stock
                     : ($lote->inventarios->isEmpty() ? null : (int) $lote->inventarios->sum('stock'));
 
+                // Cantidades en la unidad del lote (cajas/sueltas) con su
+                // equivalencia en unidades base entre paréntesis.
+                $partesCantidad = $lote->partesDeUnidades((int) $lote->stock_lote);
+
                 return [
                     'id' => $lote->id,
                     'folio' => $lote->folio,
@@ -108,7 +112,11 @@ class LotesController extends Controller
                         ?? 'Sin proveedor',
                     'sucursal' => $nombreSucursal,
                     'cantidad' => (int) $lote->stock_lote,
+                    'cantidad_texto' => $partesCantidad,
+                    'presentacion' => $partesCantidad['etiqueta'],
+                    'por_caja' => $lote->unidadesPresentacion() ?? 0,
                     'restante' => $restante,
+                    'restante_texto' => $restante === null ? null : $lote->partesDeUnidades($restante),
                     'restante_global' => (int) $lote->inventarios->sum('stock'),
                     'anulado' => $anulado,
                     'fecha_entrada' => $lote->entregado_en ? Carbon::parse($lote->entregado_en)->format('Y-m-d') : '-',
@@ -152,9 +160,12 @@ class LotesController extends Controller
     /**
      * Carga los catálogos para registrar un lote sobre un producto existente.
      *
-     * El formulario elige el producto en un select y sus presentaciones en
-     * otro dependiente, por eso se envían los productos activos con sus
-     * presentaciones y el mapa producto → presentaciones.
+     * El formulario elige el producto en un select y muestra debajo la
+     * presentación fija del producto (su caja, o «Producto unitario» cuando
+     * solo se vende por unidad): no se puede cambiar. Por eso se envían los
+     * productos activos con su presentación de lote y el mapa producto →
+     * presentación. La sucursal se muestra fija: es la activa del sidebar y
+     * el alta no la cambia.
      *
      * Entrada: query string opcional `sucursal`.
      * Salida: resources/views/pages/lotes/create.blade.php.
@@ -165,6 +176,7 @@ class LotesController extends Controller
         $pedidos = Pedido::with(['proveedor', 'sucursal'])->orderByDesc('id')->get();
         $proveedores = Proveedor::orderBy('nombre_proveedor')->get();
         $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
+        $sucursalActiva = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
 
         $productos = Producto::query()
             ->where('es_activo', true)
@@ -172,29 +184,33 @@ class LotesController extends Controller
             ->orderBy('nombre_producto')
             ->get();
 
-        $presentacionesPorProducto = $productos->mapWithKeys(
-            fn (Producto $producto) => [
-                $producto->id => $producto->presentacionesPrecio
-                    ->map(fn ($presentacion) => [
-                        'id' => $presentacion->id_presentacion,
-                        'nombre' => $presentacion->presentacion?->presentacion ?? 'Presentación',
-                        'unidades' => (int) $presentacion->unidades,
-                    ])
-                    ->values(),
-            ]
-        );
+        $presentacionPorProducto = $productos->mapWithKeys(function (Producto $producto) {
+            $presentacion = $producto->presentacionParaLote();
 
-        return view('pages.lotes.create', compact('sucursales', 'pedidos', 'proveedores', 'productos', 'presentacionesPorProducto', 'selectedSucursalId'));
+            return [
+                $producto->id => $presentacion === null ? null : [
+                    'id' => $presentacion->id_presentacion,
+                    'nombre' => $presentacion->presentacion?->presentacion ?? 'Presentación',
+                    'unidades' => (int) $presentacion->unidades,
+                ],
+            ];
+        });
+
+        return view('pages.lotes.create', compact('sucursales', 'pedidos', 'proveedores', 'productos', 'presentacionPorProducto', 'selectedSucursalId', 'sucursalActiva'));
     }
 
     /**
      * Valida y crea el lote vinculado a un producto existente y a la sucursal.
      *
-     * El producto y su presentación llegan de los selects del formulario; la
-     * presentación debe pertenecer al producto elegido y es obligatoria solo
-     * cuando el producto tiene presentaciones. La cantidad capturada es la
-     * física de la presentación elegida: se guarda convertida a unidades base
-     * (cantidad × unidades). Sin presentación la cantidad ya son unidades.
+     * El producto llega de un select y su presentación (la caja fija del
+     * producto) se envía oculta: no se puede elegir. La presentación debe
+     * pertenecer al producto y es obligatoria solo cuando el producto tiene
+     * presentaciones. La cantidad capturada es la física de esa presentación:
+     * se guarda convertida a unidades base (cantidad × unidades). Sin
+     * presentación la cantidad ya son unidades.
+     *
+     * El proveedor es obligatorio (viene del formulario o del pedido) y la
+     * sucursal es la activa del sidebar: el formulario solo la muestra.
      *
      * Entrada: datos del formulario de alta de lote.
      * Salida: redirección a lotes.index con mensaje de resultado.
@@ -206,8 +222,8 @@ class LotesController extends Controller
         $data = $request->validate([
             'folio' => ['required', 'string', 'max:20', 'unique:lotes,folio'],
             'id_pedido' => ['nullable', 'exists:pedidos,id'],
-            'id_proveedor' => ['nullable', 'exists:proveedores,id'],
-            'sucursal' => ['required', 'exists:sucursales,id'],
+            'id_proveedor' => ['required', 'exists:proveedores,id'],
+            'sucursal' => ['required', 'integer', 'exists:sucursales,id'],
             'entregado_en' => ['required', 'date'],
             'fecha_caducidad' => ['required', 'date', 'after_or_equal:entregado_en'],
             'id_producto' => ['required', 'exists:productos,id'],
@@ -218,7 +234,13 @@ class LotesController extends Controller
                 ),
             ],
             'stock' => ['required', 'integer', 'min:1'],
+        ], [
+            'id_proveedor.required' => 'Selecciona el proveedor del lote.',
+            'sucursal.required' => 'Selecciona la sucursal en el menú lateral.',
         ]);
+
+        $sucursalId = $this->sucursalActiva($request, $data['sucursal']);
+        $data['sucursal'] = $sucursalId;
 
         DB::transaction(function () use ($data) {
             $producto = Producto::findOrFail($data['id_producto']);
@@ -251,6 +273,10 @@ class LotesController extends Controller
                 ],
                 ['stock' => $cantidadBase]
             );
+
+            // Registrar el primer lote en una sucursal también da de alta el
+            // producto ahí (pivot), para que aparezca en su pestaña Productos.
+            $producto->sucursales()->syncWithoutDetaching([$data['sucursal']]);
         });
 
         return redirect()->route('lotes.index', ['sucursal' => $data['sucursal']])
@@ -270,10 +296,40 @@ class LotesController extends Controller
     }
 
     /**
+     * Sucursal donde se registra el lote: la activa del sidebar.
+     *
+     * El formulario solo muestra la sucursal en un campo oculto; el valor
+     * usable sale de `session('active_sucursal_id')`, que es lo que cambia el
+     * selector global del menú lateral. La sucursal enviada entra únicamente
+     * como respaldo cuando esa sesión todavía no existe.
+     *
+     * Entrada: petición del alta y sucursal enviada por el formulario.
+     * Salida: id de la sucursal vigente.
+     */
+    private function sucursalActiva(Request $request, mixed $sucursalEnviada): int
+    {
+        $sucursalId = (int) (session('active_sucursal_id')
+            ?? $request->user()?->id_sucursal
+            ?? $sucursalEnviada);
+
+        if ($sucursalId <= 0 || ! Sucursal::whereKey($sucursalId)->exists()) {
+            throw ValidationException::withMessages([
+                'sucursal' => 'La sucursal indicada ya no existe.',
+            ]);
+        }
+
+        return $sucursalId;
+    }
+
+    /**
      * Da de baja unidades de un lote en la sucursal visible.
      *
      * Resta del inventario de la sucursal y registra el motivo en `mermas`.
      * `lote.stock_lote` queda intacto como histórico de la entrada.
+     *
+     * El modal captura en la unidad del lote: lotes en caja se reciben como
+     * `cantidad_cajas` + `cantidad_sueltas` (convertidos aquí a unidades
+     * base) y lotes unitarios como `cantidad` en unidades base.
      *
      * Entrada: lote_id, sucursal, cantidad, motivo y nota del modal de Lotes.
      * Salida: redirección a lotes.index con éxito o con errores de validación.
@@ -283,24 +339,43 @@ class LotesController extends Controller
         $data = $request->validate([
             'lote_id' => ['required', 'integer', 'exists:lotes,id'],
             'sucursal' => ['required', 'integer', 'exists:sucursales,id'],
-            'cantidad' => ['required', 'integer', 'min:1'],
+            'cantidad' => ['nullable', 'integer', 'min:1', 'required_without:cantidad_cajas'],
+            'cantidad_cajas' => ['nullable', 'integer', 'min:0'],
+            'cantidad_sueltas' => ['nullable', 'integer', 'min:0'],
             'motivo' => ['required', Rule::in(['caducado', 'danado', 'otro'])],
             'nota' => ['nullable', 'string', 'max:500', 'required_if:motivo,otro'],
         ], [
             'lote_id.required' => 'Selecciona el lote a dar de baja.',
             'lote_id.exists' => 'El lote indicado ya no existe.',
             'sucursal.exists' => 'La sucursal indicada ya no existe.',
-            'cantidad.required' => 'Indica la cantidad a dar de baja.',
+            'cantidad.required_without' => 'Indica las cajas o las unidades a dar de baja.',
             'cantidad.integer' => 'La cantidad debe ser un número entero.',
             'cantidad.min' => 'La cantidad debe ser al menos 1.',
+            'cantidad_cajas.integer' => 'Las cajas deben ser un número entero.',
+            'cantidad_cajas.min' => 'Las cajas no pueden ser negativas.',
+            'cantidad_sueltas.integer' => 'Las unidades sueltas deben ser un número entero.',
+            'cantidad_sueltas.min' => 'Las unidades sueltas no pueden ser negativas.',
             'motivo.required' => 'Selecciona el motivo de la baja.',
             'motivo.in' => 'El motivo seleccionado no es válido.',
             'nota.required_if' => 'Explica el motivo de la baja.',
         ]);
 
         $lote = Lote::findOrFail($data['lote_id']);
+        $porCaja = $lote->unidadesPresentacion();
 
-        DB::transaction(function () use ($lote, $data, $request) {
+        $unidades = $porCaja === null
+            ? (int) ($data['cantidad'] ?? 0)
+            : (int) ($data['cantidad_cajas'] ?? 0) * $porCaja + (int) ($data['cantidad_sueltas'] ?? 0);
+
+        if ($unidades < 1) {
+            throw ValidationException::withMessages([
+                'cantidad' => $porCaja === null
+                    ? 'Indica la cantidad a dar de baja.'
+                    : 'Indica las cajas o las unidades sueltas a dar de baja.',
+            ]);
+        }
+
+        DB::transaction(function () use ($lote, $data, $unidades, $request) {
             $fila = Inventario::query()
                 ->where('id_sucursal', $data['sucursal'])
                 ->where('id_lote', $lote->id)
@@ -313,18 +388,18 @@ class LotesController extends Controller
                 ]);
             }
 
-            if ($fila->stock < $data['cantidad']) {
+            if ($fila->stock < $unidades) {
                 throw ValidationException::withMessages([
-                    'cantidad' => "La cantidad ({$data['cantidad']}) supera el restante ({$fila->stock}) en esta sucursal.",
+                    'cantidad' => "La cantidad ({$unidades}) supera el restante ({$fila->stock}) en esta sucursal.",
                 ]);
             }
 
-            $fila->decrement('stock', $data['cantidad']);
+            $fila->decrement('stock', $unidades);
 
             Merma::create([
                 'id_sucursal' => $data['sucursal'],
                 'id_lote' => $lote->id,
-                'cantidad' => $data['cantidad'],
+                'cantidad' => $unidades,
                 'motivo' => $data['motivo'],
                 'nota' => $data['nota'] ?? null,
                 'id_usuario' => $request->user()->id,
@@ -333,7 +408,7 @@ class LotesController extends Controller
 
         return redirect()
             ->route('lotes.index', ['sucursal' => $data['sucursal']])
-            ->with('success', "Se dieron de baja {$data['cantidad']} unidades del lote {$lote->folio}.");
+            ->with('success', "Se dieron de baja {$unidades} unidades del lote {$lote->folio}.");
     }
 
     /**
@@ -475,6 +550,9 @@ class LotesController extends Controller
                     ['id_sucursal' => $destinoId, 'id_lote' => $lote->id],
                     ['stock' => 0]
                 )->increment('stock', (int) $detalle->cantidad);
+
+                // La recepción da de alta el producto en la sucursal receptora.
+                $lote->producto->sucursales()->syncWithoutDetaching([$destinoId]);
             }
         });
     }

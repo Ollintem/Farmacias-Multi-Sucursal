@@ -64,4 +64,32 @@ class Inventario extends Model
             ->map(fn (mixed $total): int => (int) $total)
             ->all();
     }
+
+    /**
+     * Lotes de cada producto en una sucursal.
+     *
+     * Cuenta los lotes con fila de inventario en la sucursal (`total`) y
+     * cuántos de ellos aún conservan existencia (`con_existencia`), que es
+     * lo que muestra la pestaña Stock.
+     *
+     * Entrada: id de la sucursal.
+     * Salida: arreglo `[id_producto => ['total' => n, 'con_existencia' => n]]`.
+     *
+     * @return array<int, array{total: int, con_existencia: int}>
+     */
+    public static function lotesPorProducto(int $idSucursal): array
+    {
+        return static::query()
+            ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
+            ->forSucursal($idSucursal)
+            ->whereNotNull('lotes.id_producto')
+            ->groupBy('lotes.id_producto')
+            ->selectRaw('lotes.id_producto as id_producto, COUNT(DISTINCT inventario.id_lote) as total, COUNT(DISTINCT CASE WHEN inventario.stock > 0 THEN inventario.id_lote END) as con_existencia')
+            ->get()
+            ->mapWithKeys(fn (Inventario $fila): array => [(int) $fila->id_producto => [
+                'total' => (int) $fila->total,
+                'con_existencia' => (int) $fila->con_existencia,
+            ]])
+            ->all();
+    }
 }

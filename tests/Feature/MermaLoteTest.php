@@ -7,6 +7,7 @@ use App\Models\Modulo;
 use App\Models\PermisoActivado;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
+use App\Models\ProductoPresentacion;
 use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
@@ -62,15 +63,17 @@ function sucursalMerma(string $nombre): Sucursal
 /**
  * Crea un lote con su fila de inventario en la sucursal indicada.
  *
- * Entrada: sucursal, producto, folio, unidades en stock y fecha de caducidad.
+ * Entrada: sucursal, producto, folio, unidades en stock, fecha de
+ * caducidad y presentación del lote (opcional).
  * Salida: el lote creado.
  */
-function loteMerma(Sucursal $sucursal, Producto $producto, string $folio, int $stock, string $fecha = '2027-06-30'): Lote
+function loteMerma(Sucursal $sucursal, Producto $producto, string $folio, int $stock, string $fecha = '2027-06-30', ?int $idPresentacion = null): Lote
 {
     $lote = Lote::create([
         'folio' => $folio,
         'stock_lote' => $stock,
         'id_producto' => $producto->id,
+        'id_presentacion' => $idPresentacion,
         'fecha_caducidad' => $fecha,
     ]);
 
@@ -247,4 +250,100 @@ test('la pagina de lotes ofrece la baja solo con existencia', function () {
         ->toContain(route('lotes.merma'))
         ->toContain('data-lote="'.$loteConStock->id.'"')
         ->not->toContain('data-lote="'.$loteSinStock->id.'"');
+});
+
+/**
+ * Equivalencia en unidades base de la presentación del lote (caja de 10).
+ */
+function cajaMerma(Producto $producto): void
+{
+    ProductoPresentacion::create([
+        'id_presentacion' => (int) $producto->id_presentacion,
+        'producto' => $producto->id,
+        'precio_presentacion' => 120.0,
+        'unidades' => 10,
+    ]);
+}
+
+test('merma en cajas convierte la cantidad a unidades base', function () {
+    $escenario = escenarioMerma();
+    cajaMerma($escenario['producto']);
+    $lote = loteMerma(
+        $escenario['sucursal'],
+        $escenario['producto'],
+        'L-MERMA-CAJA',
+        50,
+        '2027-06-30',
+        (int) $escenario['producto']->id_presentacion
+    );
+
+    $respuesta = $this->actingAs($escenario['usuario'])
+        ->withSession(['active_sucursal_id' => $escenario['sucursal']->id])
+        ->post(route('lotes.merma'), [
+            'lote_id' => $lote->id,
+            'sucursal' => $escenario['sucursal']->id,
+            'cantidad_cajas' => 2,
+            'cantidad_sueltas' => 5,
+            'motivo' => 'danado',
+        ]);
+
+    $respuesta->assertRedirect()->assertSessionHas('success');
+
+    expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(25)
+        ->and($escenario['producto']->fresh()->stockTotal())->toBe(25)
+        ->and(Merma::count())->toBe(1)
+        ->and(Merma::first()->cantidad)->toBe(25);
+});
+
+test('rechaza cajas que superan el restante sin tocar el stock', function () {
+    $escenario = escenarioMerma();
+    cajaMerma($escenario['producto']);
+    $lote = loteMerma(
+        $escenario['sucursal'],
+        $escenario['producto'],
+        'L-MERMA-CAJA-EXCESO',
+        50,
+        '2027-06-30',
+        (int) $escenario['producto']->id_presentacion
+    );
+
+    $this->actingAs($escenario['usuario'])
+        ->withSession(['active_sucursal_id' => $escenario['sucursal']->id])
+        ->post(route('lotes.merma'), [
+            'lote_id' => $lote->id,
+            'sucursal' => $escenario['sucursal']->id,
+            'cantidad_cajas' => 6,
+            'motivo' => 'caducado',
+        ])
+        ->assertSessionHasErrors('cantidad');
+
+    expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(50)
+        ->and($escenario['producto']->fresh()->stockTotal())->toBe(50)
+        ->and(Merma::count())->toBe(0);
+});
+
+test('en un lote en caja exige cajas o unidades sueltas', function () {
+    $escenario = escenarioMerma();
+    cajaMerma($escenario['producto']);
+    $lote = loteMerma(
+        $escenario['sucursal'],
+        $escenario['producto'],
+        'L-MERMA-CAJA-VACIA',
+        50,
+        '2027-06-30',
+        (int) $escenario['producto']->id_presentacion
+    );
+
+    $this->actingAs($escenario['usuario'])
+        ->withSession(['active_sucursal_id' => $escenario['sucursal']->id])
+        ->post(route('lotes.merma'), [
+            'lote_id' => $lote->id,
+            'sucursal' => $escenario['sucursal']->id,
+            'motivo' => 'otro',
+            'nota' => 'Sin cantidad capturada.',
+        ])
+        ->assertSessionHasErrors('cantidad');
+
+    expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(50)
+        ->and(Merma::count())->toBe(0);
 });

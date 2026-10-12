@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
@@ -59,6 +60,17 @@ class Sucursal extends Model
     public function inventarios(): HasMany
     {
         return $this->hasMany(Inventario::class, 'id_sucursal');
+    }
+
+    /**
+     * Productos dados de alta en esta sucursal (pivot `producto_sucursal`).
+     *
+     * @return BelongsToMany<Producto, $this>
+     */
+    public function productos(): BelongsToMany
+    {
+        return $this->belongsToMany(Producto::class, 'producto_sucursal', 'id_sucursal', 'producto')
+            ->withTimestamps();
     }
 
     /**

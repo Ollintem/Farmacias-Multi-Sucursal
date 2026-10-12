@@ -103,24 +103,42 @@
                         <table class="min-w-full text-left text-sm">
                             <thead class="text-slate-600 dark:text-slate-300">
                                 <tr>
-                                    <th class="px-4 py-3 font-semibold">Código</th>
                                     <th class="px-4 py-3 font-semibold">Producto</th>
-                                    <th class="px-4 py-3 font-semibold">Descripción</th>
-                                    <th class="px-4 py-3 font-semibold">Stock</th>
-                                    <th class="px-4 py-3 font-semibold">Precio</th>
+                                    <th class="px-4 py-3 font-semibold">Cajas cerradas</th>
+                                    <th class="px-4 py-3 font-semibold">Caja abierta</th>
+                                    <th class="px-4 py-3 font-semibold">Stock en unidades</th>
+                                    <th class="px-4 py-3 font-semibold">Lotes</th>
                                     <th class="px-4 py-3 font-semibold">Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($productos as $producto)
                                     <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5" data-buscar="{{ $producto->codigo_barras }} {{ $producto->nombre_producto }}">
-                                        <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $producto->codigo_barras }}</td>
-                                        <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $producto->nombre_producto }}</td>
-                                        <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ $producto->descripcion ?: 'Sin descripción' }}</td>
-                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $producto->stock_sucursal ?? $producto->stock }} uds.</td>
-                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">@if($producto->precio !== null)${{ number_format((float) $producto->precio, 2) }}@else<span class="theme-subtle">—</span>@endif</td>
                                         <td class="px-4 py-3">
-                                            @if(($producto->stock_sucursal ?? $producto->stock) <= 15)
+                                            <span class="block font-medium text-slate-800 dark:text-slate-100">{{ $producto->nombre_producto }}</span>
+                                            <span class="block text-xs theme-subtle">{{ $producto->codigo_barras }}</span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            @if($producto->unidades_por_caja !== null)
+                                                <span class="block font-medium text-slate-700 dark:text-slate-200">{{ $producto->cajas_cerradas }}</span>
+                                                <span class="block text-xs theme-subtle">{{ $producto->unidades_por_caja }} uds. por caja</span>
+                                            @else
+                                                <span class="theme-subtle">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">@if($producto->caja_abierta !== null){{ $producto->caja_abierta }}@else<span class="theme-subtle">—</span>@endif</td>
+                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $producto->stock_sucursal }} uds.</td>
+                                        <td class="px-4 py-3 text-slate-700 dark:text-slate-200">
+                                            @if($producto->lotes_sucursal > 0)
+                                                <a href="{{ route('lotes.index', ['sucursal' => $selectedSucursal?->id, 'buscar' => $producto->nombre_producto]) }}" class="font-medium transition hover:text-emerald-600 hover:underline dark:hover:text-emerald-400">
+                                                    {{ $producto->lotes_sucursal }} {{ \Illuminate\Support\Str::plural('lote', $producto->lotes_sucursal) }}
+                                                </a>
+                                            @else
+                                                0 lotes
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            @if($producto->stock_sucursal <= 15)
                                                 <span class="inventory-status inventory-status-low">Bajo</span>
                                             @else
                                                 <span class="inventory-status inventory-status-available">Disponible</span>

@@ -74,14 +74,21 @@
                                 </tr>
                             </thead>
                                 @foreach($productos as $producto)
-                                    @php
-                                        $presentaciones = $producto->presentacionesOrdenadas($presentacionCaja?->id);
-                                        $presentacionesLista = $presentaciones
-                                            ->reject(fn ($presentacion) => $presentacionCaja !== null && $presentacion->id_presentacion === $presentacionCaja->id)
-                                            ->values();
-                                        $tieneUnitario = $producto->vender_por_unidad && $producto->precio !== null;
-                                        $totalDesplegable = $presentacionesLista->count() + ($tieneUnitario ? 1 : 0);
-                                    @endphp
+                                        @php
+                                            $presentaciones = $producto->presentacionesOrdenadas($presentacionCaja?->id);
+                                            $presentacionesLista = $presentaciones
+                                                ->reject(fn ($presentacion) => $presentacionCaja !== null && $presentacion->id_presentacion === $presentacionCaja->id)
+                                                ->values();
+                                            $tieneUnitario = $producto->vender_por_unidad && $producto->precio !== null;
+                                            $totalDesplegable = $presentacionesLista->count() + ($tieneUnitario ? 1 : 0);
+                                            // Un producto solo unitario (sin presentaciones, con la Caja
+                                            // eliminada) ya muestra «Unidad» en la celda: su única
+                                            // presentación es la unitaria y no hay nada que desplegar.
+                                            $esUnitarioSinPresentaciones = $tieneUnitario
+                                                && $producto->presentacionCaja === null
+                                                && $presentacionesLista->isEmpty();
+                                            $mostrarDesplegable = $totalDesplegable > 0 && ! $esUnitarioSinPresentaciones;
+                                        @endphp
                                     <tbody x-data="{ abierta: false }" data-buscar="{{ $producto->codigo_barras }} {{ $producto->nombre_producto }}">
                                         <tr @class([
                                             'border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5',
@@ -107,7 +114,7 @@
                                                     <span class="block theme-subtle">Sin presentación Caja</span>
                                                 @endif
 
-                                                @if($totalDesplegable > 0)
+                                                @if($mostrarDesplegable)
                                                     <button
                                                         type="button"
                                                         @click="abierta = !abierta"
@@ -189,7 +196,7 @@
                                             </td>
                                         </tr>
 
-                                        @if($totalDesplegable > 0)
+                                        @if($mostrarDesplegable)
                                             <tr>
                                                 <td colspan="7" class="p-0">
                                                     <div
