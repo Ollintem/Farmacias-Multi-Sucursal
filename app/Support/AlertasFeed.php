@@ -653,6 +653,7 @@ class AlertasFeed
         }
 
         $nombre = $lote->producto?->nombre_producto ?? 'Producto sin nombre';
+        $fecha = $lote->fecha_de_caducidad ?? $lote->fecha_caducidad ?? $alerta->fecha_creado ?? now();
 
         return [
             'id' => "caducidad:{$lote->id}",
@@ -660,7 +661,7 @@ class AlertasFeed
             'detalle' => "Lote {$lote->folio}",
             'avatar' => mb_strtoupper(mb_substr($nombre, 0, 1)),
             'url' => route('alertas.index', ['sucursal' => $sucursalId, 'filtro' => 'caducidad']),
-            'fecha' => $lote->fecha_de_caducidad ?? $lote->fecha_caducidad ?? $alerta->fecha_creado,
+            'fecha' => $fecha instanceof CarbonInterface ? $fecha : Carbon::parse($fecha),
             'icono' => '●',
         ];
     }

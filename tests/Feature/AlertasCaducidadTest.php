@@ -71,21 +71,21 @@ function loteAlertasCaducidad(Sucursal $sucursal, Producto $producto, string $fo
 }
 
 /**
- * Lee la sección de caducidades con el nivel indicado.
+ * Lee una sección del centro de notificaciones.
  *
- * Entrada: usuario, sucursal y nivel (todos|rojo|amarillo|verde).
+ * Entrada: usuario, sucursal y filtro (todas por defecto; caducidad para el grupo de caducidades).
  * Salida: el HTML de la página de alertas.
  */
-function paginaCaducidadesAlertas(User $usuario, Sucursal $sucursal, string $nivel = 'todos'): string
+function paginaCaducidadesAlertas(User $usuario, Sucursal $sucursal, string $filtro = 'todas'): string
 {
     return test()->actingAs($usuario)
         ->withSession(['active_sucursal_id' => $sucursal->id])
-        ->get(route('alertas.index', ['seccion' => 'caducidades', 'nivel' => $nivel]))
+        ->get(route('alertas.index', ['filtro' => $filtro]))
         ->assertOk()
         ->getContent();
 }
 
-test('el semaforo clasifica bien y excluye los lotes sin existencia', function () {
+test('el filtro de caducidad muestra lotes en riesgo y excluye vigentes, sin fecha y los sin existencia', function () {
     $escenario = escenarioAlertasCaducidad();
 
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-CAD', '2020-01-01', 5);
@@ -96,41 +96,28 @@ test('el semaforo clasifica bien y excluye los lotes sin existencia', function (
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-CERO', now()->addDays(5)->format('Y-m-d'), 0);
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-NOREG', now()->addDays(5)->format('Y-m-d'), null);
 
-    $todos = paginaCaducidadesAlertas($escenario['usuario'], $escenario['sucursal']);
+    $caducidad = paginaCaducidadesAlertas($escenario['usuario'], $escenario['sucursal'], 'caducidad');
 
-    expect($todos)
+    expect($caducidad)
         ->toContain('L-ALERT-CAD')
         ->toContain('L-ALERT-CER')
         ->toContain('L-ALERT-PORV')
-        ->toContain('L-ALERT-VIG')
-        ->toContain('L-ALERT-SIN')
+        ->not->toContain('L-ALERT-VIG')
+        ->not->toContain('L-ALERT-SIN')
         ->not->toContain('L-ALERT-CERO')
         ->not->toContain('L-ALERT-NOREG')
         ->not->toContain('Caduca en -');
 
-    $verde = paginaCaducidadesAlertas($escenario['usuario'], $escenario['sucursal'], 'verde');
-    expect($verde)
-        ->toContain('L-ALERT-VIG')
-        ->not->toContain('L-ALERT-CAD')
-        ->not->toContain('L-ALERT-CER')
-        ->not->toContain('L-ALERT-PORV');
+    $alias = test()->actingAs($escenario['usuario'])
+        ->withSession(['active_sucursal_id' => $escenario['sucursal']->id])
+        ->get(route('alertas.index', ['seccion' => 'caducidades']))
+        ->assertOk()
+        ->getContent();
 
-    $rojo = paginaCaducidadesAlertas($escenario['usuario'], $escenario['sucursal'], 'rojo');
-    expect($rojo)
-        ->toContain('L-ALERT-CAD')
-        ->toContain('L-ALERT-CER')
-        ->not->toContain('L-ALERT-PORV')
-        ->not->toContain('L-ALERT-SIN');
-
-    $amarillo = paginaCaducidadesAlertas($escenario['usuario'], $escenario['sucursal'], 'amarillo');
-    expect($amarillo)
-        ->toContain('L-ALERT-PORV')
-        ->toContain('L-ALERT-SIN')
-        ->not->toContain('L-ALERT-CAD')
-        ->not->toContain('L-ALERT-VIG');
+    expect($alias)->toContain('L-ALERT-CAD');
 });
 
-test('el badge del sidebar cuenta los mismos rojos que la pagina', function () {
+test('el badge del sidebar cuenta los mismos rojos que las notificaciones de prioridad alta', function () {
     $escenario = escenarioAlertasCaducidad();
 
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-CAD', '2020-01-01', 5);
@@ -145,13 +132,13 @@ test('el badge del sidebar cuenta los mismos rojos que la pagina', function () {
 
     expect($resumen['rojos'])->toBe(2);
 
-    $rojo = paginaCaducidadesAlertas($escenario['usuario'], $escenario['sucursal'], 'rojo');
-    expect($rojo)
+    $pagina = paginaCaducidadesAlertas($escenario['usuario'], $escenario['sucursal']);
+
+    expect($pagina)
         ->toContain('L-ALERT-CAD')
         ->toContain('L-ALERT-CER')
         ->not->toContain('L-ALERT-CERO')
-        ->not->toContain('L-ALERT-NOREG')
-        ->not->toContain('L-ALERT-PORV')
-        ->not->toContain('L-ALERT-VIG')
-        ->not->toContain('L-ALERT-SIN');
+        ->not->toContain('L-ALERT-NOREG');
+
+    expect(substr_count($pagina, 'noti-avatar prioridad-alta'))->toBe($resumen['rojos']);
 });
