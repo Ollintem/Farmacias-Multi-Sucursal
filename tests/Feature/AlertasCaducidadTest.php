@@ -85,7 +85,7 @@ function paginaCaducidadesAlertas(User $usuario, Sucursal $sucursal, string $fil
         ->getContent();
 }
 
-test('el filtro de caducidad muestra lotes en riesgo y excluye vigentes, sin fecha y los sin existencia', function () {
+test('el filtro de caducidad clasifica los lotes con existencia y excluye los sin existencia', function () {
     $escenario = escenarioAlertasCaducidad();
 
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-CAD', '2020-01-01', 5);
@@ -98,12 +98,16 @@ test('el filtro de caducidad muestra lotes en riesgo y excluye vigentes, sin fec
 
     $caducidad = paginaCaducidadesAlertas($escenario['usuario'], $escenario['sucursal'], 'caducidad');
 
+    // Los lotes con existencia aparecen clasificados (rojo/amarillo/verde);
+    // los que no tienen inventario en la sucursal se excluyen.
     expect($caducidad)
         ->toContain('L-ALERT-CAD')
         ->toContain('L-ALERT-CER')
         ->toContain('L-ALERT-PORV')
-        ->not->toContain('L-ALERT-VIG')
-        ->not->toContain('L-ALERT-SIN')
+        ->toContain('L-ALERT-VIG')
+        ->toContain('Vigente ·')
+        ->toContain('L-ALERT-SIN')
+        ->toContain('Sin fecha de caducidad')
         ->not->toContain('L-ALERT-CERO')
         ->not->toContain('L-ALERT-NOREG')
         ->not->toContain('Caduca en -');
