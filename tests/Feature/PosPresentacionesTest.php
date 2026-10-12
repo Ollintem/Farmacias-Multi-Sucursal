@@ -295,3 +295,80 @@ test('el producto que solo se vende en caja no ofrece la unidad en el selector',
     $component->assertSet('carrito', []);
     $this->assertStringNotContainsString('elegirUnidad()', $component->html());
 });
+
+test('el POS abre caja al vender unidad y refleja el estado de cajas', function () {
+    [$sucursal, , $caja] = crearContextoPos($this);
+
+    $producto = Producto::create([
+        'codigo_barras' => '7500000000008',
+        'nombre_producto' => 'Naproxeno 200mg',
+        'descripcion' => '',
+        'stock' => 10,
+        'precio' => 2.5,
+        'id_presentacion' => $caja->id,
+        'es_controlado' => false,
+        'es_activo' => true,
+    ]);
+
+    $producto->presentacionesPrecio()->create([
+        'id_presentacion' => $caja->id,
+        'unidades' => 10,
+        'precio_presentacion' => 25.0,
+    ]);
+
+    registrarLotePos($producto, $sucursal, 10);
+
+    $component = Livewire::test(PuntoDeVenta::class);
+
+    $component->call('agregarAlCarrito', $producto->id);
+
+    $component->assertSet('selectorEstadoCajas.selladas', 1)
+        ->assertSet('selectorEstadoCajas.sueltas', 0);
+    $this->assertStringContainsString('Al vender 1 ud se abrirá una caja', $component->html());
+    $this->assertStringNotContainsString('Stock insuficiente', $component->html());
+
+    $component->call('elegirUnidad');
+    $component->call('abrirCobro');
+    $component->set('metodoPago', 'efectivo');
+    $component->set('efectivoRecibido', 100);
+    $component->call('confirmarVenta');
+
+    $component->assertSet('errorVenta', '');
+    $this->assertSame(9, $producto->fresh()->stockTotal());
+
+    $component->call('abrirSelector', $producto->id);
+
+    $component->assertSet('selectorEstadoCajas.selladas', 0)
+        ->assertSet('selectorEstadoCajas.sueltas', 9);
+    $this->assertStringNotContainsString('Al vender 1 ud se abrirá una caja', $component->html());
+});
+
+test('la presentacion que no cabe en el stock aparece deshabilitada en el selector', function () {
+    [$sucursal, , $caja] = crearContextoPos($this);
+
+    $producto = Producto::create([
+        'codigo_barras' => '7500000000009',
+        'nombre_producto' => 'Amoxicilina 250mg',
+        'descripcion' => '',
+        'stock' => 9,
+        'precio' => null,
+        'id_presentacion' => $caja->id,
+        'es_controlado' => false,
+        'es_activo' => true,
+    ]);
+
+    $producto->presentacionesPrecio()->create([
+        'id_presentacion' => $caja->id,
+        'unidades' => 10,
+        'precio_presentacion' => 80.0,
+    ]);
+
+    registrarLotePos($producto, $sucursal, 9);
+
+    $component = Livewire::test(PuntoDeVenta::class);
+
+    $component->call('agregarAlCarrito', $producto->id);
+
+    $component->assertSet('selectorPresentaciones.0.maximo', 0);
+    $this->assertStringContainsString('Stock insuficiente', $component->html());
+});

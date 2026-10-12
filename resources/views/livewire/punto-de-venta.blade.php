@@ -1,7 +1,8 @@
 <div
     class="module-page"
-    x-data="{ successFolio: null }"
+    x-data="{ successFolio: null, avisoCaducado: 0 }"
     @venta-completada.window="successFolio = $event.detail.folio; setTimeout(() => successFolio = null, 4000)"
+    @stock-caducado-ignorado.window="avisoCaducado = $event.detail.unidades; setTimeout(() => avisoCaducado = 0, 4000)"
 >
     {{-- Toast de éxito --}}
     <template x-if="successFolio">
@@ -17,6 +18,26 @@
             <div class="flex items-center gap-2">
                 <span class="grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-xs font-bold text-white">✓</span>
                 <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Venta registrada: <span x-text="successFolio"></span></span>
+            </div>
+        </div>
+    </template>
+
+    {{-- Toast de lotes caducados ignorados --}}
+    <template x-if="avisoCaducado > 0">
+        <div
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed right-4 top-20 z-[100] rounded-2xl border border-amber-300 bg-amber-50 px-5 py-3 shadow-xl dark:border-amber-700 dark:bg-amber-900/90"
+        >
+            <div class="flex items-center gap-2">
+                <span class="grid h-7 w-7 place-items-center rounded-full bg-amber-500 text-xs font-bold text-white">!</span>
+                <span class="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                    Se vendió con lotes vigentes; se ignoraron <span x-text="avisoCaducado"></span> uds. de lote(s) caducado(s).
+                </span>
             </div>
         </div>
     </template>
@@ -956,12 +977,23 @@
                 </div>
 
                 <div class="px-6 py-5">
+                    @if($selectorEstadoCajas)
+                        <p class="mb-4 rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 dark:bg-zinc-800 dark:text-zinc-300">
+                            {{ $selectorEstadoCajas['selladas'] }} cajas selladas
+                            <span class="mx-1 font-normal text-slate-400 dark:text-zinc-500">·</span>
+                            {{ $selectorEstadoCajas['sueltas'] }} unidades sueltas
+                            <span class="font-normal text-slate-500 dark:text-zinc-400">(caja de {{ $selectorEstadoCajas['unidades_por_caja'] }} und)</span>
+                        </p>
+                    @endif
+
                     @php
                         $opcionesVenta = collect($selectorPresentaciones)->map(fn (array $presentacion) => [
                             'etiqueta' => ucfirst($presentacion['presentacion']),
                             'detalle' => $presentacion['unidades'].' und',
                             'precio' => $presentacion['precio'],
                             'accion' => 'elegirPresentacion('.$presentacion['id'].')',
+                            'agotada' => (int) ($presentacion['maximo'] ?? 0) < 1,
+                            'nota' => null,
                         ]);
 
                         if ($selectorPrecioUnidad !== null) {
@@ -970,6 +1002,12 @@
                                 'detalle' => '1 und',
                                 'precio' => $selectorPrecioUnidad,
                                 'accion' => 'elegirUnidad()',
+                                'agotada' => false,
+                                'nota' => $selectorEstadoCajas !== null
+                                    && $selectorEstadoCajas['selladas'] > 0
+                                    && $selectorEstadoCajas['sueltas'] === 0
+                                        ? 'Al vender 1 ud se abrirá una caja'
+                                        : null,
                             ]);
                         }
                     @endphp
@@ -989,15 +1027,23 @@
                             @foreach($opcionesVenta as $opcion)
                                 <button
                                     wire:click="{{ $opcion['accion'] }}"
-                                    class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-[#0c9f9c] hover:bg-[#0c9f9c]/5 active:scale-[0.99] dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-[#0c9f9c]"
+                                    @disabled($opcion['agotada'])
+                                    class="flex items-center justify-between rounded-xl border px-4 py-3 text-left transition active:scale-[0.99] {{ $opcion['agotada']
+                                        ? 'cursor-not-allowed border-slate-200 bg-slate-100 opacity-70 dark:border-zinc-700 dark:bg-zinc-800/60'
+                                        : 'border-slate-200 bg-slate-50 hover:border-[#0c9f9c] hover:bg-[#0c9f9c]/5 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-[#0c9f9c]' }}"
                                 >
                                     <div>
                                         <p class="text-sm font-bold text-slate-800 dark:text-white">
                                             {{ $opcion['etiqueta'] }}
                                         </p>
                                         <p class="text-xs text-slate-500 dark:text-zinc-400">
-                                            {{ $opcion['detalle'] }}
+                                            {{ $opcion['agotada'] ? 'Stock insuficiente' : $opcion['detalle'] }}
                                         </p>
+                                        @if($opcion['nota'])
+                                            <p class="mt-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                                                {{ $opcion['nota'] }}
+                                            </p>
+                                        @endif
                                     </div>
                                     <span class="text-base font-extrabold text-[#0c9f9c]">
                                         ${{ number_format($opcion['precio'], 2) }}

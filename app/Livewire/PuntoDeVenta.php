@@ -9,6 +9,7 @@ use App\Models\Pago;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\Venta;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -19,6 +20,12 @@ use Livewire\Component;
 #[Title('Punto de venta')]
 class PuntoDeVenta extends Component
 {
+    /**
+     * Expresión SQL de la fecha efectiva de un lote: `fecha_de_caducidad` con
+     * respaldo a `fecha_caducidad` (misma regla que Lote::estaCaducado()).
+     */
+    private const FECHA_EFECTIVA_LOTE = 'COALESCE(lotes.fecha_de_caducidad, lotes.fecha_caducidad)';
+
     public string $busqueda = '';
 
     public string $filtroPresentacion = '';
@@ -57,6 +64,9 @@ class PuntoDeVenta extends Component
 
     // Precio unitario cuando el selector también ofrece vender por unidad.
     public ?float $selectorPrecioUnidad = null;
+
+    // Cajas selladas y unidades sueltas del producto en la sucursal activa.
+    public ?array $selectorEstadoCajas = null;
 
     // Receta modal (controlled meds)
     public bool $mostrandoReceta = false;
@@ -98,9 +108,17 @@ class PuntoDeVenta extends Component
 
     public function getProductosProperty(): \Illuminate\Database\Eloquent\Collection
     {
+        $sucursalId = (int) (session('active_sucursal_id') ?? 0);
+
         $query = Producto::query()
             ->with(['presentacion', 'presentacionesPrecio.presentacion'])
-            ->where('es_activo', true);
+            ->where('es_activo', true)
+            // Solo se ofrecen productos con inventario registrado en la
+            // sucursal activa: el catálogo es global, la venta es por sucursal.
+            ->when($sucursalId > 0, fn ($q) => $q->whereHas(
+                'inventarios',
+                fn ($inventarioQuery) => $inventarioQuery->where('inventario.id_sucursal', $sucursalId)
+            ));
 
         if ($this->busqueda !== '') {
             $termino = $this->busqueda;
@@ -171,8 +189,11 @@ class PuntoDeVenta extends Component
     /**
      * Unidades disponibles de un producto en la sucursal activa.
      *
+     * Solo cuenta lotes no caducados (misma regla que Lote::estaCaducado()):
+     * el stock caducado no es vendible.
+     *
      * Entrada: id del producto.
-     * Salida: suma del inventario de la sucursal en sus lotes.
+     * Salida: suma del inventario de la sucursal en sus lotes vigentes.
      */
     private function stockDisponibleEnSucursal(int $productoId): int
     {
@@ -182,10 +203,13 @@ class PuntoDeVenta extends Component
             return 0;
         }
 
-        return (int) Inventario::forSucursal($sucursalId)
+        $query = Inventario::forSucursal($sucursalId)
             ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
-            ->where('lotes.id_producto', $productoId)
-            ->sum('inventario.stock');
+            ->where('lotes.id_producto', $productoId);
+
+        $this->excluirLotesCaducados($query);
+
+        return (int) $query->sum('inventario.stock');
     }
 
     public function getCantidadProductosProperty(): int
@@ -321,15 +345,19 @@ class PuntoDeVenta extends Component
     {
         $producto = Producto::with('presentacionesPrecio.presentacion')->findOrFail($productoId);
 
+        $disponible = $this->stockDisponibleEnSucursal($productoId);
+
         $this->selectorProductoId = $producto->id;
         $this->selectorNombreProducto = $producto->nombre_producto;
         $this->selectorPrecioUnidad = $producto->precio !== null ? (float) $producto->precio : null;
+        $this->selectorEstadoCajas = $producto->estadoDeCajas($disponible);
         $this->selectorPresentaciones = $producto->presentacionesPrecio
             ->map(fn ($rel) => [
                 'id' => $rel->id,
                 'presentacion' => $rel->presentacion?->presentacion ?? '',
                 'unidades' => (int) $rel->unidades,
                 'precio' => (float) $rel->precio_presentacion,
+                'maximo' => (int) floor($disponible / max(1, (int) $rel->unidades)),
             ])
             ->values()
             ->all();
@@ -340,6 +368,7 @@ class PuntoDeVenta extends Component
         $this->selectorProductoId = null;
         $this->selectorNombreProducto = '';
         $this->selectorPrecioUnidad = null;
+        $this->selectorEstadoCajas = null;
         $this->selectorPresentaciones = [];
     }
 
@@ -747,6 +776,13 @@ class PuntoDeVenta extends Component
                 return $venta;
             });
 
+            // Unidades que quedaron sin vender por estar en lotes caducados
+            // (se calcula antes de limpiar el carrito).
+            $caducadasIgnoradas = $this->unidadesCaducadasIgnoradas(
+                (int) $sucursalId,
+                array_values(array_unique(array_column($this->carrito, 'producto_id')))
+            );
+
             // Clear cart
             $this->carrito = [];
             session()->forget('carrito_pos');
@@ -756,6 +792,10 @@ class PuntoDeVenta extends Component
 
             $this->dispatch('venta-completada', folio: $resultado->folio);
 
+            if ($caducadasIgnoradas > 0) {
+                $this->dispatch('stock-caducado-ignorado', unidades: $caducadasIgnoradas);
+            }
+
         } catch (\Throwable $e) {
             DB::rollBack();
             $this->errorVenta = 'Error al procesar la venta: '.$e->getMessage();
@@ -764,21 +804,27 @@ class PuntoDeVenta extends Component
     }
 
     /**
-     * Descuenta unidades del inventario de una sucursal consumiendo lotes FEFO.
+     * Consume inventario de la sucursal por FEFO entre lotes no caducados:
+     * primero el lote vigente más cercano a caducar. Lanza RuntimeException
+     * cuando el stock vigente no alcanza.
      *
-     * Entrada: id de sucursal, id de producto y unidades a consumir.
-     * Salida: ninguna; cada fila de inventario baja hasta cubrir el requerido.
+     * Entrada: id de la sucursal, id del producto y unidades a consumir.
+     * Salida: void.
      *
      * @throws \RuntimeException Cuando el inventario de la sucursal no alcanza.
      */
     private function consumirStockFefo(int $sucursalId, int $productoId, int $unidades): void
     {
-        $filas = Inventario::query()
+        $query = Inventario::query()
             ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
             ->where('inventario.id_sucursal', $sucursalId)
             ->where('lotes.id_producto', $productoId)
-            ->where('inventario.stock', '>', 0)
-            ->orderByRaw('COALESCE(lotes.fecha_de_caducidad, lotes.fecha_caducidad) ASC')
+            ->where('inventario.stock', '>', 0);
+
+        $this->excluirLotesCaducados($query);
+
+        $filas = $query
+            ->orderByRaw(self::FECHA_EFECTIVA_LOTE.' ASC')
             ->select('inventario.*')
             ->lockForUpdate()
             ->get();
@@ -800,6 +846,47 @@ class PuntoDeVenta extends Component
             $fila->decrement('stock', $tomar);
             $restante -= $tomar;
         }
+    }
+
+    /**
+     * Excluye los lotes caducados con la regla de Lote::estaCaducado(): la
+     * fecha efectiva pasada cuenta como caducada —el propio día de caducidad
+     * ya se considera caducado— y un lote sin fecha no se excluye.
+     *
+     * Entrada: consulta de inventario unida a lotes.
+     * Salida: void (la consulta se filtra en el lugar).
+     */
+    private function excluirLotesCaducados(Builder $query): void
+    {
+        $hoy = now()->toDateString();
+
+        $query->where(function (Builder $sub) use ($hoy) {
+            $sub->whereNull('lotes.fecha_de_caducidad')
+                ->whereNull('lotes.fecha_caducidad')
+                ->orWhereRaw(self::FECHA_EFECTIVA_LOTE.' > ?', [$hoy]);
+        });
+    }
+
+    /**
+     * Unidades de la sucursal que quedaron sin vender por estar en lotes
+     * caducados, para los productos de la venta recién confirmada.
+     *
+     * Entrada: id de la sucursal y lista de ids de producto vendidos.
+     * Salida: suma de inventario con stock > 0 en lotes ya caducados.
+     */
+    private function unidadesCaducadasIgnoradas(int $sucursalId, array $productoIds): int
+    {
+        if ($sucursalId <= 0 || $productoIds === []) {
+            return 0;
+        }
+
+        return (int) Inventario::forSucursal($sucursalId)
+            ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
+            ->whereIn('lotes.id_producto', $productoIds)
+            ->where('inventario.stock', '>', 0)
+            ->whereRaw(self::FECHA_EFECTIVA_LOTE.' IS NOT NULL')
+            ->whereRaw(self::FECHA_EFECTIVA_LOTE.' <= ?', [now()->toDateString()])
+            ->sum('inventario.stock');
     }
 
     public function render()
