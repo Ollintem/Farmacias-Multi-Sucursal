@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class InventarioController extends Controller
@@ -61,7 +63,7 @@ class InventarioController extends Controller
 
         $productos = Producto::query()
             ->where('productos.es_activo', true)
-            ->with('presentacionesPrecio')
+            ->with('presentacionesPrecio.presentacion')
             ->when($selectedSucursal !== null, fn (Builder $query) => $query->whereHas(
                 'inventarios',
                 fn (Builder $inventarioQuery) => $inventarioQuery->where('inventario.id_sucursal', $selectedSucursal->id)
@@ -87,7 +89,12 @@ class InventarioController extends Controller
         $stockCritico = $productos
             ->filter(fn (Producto $producto) => (int) $producto->stock_sucursal <= 15)
             ->count();
-        $valorTotal = $productos->sum(fn (Producto $producto) => (float) $producto->stock_sucursal * (float) $producto->precio);
+        $valorTotal = $productos->sum(function (Producto $producto): float {
+            $precio = $producto->precioUnidad()
+                ?? (float) ($producto->presentacionPrincipalDe()?->precio_presentacion ?? 0);
+
+            return (float) $producto->stock_sucursal * $precio;
+        });
 
         return view('pages.inventario.index', compact(
             'sucursales',
@@ -164,51 +171,37 @@ class InventarioController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $venderPorUnidad = $request->boolean('vender_por_unidad');
-        $data = $request->validate($this->reglasProducto($venderPorUnidad));
+        $data = $request->validate($this->reglasProducto());
 
-        $presentaciones = array_values($data['presentaciones'] ?? []);
+        $presentaciones = array_values($data['presentaciones']);
 
-        if ($presentaciones !== []) {
-            $presentacionCaja = $this->presentacionCaja();
+        try {
+            $producto = DB::transaction(function () use ($request, $data, $presentaciones): Producto {
+                $producto = Producto::create([
+                    'codigo_barras' => $data['codigo_barras'],
+                    'nombre_producto' => $data['nombre_producto'],
+                    'id_categoria' => $data['id_categoria'],
+                    'descripcion' => $data['descripcion'] ?? '',
+                    'es_controlado' => $request->boolean('es_controlado', false),
+                    'es_activo' => true,
+                ]);
 
-            if (! $presentacionCaja) {
-                return back()
-                    ->withInput()
-                    ->withErrors(['presentaciones' => 'No existe la presentación «Caja» en el catálogo. Créala antes de registrar productos.']);
-            }
+                $this->sincronizarPresentaciones($producto, $presentaciones);
 
-            // La primera presentación siempre es Caja: es la que alimenta el
-            // control de caja abierta/cerrada, por lo que se fija del lado servidor.
-            $presentaciones[0]['id_presentacion'] = $presentacionCaja->id;
-        }
+                // El alta es en la sucursal activa: se asocia al pivot sin crear
+                // filas de `inventario` (esas nacen con el primer lote).
+                $sucursalId = $this->sucursalAlta($request);
 
-        $producto = Producto::create([
-            'codigo_barras' => $data['codigo_barras'],
-            'nombre_producto' => $data['nombre_producto'],
-            'id_categoria' => $data['id_categoria'],
-            'descripcion' => $data['descripcion'] ?? '',
-            'precio' => $venderPorUnidad ? $data['precio'] : null,
-            'vender_por_unidad' => $venderPorUnidad,
-            'id_presentacion' => $presentaciones[0]['id_presentacion'] ?? null,
-            'es_controlado' => $request->boolean('es_controlado', false),
-            'es_activo' => true,
-        ]);
+                if ($sucursalId !== null) {
+                    $producto->sucursales()->syncWithoutDetaching([$sucursalId]);
+                }
 
-        foreach ($presentaciones as $presentacion) {
-            $producto->presentacionesPrecio()->create([
-                'id_presentacion' => $presentacion['id_presentacion'],
-                'unidades' => $presentacion['unidades'],
-                'precio_presentacion' => $presentacion['precio'],
-            ]);
-        }
-
-        // El alta es en la sucursal activa: se asocia al pivot sin crear filas
-        // de `inventario` (esas nacen con el primer lote).
-        $sucursalId = $this->sucursalAlta($request);
-
-        if ($sucursalId !== null) {
-            $producto->sucursales()->syncWithoutDetaching([$sucursalId]);
+                return $producto;
+            });
+        } catch (\Throwable $e) {
+            return back()
+                ->withInput()
+                ->withErrors(['presentaciones' => 'No se pudo guardar el producto: '.$e->getMessage()]);
         }
 
         return redirect()->route('inventario.productos', ['sucursal' => session('active_sucursal_id')])
@@ -253,7 +246,6 @@ class InventarioController extends Controller
         $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
         $selectedSucursal = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
         $busqueda = trim((string) $request->query('buscar', ''));
-        $presentacionCaja = $this->presentacionCaja();
 
         $productos = Producto::query()
             ->with(['categoria', 'presentacionesPrecio.presentacion'])
@@ -272,14 +264,13 @@ class InventarioController extends Controller
         $stockInventario = Inventario::stockPorProducto();
 
         $productos = $productos
-            ->map(function (Producto $producto) use ($presentacionCaja, $stockInventario) {
+            ->map(function (Producto $producto) use ($stockInventario) {
                 $conStock = (int) ($stockInventario[$producto->id] ?? 0) > 0;
                 $conLotes = (int) $producto->lotes_count > 0;
                 $conVentas = (int) $producto->ventas_count > 0;
 
-                $producto->presentacionCaja = $presentacionCaja
-                    ? $producto->presentacionesPrecio->firstWhere('id_presentacion', $presentacionCaja->id)
-                    : null;
+                $producto->presentacionPrincipal = $producto->presentacionPrincipalDe();
+                $producto->precioUnidad = $producto->precioUnidad();
                 $producto->puedeDesactivarse = ! $conStock && ! $conLotes;
                 $producto->puedeEliminarse = $producto->puedeDesactivarse && ! $conVentas;
 
@@ -290,7 +281,6 @@ class InventarioController extends Controller
             'selectedSucursal',
             'productos',
             'busqueda',
-            'presentacionCaja',
         ));
     }
 
@@ -326,51 +316,101 @@ class InventarioController extends Controller
      */
     public function update(Request $request, Producto $producto): RedirectResponse
     {
-        $venderPorUnidad = $request->boolean('vender_por_unidad');
-        $data = $request->validate($this->reglasProducto($venderPorUnidad));
+        $data = $request->validate($this->reglasProducto());
 
-        $presentaciones = array_values($data['presentaciones'] ?? []);
+        $presentaciones = array_values($data['presentaciones']);
 
-        if ($presentaciones !== []) {
-            $presentacionCaja = $this->presentacionCaja();
+        try {
+            DB::transaction(function () use ($request, $producto, $data, $presentaciones): void {
+                $producto->update([
+                    'codigo_barras' => $data['codigo_barras'],
+                    'nombre_producto' => $data['nombre_producto'],
+                    'id_categoria' => $data['id_categoria'],
+                    'descripcion' => $data['descripcion'] ?? '',
+                    'es_controlado' => $request->boolean('es_controlado', false),
+                ]);
 
-            if (! $presentacionCaja) {
-                return back()
-                    ->withInput()
-                    ->withErrors(['presentaciones' => 'No existe la presentación «Caja» en el catálogo. Créala antes de editar productos.']);
-            }
-
-            $presentaciones[0]['id_presentacion'] = $presentacionCaja->id;
-        }
-
-        $producto->update([
-            'codigo_barras' => $data['codigo_barras'],
-            'nombre_producto' => $data['nombre_producto'],
-            'id_categoria' => $data['id_categoria'],
-            'descripcion' => $data['descripcion'] ?? '',
-            'precio' => $venderPorUnidad ? $data['precio'] : null,
-            'vender_por_unidad' => $venderPorUnidad,
-            'id_presentacion' => $presentaciones[0]['id_presentacion'] ?? null,
-            'es_controlado' => $request->boolean('es_controlado', false),
-        ]);
-
-        foreach ($presentaciones as $presentacion) {
-            $producto->presentacionesPrecio()->updateOrCreate(
-                ['id_presentacion' => $presentacion['id_presentacion']],
-                ['unidades' => $presentacion['unidades'], 'precio_presentacion' => $presentacion['precio']]
-            );
-        }
-
-        if ($presentaciones === []) {
-            $producto->presentacionesPrecio()->delete();
-        } else {
-            $producto->presentacionesPrecio()
-                ->whereNotIn('id_presentacion', array_column($presentaciones, 'id_presentacion'))
-                ->delete();
+                $this->sincronizarPresentaciones($producto, $presentaciones);
+            });
+        } catch (\Throwable $e) {
+            return back()
+                ->withInput()
+                ->withErrors(['presentaciones' => 'No se pudo actualizar el producto: '.$e->getMessage()]);
         }
 
         return redirect()->route('inventario.productos', ['sucursal' => session('active_sucursal_id')])
             ->with('success', 'Producto actualizado correctamente.');
+    }
+
+    /**
+     * Guarda las presentaciones del producto y garantiza una única principal.
+     *
+     * La principal la elige el usuario (`es_principal`); si ninguna viene
+     * marcada se usa «caja» y, en su defecto, la primera. La presentación
+     * «unidad» siempre vale 1. Las presentaciones que ya no vienen en el
+     * formulario se eliminan.
+     *
+     * Entrada: producto y filas validadas del formulario.
+     * Salida: ninguna (escribe `presentacion_producto`).
+     */
+    private function sincronizarPresentaciones(Producto $producto, array $presentaciones): void
+    {
+        $catalogo = PresentacionProducto::query()
+            ->whereIn('id', array_column($presentaciones, 'id_presentacion'))
+            ->get()
+            ->keyBy('id');
+
+        $indicePrincipal = $this->indicePresentacionPrincipal($presentaciones, $catalogo);
+        $ids = [];
+
+        foreach ($presentaciones as $indice => $fila) {
+            $idPresentacion = (int) $fila['id_presentacion'];
+            $esUnidad = mb_strtolower((string) ($catalogo[$idPresentacion]->presentacion ?? '')) === 'unidad';
+            $unidades = $esUnidad ? 1 : max(1, (int) $fila['unidades']);
+
+            $producto->presentacionesPrecio()->updateOrCreate(
+                ['id_presentacion' => $idPresentacion],
+                [
+                    'unidades' => $unidades,
+                    'precio_presentacion' => $fila['precio'],
+                    'es_principal' => $indice === $indicePrincipal,
+                ]
+            );
+
+            $ids[] = $idPresentacion;
+        }
+
+        $producto->presentacionesPrecio()
+            ->whereNotIn('id_presentacion', $ids)
+            ->delete();
+    }
+
+    /**
+     * Índice de la fila que será la presentación principal.
+     *
+     * Respeta la elección del usuario; si no hay ninguna marcada prefiere
+     * «caja» y, en último caso, la primera fila.
+     *
+     * Entrada: filas validadas y catálogo indexado por id.
+     * Salida: índice de la fila principal.
+     */
+    private function indicePresentacionPrincipal(array $presentaciones, Collection $catalogo): int
+    {
+        foreach ($presentaciones as $indice => $fila) {
+            if (! empty($fila['es_principal'])) {
+                return $indice;
+            }
+        }
+
+        foreach ($presentaciones as $indice => $fila) {
+            $esCaja = mb_strtolower((string) ($catalogo[(int) $fila['id_presentacion']]->presentacion ?? '')) === 'caja';
+
+            if ($esCaja) {
+                return $indice;
+            }
+        }
+
+        return 0;
     }
 
     /**
@@ -425,30 +465,32 @@ class InventarioController extends Controller
     /**
      * Reglas compartidas entre el alta y la edición de productos.
      *
-     * Sin presentaciones el producto solo se vende por unidad, así que
-     * `presentaciones` deja de ser obligatoria solo cuando
-     * `vender_por_unidad` está activo; sin unidad y sin presentaciones el
-     * producto no sería vendible y la validación lo rechaza.
+     * Todo producto necesita al menos una presentación (la principal), por lo
+     * que las presentaciones son obligatorias. La presentación elegida como
+     * principal se marca con `es_principal`; la «unidad» se admite con 1
+     * unidad, el resto exige al menos 2.
      *
-     * Entrada: si el producto se vende también por unidad suelta.
      * Salida: arreglo de reglas de validación.
      *
      * @return array<string, array<int, mixed>>
      */
-    private function reglasProducto(bool $venderPorUnidad): array
+    private function reglasProducto(): array
     {
         return [
             'codigo_barras' => ['required', 'string', 'max:255'],
             'nombre_producto' => ['required', 'string', 'max:120'],
             'id_categoria' => ['required', 'exists:categorias,id'],
             'descripcion' => ['nullable', 'string'],
-            'vender_por_unidad' => ['nullable', 'boolean'],
-            'precio' => ['required_if:vender_por_unidad,1', 'nullable', 'numeric', 'min:0'],
             'es_controlado' => ['boolean'],
-            'presentaciones' => $venderPorUnidad ? ['nullable', 'array'] : ['required', 'array', 'min:1'],
-            'presentaciones.*.id_presentacion' => ['required', 'distinct', 'exists:presentaciones,id'],
-            'presentaciones.*.unidades' => ['required', 'integer', 'min:2'],
+            'presentaciones' => ['required', 'array', 'min:1'],
+            'presentaciones.*.id_presentacion' => [
+                'required',
+                'distinct',
+                Rule::exists('presentaciones', 'id')->where(fn ($query) => $query->where('es_activo', true)),
+            ],
+            'presentaciones.*.unidades' => ['required', 'integer', 'min:1'],
             'presentaciones.*.precio' => ['required', 'numeric', 'min:0'],
+            'presentaciones.*.es_principal' => ['nullable', 'boolean'],
         ];
     }
 
@@ -461,7 +503,7 @@ class InventarioController extends Controller
      */
     private function tieneStock(Producto $producto): bool
     {
-        return (int) $producto->inventarios()->sum('inventario.stock') > 0;
+        return (int) $producto->inventarios()->sum('inventario.stock_individual') > 0;
     }
 
     /**

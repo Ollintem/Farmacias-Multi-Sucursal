@@ -14,11 +14,13 @@ class ProductoPresentacion extends Model
         'producto',
         'precio_presentacion',
         'unidades',
+        'es_principal',
     ];
 
     protected $casts = [
         'precio_presentacion' => 'decimal:2',
         'unidades' => 'integer',
+        'es_principal' => 'boolean',
     ];
 
     public function presentacion(): BelongsTo

@@ -26,11 +26,6 @@ class PresentacionProducto extends Model
         return $this->hasMany(ProductoPresentacion::class, 'id_presentacion');
     }
 
-    public function productos(): HasMany
-    {
-        return $this->hasMany(Producto::class, 'id_presentacion');
-    }
-
     public function scopeActivas($query)
     {
         return $query->where('es_activo', true);

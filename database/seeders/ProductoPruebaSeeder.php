@@ -161,12 +161,9 @@ class ProductoPruebaSeeder extends Seeder
                     [
                         'nombre_producto' => $data['nombre_producto'],
                         'descripcion' => $data['descripcion'],
-                        'precio' => $data['precio_base'],
-                        'id_presentacion' => $idPrincipal,
                         'id_categoria' => $cat($data['categoria']),
                         'es_controlado' => $data['es_controlado'],
                         'es_activo' => $data['es_activo'] ?? true,
-                        'stock' => 0,
                     ]
                 );
 
@@ -179,6 +176,7 @@ class ProductoPruebaSeeder extends Seeder
                         [
                             'precio_presentacion' => $precio['precio'],
                             'unidades' => $precio['unidades'],
+                            'es_principal' => $precio['presentacion'] === $data['presentacion_principal'],
                         ]
                     );
                 }
@@ -198,14 +196,11 @@ class ProductoPruebaSeeder extends Seeder
 
                 Inventario::updateOrCreate(
                     ['id_sucursal' => $sucCentro->id, 'id_lote' => $lote->id],
-                    ['stock' => $data['inventario']['centro']]
-                );
+                )->fijarUnidadesIndividuales($data['inventario']['centro']);
+
                 Inventario::updateOrCreate(
                     ['id_sucursal' => $sucNorte->id, 'id_lote' => $lote->id],
-                    ['stock' => $data['inventario']['norte']]
-                );
-
-                Inventario::reflejarStockGlobal($producto->id);
+                )->fijarUnidadesIndividuales($data['inventario']['norte']);
             });
         }
     }

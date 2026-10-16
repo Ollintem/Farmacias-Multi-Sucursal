@@ -111,7 +111,7 @@ class PuntoDeVenta extends Component
         $sucursalId = (int) (session('active_sucursal_id') ?? 0);
 
         $query = Producto::query()
-            ->with(['presentacion', 'presentacionesPrecio.presentacion'])
+            ->with(['presentacionesPrecio.presentacion'])
             ->where('es_activo', true)
             // Solo se ofrecen productos con inventario registrado en la
             // sucursal activa: el catálogo es global, la venta es por sucursal.
@@ -129,11 +129,8 @@ class PuntoDeVenta extends Component
         }
 
         if ($this->filtroPresentacion !== '') {
-            $query->where(function ($q) {
-                $q->where('id_presentacion', $this->filtroPresentacion)
-                    ->orWhereHas('presentacionesPrecio', function ($subQuery) {
-                        $subQuery->where('id_presentacion', $this->filtroPresentacion);
-                    });
+            $query->whereHas('presentacionesPrecio', function ($subQuery) {
+                $subQuery->where('id_presentacion', $this->filtroPresentacion);
             });
         }
 
@@ -209,7 +206,7 @@ class PuntoDeVenta extends Component
 
         $this->excluirLotesCaducados($query);
 
-        return (int) $query->sum('inventario.stock');
+        return (int) $query->sum('inventario.stock_individual');
     }
 
     public function getCantidadProductosProperty(): int
@@ -281,8 +278,13 @@ class PuntoDeVenta extends Component
     {
         $producto = Producto::with('presentacionesPrecio.presentacion')->findOrFail($productoId);
 
-        // Divisible (caja + unidad) o solo caja: el selector decide la vía de venta.
-        if ($producto->precio === null || $producto->presentacionesPrecio->isNotEmpty()) {
+        // Un producto unitario (su única presentación es «unidad») se agrega
+        // directo. Con cualquier otra presentación el selector decide la vía.
+        $otrasPresentaciones = $producto->presentacionesPrecio->filter(
+            fn ($presentacion): bool => strcasecmp($presentacion->presentacion?->presentacion ?? '', 'Unidad') !== 0
+        );
+
+        if ($otrasPresentaciones->isNotEmpty()) {
             $this->abrirSelector($productoId);
 
             return;
@@ -300,6 +302,11 @@ class PuntoDeVenta extends Component
     private function agregarUnidadAlCarrito(int $productoId, ?array $receta = null): void
     {
         $producto = Producto::with('presentacionesPrecio.presentacion')->findOrFail($productoId);
+        $precioUnidad = $producto->precioUnidad();
+
+        if ($precioUnidad === null) {
+            return;
+        }
 
         $disponible = $this->stockDisponibleEnSucursal($productoId);
 
@@ -321,7 +328,7 @@ class PuntoDeVenta extends Component
             $item = [
                 'producto_id' => $producto->id,
                 'nombre' => $producto->nombre_producto,
-                'precio' => (float) $producto->precio,
+                'precio' => $precioUnidad,
                 'cantidad' => 1,
                 'stock' => $disponible,
                 'presentacion' => '',
@@ -349,7 +356,7 @@ class PuntoDeVenta extends Component
 
         $this->selectorProductoId = $producto->id;
         $this->selectorNombreProducto = $producto->nombre_producto;
-        $this->selectorPrecioUnidad = $producto->precio !== null ? (float) $producto->precio : null;
+        $this->selectorPrecioUnidad = $producto->precioUnidad();
         $this->selectorEstadoCajas = $producto->estadoDeCajas($disponible);
         $this->selectorPresentaciones = $producto->presentacionesPrecio
             ->map(fn ($rel) => [
@@ -404,7 +411,7 @@ class PuntoDeVenta extends Component
 
         $producto = Producto::find($productoId);
 
-        if ($producto === null || $producto->precio === null) {
+        if ($producto === null || $producto->precioUnidad() === null) {
             $this->cerrarSelector();
 
             return;
@@ -819,7 +826,7 @@ class PuntoDeVenta extends Component
             ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
             ->where('inventario.id_sucursal', $sucursalId)
             ->where('lotes.id_producto', $productoId)
-            ->where('inventario.stock', '>', 0);
+            ->where('inventario.stock_individual', '>', 0);
 
         $this->excluirLotesCaducados($query);
 
@@ -829,7 +836,7 @@ class PuntoDeVenta extends Component
             ->lockForUpdate()
             ->get();
 
-        $disponible = (int) $filas->sum('stock');
+        $disponible = (int) $filas->sum('stock_individual');
 
         if ($disponible < $unidades) {
             throw new \RuntimeException("Stock insuficiente en la sucursal. Disponible: {$disponible} uds, solicitado: {$unidades} uds.");
@@ -842,8 +849,8 @@ class PuntoDeVenta extends Component
                 break;
             }
 
-            $tomar = min((int) $fila->stock, $restante);
-            $fila->decrement('stock', $tomar);
+            $tomar = min((int) $fila->stock_individual, $restante);
+            $fila->ajustarUnidadesIndividuales(-$tomar);
             $restante -= $tomar;
         }
     }
@@ -883,10 +890,10 @@ class PuntoDeVenta extends Component
         return (int) Inventario::forSucursal($sucursalId)
             ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
             ->whereIn('lotes.id_producto', $productoIds)
-            ->where('inventario.stock', '>', 0)
+            ->where('inventario.stock_individual', '>', 0)
             ->whereRaw(self::FECHA_EFECTIVA_LOTE.' IS NOT NULL')
             ->whereRaw(self::FECHA_EFECTIVA_LOTE.' <= ?', [now()->toDateString()])
-            ->sum('inventario.stock');
+            ->sum('inventario.stock_individual');
     }
 
     public function render()

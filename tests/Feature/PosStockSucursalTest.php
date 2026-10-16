@@ -52,7 +52,7 @@ function loteEnSucursalPos(Producto $producto, Sucursal $sucursal, int $unidades
     Inventario::create([
         'id_sucursal' => $sucursal->id,
         'id_lote' => $lote->id,
-        'stock' => $unidades,
+        'stock_individual' => $unidades,
     ]);
 
     return $lote;
@@ -65,12 +65,11 @@ test('confirmar venta consume los lotes de la sucursal activa por caducidad mas 
         'codigo_barras' => '7500000000101',
         'nombre_producto' => 'Ibuprofeno 400mg FEFO',
         'descripcion' => '',
-        'stock' => 0,
-        'precio' => 5.0,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
+
+    registrarPrecioUnidad($producto, 5.0);
 
     $loteViejo = loteEnSucursalPos($producto, $sucursal, 10, '2026-12-31');
     $loteNuevo = loteEnSucursalPos($producto, $sucursal, 10, '2027-12-31');
@@ -85,8 +84,8 @@ test('confirmar venta consume los lotes de la sucursal activa por caducidad mas 
     $component->call('confirmarVenta');
 
     $component->assertSet('errorVenta', '');
-    $this->assertSame(0, (int) Inventario::where('id_lote', $loteViejo->id)->value('stock'));
-    $this->assertSame(5, (int) Inventario::where('id_lote', $loteNuevo->id)->value('stock'));
+    $this->assertSame(0, (int) Inventario::where('id_lote', $loteViejo->id)->value('stock_individual'));
+    $this->assertSame(5, (int) Inventario::where('id_lote', $loteNuevo->id)->value('stock_individual'));
     $this->assertSame(5, $producto->fresh()->stockTotal());
 });
 
@@ -104,12 +103,11 @@ test('la venta se bloquea si la sucursal activa no tiene stock aunque otra si te
         'codigo_barras' => '7500000000102',
         'nombre_producto' => 'Naproxeno 250mg Agotado',
         'descripcion' => '',
-        'stock' => 0,
-        'precio' => 5.0,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
+
+    registrarPrecioUnidad($producto, 5.0);
 
     $loteAjeno = loteEnSucursalPos($producto, $otraSucursal, 10, '2027-12-31');
 
@@ -137,7 +135,7 @@ test('la venta se bloquea si la sucursal activa no tiene stock aunque otra si te
         'errorVenta',
         "Stock insuficiente para '{$producto->nombre_producto}' en esta sucursal. Disponible: 0, solicitado: 2 unidades."
     );
-    $this->assertSame(10, (int) Inventario::where('id_lote', $loteAjeno->id)->value('stock'));
+    $this->assertSame(10, (int) Inventario::where('id_lote', $loteAjeno->id)->value('stock_individual'));
     $this->assertSame(10, $producto->fresh()->stockTotal());
 });
 
@@ -155,12 +153,11 @@ test('las tarjetas del pos muestran el stock de la sucursal activa', function ()
         'codigo_barras' => '7500000000103',
         'nombre_producto' => 'Paracetamol 500mg Stock',
         'descripcion' => '',
-        'stock' => 0,
-        'precio' => 2.5,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
+
+    registrarPrecioUnidad($producto, 2.5);
 
     loteEnSucursalPos($producto, $sucursal, 10, '2027-12-31');
     loteEnSucursalPos($producto, $otraSucursal, 25, '2027-12-31');

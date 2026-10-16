@@ -96,8 +96,8 @@ class LotesController extends Controller
                 // Sin filas de inventario el lote no está ubicado: el restante
                 // se muestra como «—» en lugar de inventar una cifra.
                 $restante = $inventarioSucursal !== null
-                    ? (int) $inventarioSucursal->stock
-                    : ($lote->inventarios->isEmpty() ? null : (int) $lote->inventarios->sum('stock'));
+                    ? (int) $inventarioSucursal->stock_individual
+                    : ($lote->inventarios->isEmpty() ? null : (int) $lote->inventarios->sum('stock_individual'));
 
                 // Cantidades en la unidad del lote (cajas/sueltas) con su
                 // equivalencia en unidades base entre paréntesis.
@@ -117,7 +117,7 @@ class LotesController extends Controller
                     'por_caja' => $lote->unidadesPresentacion() ?? 0,
                     'restante' => $restante,
                     'restante_texto' => $restante === null ? null : $lote->partesDeUnidades($restante),
-                    'restante_global' => (int) $lote->inventarios->sum('stock'),
+                    'restante_global' => (int) $lote->inventarios->sum('stock_individual'),
                     'anulado' => $anulado,
                     'fecha_entrada' => $lote->entregado_en ? Carbon::parse($lote->entregado_en)->format('Y-m-d') : '-',
                     'fecha_caducidad' => $fechaCaducidad ? $fechaCaducidad->format('Y-m-d') : '-',
@@ -266,13 +266,18 @@ class LotesController extends Controller
                 'fecha_de_caducidad' => $data['fecha_caducidad'],
             ]);
 
-            Inventario::updateOrCreate(
+            $inventario = Inventario::updateOrCreate(
                 [
                     'id_sucursal' => $data['sucursal'],
                     'id_lote' => $lote->id,
                 ],
-                ['stock' => $cantidadBase]
+                []
             );
+
+            // El lote guarda la cantidad en unidades base; el inventario se
+            // sincroniza desde ahí (`stock` en presentaciones, `stock_individual`
+            // en unidades).
+            $inventario->fijarUnidadesIndividuales($cantidadBase);
 
             // Registrar el primer lote en una sucursal también da de alta el
             // producto ahí (pivot), para que aparezca en su pestaña Productos.
@@ -388,13 +393,13 @@ class LotesController extends Controller
                 ]);
             }
 
-            if ($fila->stock < $unidades) {
+            if ($fila->stock_individual < $unidades) {
                 throw ValidationException::withMessages([
-                    'cantidad' => "La cantidad ({$unidades}) supera el restante ({$fila->stock}) en esta sucursal.",
+                    'cantidad' => "La cantidad ({$unidades}) supera el restante ({$fila->stock_individual}) en esta sucursal.",
                 ]);
             }
 
-            $fila->decrement('stock', $unidades);
+            $fila->ajustarUnidadesIndividuales(-$unidades);
 
             Merma::create([
                 'id_sucursal' => $data['sucursal'],
@@ -423,7 +428,7 @@ class LotesController extends Controller
     public function edit(Lote $lote): View
     {
         $proveedores = Proveedor::orderBy('nombre_proveedor')->get();
-        $restanteGlobal = (int) Inventario::where('id_lote', $lote->id)->sum('stock');
+        $restanteGlobal = (int) Inventario::where('id_lote', $lote->id)->sum('stock_individual');
 
         return view('pages.lotes.edit', compact('lote', 'proveedores', 'restanteGlobal'));
     }
@@ -476,7 +481,7 @@ class LotesController extends Controller
                 return [false, "El lote {$vigente->folio} ya está anulado."];
             }
 
-            $existencias = (int) Inventario::where('id_lote', $vigente->id)->sum('stock');
+            $existencias = (int) Inventario::where('id_lote', $vigente->id)->sum('stock_individual');
 
             if ($existencias > 0) {
                 return [false, "No se puede anular el lote {$vigente->folio}: aún tiene {$existencias} unidades en existencia. Da de baja las unidades primero."];
@@ -512,7 +517,7 @@ class LotesController extends Controller
             $movimientos = $this->bloquearDisponibilidad($traspaso);
 
             foreach ($movimientos as [$fila, $lote, $cantidad]) {
-                $fila->decrement('stock', $cantidad);
+                $fila->ajustarUnidadesIndividuales(-$cantidad);
                 $lote->decrement('stock_lote', $cantidad);
             }
         });
@@ -546,10 +551,11 @@ class LotesController extends Controller
                     throw new \RuntimeException("El lote {$detalle->id_lote} del traspaso ya no existe.");
                 }
 
-                Inventario::firstOrCreate(
-                    ['id_sucursal' => $destinoId, 'id_lote' => $lote->id],
-                    ['stock' => 0]
-                )->increment('stock', (int) $detalle->cantidad);
+                $destino = Inventario::firstOrCreate(
+                    ['id_sucursal' => $destinoId, 'id_lote' => $lote->id]
+                );
+
+                $destino->ajustarUnidadesIndividuales((int) $detalle->cantidad);
 
                 // La recepción da de alta el producto en la sucursal receptora.
                 $lote->producto->sucursales()->syncWithoutDetaching([$destinoId]);
@@ -583,10 +589,11 @@ class LotesController extends Controller
                     throw new \RuntimeException("El lote {$detalle->id_lote} del traspaso ya no existe.");
                 }
 
-                Inventario::firstOrCreate(
-                    ['id_sucursal' => $origenId, 'id_lote' => $lote->id],
-                    ['stock' => 0]
-                )->increment('stock', (int) $detalle->cantidad);
+                $origen = Inventario::firstOrCreate(
+                    ['id_sucursal' => $origenId, 'id_lote' => $lote->id]
+                );
+
+                $origen->ajustarUnidadesIndividuales((int) $detalle->cantidad);
 
                 $lote->increment('stock_lote', (int) $detalle->cantidad);
             }
@@ -651,7 +658,7 @@ class LotesController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            $disponible = (int) ($fila?->stock ?? 0);
+            $disponible = (int) ($fila?->stock_individual ?? 0);
 
             if ($fila === null || $disponible < $cantidad) {
                 throw new \RuntimeException("Stock insuficiente en origen para el lote {$lote->folio}. Disponible: {$disponible} uds, solicitado: {$cantidad} uds.");

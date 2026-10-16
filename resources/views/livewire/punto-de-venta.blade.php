@@ -115,21 +115,20 @@
                                     {{ $producto->nombre_producto }}
                                 </h3>
 
-                                @if($producto->presentacion)
+                                @php
+                                    $principalPos = $producto->presentacionPrincipalDe();
+                                @endphp
+                                @if($principalPos)
                                     <p class="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400">
-                                        {{ ucfirst($producto->presentacion->presentacion) }}
+                                        {{ ucfirst($principalPos->presentacion?->presentacion ?? 'presentación') }}
                                     </p>
                                 @endif
 
                                 <div class="mt-auto pt-2">
                                     <div class="flex items-end justify-between gap-2">
-                                        @if($producto->precio !== null)
+                                        @if($principalPos)
                                             <span class="text-lg font-extrabold text-[#0b6e68] dark:text-emerald-300">
-                                                ${{ number_format($producto->precio, 2) }}
-                                            </span>
-                                        @elseif($producto->presentacionesPrecio->isNotEmpty())
-                                            <span class="text-base font-extrabold text-[#0b6e68] dark:text-emerald-300">
-                                                Desde ${{ number_format($producto->presentacionesPrecio->min('precio_presentacion'), 2) }}
+                                                ${{ number_format((float) $principalPos->precio_presentacion, 2) }}
                                             </span>
                                         @else
                                             <span class="text-sm font-medium text-slate-400 dark:text-zinc-500">Sin precio</span>

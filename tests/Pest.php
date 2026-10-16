@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\PresentacionProducto;
+use App\Models\Producto;
+use App\Models\ProductoPresentacion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,4 +50,28 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Presentación «Unidad» del catálogo.
+ */
+function presentacionUnidad(): PresentacionProducto
+{
+    return PresentacionProducto::firstOrCreate(
+        ['presentacion' => 'Unidad'],
+        ['descripcion' => 'Medida individual del producto.']
+    );
+}
+
+/**
+ * Asigna a un producto su presentación unitaria (factor 1) con su precio.
+ */
+function registrarPrecioUnidad(Producto $producto, float $precio, bool $esPrincipal = true): ProductoPresentacion
+{
+    return $producto->presentacionesPrecio()->create([
+        'id_presentacion' => presentacionUnidad()->id,
+        'unidades' => 1,
+        'precio_presentacion' => $precio,
+        'es_principal' => $esPrincipal,
+    ]);
 }

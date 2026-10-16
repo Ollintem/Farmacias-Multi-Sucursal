@@ -70,6 +70,7 @@ function crearProductoCatalogo(Categoria $categoria, PresentacionProducto $caja,
         'id_presentacion' => $caja->id,
         'unidades' => 10,
         'precio_presentacion' => 22.5,
+        'es_principal' => true,
     ]);
 
     return $producto;
@@ -388,48 +389,39 @@ test('la lista desplegable muestra las presentaciones distintas a la caja', func
         ->assertDontSee('Unitario');
 });
 
-test('la pestana productos muestra el precio unitario como registro primero de la lista', function () {
-    [$sucursal, $categoria, $caja] = crearContextoCatalogo($this);
+test('la pestana productos muestra la presentacion principal y cuenta las adicionales', function () {
+    [$sucursal, $categoria, $caja, $blister] = crearContextoCatalogo($this);
 
-    $sinUnidad = crearProductoCatalogo($categoria, $caja, [
-        'codigo_barras' => '7500000000110',
-        'nombre_producto' => 'Solo por presentacion',
-    ]);
-
-    $conUnidad = crearProductoCatalogo($categoria, $caja, [
+    $producto = crearProductoCatalogo($categoria, $caja, [
         'codigo_barras' => '7500000000127',
         'nombre_producto' => 'Tambien por unidad',
-        'precio' => 1.25,
+    ]);
+
+    $producto->presentacionesPrecio()->create([
+        'id_presentacion' => $blister->id,
+        'unidades' => 5,
+        'precio_presentacion' => 3.5,
     ]);
 
     $response = $this->withSession(['active_sucursal_id' => $sucursal->id])
         ->get(route('inventario.productos'));
 
     $response->assertOk()
-        ->assertSee('Unitario')
-        ->assertSee('1 ud.')
-        ->assertSee('$1.25')
-        ->assertSee('+ 1 presentación');
-
-    $cuerpo = $response->getContent();
-    $posicionSolo = strpos($cuerpo, 'Solo por presentacion');
-    $posicionUnidad = strpos($cuerpo, 'Tambien por unidad');
-
-    expect($posicionSolo)->not->toBeFalse()
-        ->and($posicionUnidad)->not->toBeFalse()
-        ->and($posicionSolo)->toBeLessThan($posicionUnidad)
-        ->and(substr_count($cuerpo, 'Unitario'))->toBe(1);
-
-    $bloqueSolo = substr($cuerpo, $posicionSolo, $posicionUnidad - $posicionSolo);
-
-    expect(str_contains($bloqueSolo, 'Unitario'))->toBeFalse();
+        ->assertSee('Tambien por unidad')
+        ->assertSee('Caja')
+        ->assertSee('$22.50')
+        ->assertSee('+ 1 presentación')
+        ->assertSee('Blister')
+        ->assertSee('$3.50');
 });
 
-test('el contador de presentaciones incluye la unitaria cuando esta habilitada', function () {
+test('el contador de presentaciones incluye la unidad y las adicionales', function () {
     [$sucursal, $categoria, $caja, $blister] = crearContextoCatalogo($this);
     $par = PresentacionProducto::create(['presentacion' => 'Par', 'descripcion' => '']);
 
-    $producto = crearProductoCatalogo($categoria, $caja, ['precio' => 1.25]);
+    $producto = crearProductoCatalogo($categoria, $caja);
+
+    registrarPrecioUnidad($producto, 1.25, false);
 
     $producto->presentacionesPrecio()->create([
         'id_presentacion' => $blister->id,
@@ -448,12 +440,11 @@ test('el contador de presentaciones incluye la unitaria cuando esta habilitada',
 
     $response->assertOk()
         ->assertSee('+ 3 presentaciones')
-        ->assertSee('Unitario')
+        ->assertSee('Unidad')
         ->assertSee('Blister')
         ->assertSee('$1.25')
         ->assertSee('$3.50')
-        ->assertSee('$4.00')
-        ->assertDontSee('10 ud.');
+        ->assertSee('$4.00');
 });
 
 test('la lista desplegable cuenta solo las presentaciones que no son caja', function () {
@@ -502,31 +493,33 @@ test('sin presentaciones adicionales ni precio unitario no se muestra el despleg
         ->assertSee('Caja')
         ->assertSee('$22.50')
         ->assertDontSee('presentaciones-'.$producto->id, false)
-        ->assertDontSee('presentación');
+        ->assertDontSee('+ 1 presentación');
 });
 
-test('un producto sin presentaciones se muestra como venta unitaria en el catalogo', function () {
+test('un producto unitario se muestra con su presentacion unidad en el catalogo', function () {
     [$sucursal, $categoria, $caja] = crearContextoCatalogo($this);
 
     $producto = crearProductoCatalogo($categoria, $caja, [
         'codigo_barras' => '7500000000999',
         'nombre_producto' => 'Solución inyectable',
-        'precio' => 8.5,
-        'id_presentacion' => null,
     ]);
 
     $producto->presentacionesPrecio()->delete();
+    $producto->unsetRelation('presentacionesPrecio');
+
+    registrarPrecioUnidad($producto, 8.5);
 
     $response = $this->withSession(['active_sucursal_id' => $sucursal->id])
         ->get(route('inventario.productos'));
 
     $response->assertOk()
+        ->assertSee('Solución inyectable')
         ->assertSee('Unidad')
-        ->assertSee('Se vende por unidad suelta')
+        ->assertSee('Se vende por unidad')
         ->assertSee('$8.50')
         ->assertDontSee('+ 1 presentación')
         ->assertDontSee('presentaciones-'.$producto->id, false)
-        ->assertDontSee('Sin presentación Caja');
+        ->assertDontSee('Sin presentación');
 });
 
 test('la edicion actualiza los datos y agrega presentaciones', function () {
@@ -548,11 +541,9 @@ test('la edicion actualiza los datos y agrega presentaciones', function () {
             'nombre_producto' => 'Paracetamol 1000mg',
             'id_categoria' => $categoria->id,
             'descripcion' => 'Fuerza doble',
-            'vender_por_unidad' => '1',
-            'precio' => 3.5,
             'es_controlado' => '1',
             'presentaciones' => [
-                ['id_presentacion' => $caja->id, 'unidades' => 20, 'precio' => 45],
+                ['id_presentacion' => $caja->id, 'unidades' => 20, 'precio' => 45, 'es_principal' => 1],
                 ['id_presentacion' => $blister->id, 'unidades' => 7, 'precio' => 4],
             ],
         ])
@@ -565,9 +556,7 @@ test('la edicion actualiza los datos y agrega presentaciones', function () {
         'nombre_producto' => 'Paracetamol 1000mg',
         'id_categoria' => $categoria->id,
         'descripcion' => 'Fuerza doble',
-        'precio' => 3.5,
         'es_controlado' => true,
-        'id_presentacion' => $caja->id,
     ]);
 
     $this->assertDatabaseHas('presentacion_producto', [
@@ -575,6 +564,7 @@ test('la edicion actualiza los datos y agrega presentaciones', function () {
         'id_presentacion' => $caja->id,
         'unidades' => 20,
         'precio_presentacion' => 45,
+        'es_principal' => true,
     ]);
 
     $this->assertDatabaseHas('presentacion_producto', [
@@ -659,13 +649,13 @@ test('el catalogo no muestra selladas ni sueltas porque esa existencia vive en s
     Inventario::create([
         'id_sucursal' => $sucursal->id,
         'id_lote' => $lote->id,
-        'stock' => 26,
+        'stock_individual' => 26,
     ]);
 
     $this->withSession(['active_sucursal_id' => $sucursal->id])
         ->get(route('inventario.productos'))
         ->assertOk()
-        ->assertSee('10 uds. por caja')
+        ->assertSee('10 uds. por presentación')
         ->assertDontSee('selladas')
         ->assertDontSee('sueltas');
 });
@@ -678,10 +668,11 @@ test('estadoDeCajas separa cajas selladas de unidades sueltas y no aplica sin ca
     $sinCajas = crearProductoCatalogo($categoria, $caja, [
         'codigo_barras' => '7500000000063',
         'nombre_producto' => 'Solo unidad',
-        'precio' => 3.5,
-        'vender_por_unidad' => true,
-        'id_presentacion' => null,
     ]);
+
+    $sinCajas->presentacionesPrecio()->delete();
+    $sinCajas->unsetRelation('presentacionesPrecio');
+    registrarPrecioUnidad($sinCajas, 3.5);
 
     $this->assertSame([
         'unidades_por_caja' => 10,

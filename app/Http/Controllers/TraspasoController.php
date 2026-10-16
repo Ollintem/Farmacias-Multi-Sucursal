@@ -65,8 +65,8 @@ class TraspasoController extends Controller
 
         $lotesDisponibles = ($elegidoValido && $origenLotesId)
             ? Lote::query()
-                ->with(['producto', 'inventarios' => fn ($query) => $query->where('id_sucursal', $origenLotesId)])
-                ->whereHas('inventarios', fn ($query) => $query->where('id_sucursal', $origenLotesId)->where('stock', '>', 0))
+                ->with(['producto.presentacionesPrecio.presentacion', 'inventarios' => fn ($query) => $query->where('id_sucursal', $origenLotesId)])
+                ->whereHas('inventarios', fn ($query) => $query->where('id_sucursal', $origenLotesId)->where('stock_individual', '>', 0))
                 ->where(function ($query): void {
                     $query->whereNull('fecha_de_caducidad')
                         ->orWhere('fecha_de_caducidad', '>=', now()->toDateString());
@@ -77,7 +77,7 @@ class TraspasoController extends Controller
                 })
                 ->orderBy('folio')
                 ->get()
-                ->filter(fn (Lote $lote) => ! $lote->estaCaducado() && (int) $lote->inventarios->sum('stock') > 0)
+                ->filter(fn (Lote $lote) => ! $lote->estaCaducado() && (int) $lote->inventarios->sum('stock_individual') > 0)
                 ->values()
             : collect();
 
@@ -170,7 +170,7 @@ class TraspasoController extends Controller
             $stockOrigen = (int) Inventario::query()
                 ->where('id_sucursal', $origenId)
                 ->where('id_lote', $lote->id)
-                ->sum('stock');
+                ->sum('stock_individual');
 
             if ($stockOrigen < (int) $item['cantidad']) {
                 $errores["lotes.{$indice}.cantidad"] = "Stock insuficiente en origen. Disponible: {$stockOrigen} uds.";

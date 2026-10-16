@@ -13,8 +13,6 @@ return new class extends Migration
             $table->string('codigo_barras', 20);
             $table->string('nombre_producto', 120);
             $table->text('descripcion');
-            $table->decimal('precio', 12, 2)->nullable();
-            $table->foreignId('id_presentacion')->nullable()->constrained('presentaciones')->cascadeOnDelete();
             $table->foreignId('id_categoria')->nullable()->constrained('categorias')->nullOnDelete();
             $table->boolean('es_controlado')->default(false);
             $table->timestamp('entregado_en')->nullable();

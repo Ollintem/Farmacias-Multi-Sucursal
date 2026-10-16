@@ -79,14 +79,14 @@ function contextoBusquedaInventario(object $test): array
     Inventario::create([
         'id_sucursal' => $sucursalA->id,
         'id_lote' => $lote->id,
-        'stock' => 6,
+        'stock_individual' => 6,
     ]);
 
     // El mismo lote existe en la sucursal B sin existencias: Stock muestra 0.
     Inventario::create([
         'id_sucursal' => $sucursalB->id,
         'id_lote' => $lote->id,
-        'stock' => 0,
+        'stock_individual' => 0,
     ]);
 
     // Ibuprofeno también tiene inventario en la sucursal A (4 uds.).
@@ -100,7 +100,7 @@ function contextoBusquedaInventario(object $test): array
     Inventario::create([
         'id_sucursal' => $sucursalA->id,
         'id_lote' => $loteIbuprofeno->id,
-        'stock' => 4,
+        'stock_individual' => 4,
     ]);
 
     $test->actingAs($user);
@@ -214,7 +214,7 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
     $this->assertDatabaseHas('inventario', [
         'id_sucursal' => $sucursalA->id,
         'id_lote' => $lote->id,
-        'stock' => 100,
+        'stock_individual' => 100,
     ]);
 
     // El proveedor del lote se resuelve vía pedido en el listado.

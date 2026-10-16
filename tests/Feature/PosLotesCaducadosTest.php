@@ -44,16 +44,17 @@ function contextoPosCaducados(object $test): array
  */
 function productoCaducadoPos(PresentacionProducto $caja, string $codigo, string $nombre): Producto
 {
-    return Producto::create([
+    $producto = Producto::create([
         'codigo_barras' => $codigo,
         'nombre_producto' => $nombre,
         'descripcion' => '',
-        'stock' => 0,
-        'precio' => 5.0,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
+
+    registrarPrecioUnidad($producto, 5.0);
+
+    return $producto;
 }
 
 /**
@@ -73,7 +74,7 @@ function loteCaducadoPos(Producto $producto, Sucursal $sucursal, int $unidades, 
     Inventario::create([
         'id_sucursal' => $sucursal->id,
         'id_lote' => $lote->id,
-        'stock' => $unidades,
+        'stock_individual' => $unidades,
     ]);
 
     return $lote;
@@ -103,9 +104,9 @@ test('la venta ignora los lotes caducados y consume los vigentes por FEFO', func
     $component->assertDispatched('stock-caducado-ignorado', unidades: 40);
 
     // FEFO sigue intacto entre los vigentes: primero el más cercano a caducar.
-    $this->assertSame(40, (int) Inventario::where('id_lote', $loteCaducado->id)->value('stock'));
-    $this->assertSame(0, (int) Inventario::where('id_lote', $loteVigenteCercano->id)->value('stock'));
-    $this->assertSame(8, (int) Inventario::where('id_lote', $loteVigenteLejano->id)->value('stock'));
+    $this->assertSame(40, (int) Inventario::where('id_lote', $loteCaducado->id)->value('stock_individual'));
+    $this->assertSame(0, (int) Inventario::where('id_lote', $loteVigenteCercano->id)->value('stock_individual'));
+    $this->assertSame(8, (int) Inventario::where('id_lote', $loteVigenteLejano->id)->value('stock_individual'));
 });
 
 test('un producto cuyo stock sea solo caducado no entra al carrito', function () {
@@ -140,7 +141,7 @@ test('un producto cuyo stock sea solo caducado no entra al carrito', function ()
     );
 
     // El inventario caducado queda intacto.
-    $this->assertSame(20, (int) Inventario::where('id_lote', Lote::where('id_producto', $producto->id)->firstOrFail()->id)->value('stock'));
+    $this->assertSame(20, (int) Inventario::where('id_lote', Lote::where('id_producto', $producto->id)->firstOrFail()->id)->value('stock_individual'));
 });
 
 test('un lote sin fecha de caducidad sigue vendible y no lanza el aviso', function () {
@@ -163,5 +164,5 @@ test('un lote sin fecha de caducidad sigue vendible y no lanza el aviso', functi
 
     $lote = Lote::where('id_producto', $producto->id)->firstOrFail();
 
-    $this->assertSame(9, (int) Inventario::where('id_lote', $lote->id)->value('stock'));
+    $this->assertSame(9, (int) Inventario::where('id_lote', $lote->id)->value('stock_individual'));
 });

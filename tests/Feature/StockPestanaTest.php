@@ -88,7 +88,7 @@ function loteStockPestana(Sucursal $sucursal, Producto $producto, string $folio,
     Inventario::create([
         'id_sucursal' => $sucursal->id,
         'id_lote' => $lote->id,
-        'stock' => $stock,
+        'stock_individual' => $stock,
     ]);
 
     return $lote;

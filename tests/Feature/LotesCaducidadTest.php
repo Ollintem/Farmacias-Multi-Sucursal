@@ -93,7 +93,7 @@ test('la tabla de lotes muestra la cantidad inicial y el restante de la sucursal
     Inventario::create([
         'id_sucursal' => $sucursal->id,
         'id_lote' => $lote->id,
-        'stock' => 60,
+        'stock_individual' => 60,
     ]);
 
     $contenido = $this->actingAs($user)
@@ -151,7 +151,7 @@ test('la tabla muestra las cantidades en cajas con su equivalencia en unidades',
     Inventario::create([
         'id_sucursal' => $sucursal->id,
         'id_lote' => $lote->id,
-        'stock' => 35,
+        'stock_individual' => 35,
     ]);
 
     $contenido = $this->actingAs($user)
@@ -246,7 +246,7 @@ test('las tarjetas de estado filtran la tabla y resaltan la seleccion', function
         Inventario::create([
             'id_sucursal' => $sucursal->id,
             'id_lote' => $lote->id,
-            'stock' => 10,
+            'stock_individual' => 10,
         ]);
     }
 

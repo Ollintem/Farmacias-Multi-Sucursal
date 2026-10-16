@@ -18,11 +18,6 @@ return new class extends Migration
             ->whereIn('presentacion', ['ampolleta', 'pastilla'])
             ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))
-                    ->from('productos')
-                    ->whereColumn('productos.id_presentacion', 'presentaciones.id');
-            })
-            ->whereNotExists(function ($query) {
-                $query->select(DB::raw(1))
                     ->from('presentacion_producto')
                     ->whereColumn('presentacion_producto.id_presentacion', 'presentaciones.id');
             })

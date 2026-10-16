@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Producto extends Model
 {
@@ -17,9 +18,6 @@ class Producto extends Model
         'codigo_barras',
         'nombre_producto',
         'descripcion',
-        'precio',
-        'vender_por_unidad',
-        'id_presentacion',
         'id_categoria',
         'es_controlado',
         'es_activo',
@@ -27,9 +25,6 @@ class Producto extends Model
     ];
 
     protected $casts = [
-        'precio' => 'decimal:2',
-        'vender_por_unidad' => 'boolean',
-        'id_presentacion' => 'integer',
         'id_categoria' => 'integer',
         'es_controlado' => 'boolean',
         'es_activo' => 'boolean',
@@ -38,9 +33,12 @@ class Producto extends Model
         'actualizado_en' => 'datetime',
     ];
 
-    public function presentacion(): BelongsTo
+    /**
+     * Presentación principal del producto (la marcada con `es_principal`).
+     */
+    public function presentacionPrincipal(): HasOne
     {
-        return $this->belongsTo(PresentacionProducto::class, 'id_presentacion');
+        return $this->hasOne(ProductoPresentacion::class, 'producto')->where('es_principal', true);
     }
 
     public function categoria(): BelongsTo
@@ -69,29 +67,38 @@ class Producto extends Model
     }
 
     /**
-     * Presentaciones del producto para listados: la principal (Caja) va primero y el resto por nombre.
+     * Presentación principal del producto dentro de las presentaciones cargadas.
+     *
+     * Prefiere la marcada con `es_principal`; si ninguna lo está (datos
+     * heredados) cae a «caja» y, en último caso, a la primera.
      */
-    public function presentacionesOrdenadas(?int $idPresentacionPrincipal = null): Collection
+    public function presentacionPrincipalDe(?Collection $presentaciones = null): ?ProductoPresentacion
     {
-        $ordenadas = $this->presentacionesPrecio
-            ->sortBy(fn (ProductoPresentacion $presentacion): string => mb_strtolower($presentacion->presentacion?->presentacion ?? ''))
+        $presentaciones ??= $this->presentacionesPrecio;
+
+        if ($presentaciones->isEmpty()) {
+            return null;
+        }
+
+        return $presentaciones->firstWhere('es_principal', true)
+            ?? $presentaciones->first(
+                fn (ProductoPresentacion $presentacion): bool => strcasecmp($presentacion->presentacion?->presentacion ?? '', 'Caja') === 0
+            )
+            ?? $presentaciones->first();
+    }
+
+    /**
+     * Presentaciones del producto para listados: la principal va primero y el
+     * resto por nombre.
+     */
+    public function presentacionesOrdenadas(): Collection
+    {
+        return $this->presentacionesPrecio
+            ->sortBy([
+                fn (ProductoPresentacion $presentacion): int => $presentacion->es_principal ? 0 : 1,
+                fn (ProductoPresentacion $presentacion): string => mb_strtolower($presentacion->presentacion?->presentacion ?? ''),
+            ])
             ->values();
-
-        if ($idPresentacionPrincipal === null) {
-            return $ordenadas;
-        }
-
-        $indice = $ordenadas->search(
-            fn (ProductoPresentacion $presentacion): bool => $presentacion->id_presentacion === $idPresentacionPrincipal
-        );
-
-        if ($indice === false) {
-            return $ordenadas;
-        }
-
-        $principal = $ordenadas->splice((int) $indice, 1)->first();
-
-        return $ordenadas->prepend($principal)->values();
     }
 
     public function lotes(): HasMany
@@ -102,74 +109,80 @@ class Producto extends Model
     /**
      * Stock total del producto en todas las sucursales.
      *
-     * Suma `inventario.stock` vía lote. Reemplaza la antigua columna
-     * `productos.stock` (eliminada): el stock vive en `lotes.stock_lote`
-     * (histórico de entrada) e `inventario.stock` (disponible por sucursal).
+     * Suma `inventario.stock_individual` (unidades individuales) vía lote. El
+     * stock vive en `lotes.stock_lote` (histórico de entrada) e `inventario`
+     * (disponible por sucursal).
      */
     public function stockTotal(): int
     {
-        return (int) $this->inventarios()->sum('inventario.stock');
+        return (int) $this->inventarios()->sum('inventario.stock_individual');
     }
 
     /**
-     * Stock disponible del producto en una sucursal.
+     * Stock disponible del producto en una sucursal, en unidades individuales.
      */
     public function stockEnSucursal(int $idSucursal): int
     {
-        return (int) $this->inventarios()->where('inventario.id_sucursal', $idSucursal)->sum('inventario.stock');
+        return (int) $this->inventarios()->where('inventario.id_sucursal', $idSucursal)->sum('inventario.stock_individual');
     }
 
     /**
-     * Presentación con la que se registra un lote del producto: su caja.
+     * Presentación con la que se registra un lote del producto: su principal.
      *
      * El alta de lotes no deja elegir presentación: el producto aporta la suya
-     * principal (la caja) y la cantidad capturada se convierte con sus
-     * unidades, igual que en el resto del sistema. Sale null cuando el
-     * producto solo se vende por unidad y no tiene presentaciones.
+     * principal y la cantidad capturada se convierte con sus unidades, igual
+     * que en el resto del sistema. Sale null cuando el producto no tiene
+     * presentaciones registradas.
      */
     public function presentacionParaLote(): ?ProductoPresentacion
     {
-        $presentaciones = $this->presentacionesPrecio;
-
-        if ($presentaciones->isEmpty()) {
-            return null;
-        }
-
-        $principal = $this->id_presentacion === null
-            ? null
-            : $presentaciones->firstWhere('id_presentacion', $this->id_presentacion);
-
-        return $principal
-            ?? $presentaciones->first(
-                fn (ProductoPresentacion $presentacion): bool => strcasecmp($presentacion->presentacion?->presentacion ?? '', 'Caja') === 0
-            )
-            ?? $presentaciones->first();
+        return $this->presentacionPrincipalDe();
     }
 
     /**
-     * Unidades que trae la caja (presentación principal) del producto.
+     * Unidades individuales que trae la presentación principal del producto.
      *
-     * Salida: null cuando el producto no se vende en cajas (solo por unidad).
+     * Salida: null cuando la principal es la unidad (factor 1) o no existe, es
+     * decir, cuando el producto no maneja cajas abiertas.
      */
     public function unidadesPorCaja(): ?int
     {
-        if ($this->id_presentacion === null) {
-            return null;
-        }
-
-        $unidades = (int) ($this->presentacionesPrecio
-            ->firstWhere('id_presentacion', $this->id_presentacion)?->unidades ?? 0);
+        $unidades = (int) ($this->presentacionPrincipalDe()?->unidades ?? 0);
 
         return $unidades >= 2 ? $unidades : null;
+    }
+
+    /**
+     * Factor de conversión de la presentación principal (unidades por
+     * presentación). Es 1 cuando la principal es la unidad o no hay principal.
+     */
+    public function factorPrincipal(): int
+    {
+        return max(1, (int) ($this->presentacionPrincipalDe()?->unidades ?? 1));
+    }
+
+    /**
+     * Precio de venta por unidad individual (presentación «unidad»).
+     *
+     * Salida: null si el producto no tiene una presentación unitaria.
+     */
+    public function precioUnidad(): ?float
+    {
+        $unidad = $this->presentacionesPrecio->first(
+            fn (ProductoPresentacion $presentacion): bool => strcasecmp($presentacion->presentacion?->presentacion ?? '', 'Unidad') === 0
+        );
+
+        return $unidad?->precio_presentacion !== null ? (float) $unidad->precio_presentacion : null;
     }
 
     /**
      * Estado de las cajas de un producto para un stock dado.
      *
      * Deriva cuántas cajas siguen selladas y cuántas unidades quedan sueltas
-     * a partir del stock en unidades base; no requiere estado persistido.
+     * a partir del stock en unidades individuales; no requiere estado
+     * persistido.
      *
-     * Entrada: stock disponible en unidades base.
+     * Entrada: stock disponible en unidades individuales.
      *
      * @return array{unidades_por_caja: int, selladas: int, sueltas: int}|null
      */

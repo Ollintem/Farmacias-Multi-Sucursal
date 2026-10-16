@@ -101,7 +101,7 @@ class AlertasFeed
             ->with(['producto', 'inventarios.sucursal'])
             ->whereHas('inventarios', function ($query) use ($sucursalId) {
                 $query->where('inventario.id_sucursal', $sucursalId)
-                    ->where('inventario.stock', '>', 0);
+                    ->where('inventario.stock_individual', '>', 0);
             })
             ->orderByRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) ASC')
             ->limit(60)

@@ -37,9 +37,6 @@ function escenarioMerma(): array
         'codigo_barras' => '7500000000400',
         'nombre_producto' => 'Producto Prueba Merma',
         'descripcion' => '',
-        'stock' => 0,
-        'precio' => 10.0,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
@@ -80,7 +77,7 @@ function loteMerma(Sucursal $sucursal, Producto $producto, string $folio, int $s
     Inventario::create([
         'id_sucursal' => $sucursal->id,
         'id_lote' => $lote->id,
-        'stock' => $stock,
+        'stock_individual' => $stock,
     ]);
 
     return $lote;
@@ -102,7 +99,7 @@ test('da de baja existencia y deja trazabilidad de la merma', function () {
 
     $respuesta->assertRedirect()->assertSessionHas('success');
 
-    expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(6)
+    expect(Inventario::where('id_lote', $lote->id)->first()->stock_individual)->toBe(6)
         ->and($escenario['producto']->fresh()->stockTotal())->toBe(6)
         ->and((int) $lote->fresh()->stock_lote)->toBe(10)
         ->and(Merma::count())->toBe(1);
@@ -130,7 +127,7 @@ test('rechaza una cantidad mayor al restante sin tocar el stock', function () {
         ])
         ->assertSessionHasErrors('cantidad');
 
-    expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(5)
+    expect(Inventario::where('id_lote', $lote->id)->first()->stock_individual)->toBe(5)
         ->and($escenario['producto']->fresh()->stockTotal())->toBe(5)
         ->and(Merma::count())->toBe(0);
 });
@@ -150,7 +147,7 @@ test('rechaza la merma si el lote no tiene fila en la sucursal', function () {
         ])
         ->assertSessionHasErrors('cantidad');
 
-    expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(8)
+    expect(Inventario::where('id_lote', $lote->id)->first()->stock_individual)->toBe(8)
         ->and(Merma::count())->toBe(0);
 });
 
@@ -179,7 +176,7 @@ test('respeta el permiso editar del modulo lotes', function () {
         ->assertForbidden();
 
     expect(Merma::count())->toBe(0)
-        ->and(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(10);
+        ->and(Inventario::where('id_lote', $lote->id)->first()->stock_individual)->toBe(10);
 });
 
 test('el motivo otro exige nota', function () {
@@ -212,7 +209,7 @@ test('el motivo otro exige nota', function () {
 
     expect(Merma::count())->toBe(1)
         ->and(Merma::first()->motivo)->toBe('otro')
-        ->and(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(9);
+        ->and(Inventario::where('id_lote', $lote->id)->first()->stock_individual)->toBe(9);
 });
 
 test('mermar a cero elimina la alerta de caducidad', function () {
@@ -255,26 +252,31 @@ test('la pagina de lotes ofrece la baja solo con existencia', function () {
 /**
  * Equivalencia en unidades base de la presentación del lote (caja de 10).
  */
-function cajaMerma(Producto $producto): void
+function cajaMerma(Producto $producto): int
 {
+    $caja = PresentacionProducto::where('presentacion', 'Caja')->firstOrFail();
+
     ProductoPresentacion::create([
-        'id_presentacion' => (int) $producto->id_presentacion,
+        'id_presentacion' => $caja->id,
         'producto' => $producto->id,
         'precio_presentacion' => 120.0,
         'unidades' => 10,
+        'es_principal' => true,
     ]);
+
+    return $caja->id;
 }
 
 test('merma en cajas convierte la cantidad a unidades base', function () {
     $escenario = escenarioMerma();
-    cajaMerma($escenario['producto']);
+    $idCaja = cajaMerma($escenario['producto']);
     $lote = loteMerma(
         $escenario['sucursal'],
         $escenario['producto'],
         'L-MERMA-CAJA',
         50,
         '2027-06-30',
-        (int) $escenario['producto']->id_presentacion
+        $idCaja
     );
 
     $respuesta = $this->actingAs($escenario['usuario'])
@@ -289,7 +291,7 @@ test('merma en cajas convierte la cantidad a unidades base', function () {
 
     $respuesta->assertRedirect()->assertSessionHas('success');
 
-    expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(25)
+    expect(Inventario::where('id_lote', $lote->id)->first()->stock_individual)->toBe(25)
         ->and($escenario['producto']->fresh()->stockTotal())->toBe(25)
         ->and(Merma::count())->toBe(1)
         ->and(Merma::first()->cantidad)->toBe(25);
@@ -297,14 +299,14 @@ test('merma en cajas convierte la cantidad a unidades base', function () {
 
 test('rechaza cajas que superan el restante sin tocar el stock', function () {
     $escenario = escenarioMerma();
-    cajaMerma($escenario['producto']);
+    $idCaja = cajaMerma($escenario['producto']);
     $lote = loteMerma(
         $escenario['sucursal'],
         $escenario['producto'],
         'L-MERMA-CAJA-EXCESO',
         50,
         '2027-06-30',
-        (int) $escenario['producto']->id_presentacion
+        $idCaja
     );
 
     $this->actingAs($escenario['usuario'])
@@ -317,21 +319,21 @@ test('rechaza cajas que superan el restante sin tocar el stock', function () {
         ])
         ->assertSessionHasErrors('cantidad');
 
-    expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(50)
+    expect(Inventario::where('id_lote', $lote->id)->first()->stock_individual)->toBe(50)
         ->and($escenario['producto']->fresh()->stockTotal())->toBe(50)
         ->and(Merma::count())->toBe(0);
 });
 
 test('en un lote en caja exige cajas o unidades sueltas', function () {
     $escenario = escenarioMerma();
-    cajaMerma($escenario['producto']);
+    $idCaja = cajaMerma($escenario['producto']);
     $lote = loteMerma(
         $escenario['sucursal'],
         $escenario['producto'],
         'L-MERMA-CAJA-VACIA',
         50,
         '2027-06-30',
-        (int) $escenario['producto']->id_presentacion
+        $idCaja
     );
 
     $this->actingAs($escenario['usuario'])
@@ -344,6 +346,6 @@ test('en un lote en caja exige cajas o unidades sueltas', function () {
         ])
         ->assertSessionHasErrors('cantidad');
 
-    expect(Inventario::where('id_lote', $lote->id)->first()->stock)->toBe(50)
+    expect(Inventario::where('id_lote', $lote->id)->first()->stock_individual)->toBe(50)
         ->and(Merma::count())->toBe(0);
 });

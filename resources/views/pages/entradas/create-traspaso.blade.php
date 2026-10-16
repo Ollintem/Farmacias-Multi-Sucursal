@@ -71,7 +71,7 @@
                                         <option value="">Selecciona un lote</option>
                                         @if($mostrarLotes)
                                             @foreach(($lotesDisponibles ?? collect()) as $lote)
-                                                <option value="{{ $lote->id }}">{{ $lote->folio }} · {{ $lote->producto?->nombre_producto ?? 'Sin producto' }} · {{ (int) ($lote->inventarios->firstWhere('id_sucursal', $origenLotesId)?->stock ?? 0) }} uds. · Caduca {{ $lote->fecha_de_caducidad ? \Carbon\Carbon::parse($lote->fecha_de_caducidad)->format('Y-m-d') : 'Sin fecha' }}</option>
+                                                <option value="{{ $lote->id }}">{{ $lote->folio }} · {{ $lote->producto?->nombre_producto ?? 'Sin producto' }} · {{ $lote->producto?->presentacionParaLote()?->presentacion?->presentacion ?? 'Unidad' }} · {{ (int) ($lote->inventarios->firstWhere('id_sucursal', $origenLotesId)?->stock ?? 0) }} uds. · Caduca {{ $lote->fecha_de_caducidad ? \Carbon\Carbon::parse($lote->fecha_de_caducidad)->format('Y-m-d') : 'Sin fecha' }}</option>
                                             @endforeach
                                         @else
                                             <option value="" disabled>Selecciona primero la sucursal {{ $fijaEsDestino ? 'origen' : 'destino' }}</option>

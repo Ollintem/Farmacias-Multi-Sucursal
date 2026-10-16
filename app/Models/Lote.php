@@ -126,7 +126,7 @@ class Lote extends Model
      */
     public function stockEnSucursal(int $idSucursal): int
     {
-        return (int) $this->inventarios->where('id_sucursal', $idSucursal)->sum('stock');
+        return (int) $this->inventarios->where('id_sucursal', $idSucursal)->sum('stock_individual');
     }
 
     /**

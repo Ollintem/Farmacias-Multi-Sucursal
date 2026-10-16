@@ -75,19 +75,13 @@
                             </thead>
                                 @foreach($productos as $producto)
                                         @php
-                                            $presentaciones = $producto->presentacionesOrdenadas($presentacionCaja?->id);
-                                            $presentacionesLista = $presentaciones
-                                                ->reject(fn ($presentacion) => $presentacionCaja !== null && $presentacion->id_presentacion === $presentacionCaja->id)
+                                            $principal = $producto->presentacionPrincipal;
+                                            $presentacionesLista = $producto->presentacionesPrecio
+                                                ->reject(fn ($presentacion) => $principal !== null && $presentacion->id === $principal->id)
+                                                ->sortBy(fn ($presentacion) => mb_strtolower($presentacion->presentacion?->presentacion ?? ''))
                                                 ->values();
-                                            $tieneUnitario = $producto->vender_por_unidad && $producto->precio !== null;
-                                            $totalDesplegable = $presentacionesLista->count() + ($tieneUnitario ? 1 : 0);
-                                            // Un producto solo unitario (sin presentaciones, con la Caja
-                                            // eliminada) ya muestra «Unidad» en la celda: su única
-                                            // presentación es la unitaria y no hay nada que desplegar.
-                                            $esUnitarioSinPresentaciones = $tieneUnitario
-                                                && $producto->presentacionCaja === null
-                                                && $presentacionesLista->isEmpty();
-                                            $mostrarDesplegable = $totalDesplegable > 0 && ! $esUnitarioSinPresentaciones;
+                                            $totalDesplegable = $presentacionesLista->count();
+                                            $mostrarDesplegable = $totalDesplegable > 0;
                                         @endphp
                                     <tbody x-data="{ abierta: false }" data-buscar="{{ $producto->codigo_barras }} {{ $producto->nombre_producto }}">
                                         <tr @class([
@@ -104,14 +98,13 @@
                                             </td>
 
                                             <td class="px-4 py-3">
-                                                @if($producto->presentacionCaja && $presentacionCaja)
-                                                    <span class="block font-medium text-slate-800 dark:text-slate-100">{{ $presentacionCaja->presentacion }}</span>
-                                                    <span class="block text-xs theme-subtle">{{ $producto->presentacionCaja->unidades }} uds. por caja</span>
-                                                @elseif($tieneUnitario)
-                                                    <span class="block font-medium text-slate-800 dark:text-slate-100">Unidad</span>
-                                                    <span class="block text-xs theme-subtle">Se vende por unidad suelta</span>
+                                                @if($principal)
+                                                    <span class="block font-medium text-slate-800 dark:text-slate-100">{{ $principal->presentacion?->presentacion ?? 'Presentación' }}</span>
+                                                    <span class="block text-xs theme-subtle">
+                                                        {{ $principal->unidades >= 2 ? $principal->unidades.' uds. por presentación' : 'Se vende por unidad' }}
+                                                    </span>
                                                 @else
-                                                    <span class="block theme-subtle">Sin presentación Caja</span>
+                                                    <span class="block theme-subtle">Sin presentación</span>
                                                 @endif
 
                                                 @if($mostrarDesplegable)
@@ -131,10 +124,8 @@
                                             </td>
 
                                             <td class="px-4 py-3">
-                                                @if($producto->presentacionCaja && $presentacionCaja)
-                                                    <span class="font-semibold text-emerald-600 dark:text-emerald-400">${{ number_format((float) $producto->presentacionCaja->precio_presentacion, 2) }}</span>
-                                                @elseif($tieneUnitario)
-                                                    <span class="font-semibold text-emerald-600 dark:text-emerald-400">${{ number_format((float) $producto->precio, 2) }}</span>
+                                                @if($principal)
+                                                    <span class="font-semibold text-emerald-600 dark:text-emerald-400">${{ number_format((float) $principal->precio_presentacion, 2) }}</span>
                                                 @else
                                                     <span class="theme-subtle">—</span>
                                                 @endif
@@ -215,14 +206,6 @@
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                @if($tieneUnitario)
-                                                                    <tr class="border-t border-slate-200/70 dark:border-slate-700/60">
-                                                                        <td class="py-1.5 pr-4 text-slate-700 dark:text-slate-200">Unitario</td>
-                                                                        <td class="py-1.5 pr-4 theme-subtle">1 ud.</td>
-                                                                        <td class="py-1.5 font-semibold text-slate-800 dark:text-slate-100">${{ number_format($producto->precio, 2) }}</td>
-                                                                    </tr>
-                                                                @endif
-
                                                                 @foreach($presentacionesLista as $presentacion)
                                                                     <tr class="border-t border-slate-200/70 dark:border-slate-700/60">
                                                                         <td class="py-1.5 pr-4 text-slate-700 dark:text-slate-200">{{ $presentacion->presentacion?->presentacion ?? '—' }}</td>

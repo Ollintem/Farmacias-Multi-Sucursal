@@ -164,7 +164,7 @@ test('el alta de lote convierte la presentacion elegida a unidades base', functi
     $this->assertDatabaseHas('inventario', [
         'id_sucursal' => $sucursal->id,
         'id_lote' => $lote->id,
-        'stock' => 150,
+        'stock_individual' => 150,
     ]);
 });
 

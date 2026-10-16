@@ -33,7 +33,7 @@ class AlertasResumen
         $rojos = Lote::query()
             ->whereHas('inventarios', function ($query) use ($sucursalId) {
                 $query->where('inventario.id_sucursal', $sucursalId)
-                    ->where('stock', '>', 0);
+                    ->where('stock_individual', '>', 0);
             })
             ->whereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) IS NOT NULL')
             ->whereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) <= ?', [$limite])

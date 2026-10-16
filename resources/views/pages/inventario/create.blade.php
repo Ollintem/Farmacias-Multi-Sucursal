@@ -1,8 +1,6 @@
 @php
     $producto = $producto ?? null;
     $esEdicion = $producto !== null;
-    $venderPorUnidad = old('vender_por_unidad', $esEdicion && $producto->vender_por_unidad);
-    $valorPrecio = old('precio', $esEdicion ? $producto->precio : '');
     $valorVolver = route('inventario.productos', ['sucursal' => $selectedSucursalId]);
 @endphp
 
@@ -35,40 +33,43 @@
             @endif
 
             @php
-                $faltanCatalogos = $sucursales->isEmpty() || $presentaciones->isEmpty() || $categorias->isEmpty() || $presentacionCaja === null;
-                $sinPresentaciones = $esEdicion && $producto->presentacionesPrecio->isEmpty();
-                $filasBase = $sinPresentaciones ? [] : [['id_presentacion' => $presentacionCaja?->id ?? '', 'unidades' => '', 'precio' => '']];
+                $faltanCatalogos = $sucursales->isEmpty() || $presentaciones->isEmpty() || $categorias->isEmpty();
 
                 if ($esEdicion) {
-                    $filasDelProducto = $producto->presentacionesPrecio
+                    $filasBase = $producto->presentacionesPrecio
                         ->map(fn ($presentacion) => [
                             'id_presentacion' => $presentacion->id_presentacion,
                             'unidades' => $presentacion->unidades,
                             'precio' => $presentacion->precio_presentacion,
+                            'es_principal' => (int) $presentacion->es_principal,
                             'error' => '',
                         ])
-                        ->sortBy(fn ($fila) => $fila['id_presentacion'] == $presentacionCaja?->id ? 0 : 1)
                         ->values()
                         ->all();
-
-                    if ($filasDelProducto !== []) {
-                        $filasBase = $filasDelProducto;
-                    }
+                } else {
+                    $filasBase = [[
+                        'id_presentacion' => $presentacionCaja?->id ?? '',
+                        'unidades' => '',
+                        'precio' => '',
+                        'es_principal' => 1,
+                        'error' => '',
+                    ]];
                 }
 
                 $filasOld = old('presentaciones');
                 $filasIniciales = is_array($filasOld) && $filasOld !== [] ? $filasOld : $filasBase;
                 $filasIniciales = collect($filasIniciales)
-                    ->map(fn ($fila) => array_merge(['id_presentacion' => '', 'unidades' => '', 'precio' => '', 'error' => ''], is_array($fila) ? $fila : []))
+                    ->map(fn ($fila) => array_merge(['id_presentacion' => '', 'unidades' => '', 'precio' => '', 'es_principal' => 0, 'error' => ''], is_array($fila) ? $fila : []))
                     ->values()
                     ->all();
 
-                if ($filasIniciales === [] && $filasBase !== []) {
-                    $filasIniciales = $filasBase;
-                }
+                $indicePrincipalInicial = 0;
 
-                if ($filasIniciales !== []) {
-                    $filasIniciales[0]['id_presentacion'] = $presentacionCaja?->id ?? '';
+                foreach ($filasIniciales as $indice => $fila) {
+                    if (! empty($fila['es_principal'])) {
+                        $indicePrincipalInicial = $indice;
+                        break;
+                    }
                 }
             @endphp
 
@@ -83,10 +84,7 @@
                             <li>No hay categorías registradas.</li>
                         @endif
                         @if($presentaciones->isEmpty())
-                            <li>No hay presentaciones registradas.</li>
-                        @endif
-                        @if($presentacionCaja === null)
-                            <li>No hay presentación «Caja» registrada. Es obligatoria para control de caja: créala desde «+ Agregar nueva presentación» y vuelve a cargar la p&aacute;gina.</li>
+                            <li>No hay presentaciones registradas. Es obligatoria al menos una presentación principal: créala desde «+ Agregar nueva presentación» y vuelve a cargar la p&aacute;gina.</li>
                         @endif
                     </ul>
                 </div>
@@ -225,32 +223,6 @@
                                 <label class="mb-2 block text-sm font-medium">Descripción <span class="opacity-50 font-normal">(opcional)</span></label>
                                 <textarea name="descripcion" rows="2" class="theme-input" placeholder="Ej. agrega una breve descripción de este producto">{{ old('descripcion', $producto?->descripcion) }}</textarea>
                             </div>
-
-                            <div>
-                                <label class="mb-2 block text-sm font-medium">Precio unitario</label>
-                                <label class="flex items-center gap-3 text-sm">
-                                    <input type="checkbox" name="vender_por_unidad" value="1" x-model="venderPorUnidad">
-                                    <span>Vender por unidad</span>
-                                </label>
-                                <p class="mt-1 text-xs text-slate-500 dark:text-zinc-400">Ej. pastilla o ampolleta. Si lo deshabilitas, solo se venderá por presentación.</p>
-
-                                <div x-show="venderPorUnidad" x-cloak>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        name="precio"
-                                        value="{{ $valorPrecio }}"
-                                        class="theme-input mt-2"
-                                        placeholder="0.00"
-                                        :disabled="!venderPorUnidad"
-                                        :required="venderPorUnidad"
-                                    >
-                                    @error('precio')
-                                        <span class="mt-1 block text-xs text-red-500">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -276,86 +248,81 @@
                                         <div>
                                             <label class="mb-2 block text-sm font-medium">
                                                 Presentación
-                                                <span x-show="indice === 0" class="font-normal text-slate-400">(principal)</span>
+                                                <span x-show="principalIndex === indice" class="font-normal text-slate-400">(principal)</span>
                                             </label>
 
-                                            <template x-if="indice === 0">
-                                                <div class="flex items-center gap-2">
-                                                    <select class="theme-input cursor-not-allowed appearance-none" disabled aria-label="Presentación principal">
-                                                        <option selected x-text="presentacionCajaNombre || 'Caja'"></option>
-                                                    </select>
-                                                    <input
-                                                        type="hidden"
-                                                        :name="'presentaciones[' + indice + '][id_presentacion]'"
-                                                        :value="fila.id_presentacion"
-                                                    >
-                                                </div>
-                                            </template>
+                                            <label class="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-zinc-400">
+                                                <input type="radio" name="principal_presentacion" :checked="principalIndex === indice" x-on:change="marcarPrincipal(indice)">
+                                                Principal
+                                            </label>
+                                            <input
+                                                type="hidden"
+                                                :name="'presentaciones[' + indice + '][es_principal]'"
+                                                :value="principalIndex === indice ? 1 : 0"
+                                            >
 
-                                            <template x-if="indice > 0">
-                                                <div class="relative" :data-dropdown="'presentacion-' + indice">
-                                                    <input
-                                                        type="hidden"
-                                                        :name="'presentaciones[' + indice + '][id_presentacion]'"
-                                                        :value="fila.id_presentacion"
-                                                    >
+                                            <div class="relative" :data-dropdown="'presentacion-' + indice">
+                                                <input
+                                                    type="hidden"
+                                                    :name="'presentaciones[' + indice + '][id_presentacion]'"
+                                                    :value="fila.id_presentacion"
+                                                >
 
+                                                <button
+                                                    type="button"
+                                                    class="theme-input flex cursor-pointer items-center justify-between gap-2 text-left"
+                                                    x-on:click="dropdownAbierto = dropdownAbierto === ('presentacion-' + indice) ? null : ('presentacion-' + indice)"
+                                                    x-bind:aria-expanded="dropdownAbierto === ('presentacion-' + indice)"
+                                                    aria-haspopup="listbox"
+                                                >
+                                                    <span x-bind:class="fila.id_presentacion === '' ? 'opacity-60' : 'font-semibold'" x-text="nombrePresentacion(fila.id_presentacion)"></span>
+                                                    <svg
+                                                        class="h-4 w-4 shrink-0 text-slate-400 transition-transform"
+                                                        x-bind:class="dropdownAbierto === ('presentacion-' + indice) && 'rotate-180'"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                                    </svg>
+                                                </button>
+
+                                                <div x-show="dropdownAbierto === ('presentacion-' + indice)" x-cloak x-transition.opacity class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-zinc-700 dark:bg-zinc-900">
+                                                    <div class="farma-pick-scroll" role="listbox" aria-label="Presentaciones">
+                                                        <template x-for="presentacion in catalogoPresentaciones" :key="presentacion.id">
+                                                            <button
+                                                                type="button"
+                                                                role="option"
+                                                                x-on:click="seleccionarPresentacion(indice, presentacion.id)"
+                                                                x-bind:aria-selected="String(fila.id_presentacion) === String(presentacion.id)"
+                                                                x-bind:class="String(fila.id_presentacion) === String(presentacion.id) ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100'"
+                                                                class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border-[1.5px] px-3 py-2 text-left text-sm font-semibold transition active:scale-[0.99]"
+                                                            >
+                                                                <span class="truncate" x-text="presentacion.presentacion"></span>
+                                                                <svg
+                                                                    x-show="String(fila.id_presentacion) === String(presentacion.id)"
+                                                                    x-cloak
+                                                                    class="h-4 w-4 shrink-0"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    viewBox="0 0 24 24"
+                                                                >
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                                </svg>
+                                                            </button>
+                                                        </template>
+                                                    </div>
                                                     <button
                                                         type="button"
-                                                        class="theme-input flex cursor-pointer items-center justify-between gap-2 text-left"
-                                                        x-on:click="dropdownAbierto = dropdownAbierto === ('presentacion-' + indice) ? null : ('presentacion-' + indice)"
-                                                        x-bind:aria-expanded="dropdownAbierto === ('presentacion-' + indice)"
-                                                        aria-haspopup="listbox"
+                                                        x-on:click="abrirModal('presentacion', indice)"
+                                                        class="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-[#0e9384] px-3 py-2 text-sm font-bold text-[#0b6e68] transition hover:bg-emerald-50 active:scale-[0.99] dark:text-emerald-300 dark:hover:bg-emerald-500/10"
                                                     >
-                                                        <span x-bind:class="fila.id_presentacion === '' ? 'opacity-60' : 'font-semibold'" x-text="nombrePresentacion(fila.id_presentacion)"></span>
-                                                        <svg
-                                                            class="h-4 w-4 shrink-0 text-slate-400 transition-transform"
-                                                            x-bind:class="dropdownAbierto === ('presentacion-' + indice) && 'rotate-180'"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                            aria-hidden="true"
-                                                        >
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                                        </svg>
+                                                        <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#0e9384] text-xs font-bold leading-none text-white">+</span>
+                                                        Agregar nueva presentación
                                                     </button>
-
-                                                    <div x-show="dropdownAbierto === ('presentacion-' + indice)" x-cloak x-transition.opacity class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-zinc-700 dark:bg-zinc-900">
-                                                        <div class="farma-pick-scroll" role="listbox" aria-label="Presentaciones">
-                                                            <template x-for="presentacion in catalogoPresentaciones" :key="presentacion.id">
-                                                                <button
-                                                                    type="button"
-                                                                    role="option"
-                                                                    x-on:click="seleccionarPresentacion(indice, presentacion.id)"
-                                                                    x-bind:aria-selected="String(fila.id_presentacion) === String(presentacion.id)"
-                                                                    x-bind:class="String(fila.id_presentacion) === String(presentacion.id) ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100'"
-                                                                    class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border-[1.5px] px-3 py-2 text-left text-sm font-semibold transition active:scale-[0.99]"
-                                                                >
-                                                                    <span class="truncate" x-text="presentacion.presentacion"></span>
-                                                                    <svg
-                                                                        x-show="String(fila.id_presentacion) === String(presentacion.id)"
-                                                                        x-cloak
-                                                                        class="h-4 w-4 shrink-0"
-                                                                        fill="none"
-                                                                        stroke="currentColor"
-                                                                        viewBox="0 0 24 24"
-                                                                    >
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                                                                    </svg>
-                                                                </button>
-                                                            </template>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            x-on:click="abrirModal('presentacion', indice)"
-                                                            class="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-[#0e9384] px-3 py-2 text-sm font-bold text-[#0b6e68] transition hover:bg-emerald-50 active:scale-[0.99] dark:text-emerald-300 dark:hover:bg-emerald-500/10"
-                                                        >
-                                                            <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#0e9384] text-xs font-bold leading-none text-white">+</span>
-                                                            Agregar nueva presentación
-                                                        </button>
-                                                    </div>
                                                 </div>
-                                            </template>
+                                            </div>
 
                                             <span
                                                 x-show="fila.error"
@@ -369,13 +336,15 @@
                                             <label class="mb-2 block text-sm font-medium">Unidades en esta presentación <span class="text-red-500">*</span></label>
                                             <input
                                                 type="number"
-                                                min="2"
+                                                min="1"
+                                                :readonly="esUnidad(fila.id_presentacion)"
                                                 :name="'presentaciones[' + indice + '][unidades]'"
                                                 x-model="fila.unidades"
                                                 class="theme-input"
                                                 placeholder="Ej. 10"
                                                 required
                                             >
+                                            <span x-show="esUnidad(fila.id_presentacion)" x-cloak class="mt-1 block text-xs text-slate-400">La unidad siempre vale 1.</span>
                                         </div>
 
                                         <div>
@@ -396,11 +365,12 @@
                                     <div class="mt-3 flex justify-end">
                                         <button
                                             type="button"
-                                            x-show="indice === 0 || filas.length > 1"
-                                            x-on:click="indice === 0 ? confirmarUnitario = true : quitarFila(indice)"
+                                            x-show="filas.length > 1"
+                                            x-on:click="quitarFila(indice)"
                                             class="text-xs font-medium text-red-500 transition hover:text-red-600"
-                                            x-text="indice === 0 ? 'Quitar presentaciones' : 'Eliminar presentación'"
-                                        ></button>
+                                        >
+                                            Eliminar presentación
+                                        </button>
                                     </div>
                                 </div>
                             </template>
@@ -422,46 +392,9 @@
                     <button
                         type="submit"
                         class="theme-button theme-button-primary"
-                        x-bind:disabled="(filas.length === 0 && !venderPorUnidad) || (filas.length > 0 && !presentacionCajaId)"
-                        x-bind:aria-disabled="(filas.length === 0 && !venderPorUnidad) || (filas.length > 0 && !presentacionCajaId)"
+                        x-bind:disabled="filas.length === 0"
+                        x-bind:aria-disabled="filas.length === 0"
                     >{{ $esEdicion ? 'Guardar cambios' : 'Guardar producto' }}</button>
-                </div>
-
-                {{-- Modal: confirmar quitar todas las presentaciones --}}
-                <div
-                    x-show="confirmarUnitario"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
-                    style="display:none;"
-                    x-cloak
-                >
-                    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="confirmarUnitario = false"></div>
-
-                    <div
-                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
-                        x-on:click.stop
-                    >
-                        <div class="mb-5 flex items-center justify-between">
-                            <h2 class="text-lg font-bold">Quitar presentaciones</h2>
-                            <button type="button" x-on:click="confirmarUnitario = false" class="opacity-50 transition hover:opacity-100">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            </button>
-                        </div>
-
-                        <p class="text-sm text-slate-600 dark:text-slate-300">
-                            ¿Estás consciente de que este producto no se vende por presentación y su única venta es unitaria?
-                        </p>
-
-                        <div class="mt-6 flex justify-end gap-3">
-                            <button type="button" x-on:click="confirmarUnitario = false" class="theme-button theme-button-secondary">Cancelar</button>
-                            <button type="button" x-on:click="quitarTodasPresentaciones()" class="theme-button theme-button-primary">Sí, quitar</button>
-                        </div>
-                    </div>
                 </div>
 
                 {{-- Modal: nueva categoría / nueva presentación --}}
@@ -526,43 +459,33 @@
                 dropdownAbierto: null,
                 errorCategoria: '',
                 categorias: @json($categorias->map(fn ($categoria) => ['id' => $categoria->id, 'nombre' => $categoria->nombre])->values(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT),
-                venderPorUnidad: {{ $venderPorUnidad ? 'true' : 'false' }},
                 filas: @json($filasIniciales),
-                presentacionCajaId: @json($presentacionCaja?->id),
-                presentacionCajaNombre: @json($presentacionCaja?->presentacion),
-                catalogoPresentaciones: @json($presentaciones->reject(fn ($p) => strtolower($p->presentacion) === 'caja')->map(fn ($p) => ['id' => $p->id, 'presentacion' => $p->presentacion])->values()),
+                principalIndex: {{ (int) $indicePrincipalInicial }},
+                catalogoPresentaciones: @json($presentaciones->map(fn ($p) => ['id' => $p->id, 'presentacion' => $p->presentacion])->values()),
                 modalAbierto: false,
                 modalModo: 'categoria',
                 modalNombre: '',
                 modalError: '',
                 guardando: false,
                 indiceFilaOrigen: null,
-                confirmarUnitario: false,
 
                 agregarFila() {
-                    if (this.filas.length === 0) {
-                        this.filas.push({
-                            id_presentacion: this.presentacionCajaId ? String(this.presentacionCajaId) : '',
-                            unidades: '',
-                            precio: '',
-                            error: '',
-                        });
-                        return;
-                    }
-
-                    this.filas.push({ id_presentacion: '', unidades: '', precio: '', error: '' });
+                    this.filas.push({ id_presentacion: '', unidades: '', precio: '', es_principal: 0, error: '' });
                 },
 
                 quitarFila(indice) {
                     this.filas.splice(indice, 1);
                     this.dropdownAbierto = null;
+
+                    if (this.principalIndex === indice) {
+                        this.principalIndex = 0;
+                    } else if (this.principalIndex > indice) {
+                        this.principalIndex--;
+                    }
                 },
 
-                quitarTodasPresentaciones() {
-                    this.filas = [];
-                    this.venderPorUnidad = true;
-                    this.dropdownAbierto = null;
-                    this.confirmarUnitario = false;
+                marcarPrincipal(indice) {
+                    this.principalIndex = indice;
                 },
 
                 seguirDesplegable() {
@@ -647,17 +570,27 @@
                 seleccionarPresentacion(indice, valor) {
                     this.dropdownAbierto = null;
                     this.filas[indice].id_presentacion = String(valor);
+
+                    if (this.esUnidad(valor)) {
+                        this.filas[indice].unidades = 1;
+                    } else if (Number(this.filas[indice].unidades) <= 1) {
+                        this.filas[indice].unidades = '';
+                    }
+
                     this.validarDuplicado(indice, String(valor));
+                },
+
+                esUnidad(valor) {
+                    const presentacion = this.catalogoPresentaciones.find((item) => String(item.id) === String(valor));
+
+                    return presentacion ? presentacion.presentacion.toLowerCase() === 'unidad' : false;
                 },
 
                 validarFormulario() {
                     this.errorCategoria = this.categoriaSeleccionada === '' ? 'Selecciona una categoría' : '';
 
                     let faltanPresentaciones = false;
-                    this.filas.forEach((fila, indice) => {
-                        if (indice === 0) {
-                            return;
-                        }
+                    this.filas.forEach((fila) => {
                         if (fila.id_presentacion === '') {
                             fila.error = 'Selecciona una presentación';
                             faltanPresentaciones = true;
@@ -741,18 +674,16 @@
                             this.categorias.push({ id: payload.id, nombre: payload.nombre });
                             this.categoriaSeleccionada = String(payload.id);
                             this.errorCategoria = '';
-                        } else if (String(payload.presentacion).toLowerCase() === 'caja' && !this.presentacionCajaId) {
-                            this.presentacionCajaId = payload.id;
-                            this.presentacionCajaNombre = payload.presentacion;
-                            if (this.filas[0]) {
-                                this.filas[0].id_presentacion = String(payload.id);
-                                this.filas[0].error = '';
-                            }
                         } else {
                             this.catalogoPresentaciones.push({ id: payload.id, presentacion: payload.presentacion });
+
                             if (this.indiceFilaOrigen !== null && this.filas[this.indiceFilaOrigen]) {
                                 this.filas[this.indiceFilaOrigen].id_presentacion = String(payload.id);
                                 this.filas[this.indiceFilaOrigen].error = '';
+
+                                if (String(payload.presentacion).toLowerCase() === 'unidad') {
+                                    this.filas[this.indiceFilaOrigen].unidades = 1;
+                                }
                             }
                         }
 

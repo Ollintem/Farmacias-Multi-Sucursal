@@ -57,7 +57,7 @@ function registrarLotePos(Producto $producto, Sucursal $sucursal, int $unidades,
     Inventario::create([
         'id_sucursal' => $sucursal->id,
         'id_lote' => $lote->id,
-        'stock' => $unidades,
+        'stock_individual' => $unidades,
     ]);
 
     return $lote;
@@ -70,9 +70,6 @@ test('un producto sin precio unitario abre el selector de presentaciones', funct
         'codigo_barras' => '7500000000001',
         'nombre_producto' => 'Amoxicilina 500mg',
         'descripcion' => '',
-        'stock' => 30,
-        'precio' => null,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
@@ -80,6 +77,7 @@ test('un producto sin precio unitario abre el selector de presentaciones', funct
     $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
         'unidades' => 10,
+        'es_principal' => true,
         'precio_presentacion' => 85.0,
     ]);
 
@@ -101,9 +99,6 @@ test('elegir presentacion agrega el item al carrito con su precio', function () 
         'codigo_barras' => '7500000000002',
         'nombre_producto' => 'Amoxicilina 500mg',
         'descripcion' => '',
-        'stock' => 30,
-        'precio' => null,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
@@ -111,6 +106,7 @@ test('elegir presentacion agrega el item al carrito con su precio', function () 
     $relacion = $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
         'unidades' => 10,
+        'es_principal' => true,
         'precio_presentacion' => 85.0,
     ]);
 
@@ -136,9 +132,6 @@ test('confirmar venta descuenta stock por unidades al vender presentaciones', fu
         'codigo_barras' => '7500000000003',
         'nombre_producto' => 'Ibuprofeno 400mg',
         'descripcion' => '',
-        'stock' => 30,
-        'precio' => null,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
@@ -146,6 +139,7 @@ test('confirmar venta descuenta stock por unidades al vender presentaciones', fu
     $relacion = $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
         'unidades' => 10,
+        'es_principal' => true,
         'precio_presentacion' => 85.0,
     ]);
 
@@ -172,9 +166,6 @@ test('no se puede superar el stock en presentaciones del carrito', function () {
         'codigo_barras' => '7500000000004',
         'nombre_producto' => 'Naproxeno 250mg',
         'descripcion' => '',
-        'stock' => 15,
-        'precio' => null,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
@@ -182,6 +173,7 @@ test('no se puede superar el stock en presentaciones del carrito', function () {
     $relacion = $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
         'unidades' => 10,
+        'es_principal' => true,
         'precio_presentacion' => 70.0,
     ]);
 
@@ -205,12 +197,11 @@ test('el producto con precio unitario se agrega por unidad como antes', function
         'codigo_barras' => '7500000000005',
         'nombre_producto' => 'Paracetamol 500mg',
         'descripcion' => '',
-        'stock' => 50,
-        'precio' => 2.5,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
+
+    registrarPrecioUnidad($producto, 2.5);
 
     registrarLotePos($producto, $sucursal, 50);
 
@@ -230,9 +221,6 @@ test('el producto divisible abre el selector y ofrece caja o unidad', function (
         'codigo_barras' => '7500000000006',
         'nombre_producto' => 'Diclofenaco 50mg',
         'descripcion' => '',
-        'stock' => 30,
-        'precio' => 2.5,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
@@ -240,8 +228,11 @@ test('el producto divisible abre el selector y ofrece caja o unidad', function (
     $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
         'unidades' => 10,
+        'es_principal' => true,
         'precio_presentacion' => 25.0,
     ]);
+
+    registrarPrecioUnidad($producto, 2.5, false);
 
     registrarLotePos($producto, $sucursal, 30);
 
@@ -273,9 +264,6 @@ test('el producto que solo se vende en caja no ofrece la unidad en el selector',
         'codigo_barras' => '7500000000007',
         'nombre_producto' => 'Amoxicilina 500mg Caja',
         'descripcion' => '',
-        'stock' => 30,
-        'precio' => null,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
@@ -283,6 +271,7 @@ test('el producto que solo se vende en caja no ofrece la unidad en el selector',
     $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
         'unidades' => 10,
+        'es_principal' => true,
         'precio_presentacion' => 85.0,
     ]);
 
@@ -303,9 +292,6 @@ test('el POS abre caja al vender unidad y refleja el estado de cajas', function 
         'codigo_barras' => '7500000000008',
         'nombre_producto' => 'Naproxeno 200mg',
         'descripcion' => '',
-        'stock' => 10,
-        'precio' => 2.5,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
@@ -313,8 +299,11 @@ test('el POS abre caja al vender unidad y refleja el estado de cajas', function 
     $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
         'unidades' => 10,
+        'es_principal' => true,
         'precio_presentacion' => 25.0,
     ]);
+
+    registrarPrecioUnidad($producto, 2.5, false);
 
     registrarLotePos($producto, $sucursal, 10);
 
@@ -350,9 +339,6 @@ test('la presentacion que no cabe en el stock aparece deshabilitada en el select
         'codigo_barras' => '7500000000009',
         'nombre_producto' => 'Amoxicilina 250mg',
         'descripcion' => '',
-        'stock' => 9,
-        'precio' => null,
-        'id_presentacion' => $caja->id,
         'es_controlado' => false,
         'es_activo' => true,
     ]);
@@ -360,6 +346,7 @@ test('la presentacion que no cabe en el stock aparece deshabilitada en el select
     $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
         'unidades' => 10,
+        'es_principal' => true,
         'precio_presentacion' => 80.0,
     ]);
 
