@@ -66,6 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/sucursales', [SucursalesController::class, 'store'])->name('sucursales.store')->middleware('checarPermisos:crear,sucursales');
     Route::get('/sucursales/{sucursal}/edit', [SucursalesController::class, 'edit'])->name('sucursales.edit')->middleware('checarPermisos:editar,sucursales');
     Route::put('/sucursales/{sucursal}', [SucursalesController::class, 'update'])->name('sucursales.update')->middleware('checarPermisos:editar,sucursales');
+    Route::delete('/sucursales/{sucursal}', [SucursalesController::class, 'destroy'])->name('sucursales.destroy')->middleware('checarPermisos:eliminar,sucursales');
 
     // Punto de Venta
     Route::get('/punto-venta', PuntoDeVenta::class)
@@ -101,6 +102,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/proveedores', [ProveedoresController::class, 'store'])->name('proveedores.store')->middleware('checarPermisos:crear,proveedores');
     Route::get('/proveedores/{proveedor}/edit', [ProveedoresController::class, 'edit'])->name('proveedores.edit')->middleware('checarPermisos:editar,proveedores');
     Route::put('/proveedores/{proveedor}', [ProveedoresController::class, 'update'])->name('proveedores.update')->middleware('checarPermisos:editar,proveedores');
+    Route::delete('/proveedores/{proveedor}', [ProveedoresController::class, 'destroy'])->name('proveedores.destroy')->middleware('checarPermisos:eliminar,proveedores');
 
 });
 

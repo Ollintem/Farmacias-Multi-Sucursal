@@ -1,18 +1,18 @@
 <x-layouts::app :title="__('Permisos: ' . $usuario->nombre)">
-    <div class="module-page">
-        <div class="module-page-inner">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Permisos</p>
-                    <h1 class="mt-2 text-3xl font-bold text-slate-800 dark:text-white">{{ $usuario->nombre }} {{ $usuario->apellido }}</h1>
-                    <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">{{ $usuario->rol?->tipo_rol ?? 'Sin rol' }} &middot; {{ $usuario->email }}</p>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de permisos">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Permisos · {{ $usuario->rol?->tipo_rol ?? 'Sin rol' }} · {{ $usuario->email }}</p>
+                    <h1 class="mt-2">{{ $usuario->nombre }} {{ $usuario->apellido }}</h1>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary">← Volver</a>
+                        <a href="{{ route('usuarios.edit', $usuario) }}" class="theme-button theme-button-primary">Editar usuario</a>
+                    </div>
                 </div>
-
-                <div class="theme-tools">
-                    <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary">Volver</a>
-                    <a href="{{ route('usuarios.edit', $usuario) }}" class="theme-button theme-button-primary">Editar usuario</a>
-                </div>
-            </div>
+            </section>
 
             @if(session('success'))
                 <div
@@ -42,18 +42,22 @@
                 </div>
             @endif
 
+            <section class="module-card noti-listado" aria-label="Permisos por módulo">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Permisos por módulo</h2>
+                        <p class="theme-subtle text-sm">Marque qué puede hacer el usuario en cada módulo</p>
+                    </div>
+                    <div class="noti-cabecera-lado">
+                        <button type="button" id="permisos-toggle-all" class="noti-desplegar">Activar todo</button>
+                    </div>
+                </header>
+                <div class="p-5">
             <form action="{{ route('usuarios.updatePermisos', $usuario) }}" method="POST">
                 @csrf
                 @method('PUT')
 
-                <div class="module-table">
-                    <div class="flex flex-col gap-2 p-5 md:flex-row md:items-center md:justify-between">
-                        <div>
-                            <h2 class="text-lg font-bold text-slate-800 dark:text-white">Permisos por modulo</h2>
-                            <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">Marca que puede hacer el usuario en cada modulo.</p>
-                        </div>
-                        <button type="button" id="permisos-toggle-all" class="theme-button theme-button-secondary">Activar todo</button>
-                    </div>
+                <div class="module-table !rounded-none !border-0 !shadow-none">
 
                     @php
                         $columnasPermiso = ['ver' => 'Ver', 'crear' => 'Crear', 'editar' => 'Editar', 'borrar' => 'Borrar'];
@@ -114,6 +118,8 @@
                     <button type="submit" class="theme-button theme-button-primary">Guardar permisos</button>
                 </div>
             </form>
+                </div>
+            </section>
         </div>
     </div>
 

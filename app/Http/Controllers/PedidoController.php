@@ -74,9 +74,12 @@ class PedidoController extends Controller
                 'entregado_en' => $data['entregado_en'] ?? null,
             ]);
 
+            /** @var array<int, array{id: int, cantidad: int}> $productos */
+            $productos = $data['productos'];
+
             $pedido->detalles()->createMany(
-                collect($data['productos'])
-                    ->map(fn (array $item) => [
+                collect($productos)
+                    ->map(fn (array $item): array => [
                         'producto' => $item['id'],
                         'cantidad' => $item['cantidad'],
                     ])
@@ -91,37 +94,5 @@ class PedidoController extends Controller
             'sucursal' => $data['id_sucursal'],
             'tipo' => 'pedidos',
         ])->with('success', 'Pedido registrado correctamente.');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }

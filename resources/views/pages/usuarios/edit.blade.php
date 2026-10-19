@@ -1,17 +1,17 @@
 <x-layouts::app :title="__('Editar usuario: ' . $usuario->nombre . ' ' . $usuario->apellido)">
-    <div class="module-page">
-        <div class="module-page-inner">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Gestion de personal</p>
-                    <h1 class="mt-2 text-3xl font-bold text-slate-800 dark:text-white">Editar usuario: {{ $usuario->nombre }} {{ $usuario->apellido }}</h1>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de usuario">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Gestión de personal · Edición</p>
+                    <h1 class="mt-2">Editar usuario: {{ $usuario->nombre }} {{ $usuario->apellido }}</h1>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('usuarios.permisos', $usuario) }}" class="theme-button theme-button-secondary">Permisos</a>
+                    </div>
                 </div>
-
-                <div class="theme-tools">
-                    <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary">Volver</a>
-                    <a href="{{ route('usuarios.permisos', $usuario) }}" class="theme-button theme-button-secondary">Permisos</a>
-                </div>
-            </div>
+            </section>
 
             @if(session('success'))
                 <div
@@ -27,14 +27,20 @@
                 </div>
             @endif
 
+            <section class="module-card noti-listado" aria-label="Datos del usuario">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Datos del usuario</h2>
+                        <p class="theme-subtle text-sm">Actualice la información general de la cuenta</p>
+                    </div>
+                </header>
+                <div class="p-5">
             <form action="{{ route('usuarios.update', $usuario) }}" method="POST">
                 @csrf
                 @method('PUT')
 
-                <div class="module-table">
+                <div class="module-table !rounded-none !border-0 !shadow-none">
                     <div class="p-5">
-                        <h2 class="text-lg font-bold text-slate-800 dark:text-white">Datos del usuario</h2>
-                        <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">Actualiza la informacion general de la cuenta.</p>
 
                         <div class="mt-5 grid gap-5 md:grid-cols-2">
                             <div>
@@ -113,6 +119,8 @@
                     <button type="submit" class="theme-button theme-button-primary">Guardar cambios</button>
                 </div>
             </form>
+                </div>
+            </section>
         </div>
     </div>
 </x-layouts::app>

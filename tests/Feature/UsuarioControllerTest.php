@@ -103,7 +103,7 @@ it('muestra el formulario de edición con los datos y permisos del usuario', fun
     $this->actingAs($admin)
         ->get(route('usuarios.permisos', $usuario))
         ->assertOk()
-        ->assertSee('Permisos por modulo')
+        ->assertSee('Permisos por módulo')
         ->assertSee($modulo->nombre_modulo)
         ->assertSee('Ver');
 });
@@ -256,7 +256,7 @@ it('muestra los permisos activados del usuario en modo solo lectura', function (
 
     $response->assertOk()
         ->assertSee($usuario->nombre)
-        ->assertSee('Permisos por modulo')
+        ->assertSee('Permisos por módulo')
         ->assertSee($modulo->nombre_modulo)
         ->assertSee('Guardar permisos');
 });

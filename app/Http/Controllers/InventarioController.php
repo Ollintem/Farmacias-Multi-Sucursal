@@ -116,6 +116,8 @@ class InventarioController extends Controller
      *
      * Entrada: query Eloquent de productos y texto ya recortado (no vacío).
      * Salida: ninguna, modifica el query recibido.
+     *
+     * @param  Builder<Producto>  $query
      */
     private function aplicarBusquedaProducto(Builder $query, string $busqueda): void
     {
@@ -153,6 +155,8 @@ class InventarioController extends Controller
      *
      * Entrada: catálogo de presentaciones (opcional).
      * Salida: el registro de caja o null si no existe en el catálogo.
+     *
+     * @param  Collection<int, PresentacionProducto>|null  $presentaciones
      */
     private function presentacionCaja(?Collection $presentaciones = null): ?PresentacionProducto
     {

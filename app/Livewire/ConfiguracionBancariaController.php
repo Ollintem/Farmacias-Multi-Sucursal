@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\ConfiguracionBancaria;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -63,7 +64,7 @@ class ConfiguracionBancariaController extends Component
         $this->dispatch('configuracion-actualizada');
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.configuracion-bancaria');
     }

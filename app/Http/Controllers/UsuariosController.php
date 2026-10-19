@@ -145,6 +145,9 @@ class UsuariosController extends Controller
         return redirect()->route('usuarios.permisos', $usuario)->with('success', 'Permisos actualizados correctamente.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function datosPermisos(User $usuario): array
     {
         $roles = Rol::where('tipo_rol', '!=', 'SuperAdmin')
@@ -161,12 +164,13 @@ class UsuariosController extends Controller
         $permisosAgrupados = [];
 
         foreach ($modulos as $modulo) {
+            /** @var PermisoActivado|null $fila */
             $fila = $filas->get($modulo->id);
 
-            $tieneVer = (bool) ($fila?->puede_ver ?? false);
-            $tieneCrear = (bool) ($fila?->puede_crear ?? false);
-            $tieneEditar = (bool) ($fila?->puede_editar ?? false);
-            $tieneBorrar = (bool) ($fila?->puede_borrar ?? false);
+            $tieneVer = $fila !== null && $fila->puede_ver;
+            $tieneCrear = $fila !== null && $fila->puede_crear;
+            $tieneEditar = $fila !== null && $fila->puede_editar;
+            $tieneBorrar = $fila !== null && $fila->puede_borrar;
 
             $permisosActivos[$modulo->id] = [
                 'ver' => $tieneVer,

@@ -3,19 +3,25 @@
 @endphp
 
 <x-layouts::app :title="$esEdicion ? __('Editar sucursal') : __('Nueva sucursal')">
-    <div class="module-page">
-        <div class="module-page-inner mx-auto w-full max-w-5xl">
-            <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <a href="{{ route('sucursales.index') }}" class="inline-flex items-center gap-2 text-sm font-bold text-emerald-700 transition hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200">← Volver a sucursales</a>
-                    <p class="farma-kicker mt-6">Red de farmacias</p>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de sucursal">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Red de farmacias · {{ $esEdicion ? 'Edición' : 'Nuevo registro' }}</p>
                     <h1 class="mt-2">{{ $esEdicion ? 'Editar sucursal' : 'Agregar sucursal' }}</h1>
-                    <p class="theme-subtle mt-2 max-w-2xl text-sm leading-6">{{ $esEdicion ? 'Actualiza la información operativa y de contacto de esta farmacia.' : 'Registra la información necesaria para operar esta farmacia.' }}</p>
                 </div>
-                <span class="stat-pill {{ $esEdicion ? 'info' : 'positive' }} w-fit">{{ $esEdicion ? 'Edición de registro' : 'Nuevo registro' }}</span>
-            </div>
+            </section>
 
-            <div class="module-card p-5 sm:p-8">
+            <section class="module-card noti-listado" aria-label="Datos de la sucursal">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Datos de la sucursal</h2>
+                        <p class="theme-subtle text-sm">{{ $esEdicion ? 'Actualice la información operativa y de contacto' : 'Información necesaria para operar la farmacia' }}</p>
+                    </div>
+                </header>
+                <div class="p-5 sm:p-8">
                 <form method="POST" action="{{ $esEdicion ? route('sucursales.update', $sucursal) : route('sucursales.store') }}" class="space-y-8">
                     @csrf
                     @if ($esEdicion)
@@ -104,7 +110,8 @@
                         <button type="submit" class="theme-button theme-button-primary">{{ $esEdicion ? 'Guardar cambios' : 'Guardar sucursal' }} <span class="ml-2">→</span></button>
                     </div>
                 </form>
-            </div>
+                </div>
+            </section>
         </div>
     </div>
 </x-layouts::app>

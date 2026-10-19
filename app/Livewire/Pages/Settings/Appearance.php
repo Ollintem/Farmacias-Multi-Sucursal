@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Pages\Settings;
 
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -24,7 +25,7 @@ class Appearance extends Component
         $this->dispatch('aplicar-tema', modo: $nuevoModo);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.pages.settings.appearance');
     }

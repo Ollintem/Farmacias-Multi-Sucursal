@@ -99,4 +99,44 @@ class SucursalesController extends Controller
 
         return redirect()->route('sucursales.index')->with('success', 'Sucursal actualizada correctamente.');
     }
+
+    /**
+     * Elimina una sucursal sin movimiento (usuarios, pedidos, inventario,
+     * traspasos o cajas la bloquean porque se borrarían en cascada).
+     *
+     * Entrada: sucursal resuelta mediante route model binding.
+     * Salida: redirección al listado con mensaje de éxito o de bloqueo.
+     */
+    public function destroy(Sucursal $sucursal): RedirectResponse
+    {
+        $bloqueos = [];
+
+        if ($sucursal->usuarios()->exists()) {
+            $bloqueos[] = 'usuarios asignados';
+        }
+
+        if ($sucursal->pedidos()->exists()) {
+            $bloqueos[] = 'pedidos registrados';
+        }
+
+        if ($sucursal->inventarios()->exists()) {
+            $bloqueos[] = 'inventario registrado';
+        }
+
+        if ($sucursal->traspasosOrigen()->exists() || $sucursal->traspasosDestino()->exists()) {
+            $bloqueos[] = 'traspasos registrados';
+        }
+
+        if ($sucursal->cajas()->exists()) {
+            $bloqueos[] = 'movimientos de caja';
+        }
+
+        if ($bloqueos !== []) {
+            return back()->with('error', "No se puede eliminar «{$sucursal->nombre_sucursal}»: tiene ".implode(', ', $bloqueos).'. Desactívela para ocultarla de la operación sin perder el historial.');
+        }
+
+        $sucursal->delete();
+
+        return back()->with('success', "«{$sucursal->nombre_sucursal}» se eliminó del directorio.");
+    }
 }

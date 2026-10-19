@@ -5,18 +5,19 @@
 @endphp
 
 <x-layouts::app :title="$esEdicion ? __('Editar producto') : __('Nuevo producto')">
-    <div class="module-page">
-        <div class="module-page-inner">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Catálogo</p>
-                    <h1 class="mt-2 text-3xl font-bold text-slate-800 dark:text-white">{{ $esEdicion ? 'Editar producto' : 'Agregar producto' }}</h1>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de producto">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Catálogo · {{ $esEdicion ? 'Edición' : 'Nuevo registro' }}</p>
+                    <h1 class="mt-2">{{ $esEdicion ? 'Editar producto' : 'Agregar producto' }}</h1>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ $valorVolver }}" class="theme-button theme-button-secondary">← Volver</a>
+                    </div>
                 </div>
-
-                <div class="theme-tools">
-                    <a href="{{ $valorVolver }}" class="theme-button theme-button-secondary">Volver</a>
-                </div>
-            </div>
+            </section>
 
             @if(session('error'))
                 <div
@@ -106,6 +107,14 @@
                 </div>
             @endif
 
+            <section class="module-card noti-listado" aria-label="Datos del producto">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Datos del producto</h2>
+                        <p class="theme-subtle text-sm">{{ $esEdicion ? 'Actualice la información del producto' : 'Complete la información del nuevo producto' }}</p>
+                    </div>
+                </header>
+                <div class="p-5 sm:p-6">
             <form
                 action="{{ $esEdicion ? route('inventario.update', $producto) : route('inventario.store') }}"
                 method="POST"
@@ -449,6 +458,8 @@
                     </div>
                 </div>
             </form>
+                </div>
+            </section>
         </div>
     </div>
 

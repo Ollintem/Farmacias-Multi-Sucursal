@@ -12,13 +12,18 @@ use App\Models\TipoAlerta;
 use App\Models\Traspaso;
 use App\Models\Venta;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 
 /**
  * Arma el listado único de notificaciones estilo Facebook.
  *
  * Cada aviso trae: id estable, tipo, título, detalle, url, fecha y prioridad.
  * Lo leído se persiste en alertas/alertas_usuarios (fecha_leido + estado).
+ *
+ * @phpstan-type FechaAviso Carbon|CarbonImmutable
+ * @phpstan-type Aviso array{id: string, tipo: string, titulo: string, detalle: string, url: string, fecha: FechaAviso|null, prioridad: string, icono: string, mensaje?: string|null, avatar?: string, nivel?: string, destino_url?: string, destino_etiqueta?: string, traspaso_id?: int, grupo?: string, subtipo?: string, alerta_id?: int, leida?: bool, tiempo?: string, fecha_texto?: string|null}
  */
 class AlertasFeed
 {
@@ -57,7 +62,7 @@ class AlertasFeed
     /**
      * Construye todos los avisos de la sucursal, nuevos primero.
      *
-     * @return array<int, array{id: string, tipo: string, titulo: string, detalle: string, url: string, fecha: Carbon|null, prioridad: string, icono: string}>
+     * @return array<int, Aviso>
      */
     public static function items(?int $sucursalId): array
     {
@@ -69,7 +74,10 @@ class AlertasFeed
 
         $pendientes = Traspaso::query()
             ->with(['sucursalOrigen', 'sucursalDestino', 'detalles.lote.producto', 'solicitadoPor'])
-            ->where('sucursal_b', $sucursalId)
+            ->where(function ($query) use ($sucursalId): void {
+                $query->where('sucursal_a', $sucursalId)
+                    ->orWhere('sucursal_b', $sucursalId);
+            })
             ->whereIn('estado', ['pendiente', 'enviado'])
             ->orderByDesc('id')
             ->limit(30)
@@ -77,21 +85,27 @@ class AlertasFeed
 
         foreach ($pendientes as $traspaso) {
             $totalUnidades = (int) $traspaso->detalles->sum('cantidad');
-            $nombreProducto = $traspaso->detalles->first()?->lote?->producto?->nombre_producto
+            $nombreProducto = $traspaso->detalles->first()?->lote->producto->nombre_producto
                 ?? ($traspaso->detalles->count() > 1 ? $traspaso->detalles->count().' lotes' : 'Lotes solicitados');
+
+            $esOrigen = (int) $traspaso->sucursal_a === (int) $sucursalId;
+            $estado = strtolower((string) $traspaso->estado);
+            $accion = $estado === 'pendiente'
+                ? ($esOrigen ? 'Por enviar' : 'En espera de envío')
+                : ($esOrigen ? 'En tránsito' : 'Por aceptar');
 
             $avisos[] = [
                 'id' => "traspaso:{$traspaso->id}",
                 'tipo' => 'traspasos',
                 'traspaso_id' => $traspaso->id,
                 'titulo' => "Traspaso T-{$traspaso->id}: {$nombreProducto}",
-                'detalle' => "{$totalUnidades} uds. desde {$traspaso->sucursalOrigen?->nombre_sucursal} · pidió {$traspaso->solicitadoPor?->name}",
+                'detalle' => "{$accion} · {$totalUnidades} uds. desde {$traspaso->sucursalOrigen->nombre_sucursal} hacia {$traspaso->sucursalDestino->nombre_sucursal} · pidió {$traspaso->solicitadoPor->name}",
                 'mensaje' => $traspaso->mensaje,
-                'avatar' => mb_strtoupper(mb_substr($traspaso->sucursalOrigen?->nombre_sucursal ?? '?', 0, 1)),
+                'avatar' => mb_strtoupper(mb_substr($traspaso->sucursalOrigen->nombre_sucursal, 0, 1)),
                 'url' => route('alertas.index', ['sucursal' => $sucursalId, 'filtro' => 'traspasos']),
                 'destino_url' => route('entradas-de-almacen.index', ['sucursal' => $sucursalId, 'tipo' => 'traspasos']),
                 'destino_etiqueta' => 'Ir a traspasos',
-                'fecha' => $traspaso->creado_en ? Carbon::parse($traspaso->creado_en) : null,
+                'fecha' => $traspaso->creado_en,
                 'prioridad' => 'alta',
                 'icono' => '⇄',
             ];
@@ -110,7 +124,8 @@ class AlertasFeed
         foreach ($proximos as $lote) {
             $fechaRaw = $lote->fecha_de_caducidad ?? $lote->fecha_caducidad;
             $fecha = $fechaRaw ? Carbon::parse($fechaRaw) : null;
-            $nombre = $lote->producto?->nombre_producto ?? 'Producto sin nombre';
+            $productoLote = $lote->producto;
+            $nombre = $productoLote !== null ? $productoLote->nombre_producto : 'Producto sin nombre';
             $hoy = Carbon::today();
 
             if ($fecha && $fecha->lt($hoy)) {
@@ -158,36 +173,38 @@ class AlertasFeed
         $resumenVentas = self::resumenVentasHoy($sucursalId);
 
         if ($resumenVentas['total_ventas'] > 0) {
+            $ultimaVenta = $resumenVentas['ultima_venta'];
+
             $avisos[] = [
                 'id' => "ventas:{$sucursalId}:".Carbon::today()->format('Y-m-d'),
                 'tipo' => 'ventas',
                 'titulo' => "Hoy: {$resumenVentas['total_ventas']} ventas · $".number_format($resumenVentas['monto_total'], 2),
-                'detalle' => 'Ticket promedio $'.number_format($resumenVentas['ticket_promedio'], 2).' · '.($resumenVentas['ultima_venta']?->folio ?? 'sin folio'),
+                'detalle' => 'Ticket promedio $'.number_format($resumenVentas['ticket_promedio'], 2).' · '.($ultimaVenta !== null ? $ultimaVenta->folio : 'sin folio'),
                 'mensaje' => null,
                 'avatar' => '$',
                 'url' => route('alertas.index', ['sucursal' => $sucursalId, 'filtro' => 'ventas']),
                 'destino_url' => route('punto-venta.index'),
                 'destino_etiqueta' => 'Ir a punto de venta',
-                'fecha' => $resumenVentas['ultima_venta']?->creado_en ? Carbon::parse($resumenVentas['ultima_venta']->creado_en) : Carbon::today(),
+                'fecha' => $ultimaVenta !== null ? $ultimaVenta->creado_en : Carbon::today(),
                 'prioridad' => 'baja',
                 'icono' => '▣',
             ];
         }
 
-        usort($avisos, function (array $a, array $b) {
+        usort($avisos, function (array $a, array $b): int {
             $orden = ['alta' => 0, 'media' => 1, 'baja' => 2];
 
             if ($orden[$a['prioridad']] !== $orden[$b['prioridad']]) {
                 return $orden[$a['prioridad']] <=> $orden[$b['prioridad']];
             }
 
-            $fechaA = $a['fecha']?->timestamp ?? 0;
-            $fechaB = $b['fecha']?->timestamp ?? 0;
+            $fechaA = $a['fecha'] instanceof CarbonInterface ? $a['fecha']->getTimestamp() : 0;
+            $fechaB = $b['fecha'] instanceof CarbonInterface ? $b['fecha']->getTimestamp() : 0;
 
             return $fechaB <=> $fechaA;
         });
 
-        return array_values($avisos);
+        return $avisos;
     }
 
     /**
@@ -238,7 +255,7 @@ class AlertasFeed
 
         if ($lectura->estado !== AlertaUsuario::ESTADO_LEIDA || $lectura->fecha_leido === null) {
             $lectura->estado = AlertaUsuario::ESTADO_LEIDA;
-            $lectura->fecha_leido = now();
+            $lectura->fecha_leido = now()->toImmutable();
             $lectura->save();
         }
     }
@@ -288,7 +305,7 @@ class AlertasFeed
     /**
      * Busca un aviso por su id estable y le agrega estado de lectura.
      *
-     * @return array{id: string, tipo: string, titulo: string, detalle: string, url: string, destino_url: string, destino_etiqueta: string, fecha: Carbon|null, prioridad: string, icono: string, leida: bool}|null
+     * @return Aviso|null
      */
     public static function encontrar(int $sucursalId, string $id, ?int $usuarioId): ?array
     {
@@ -302,7 +319,7 @@ class AlertasFeed
             if ($aviso['id'] === $id) {
                 $aviso['leida'] = in_array($id, self::leidas($sucursalId, $usuarioId), true);
                 $aviso['tiempo'] = self::tiempoCorto($aviso['fecha'] ?? null);
-                $aviso['fecha_texto'] = isset($aviso['fecha']) && $aviso['fecha'] instanceof CarbonInterface
+                $aviso['fecha_texto'] = $aviso['fecha'] !== null
                     ? $aviso['fecha']->format('Y-m-d H:i')
                     : null;
 
@@ -316,7 +333,7 @@ class AlertasFeed
     /**
      * Serializa un aviso para el feed y el modal de detalle.
      *
-     * @param  array<string, mixed>  $aviso
+     * @param  Aviso  $aviso
      * @return array<string, mixed>
      */
     public static function serializar(array $aviso, bool $leida): array
@@ -333,12 +350,12 @@ class AlertasFeed
             'destino_url' => $aviso['destino_url'] ?? $aviso['url'],
             'destino_etiqueta' => $aviso['destino_etiqueta'] ?? 'Ir al apartado',
             'leida' => $leida,
-            'tiempo' => isset($aviso['fecha']) && $aviso['fecha'] instanceof CarbonInterface
+            'tiempo' => $aviso['fecha'] !== null
                 ? $aviso['fecha']->diffForHumans()
                 : 'reciente',
             'tiempo_corto' => self::tiempoCorto($aviso['fecha'] ?? null),
             'fecha_texto' => $aviso['fecha_texto']
-                ?? (isset($aviso['fecha']) && $aviso['fecha'] instanceof CarbonInterface ? $aviso['fecha']->format('Y-m-d H:i') : null),
+                ?? ($aviso['fecha'] !== null ? $aviso['fecha']->format('Y-m-d H:i') : null),
             'icono' => $aviso['icono'],
             'prioridad' => $aviso['prioridad'],
         ];
@@ -385,6 +402,7 @@ class AlertasFeed
             return [];
         }
 
+        /** @var Collection<int, object{entidad_tipo: string, entidad_id: int|null, fecha_creado: string|null, id_sucursal: int}> $lecturas */
         $lecturas = AlertaUsuario::query()
             ->join('alertas', 'alertas.id', '=', 'alertas_usuarios.id_alerta')
             ->where('alertas_usuarios.id_usuario', $usuarioId)
@@ -414,6 +432,9 @@ class AlertasFeed
         return array_values(array_unique($ids));
     }
 
+    /**
+     * @param  array<int, string>  $ids
+     */
     public static function marcarTodas(int $sucursalId, array $ids, ?int $usuarioId): void
     {
         if (! $usuarioId) {
@@ -452,7 +473,10 @@ class AlertasFeed
         }
 
         $pendientesIds = Traspaso::query()
-            ->where('sucursal_b', $sucursalId)
+            ->where(function ($query) use ($sucursalId): void {
+                $query->where('sucursal_a', $sucursalId)
+                    ->orWhere('sucursal_b', $sucursalId);
+            })
             ->whereIn('estado', ['pendiente', 'enviado'])
             ->pluck('id')
             ->all();
@@ -495,7 +519,7 @@ class AlertasFeed
      * vigente (p. ej. traspasos recibidos o stock bajo) se presentan desde
      * su tipo y entidad.
      *
-     * @return array<int, array{id: string, alerta_id: int, grupo: string, subtipo: string, tipo: string, titulo: string, detalle: string, url: string, fecha: Carbon|null, prioridad: string, icono: string, leida: bool}>
+     * @return array<int, Aviso>
      */
     public static function listado(?int $sucursalId, ?int $usuarioId): array
     {
@@ -541,17 +565,20 @@ class AlertasFeed
 
         $ordenFeed = array_flip($items->keys()->all());
 
-        usort($delFeed, fn (array $a, array $b) => ($ordenFeed[$a['id']] ?? PHP_INT_MAX) <=> ($ordenFeed[$b['id']] ?? PHP_INT_MAX));
+        usort($delFeed, fn (array $a, array $b): int => ($ordenFeed[$a['id']] ?? PHP_INT_MAX) <=> ($ordenFeed[$b['id']] ?? PHP_INT_MAX));
 
-        return array_values(array_merge($delFeed, $extras));
+        return array_merge($delFeed, $extras);
     }
 
     /**
      * Presenta una alerta como fila del centro de alertas.
+     *
+     * @param  Aviso|null  $item
+     * @return Aviso
      */
     private static function presentarAlerta(Alerta $alerta, ?array $item, bool $leida, int $sucursalId): array
     {
-        $subtipo = $alerta->tipoAlerta?->nombre ?? '';
+        $subtipo = $alerta->tipoAlerta->nombre;
         $grupo = self::grupoDeTipo($subtipo);
 
         if ($item !== null) {
@@ -571,12 +598,13 @@ class AlertasFeed
             default => null,
         };
 
-        $fecha = $alerta->fecha_creado ?? now();
+        $fecha = $alerta->fecha_creado ?? now()->toImmutable();
         $prioridad = match ($alerta->tipoAlerta?->nivel) {
             TipoAlerta::NIVEL_CRITICA, TipoAlerta::NIVEL_ADVERTENCIA => 'alta',
             default => $grupo === self::GRUPO_VENTAS ? 'baja' : 'media',
         };
 
+        /** @var Aviso $fila */
         $fila = array_merge([
             'id' => "alerta:{$alerta->id}",
             'alerta_id' => $alerta->id,
@@ -588,15 +616,11 @@ class AlertasFeed
             'mensaje' => null,
             'avatar' => '•',
             'url' => route('alertas.index', ['sucursal' => $sucursalId, 'filtro' => $grupo]),
-            'fecha' => $fecha instanceof Carbon ? $fecha : Carbon::parse($fecha),
+            'fecha' => $fecha,
             'prioridad' => $prioridad,
             'icono' => '●',
             'leida' => $leida,
         ], array_filter($generica ?? []));
-
-        if (! $fila['fecha'] instanceof Carbon) {
-            $fila['fecha'] = $fila['fecha'] ? Carbon::parse($fila['fecha']) : now();
-        }
 
         return $fila;
     }
@@ -610,9 +634,10 @@ class AlertasFeed
     {
         $traspaso = $alerta->entidad_id === null ? null : Traspaso::query()
             ->with(['sucursalOrigen', 'detalles.lote.producto', 'solicitadoPor'])
-            ->find($alerta->entidad_id);
+            ->whereKey($alerta->entidad_id)
+            ->first();
 
-        $subtipo = $alerta->tipoAlerta?->nombre ?? '';
+        $subtipo = $alerta->tipoAlerta->nombre;
         $sufijo = match ($subtipo) {
             'TRASPASO_RECIBIDO' => ' · recibido',
             'TRASPASO_RECHAZADO' => ' · rechazado',
@@ -624,14 +649,14 @@ class AlertasFeed
         }
 
         $totalUnidades = (int) $traspaso->detalles->sum('cantidad');
-        $nombreProducto = $traspaso->detalles->first()?->lote?->producto?->nombre_producto ?? 'Lotes solicitados';
+        $nombreProducto = $traspaso->detalles->first()?->lote->producto->nombre_producto ?? 'Lotes solicitados';
 
         return [
             'id' => "traspaso:{$traspaso->id}",
             'titulo' => "Traspaso T-{$traspaso->id}: {$nombreProducto}{$sufijo}",
-            'detalle' => "{$totalUnidades} uds. desde {$traspaso->sucursalOrigen?->nombre_sucursal} · pidió {$traspaso->solicitadoPor?->name}",
+            'detalle' => "{$totalUnidades} uds. desde {$traspaso->sucursalOrigen->nombre_sucursal} · pidió {$traspaso->solicitadoPor->name}",
             'mensaje' => $traspaso->motivo_respuesta ?? $traspaso->mensaje,
-            'avatar' => mb_strtoupper(mb_substr($traspaso->sucursalOrigen?->nombre_sucursal ?? '?', 0, 1)),
+            'avatar' => mb_strtoupper(mb_substr($traspaso->sucursalOrigen->nombre_sucursal, 0, 1)),
             'url' => route('alertas.index', ['sucursal' => $sucursalId, 'filtro' => 'traspasos']),
             'fecha' => $traspaso->respondido_en ?? $traspaso->creado_en ?? $alerta->fecha_creado,
             'icono' => '⇄',
@@ -646,7 +671,7 @@ class AlertasFeed
      */
     private static function presentarLoteGenerico(Alerta $alerta, int $sucursalId): array
     {
-        $lote = $alerta->entidad_id === null ? null : Lote::query()->with('producto')->find($alerta->entidad_id);
+        $lote = $alerta->entidad_id === null ? null : Lote::query()->with('producto')->whereKey($alerta->entidad_id)->first();
 
         if (! $lote) {
             return [];
@@ -673,8 +698,8 @@ class AlertasFeed
      */
     private static function presentarProductoGenerico(Alerta $alerta, int $sucursalId): array
     {
-        $producto = $alerta->entidad_id === null ? null : Producto::find($alerta->entidad_id);
-        $nombre = $producto?->nombre_producto ?? "Producto #{$alerta->entidad_id}";
+        $producto = $alerta->entidad_id === null ? null : Producto::query()->whereKey($alerta->entidad_id)->first();
+        $nombre = $producto !== null ? $producto->nombre_producto : "Producto #{$alerta->entidad_id}";
 
         return [
             'titulo' => "Stock bajo: {$nombre}",
@@ -756,10 +781,6 @@ class AlertasFeed
 
         $tipo = self::asegurarTipoAlerta($nombreTipo);
 
-        if (! $tipo) {
-            return null;
-        }
-
         if ($origen['entidad_tipo'] === 'ventas') {
             $existente = Alerta::query()
                 ->where('id_tipo_alerta', $tipo->id)
@@ -821,9 +842,9 @@ class AlertasFeed
     private static function tipoParaLote(?int $loteId): string
     {
         if ($loteId) {
-            $lote = Lote::find($loteId);
+            $lote = Lote::query()->whereKey($loteId)->first();
 
-            if ($lote && $lote->estaCaducado()) {
+            if ($lote !== null && $lote->estaCaducado()) {
                 return 'PRODUCTO_CADUCADO';
             }
         }
@@ -834,7 +855,7 @@ class AlertasFeed
     /**
      * Garantiza que exista el tipo de alerta (útil en tests sin seeders).
      */
-    private static function asegurarTipoAlerta(string $nombre): ?TipoAlerta
+    private static function asegurarTipoAlerta(string $nombre): TipoAlerta
     {
         $existente = TipoAlerta::where('nombre', $nombre)->first();
 
@@ -872,6 +893,9 @@ class AlertasFeed
         ]);
     }
 
+    /**
+     * @return array{total_ventas: int, monto_total: float, ticket_promedio: float, ultima_venta: Venta|null}
+     */
     private static function resumenVentasHoy(int $sucursalId): array
     {
         $cajaIds = Caja::where('id_sucursal', $sucursalId)->pluck('id');

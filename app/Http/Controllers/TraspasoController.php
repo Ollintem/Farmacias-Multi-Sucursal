@@ -49,11 +49,16 @@ class TraspasoController extends Controller
     public function create(Request $request): View
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
-        $activaId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? $sucursales->first()?->id ?? 0);
+        $usuarioActual = $request->user();
+        $primeraSucursal = $sucursales->first();
+        $activaId = (int) (session('active_sucursal_id')
+            ?? ($usuarioActual !== null ? $usuarioActual->id_sucursal : null)
+            ?? ($primeraSucursal !== null ? $primeraSucursal->id : null)
+            ?? 0);
         $fija = $sucursales->firstWhere('id', $activaId) ?? $sucursales->first();
         $opciones = $sucursales->where('id', '!==', $fija?->id)->values();
 
-        $esSuperAdmin = ($request->user()?->rol?->tipo_rol ?? null) === 'SuperAdmin';
+        $esSuperAdmin = $usuarioActual?->rol?->tipo_rol === 'SuperAdmin';
         $campoPicker = $esSuperAdmin ? 'sucursal_a' : 'sucursal_b';
         $campoFijo = $esSuperAdmin ? 'sucursal_b' : 'sucursal_a';
         $paramQuery = $esSuperAdmin ? 'origen' : 'destino';
@@ -61,7 +66,7 @@ class TraspasoController extends Controller
         $elegidoId = (int) old($campoPicker, $request->query($paramQuery, 0));
         $elegidoValido = $elegidoId > 0 && $opciones->contains('id', $elegidoId);
 
-        $origenLotesId = $esSuperAdmin ? ($elegidoValido ? $elegidoId : null) : $fija?->id;
+        $origenLotesId = $esSuperAdmin ? ($elegidoValido ? $elegidoId : null) : ($fija !== null ? $fija->id : null);
 
         $lotesDisponibles = ($elegidoValido && $origenLotesId)
             ? Lote::query()
@@ -81,6 +86,8 @@ class TraspasoController extends Controller
                 ->values()
             : collect();
 
+        $sucursalOrigenLotes = $origenLotesId !== null ? $sucursales->firstWhere('id', $origenLotesId) : null;
+
         return view('pages.entradas.create-traspaso', [
             'esSuperAdmin' => $esSuperAdmin,
             'fija' => $fija,
@@ -92,7 +99,7 @@ class TraspasoController extends Controller
             'valorPicker' => old($campoPicker, $request->query($paramQuery, '')),
             'mostrarLotes' => $elegidoValido,
             'origenLotesId' => $origenLotesId,
-            'nombreOrigenLotes' => $sucursales->firstWhere('id', $origenLotesId)?->nombre_sucursal ?? 'la sucursal origen elegida',
+            'nombreOrigenLotes' => $sucursalOrigenLotes !== null ? $sucursalOrigenLotes->nombre_sucursal : 'la sucursal origen elegida',
             'lotesDisponibles' => $lotesDisponibles,
             'sucursalLink' => old($esSuperAdmin ? 'sucursal_a' : 'sucursal_b', $request->query($paramQuery, '')) ?: $activaId,
         ]);
@@ -112,13 +119,14 @@ class TraspasoController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $activaId = (int) (session('active_sucursal_id') ?? $request->user()?->id_sucursal ?? 0);
+        $usuarioActual = $request->user();
+        $activaId = (int) (session('active_sucursal_id') ?? ($usuarioActual !== null ? $usuarioActual->id_sucursal : null) ?? 0);
 
         if ($activaId <= 0) {
             return back()->with('error', 'No se pudo determinar tu sucursal activa. Vuelve a elegir sucursal activa.')->withInput();
         }
 
-        $esSuperAdmin = ($request->user()?->rol?->tipo_rol ?? null) === 'SuperAdmin';
+        $esSuperAdmin = $usuarioActual?->rol?->tipo_rol === 'SuperAdmin';
 
         if ($esSuperAdmin) {
             $destinoId = $activaId;
@@ -146,9 +154,12 @@ class TraspasoController extends Controller
             $destinoId = (int) $data['sucursal_b'];
         }
 
+        /** @var array<int, array{lote: int, cantidad: int}> $lotesSolicitados */
+        $lotesSolicitados = $data['lotes'];
+
         $lotes = Lote::query()
             ->with('producto')
-            ->whereIn('id', collect($data['lotes'])->pluck('lote'))
+            ->whereIn('id', collect($lotesSolicitados)->pluck('lote'))
             ->get()
             ->keyBy('id');
 
@@ -181,8 +192,8 @@ class TraspasoController extends Controller
             throw ValidationException::withMessages($errores);
         }
 
-        $detalles = collect($data['lotes'])
-            ->map(function (array $item) {
+        $detalles = collect($lotesSolicitados)
+            ->map(function (array $item): array {
                 return [
                     'id_lote' => (int) $item['lote'],
                     'cantidad' => (int) $item['cantidad'],
@@ -245,6 +256,20 @@ class TraspasoController extends Controller
     }
 
     /**
+     * Id de la sucursal activa: sesión, sucursal del usuario o 0.
+     *
+     * Entrada: request con el usuario autenticado.
+     * Salida: id de sucursal (0 si no hay ninguna disponible).
+     */
+    private function sucursalActivaId(Request $request): int
+    {
+        $usuario = $request->user();
+        $idSucursal = $usuario !== null ? $usuario->id_sucursal : null;
+
+        return (int) (session('active_sucursal_id') ?? $idSucursal ?? 0);
+    }
+
+    /**
      * Indica si el usuario actual puede enviar el traspaso (es origen o SuperAdmin).
      */
     private function puedeEnviar(Request $request, Traspaso $traspaso): bool
@@ -255,7 +280,7 @@ class TraspasoController extends Controller
             return true;
         }
 
-        $sucursalActiva = (int) (session('active_sucursal_id') ?? $usuario?->id_sucursal ?? 0);
+        $sucursalActiva = $this->sucursalActivaId($request);
 
         return $sucursalActiva > 0 && $sucursalActiva === (int) $traspaso->sucursal_a;
     }
@@ -407,7 +432,7 @@ class TraspasoController extends Controller
             return true;
         }
 
-        $sucursalActiva = (int) (session('active_sucursal_id') ?? $usuario?->id_sucursal ?? 0);
+        $sucursalActiva = $this->sucursalActivaId($request);
 
         return $sucursalActiva > 0 && $sucursalActiva === (int) $traspaso->sucursal_a;
     }
@@ -423,7 +448,7 @@ class TraspasoController extends Controller
             return true;
         }
 
-        $sucursalActiva = (int) (session('active_sucursal_id') ?? $usuario?->id_sucursal ?? 0);
+        $sucursalActiva = $this->sucursalActivaId($request);
 
         return $sucursalActiva > 0 && $sucursalActiva === (int) $traspaso->sucursal_b;
     }

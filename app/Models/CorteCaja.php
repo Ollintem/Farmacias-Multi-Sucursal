@@ -4,7 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $id_caja
+ * @property int $id_usuario
+ * @property string $turno
+ * @property string $efectivo_inicial
+ * @property string $efectivo_declarado
+ * @property string $efectivo_esperado
+ * @property string $diferencia
+ * @property Carbon $fecha_inicio
+ * @property Carbon|null $fecha_cierre
+ * @property string $estado
+ * @property Carbon $creado_en
+ * @property-read Caja $caja
+ * @property-read User $usuario
+ */
 class CorteCaja extends Model
 {
     public $timestamps = false;
@@ -34,11 +51,17 @@ class CorteCaja extends Model
         'creado_en' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<Caja, $this>
+     */
     public function caja(): BelongsTo
     {
         return $this->belongsTo(Caja::class, 'id_caja');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_usuario');

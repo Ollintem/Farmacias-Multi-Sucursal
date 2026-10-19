@@ -1,17 +1,26 @@
 <x-layouts::app :title="__('Proveedores')">
-    <div class="module-page">
-        <div class="module-page-inner">
-            <section class="module-hero">
-                <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                    <div class="max-w-2xl">
-                        <p class="farma-kicker">Catálogo de suministro</p>
-                        <h1 class="mt-2">Proveedores</h1>
-                        <p class="theme-subtle mt-2 max-w-xl text-sm leading-6">Administra tu red de proveedores: datos de contacto, direcciones y unidades de entrega en un solo lugar.</p>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde + KPIs blancos --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de proveedores">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Catálogo de suministro</p>
+                    <h1 class="mt-2">Proveedores</h1>
+                    <dl class="noti-resumen noti-kpis">
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg> Proveedores</dt><dd>{{ $totalProveedores }}</dd>
+                        </div>
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg> Con correo</dt><dd>{{ $proveedoresConCorreo }}</dd>
+                        </div>
+                        <div @class(['noti-kpi', 'noti-kpi-alerta' => $proveedoresSinTelefono > 0])>
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg> Sin teléfono</dt><dd>{{ $proveedoresSinTelefono }}</dd>
+                        </div>
+                    </dl>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('proveedores.create') }}" class="theme-button theme-button-primary">+ Nuevo proveedor</a>
                     </div>
-                    <a href="{{ route('proveedores.create') }}" class="theme-button theme-button-primary">
-                        <span class="text-lg leading-none">+</span>
-                        Nuevo proveedor
-                    </a>
                 </div>
             </section>
 
@@ -46,77 +55,78 @@
                 </div>
             @endif
 
-            <section class="grid gap-4 md:grid-cols-3">
-                <div class="module-stat">
-                    <div class="flex items-center justify-between">
-                        <span class="theme-subtle text-sm">Proveedores</span>
-                        <span class="stat-pill info">Total</span>
-                    </div>
-                    <p class="mt-4 text-2xl font-bold">{{ $totalProveedores }}</p>
-                    <p class="theme-subtle mt-1 text-xs">Registrados en el sistema</p>
-                </div>
-                <div class="module-stat">
-                    <div class="flex items-center justify-between">
-                        <span class="theme-subtle text-sm">Con correo</span>
-                        <span class="stat-pill positive">{{ $proveedoresConCorreo }}</span>
-                    </div>
-                    <p class="mt-4 text-2xl font-bold">{{ $proveedoresConCorreo }}</p>
-                    <p class="theme-subtle mt-1 text-xs">Con canal de contacto digital</p>
-                </div>
-                <div class="module-stat">
-                    <div class="flex items-center justify-between">
-                        <span class="theme-subtle text-sm">Sin teléfono</span>
-                        <span class="stat-pill warning">{{ $proveedoresSinTelefono }}</span>
-                    </div>
-                    <p class="mt-4 text-2xl font-bold">{{ $proveedoresSinTelefono }}</p>
-                    <p class="theme-subtle mt-1 text-xs">Pendientes de contacto telefónico</p>
-                </div>
-            </section>
-
-            <section class="module-table" x-data="buscadorTabla()" x-effect="filtrar($el)">
-                <div class="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between dark:border-slate-700">
+            <section class="module-card noti-listado" aria-label="Directorio de proveedores" x-data="buscadorTabla()" x-effect="filtrar($el)">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                     <div>
-                        <h2 class="text-base font-bold">Directorio de proveedores</h2>
-                        <p class="theme-subtle mt-1 text-sm">Información vigente de cada proveedor.</p>
+                        <h2>Directorio de proveedores</h2>
+                        <p class="theme-subtle text-sm">{{ $totalProveedores }} registro(s) · información vigente de cada proveedor</p>
                     </div>
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <input type="search" placeholder="Buscar proveedor, correo o teléfono" class="theme-input w-full sm:w-64" aria-label="Buscar proveedor" @input.debounce.200ms="texto = $event.target.value">
-                        <span class="stat-pill info w-fit whitespace-nowrap">{{ $totalProveedores }} registros</span>
-                    </div>
+                </header>
+                <div>
+                <div class="module-table">
+                <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
+                    <input type="search" placeholder="Buscar proveedor, correo o teléfono" class="theme-input w-full sm:w-64" aria-label="Buscar proveedor" @input.debounce.200ms="texto = $event.target.value">
+                    <span class="stat-pill info w-fit whitespace-nowrap">{{ $totalProveedores }} registros</span>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="min-w-[980px] text-left text-sm">
+                    <table class="min-w-[1080px] text-left text-[15px]">
                         <thead class="text-slate-600 dark:text-slate-300">
                             <tr>
-                                <th class="px-5 py-3 font-semibold">Proveedor</th>
-                                <th class="px-5 py-3 font-semibold">Dirección</th>
-                                <th class="px-5 py-3 font-semibold">Unidad de entrega</th>
-                                <th class="px-5 py-3 font-semibold">Contacto</th>
-                                <th class="px-5 py-3 text-right font-semibold">Acción</th>
+                                <th class="px-6 py-4 text-base font-semibold">Proveedor</th>
+                                <th class="px-6 py-4 text-base font-semibold">Unidad de entrega</th>
+                                <th class="px-6 py-4 text-base font-semibold">Contacto</th>
+                                <th class="px-6 py-4 text-base font-semibold">Estado</th>
+                                <th class="px-6 py-4 text-right text-base font-semibold">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($proveedores as $proveedor)
-                                <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5" data-buscar="{{ $proveedor->nombre_proveedor }} {{ $proveedor->correo }} {{ $proveedor->telefono }} {{ $proveedor->unidad_entrega }}">
-                                    <td class="px-5 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-sm font-black text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">{{ strtoupper(mb_substr($proveedor->nombre_proveedor ?? '?', 0, 1)) }}</span>
-                                            <div>
-                                                <p class="text-sm font-bold">{{ $proveedor->nombre_proveedor }}</p>
-                                                <p class="theme-subtle mt-0.5 text-xs">{{ $proveedor->correo ?: 'Correo pendiente' }}</p>
+                                @php($contactoCompleto = filled($proveedor->telefono) && filled($proveedor->correo))
+                                <tr class="group border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5" data-buscar="{{ $proveedor->nombre_proveedor }} {{ $proveedor->correo }} {{ $proveedor->telefono }} {{ $proveedor->unidad_entrega }} {{ $proveedor->direccion }}">
+                                    <td class="px-6 py-5">
+                                        <div class="flex items-center gap-4">
+                                            @if($proveedor->fotoUrl())
+                                                <img src="{{ $proveedor->fotoUrl() }}" alt="Foto de {{ $proveedor->nombre_proveedor }}" class="h-14 w-14 shrink-0 rounded-2xl border border-slate-200 object-cover shadow-md ring-2 ring-transparent transition group-hover:ring-[#0e9384]/40 dark:border-slate-700">
+                                            @else
+                                                <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-xl font-black text-white shadow-md shadow-teal-900/20 ring-2 ring-transparent transition group-hover:ring-[#0e9384]/40">{{ strtoupper(mb_substr($proveedor->nombre_proveedor ?? '?', 0, 1)) }}</span>
+                                            @endif
+                                            <div class="min-w-0">
+                                                <p class="text-base font-bold text-slate-800 dark:text-slate-100">{{ $proveedor->nombre_proveedor }}</p>
+                                                <p class="theme-subtle mt-1 max-w-[300px] truncate text-sm" title="{{ $proveedor->direccion }}">{{ $proveedor->direccion }}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="theme-subtle max-w-[220px] px-5 py-4">{{ $proveedor->direccion }}</td>
-                                    <td class="px-5 py-4">
-                                        <span class="stat-pill positive">{{ $proveedor->unidad_entrega }}</span>
+                                    <td class="px-6 py-5">
+                                        <span class="stat-pill positive !px-4 !py-1.5 !text-sm">{{ $proveedor->unidad_entrega }}</span>
                                     </td>
-                                    <td class="px-5 py-4 text-sm">
-                                        <div class="font-medium">{{ $proveedor->telefono ?: 'Teléfono pendiente' }}</div>
-                                        <div class="theme-subtle mt-1 text-xs">{{ $proveedor->correo ?: 'Correo pendiente' }}</div>
+                                    <td class="px-6 py-5">
+                                        <p class="flex items-center gap-2 text-base font-semibold text-slate-800 dark:text-slate-100">
+                                            <svg class="h-4 w-4 text-[#0e9384] dark:text-[#3fbda9]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+                                            {{ $proveedor->telefono ?: 'Teléfono pendiente' }}
+                                        </p>
+                                        <p class="theme-subtle mt-1.5 flex items-center gap-2 text-sm">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+                                            {{ $proveedor->correo ?: 'Correo pendiente' }}
+                                        </p>
                                     </td>
-                                    <td class="px-5 py-4 text-right">
-                                        <a href="{{ route('proveedores.edit', $proveedor) }}" class="inline-flex rounded-lg px-3 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 hover:text-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-200">Editar</a>
+                                    <td class="px-6 py-5">
+                                        @if(! $proveedor->es_activo)
+                                            <span class="stat-pill info">Inactivo</span>
+                                        @elseif($contactoCompleto)
+                                            <span class="stat-pill positive !px-4 !py-1.5 !text-sm">Completo</span>
+                                        @else
+                                            <span class="stat-pill warning !px-4 !py-1.5 !text-sm">Pendiente</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-5 text-right">
+                                        <div class="inline-flex items-center gap-2">
+                                            <a href="{{ route('proveedores.edit', $proveedor) }}" class="theme-button theme-button-secondary !min-h-0 !px-5 !py-2.5 !text-sm">Editar</a>
+                                            <form action="{{ route('proveedores.destroy', $proveedor) }}" method="POST" class="m-0 inline p-0" onsubmit="return confirm('¿Eliminar a {{ $proveedor->nombre_proveedor }}? Esta acción no se puede deshacer.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="theme-button !min-h-0 !border-red-200 !bg-red-50 !px-5 !py-2.5 !text-sm !text-red-700 hover:!bg-red-100 hover:!text-red-800 dark:!border-red-500/30 dark:!bg-red-500/10 dark:!text-red-300 dark:hover:!bg-red-500/20">Eliminar</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -129,6 +139,7 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
                 </div>
             </section>
         </div>

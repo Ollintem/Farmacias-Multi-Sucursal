@@ -14,7 +14,6 @@ use App\Support\EstadoCaducidad;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -36,6 +35,7 @@ class LotesController extends Controller
     {
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
+        /** @var Sucursal|null $selectedSucursal */
         $selectedSucursal = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
         $busqueda = trim((string) $request->query('buscar', ''));
         $filtroEstado = $request->query('estado', 'todos');
@@ -68,13 +68,13 @@ class LotesController extends Controller
             })
             ->orderBy('fecha_caducidad')
             ->get()
-            ->map(function ($lote) use ($selectedSucursal) {
+            ->map(function (Lote $lote) use ($selectedSucursal): array {
                 $producto = $lote->producto;
                 $inventarioSucursal = $selectedSucursal
                     ? $lote->inventarios->firstWhere('id_sucursal', $selectedSucursal->id)
                     : $lote->inventarios->first();
-                $nombreProducto = $producto?->nombre_producto ?? 'Producto sin nombre';
-                $nombreSucursal = $inventarioSucursal?->sucursal?->nombre_sucursal ?? $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal';
+                $nombreProducto = $producto !== null ? $producto->nombre_producto : 'Producto sin nombre';
+                $nombreSucursal = $inventarioSucursal?->sucursal->nombre_sucursal ?? $selectedSucursal->nombre_sucursal ?? 'Sin sucursal';
                 $fechaCaducidad = ($lote->fecha_de_caducidad ?? $lote->fecha_caducidad)
                     ? Carbon::parse($lote->fecha_de_caducidad ?? $lote->fecha_caducidad)
                     : null;
@@ -107,9 +107,11 @@ class LotesController extends Controller
                     'id' => $lote->id,
                     'folio' => $lote->folio,
                     'producto' => $nombreProducto,
-                    'marca' => $lote->proveedor?->nombre_proveedor
-                        ?? $lote->pedido?->proveedor?->nombre_proveedor
-                        ?? 'Sin proveedor',
+                    'marca' => $lote->id_proveedor !== null
+                        ? $lote->proveedor->nombre_proveedor
+                        : ($lote->id_pedido !== null
+                            ? $lote->pedido->proveedor->nombre_proveedor
+                            : 'Sin proveedor'),
                     'sucursal' => $nombreSucursal,
                     'cantidad' => (int) $lote->stock_lote,
                     'cantidad_texto' => $partesCantidad,
@@ -119,7 +121,7 @@ class LotesController extends Controller
                     'restante_texto' => $restante === null ? null : $lote->partesDeUnidades($restante),
                     'restante_global' => (int) $lote->inventarios->sum('stock_individual'),
                     'anulado' => $anulado,
-                    'fecha_entrada' => $lote->entregado_en ? Carbon::parse($lote->entregado_en)->format('Y-m-d') : '-',
+                    'fecha_entrada' => $lote->entregado_en->format('Y-m-d'),
                     'fecha_caducidad' => $fechaCaducidad ? $fechaCaducidad->format('Y-m-d') : '-',
                     'estado' => $estado,
                     'estado_class' => $estadoClass,
@@ -131,18 +133,23 @@ class LotesController extends Controller
         // filtre `buscar`); la tabla muestra solo la categoría de las tarjetas.
         // Cada lote cae en exacto un cubeta: vigente → Vigentes,
         // warning/danger → Por caducar (incluye «Sin fecha»), expired → Caducados.
-        $porEstado = fn (string $filtro): Collection => (match ($filtro) {
-            'vigentes' => $lotes->filter(fn (array $lote) => $lote['estado_class'] === 'vigente'),
-            'por-caducar' => $lotes->filter(fn (array $lote) => in_array($lote['estado_class'], ['warning', 'danger'], true)),
-            'caducados' => $lotes->filter(fn (array $lote) => $lote['estado_class'] === 'expired'),
-            default => $lotes,
-        })->values();
+        $vigentesLotes = $lotes->filter(fn (array $lote): bool => $lote['estado_class'] === 'vigente');
+        $porCaducarLotes = $lotes->filter(fn (array $lote): bool => in_array($lote['estado_class'], ['warning', 'danger'], true));
+        $caducadosLotes = $lotes->filter(fn (array $lote): bool => $lote['estado_class'] === 'expired');
 
         $totalLotes = $lotes->count();
-        $vigentes = $porEstado('vigentes')->count();
-        $porCaducar = $porEstado('por-caducar')->count();
-        $caducados = $porEstado('caducados')->count();
-        $lotes = $porEstado($filtroEstado);
+        $vigentes = $vigentesLotes->count();
+        $porCaducar = $porCaducarLotes->count();
+        $caducados = $caducadosLotes->count();
+
+        $lotes = match ($filtroEstado) {
+            'vigentes' => $vigentesLotes,
+            'por-caducar' => $porCaducarLotes,
+            'caducados' => $caducadosLotes,
+            default => $lotes,
+        };
+
+        $lotes = $lotes->values();
 
         return view('pages.lotes.index', compact(
             'lotes',

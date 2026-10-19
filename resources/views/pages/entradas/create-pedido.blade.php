@@ -1,15 +1,27 @@
 <x-layouts::app :title="__('Nuevo pedido')">
-    <div id="theme-shell">
-        <div class="theme-shell-inner">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Almacén</p>
-                    <h1 class="mt-2 text-3xl font-bold">Registrar nuevo pedido</h1>
-                    <p class="mt-1 text-sm theme-subtle">Solicitud de mercancía a un proveedor para una sucursal.</p>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de nuevo pedido">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Almacén · Nuevo registro</p>
+                    <h1 class="mt-2">Registrar nuevo pedido</h1>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('entradas-de-almacen.index', ['sucursal' => old('id_sucursal', $selectedSucursalId), 'tipo' => 'pedidos']) }}" class="theme-button theme-button-secondary">← Volver</a>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <form action="{{ route('pedidos.store') }}" method="POST" class="theme-card">
+            <section class="module-card noti-listado" aria-label="Datos del pedido">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Datos del pedido</h2>
+                        <p class="theme-subtle text-sm">Solicitud de mercancía a un proveedor para una sucursal</p>
+                    </div>
+                </header>
+                <div class="p-5 sm:p-6">
+            <form action="{{ route('pedidos.store') }}" method="POST">
                 @csrf
 
                 <div class="grid gap-5 md:grid-cols-2">
@@ -92,6 +104,8 @@
                     <button type="submit" class="theme-button theme-button-primary">Guardar pedido</button>
                 </div>
             </form>
+                </div>
+            </section>
         </div>
     </div>
 

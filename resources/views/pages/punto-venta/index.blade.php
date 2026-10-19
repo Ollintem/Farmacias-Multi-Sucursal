@@ -40,16 +40,18 @@
 
                     <div class="pos-product-grid" id="pos-product-grid">
                         @forelse($productos as $producto)
-                            @php($productoPos = ['id' => $producto->id, 'name' => $producto->nombre_producto, 'price' => (float) $producto->precio, 'stock' => $producto->stock, 'barcode' => $producto->codigo_barras])
-                            <article class="pos-product-card" data-name="{{ strtolower($producto->nombre_producto) }}" data-barcode="{{ $producto->codigo_barras }}" data-stock="{{ $producto->stock }}">
+                            @php($stockPos = (int) ($producto->stock_sucursal ?? 0))
+                            @php($precioPos = (float) ($producto->precio ?? 0))
+                            @php($productoPos = ['id' => $producto->id, 'name' => $producto->nombre_producto, 'price' => $precioPos, 'stock' => $stockPos, 'barcode' => $producto->codigo_barras])
+                            <article class="pos-product-card" data-name="{{ strtolower($producto->nombre_producto) }}" data-barcode="{{ $producto->codigo_barras }}" data-stock="{{ $stockPos }}">
                                 <button type="button" class="pos-product-add" data-add-product aria-label="Agregar {{ $producto->nombre_producto }}">
                                     <span class="pos-product-icon" aria-hidden="true">Rx</span>
                                     <span class="pos-product-info">
                                         <strong>{{ $producto->nombre_producto }}</strong>
                                         <small>{{ $producto->codigo_barras }}</small>
                                     </span>
-                                    <span class="pos-product-price">${{ number_format($producto->precio, 2) }}</span>
-                                    <span class="pos-product-stock">{{ $producto->stock }} disponibles</span>
+                                    <span class="pos-product-price">${{ number_format((float) ($producto->precio ?? 0), 2) }}</span>
+                                    <span class="pos-product-stock">{{ $stockPos }} disponibles</span>
                                 </button>
                                 <script type="application/json" data-product-data>{{ json_encode($productoPos, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) }}</script>
                             </article>

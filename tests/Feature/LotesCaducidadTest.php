@@ -290,6 +290,6 @@ test('las tarjetas de estado filtran la tabla y resaltan la seleccion', function
         ->getContent();
 
     expect($contenido)
-        ->toContain('module-stat-filtro-activo')
+        ->toContain('aria-current="true"')
         ->toContain('estado=vigentes');
 });

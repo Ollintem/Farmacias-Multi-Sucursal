@@ -10,6 +10,7 @@ use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * Crea la sucursal, el usuario SuperAdmin y el producto compartidos
@@ -69,7 +70,7 @@ function proveedorPruebaEdicion(string $nombre): Proveedor
         'nombre_proveedor' => $nombre,
         'direccion' => 'Calle 88',
         'telefono' => '5553334444',
-        'correo' => 'edicion@demo.mx',
+        'correo' => Str::slug($nombre).'@demo.mx',
         'unidad_entrega' => 'caja',
     ]);
 }

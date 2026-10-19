@@ -8,14 +8,28 @@ use App\Models\Inventario;
 use App\Models\Pago;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
+use App\Models\ProductoPresentacion;
 use App\Models\Venta;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
+/**
+ * @property-read EloquentCollection<int, Producto> $productos
+ * @property-read EloquentCollection<int, PresentacionProducto> $presentaciones
+ * @property-read ConfiguracionBancaria $configBancaria
+ * @property-read int $cantidadArticulos
+ * @property-read int $cantidadProductos
+ * @property-read float $subTotal
+ * @property-read float $total
+ * @property-read float $cambio
+ * @property-read float $pagado
+ * @property-read bool $puedeConfirmar
+ */
 #[Layout('layouts.app')]
 #[Title('Punto de venta')]
 class PuntoDeVenta extends Component
@@ -30,6 +44,7 @@ class PuntoDeVenta extends Component
 
     public string $filtroPresentacion = '';
 
+    /** @var array<int, array{producto_id: int, nombre: string, precio: float, cantidad: int, stock: int, presentacion: string, es_controlado: bool, tipo_venta?: string, presentacion_id?: int, unidades?: int, receta?: array<string, string>}> */
     public array $carrito = [];
 
     public bool $mostrandoCarrito = false;
@@ -39,8 +54,9 @@ class PuntoDeVenta extends Component
 
     public string $metodoPago = 'efectivo';
 
-    public $efectivoRecibido = '';
+    public float|string $efectivoRecibido = '';
 
+    /** @var array{efectivo: float|string, tarjeta: float|string, transferencia: float|string} */
     public array $pagoMixto = [
         'efectivo' => '',
         'tarjeta' => '',
@@ -56,10 +72,11 @@ class PuntoDeVenta extends Component
     public bool $esSuperAdmin = false;
 
     // Selector de presentación (productos sin precio unitario)
-    public $selectorProductoId = null;
+    public ?int $selectorProductoId = null;
 
     public string $selectorNombreProducto = '';
 
+    /** @var array<int, array{id: int, presentacion: string, unidades: int, precio: float}> */
     public array $selectorPresentaciones = [];
 
     // Precio unitario cuando el selector también ofrece vender por unidad.
@@ -96,7 +113,10 @@ class PuntoDeVenta extends Component
         session(['carrito_pos' => $this->carrito]);
     }
 
-    public function getPresentacionesProperty(): Collection
+    /**
+     * @return EloquentCollection<int, PresentacionProducto>
+     */
+    public function getPresentacionesProperty(): EloquentCollection
     {
         return PresentacionProducto::orderBy('presentacion')->get();
     }
@@ -106,7 +126,10 @@ class PuntoDeVenta extends Component
         return ConfiguracionBancaria::obtener();
     }
 
-    public function getProductosProperty(): \Illuminate\Database\Eloquent\Collection
+    /**
+     * @return EloquentCollection<int, Producto>
+     */
+    public function getProductosProperty(): EloquentCollection
     {
         $sucursalId = (int) (session('active_sucursal_id') ?? 0);
 
@@ -122,7 +145,7 @@ class PuntoDeVenta extends Component
 
         if ($this->busqueda !== '') {
             $termino = $this->busqueda;
-            $query->where(function ($q) use ($termino) {
+            $query->where(function (Builder $q) use ($termino): void {
                 $q->where('nombre_producto', 'like', "%{$termino}%")
                     ->orWhere('codigo_barras', 'like', "%{$termino}%");
             });
@@ -153,6 +176,8 @@ class PuntoDeVenta extends Component
      *
      * Entrada: ítem del carrito.
      * Salida: cantidad × unidades por presentación (1 por unidad).
+     *
+     * @param  array{tipo_venta?: string, unidades?: int, cantidad: int}  $item
      */
     private function unidadesRequeridas(array $item): int
     {
@@ -216,7 +241,10 @@ class PuntoDeVenta extends Component
 
     public function getSubTotalProperty(): float
     {
-        return round(array_reduce($this->carrito, fn ($sum, $item) => $sum + ($item['precio'] * $item['cantidad']), 0.0), 2);
+        /** @var array<int, array{precio: float, cantidad: int}> $carrito */
+        $carrito = $this->carrito;
+
+        return round(array_reduce($carrito, fn (float $sum, array $item): float => $sum + ($item['precio'] * $item['cantidad']), 0.0), 2);
     }
 
     public function getTotalProperty(): float
@@ -359,9 +387,9 @@ class PuntoDeVenta extends Component
         $this->selectorPrecioUnidad = $producto->precioUnidad();
         $this->selectorEstadoCajas = $producto->estadoDeCajas($disponible);
         $this->selectorPresentaciones = $producto->presentacionesPrecio
-            ->map(fn ($rel) => [
+            ->map(fn (ProductoPresentacion $rel): array => [
                 'id' => $rel->id,
-                'presentacion' => $rel->presentacion?->presentacion ?? '',
+                'presentacion' => $rel->presentacion->presentacion,
                 'unidades' => (int) $rel->unidades,
                 'precio' => (float) $rel->precio_presentacion,
                 'maximo' => (int) floor($disponible / max(1, (int) $rel->unidades)),
@@ -389,7 +417,7 @@ class PuntoDeVenta extends Component
 
         $producto = Producto::find($productoId);
 
-        if ($producto && $producto->es_controlado) {
+        if ($producto instanceof Producto && $producto->es_controlado) {
             $this->recetaPresentacionId = $presentacionPrecioId;
             $this->cerrarSelector();
             $this->abrirReceta($productoId);
@@ -429,6 +457,9 @@ class PuntoDeVenta extends Component
         $this->cerrarSelector();
     }
 
+    /**
+     * @param  array<string, string>|null  $receta
+     */
     private function agregarItemPresentacion(int $productoId, int $presentacionPrecioId, ?array $receta = null): void
     {
         $producto = Producto::with('presentacionesPrecio.presentacion')->findOrFail($productoId);
@@ -471,7 +502,7 @@ class PuntoDeVenta extends Component
                 'precio' => (float) $relacion->precio_presentacion,
                 'cantidad' => 1,
                 'stock' => $disponible,
-                'presentacion' => $relacion->presentacion?->presentacion ?? '',
+                'presentacion' => $relacion->presentacion->presentacion,
                 'es_controlado' => $producto->es_controlado,
                 'tipo_venta' => 'presentacion',
                 'presentacion_id' => $relacion->id,
@@ -564,7 +595,7 @@ class PuntoDeVenta extends Component
         }
 
         $producto = Producto::find($this->recetaProductoId);
-        if (! $producto) {
+        if (! $producto instanceof Producto) {
             $this->errorReceta = 'El producto ya no esta disponible.';
             $this->mostrandoReceta = false;
             $this->recetaPresentacionId = null;
@@ -662,11 +693,12 @@ class PuntoDeVenta extends Component
 
         try {
             // Valida stock por sucursal para todos los ítems del carrito
+            /** @var array<int, array{producto: Producto, unidades: int}> $requerido */
             $requerido = [];
             foreach ($this->carrito as $item) {
                 $producto = Producto::find($item['producto_id']);
 
-                if (! $producto) {
+                if (! $producto instanceof Producto) {
                     $this->errorVenta = "El producto '{$item['nombre']}' ya no existe.";
                     $this->procesando = false;
 
@@ -693,7 +725,7 @@ class PuntoDeVenta extends Component
             $caja = Caja::firstOrCreate(['id_sucursal' => $sucursalId]);
 
             // Generate folio
-            $folio = 'V-'.date('Ymd').'-'.str_pad(Venta::count() + 1, 5, '0', STR_PAD_LEFT);
+            $folio = 'V-'.date('Ymd').'-'.str_pad((string) (Venta::count() + 1), 5, '0', STR_PAD_LEFT);
 
             $resultado = DB::transaction(function () use ($caja, $folio, $sucursalId) {
                 // Create payment(s)
@@ -896,7 +928,7 @@ class PuntoDeVenta extends Component
             ->sum('inventario.stock_individual');
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.punto-de-venta', [
             'productos' => $this->productos,

@@ -1,19 +1,6 @@
 <x-layouts::app :title="__('Lotes y caducidades')">
-    <div class="module-page">
-        <div class="module-page-inner">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Trazabilidad</p>
-                    <h1 class="mt-2 text-3xl font-bold">Lotes y caducidades</h1>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('lotes.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary">+ Registrar nuevo lote</a>
-                </div>
-            </div>
-
-            @include('pages.inventario.tabs', ['seccion' => 'lotes', 'selectedSucursal' => $selectedSucursal])
-
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
             @php
                 // Parámetros que toda tarjeta conserva al cambiar de filtro.
                 $filtrosBase = array_filter([
@@ -31,45 +18,38 @@
                 };
             @endphp
 
-            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <a href="{{ $enlaceTarjeta('todos') }}" @class(['module-stat module-stat-filtro', 'module-stat-filtro-activo' => $filtroEstado === 'todos']) @if($filtroEstado === 'todos') aria-current="true" @endif>
-                    <div class="flex items-center justify-between">
-                        <span class="theme-subtle text-sm">Total de lotes</span>
-                        <span class="stat-pill info">{{ $totalLotes }}</span>
-                    </div>
-                    <p class="mt-4 text-2xl font-bold">{{ $totalLotes }}</p>
-                    <p class="mt-1 text-xs theme-subtle">Todos los lotes de la sucursal</p>
-                </a>
+            {{-- Encabezado homologado: hero verde + KPIs blancos (las tarjetas filtran) --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de lotes y caducidades">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Trazabilidad · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                    <h1 class="mt-2">Lotes y caducidades</h1>
+                    <dl class="noti-resumen noti-kpis">
+                        <a href="{{ $enlaceTarjeta('todos') }}" class="noti-kpi" @if($filtroEstado === 'todos') aria-current="true" @endif>
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg> Total de lotes</dt><dd>{{ $totalLotes }}</dd>
+                        </a>
 
-                <a href="{{ $enlaceTarjeta('vigentes') }}" @class(['module-stat module-stat-filtro', 'module-stat-filtro-activo' => $filtroEstado === 'vigentes']) @if($filtroEstado === 'vigentes') aria-current="true" @endif>
-                    <div class="flex items-center justify-between">
-                        <span class="theme-subtle text-sm">Vigentes</span>
-                        <span class="stat-pill positive">OK</span>
-                    </div>
-                    <p class="mt-4 text-2xl font-bold">{{ $vigentes }}</p>
-                    <p class="mt-1 text-xs theme-subtle">Sin riesgo de caducidad</p>
-                </a>
+                        <a href="{{ $enlaceTarjeta('vigentes') }}" class="noti-kpi" @if($filtroEstado === 'vigentes') aria-current="true" @endif>
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Vigentes</dt><dd>{{ $vigentes }}</dd>
+                        </a>
 
-                <a href="{{ $enlaceTarjeta('por-caducar') }}" @class(['module-stat module-stat-filtro', 'module-stat-filtro-activo' => $filtroEstado === 'por-caducar']) @if($filtroEstado === 'por-caducar') aria-current="true" @endif>
-                    <div class="flex items-center justify-between">
-                        <span class="theme-subtle text-sm">Por caducar</span>
-                        <span class="stat-pill warning">{{ $porCaducar }}</span>
-                    </div>
-                    <p class="mt-4 text-2xl font-bold">{{ $porCaducar }}</p>
-                    <p class="mt-1 text-xs theme-subtle">Menos de 90 días o sin fecha</p>
-                </a>
+                        <a href="{{ $enlaceTarjeta('por-caducar') }}" @class(['noti-kpi', 'noti-kpi-alerta' => $porCaducar > 0]) @if($filtroEstado === 'por-caducar') aria-current="true" @endif>
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Por caducar</dt><dd>{{ $porCaducar }}</dd>
+                        </a>
 
-                <a href="{{ $enlaceTarjeta('caducados') }}" @class(['module-stat module-stat-filtro', 'module-stat-filtro-activo' => $filtroEstado === 'caducados']) @if($filtroEstado === 'caducados') aria-current="true" @endif>
-                    <div class="flex items-center justify-between">
-                        <span class="theme-subtle text-sm">Caducados</span>
-                        <span class="stat-pill danger">{{ $caducados }}</span>
+                        <a href="{{ $enlaceTarjeta('caducados') }}" @class(['noti-kpi', 'noti-kpi-alerta' => $caducados > 0]) @if($filtroEstado === 'caducados') aria-current="true" @endif>
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg> Caducados</dt><dd>{{ $caducados }}</dd>
+                        </a>
+                    </dl>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('lotes.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary">+ Registrar nuevo lote</a>
                     </div>
-                    <p class="mt-4 text-2xl font-bold">{{ $caducados }}</p>
-                    <p class="mt-1 text-xs theme-subtle">Caducados y anulados</p>
-                </a>
-            </div>
+                </div>
+            </section>
 
-            <div class="module-card p-5 sm:p-6"
+            @include('pages.inventario.tabs', ['seccion' => 'lotes', 'selectedSucursal' => $selectedSucursal])
+
+            <section class="module-card noti-listado" aria-label="Listado de lotes"
                  x-data="{
                      ...buscadorTabla(),
                      merma: {
@@ -147,6 +127,13 @@
                  }"
                  x-effect="filtrar($el)"
                  @keydown.escape.window="merma.abierto = false; anular.abierto = false">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Listado de lotes</h2>
+                        <p class="theme-subtle text-sm">{{ $totalLotes }} lote(s) · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                    </div>
+                </header>
+                <div class="p-5 sm:p-6">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="theme-subtle text-xs uppercase tracking-[0.25em]">Sucursal activa</p>
@@ -448,7 +435,8 @@
                         </form>
                     </div>
                 </div>
-            </div>
+                </div>
+            </section>
         </div>
     </div>
 

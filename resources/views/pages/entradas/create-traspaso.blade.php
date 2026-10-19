@@ -1,13 +1,17 @@
 <x-layouts::app :title="__('Nuevo traspaso')">
-    <div id="theme-shell">
-        <div class="theme-shell-inner">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Almacén</p>
-                    <h1 class="mt-2 text-3xl font-bold">Registrar nuevo traspaso</h1>
-                    <p class="mt-1 text-sm theme-subtle">Solicita producto a otra sucursal: llegará como alerta para aceptar o rechazar.</p>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de nuevo traspaso">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Almacén · Nuevo registro</p>
+                    <h1 class="mt-2">Registrar nuevo traspaso</h1>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('alertas.index', ['sucursal' => $sucursalLink, 'filtro' => 'traspasos']) }}" class="theme-button theme-button-secondary">← Volver</a>
+                    </div>
                 </div>
-            </div>
+            </section>
 
             @if(session('error'))
                 <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200" role="alert">
@@ -15,7 +19,15 @@
                 </div>
             @endif
 
-            <form action="{{ route('traspasos.store') }}" method="POST" class="theme-card">
+            <section class="module-card noti-listado" aria-label="Datos del traspaso">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Datos del traspaso</h2>
+                        <p class="theme-subtle text-sm">Solicita producto a otra sucursal: llegará como alerta para aceptar o rechazar</p>
+                    </div>
+                </header>
+                <div class="p-5 sm:p-6">
+            <form action="{{ route('traspasos.store') }}" method="POST">
                 @csrf
 
                 <div class="grid gap-5 md:grid-cols-2">
@@ -96,6 +108,8 @@
                     <button type="submit" class="theme-button theme-button-primary">Enviar solicitud</button>
                 </div>
             </form>
+                </div>
+            </section>
         </div>
     </div>
 

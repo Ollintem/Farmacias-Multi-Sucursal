@@ -2,9 +2,20 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $id_alerta
+ * @property int $id_usuario
+ * @property CarbonImmutable|null $fecha_enviado
+ * @property CarbonImmutable|null $fecha_leido
+ * @property string $estado
+ * @property-read Alerta $alerta
+ * @property-read User $usuario
+ */
 class AlertaUsuario extends Model
 {
     public const ESTADO_PENDIENTE = 'PENDIENTE';
@@ -29,11 +40,17 @@ class AlertaUsuario extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Alerta, $this>
+     */
     public function alerta(): BelongsTo
     {
         return $this->belongsTo(Alerta::class, 'id_alerta');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_usuario');

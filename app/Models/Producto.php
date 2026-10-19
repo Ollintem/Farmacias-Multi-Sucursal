@@ -10,6 +10,26 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * @property int $id
+ * @property string $codigo_barras
+ * @property string $nombre_producto
+ * @property string $descripcion
+ * @property string|null $precio
+ * @property int|null $id_presentacion
+ * @property int|null $id_categoria
+ * @property bool $es_controlado
+ * @property bool $es_activo
+ * @property Carbon|null $entregado_en
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property int $stock_sucursal
+ * @property ProductoPresentacion|null $presentacionCaja
+ * @property bool $puedeDesactivarse
+ * @property bool $puedeEliminarse
+ * @property-read PresentacionProducto|null $presentacion
+ * @property-read Categoria|null $categoria
+ */
 class Producto extends Model
 {
     protected $table = 'productos';
@@ -29,8 +49,6 @@ class Producto extends Model
         'es_controlado' => 'boolean',
         'es_activo' => 'boolean',
         'entregado_en' => 'datetime',
-        'creado_en' => 'datetime',
-        'actualizado_en' => 'datetime',
     ];
 
     /**
@@ -41,11 +59,17 @@ class Producto extends Model
         return $this->hasOne(ProductoPresentacion::class, 'producto')->where('es_principal', true);
     }
 
+    /**
+     * @return BelongsTo<Categoria, $this>
+     */
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(Categoria::class, 'id_categoria');
     }
 
+    /**
+     * @return HasManyThrough<Inventario, Lote, $this>
+     */
     public function inventarios(): HasManyThrough
     {
         return $this->hasManyThrough(Inventario::class, Lote::class, 'id_producto', 'id_lote', 'id', 'id');
@@ -61,6 +85,9 @@ class Producto extends Model
             ->withTimestamps();
     }
 
+    /**
+     * @return HasMany<ProductoPresentacion, $this>
+     */
     public function presentacionesPrecio(): HasMany
     {
         return $this->hasMany(ProductoPresentacion::class, 'producto');
@@ -101,6 +128,9 @@ class Producto extends Model
             ->values();
     }
 
+    /**
+     * @return HasMany<Lote, $this>
+     */
     public function lotes(): HasMany
     {
         return $this->hasMany(Lote::class, 'id_producto');
@@ -203,12 +233,18 @@ class Producto extends Model
         ];
     }
 
+    /**
+     * @return BelongsToMany<Venta, $this>
+     */
     public function ventas(): BelongsToMany
     {
         return $this->belongsToMany(Venta::class, 'producto_venta', 'producto', 'venta')
             ->withPivot('cantidad', 'precio_unidad');
     }
 
+    /**
+     * @return BelongsToMany<Pedido, $this>
+     */
     public function pedidos(): BelongsToMany
     {
         return $this->belongsToMany(Pedido::class, 'detalles_pedido', 'producto', 'pedido')

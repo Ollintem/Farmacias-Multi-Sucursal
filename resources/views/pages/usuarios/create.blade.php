@@ -1,16 +1,14 @@
 <x-layouts::app :title="__('Nuevo usuario')">
-    <div class="module-page">
-        <div class="module-page-inner">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Alta de personal</p>
-                    <h1 class="mt-2 text-3xl font-bold text-slate-800 dark:text-white">Registrar nuevo usuario</h1>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de usuario">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Alta de personal · Nuevo registro</p>
+                    <h1 class="mt-2">Registrar nuevo usuario</h1>
                 </div>
-
-                <div class="theme-tools">
-                    <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary">Volver</a>
-                </div>
-            </div>
+            </section>
 
             @if(session('error'))
                 <div
@@ -26,13 +24,19 @@
                 </div>
             @endif
 
+            <section class="module-card noti-listado" aria-label="Datos del usuario">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Datos del usuario</h2>
+                        <p class="theme-subtle text-sm">Completa la información para registrar un nuevo usuario</p>
+                    </div>
+                </header>
+                <div class="p-5">
             <form action="{{ route('usuarios.store') }}" method="POST">
                 @csrf
 
                 <div class="module-table">
                     <div class="p-5">
-                        <h2 class="text-lg font-bold text-slate-800 dark:text-white">Datos del usuario</h2>
-                        <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">Completa la informacion para registrar un nuevo usuario.</p>
 
                         <div class="mt-5 grid gap-5 md:grid-cols-2">
                             <div>
@@ -115,6 +119,8 @@
                     <button type="submit" class="theme-button theme-button-primary">Guardar usuario</button>
                 </div>
             </form>
+                </div>
+            </section>
         </div>
     </div>
 </x-layouts::app>

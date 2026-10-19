@@ -8,6 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $folio
+ * @property int $stock_lote
+ * @property int|null $id_pedido
+ * @property int|null $id_proveedor
+ * @property int|null $id_producto
+ * @property int|null $id_presentacion
+ * @property Carbon $entregado_en
+ * @property Carbon|null $fecha_caducidad
+ * @property Carbon|null $fecha_de_caducidad
+ * @property Carbon|null $anulado_en
+ * @property-read Pedido|null $pedido
+ * @property-read Proveedor|null $proveedor
+ * @property-read Producto|null $producto
+ */
 class Lote extends Model
 {
     protected $table = 'lotes';
@@ -38,6 +54,8 @@ class Lote extends Model
     /**
      * Alias con el nombre de la nueva especificación.
      * Lee/escribe la misma fecha que fecha_caducidad.
+     *
+     * @return Attribute<mixed, mixed>
      */
     protected function fechaDeCaducidad(): Attribute
     {
@@ -63,6 +81,8 @@ class Lote extends Model
 
     /**
      * Pedido de compra que originó el lote (si vino de uno).
+     *
+     * @return BelongsTo<Pedido, $this>
      */
     public function pedido(): BelongsTo
     {
@@ -72,12 +92,17 @@ class Lote extends Model
     /**
      * Proveedor registrado directamente en el lote. Para lotes previos
      * a la columna sigue resolviéndose vía pedido (`$lote->pedido?->proveedor`).
+     *
+     * @return BelongsTo<Proveedor, $this>
      */
     public function proveedor(): BelongsTo
     {
         return $this->belongsTo(Proveedor::class, 'id_proveedor');
     }
 
+    /**
+     * @return BelongsTo<Producto, $this>
+     */
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class, 'id_producto');
@@ -91,11 +116,17 @@ class Lote extends Model
         return $this->belongsTo(PresentacionProducto::class, 'id_presentacion');
     }
 
+    /**
+     * @return HasMany<Inventario, $this>
+     */
     public function inventarios(): HasMany
     {
         return $this->hasMany(Inventario::class, 'id_lote');
     }
 
+    /**
+     * @return HasMany<DetalleTraspaso, $this>
+     */
     public function detallesTraspaso(): HasMany
     {
         return $this->hasMany(DetalleTraspaso::class, 'id_lote');
@@ -109,9 +140,11 @@ class Lote extends Model
      */
     public function estaCaducado(): bool
     {
+        // Nota: el accessor fechaDeCaducidad devuelve el valor crudo
+        // (string|Carbon|null), por eso se normaliza con Carbon::parse.
         $fecha = $this->fecha_de_caducidad ?? $this->fecha_caducidad;
 
-        if ($fecha === null || $fecha === '') {
+        if (! $fecha) {
             return false;
         }
 

@@ -3,7 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $banco
+ * @property string $clabe
+ * @property string $beneficiario
+ * @property string $numero_cuenta
+ * @property string $correo_contacto
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class ConfiguracionBancaria extends Model
 {
     protected $table = 'configuracion_bancaria';
@@ -16,7 +27,7 @@ class ConfiguracionBancaria extends Model
         'correo_contacto',
     ];
 
-    public static function obtener(): static
+    public static function obtener(): self
     {
         return static::firstOrCreate([], [
             'banco' => '',

@@ -1,15 +1,33 @@
 <x-layouts::app :title="__('Entradas de almacén')">
-    <div class="module-page">
-        <div class="module-page-inner">
-            <div class="module-hero">
-                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <p class="farma-kicker">Almacén</p>
-                        <h1 class="mt-2">Entradas de almacén</h1>
-                        <p class="mt-1 text-sm theme-subtle">Recepción de proveedores (pedidos) y movimientos entre sucursales (traspasos).</p>
-                    </div>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            @php($tipoActual = $tipo ?? request('tipo', 'todas'))
+            @php($totalTodas = $totalEntradas ?? ($entradas->count() ?? 0))
+            @php($esTodas = in_array($tipoActual, ['todas', '', null], true))
+            @php($esPedidos = $tipoActual === 'pedidos')
+            @php($esTraspasos = $tipoActual === 'traspasos')
 
-                    <div class="flex flex-wrap items-center gap-3">
+            {{-- Encabezado homologado: hero verde + KPIs blancos --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de entradas de almacén">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Almacén · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                    <h1 class="mt-2">Entradas de almacén</h1>
+                    <dl class="noti-resumen noti-kpis">
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7l-8-4-8 4m16 0v10l-8 4m8-14l-8 4m0 10V11m0 10l-8-4V7m8 4L4 7"/></svg> Entradas</dt><dd>{{ $totalTodas }}</dd>
+                        </div>
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg> Pedidos</dt><dd>{{ $totalPedidos ?? 0 }}</dd>
+                        </div>
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg> Traspasos</dt><dd>{{ $totalTraspasos ?? 0 }}</dd>
+                        </div>
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg> Unidades</dt><dd>{{ $unidadesRecibidas ?? 0 }}</dd>
+                        </div>
+                    </dl>
+                    <div class="mt-4 flex flex-wrap gap-2">
                         @if(Route::has('pedidos.create'))
                             <a href="{{ route('pedidos.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary">+ Nuevo pedido</a>
                         @else
@@ -29,91 +47,37 @@
                         @endif
                     </div>
                 </div>
-            </div>
+            </section>
 
-            @php($tipoActual = $tipo ?? request('tipo', 'todas'))
-            @php($totalTodas = $totalEntradas ?? ($entradas->count() ?? 0))
-            @php($esTodas = in_array($tipoActual, ['todas', '', null], true))
-            @php($esPedidos = $tipoActual === 'pedidos')
-            @php($esTraspasos = $tipoActual === 'traspasos')
-
-            <nav class="inventario-segment" aria-label="Secciones de entradas">
+            <nav class="noti-tabs" aria-label="Secciones de entradas">
                 <a
                     href="{{ route('entradas-de-almacen.index', ['sucursal' => $selectedSucursal?->id]) }}"
-                    @class(['inventario-seg-btn', 'inventario-seg-btn-activo' => $esTodas])
+                    @class(['noti-filtro', 'activo' => $esTodas])
                     @if($esTodas) aria-current="page" @endif
                 >
-                    <svg @class(['h-4 w-4', 'invisible' => ! $esTodas]) fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
                     <span>Todas las entradas</span>
-                    <span class="seg-contador">{{ $totalTodas }}</span>
+                    <span class="noti-filtro-conteo">{{ $totalTodas }}</span>
                 </a>
                 <a
                     href="{{ route('entradas-de-almacen.index', ['sucursal' => $selectedSucursal?->id, 'tipo' => 'pedidos']) }}"
-                    @class(['inventario-seg-btn', 'inventario-seg-btn-activo' => $esPedidos])
+                    @class(['noti-filtro', 'activo' => $esPedidos])
                     @if($esPedidos) aria-current="page" @endif
                 >
-                    <svg @class(['h-4 w-4', 'invisible' => ! $esPedidos]) fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>
                     <span>Pedidos</span>
-                    <span class="seg-contador">{{ $totalPedidos ?? 0 }}</span>
+                    <span class="noti-filtro-conteo">{{ $totalPedidos ?? 0 }}</span>
                 </a>
                 <a
                     href="{{ route('entradas-de-almacen.index', ['sucursal' => $selectedSucursal?->id, 'tipo' => 'traspasos']) }}"
-                    @class(['inventario-seg-btn', 'inventario-seg-btn-activo' => $esTraspasos])
+                    @class(['noti-filtro', 'activo' => $esTraspasos])
                     @if($esTraspasos) aria-current="page" @endif
                 >
-                    <svg @class(['h-4 w-4', 'invisible' => ! $esTraspasos]) fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
                     <span>Traspasos</span>
-                    <span class="seg-contador">{{ $totalTraspasos ?? 0 }}</span>
+                    <span class="noti-filtro-conteo">{{ $totalTraspasos ?? 0 }}</span>
                 </a>
             </nav>
-
-            @if($esTodas)
-            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div class="module-stat entradas-stat">
-                    <span class="entradas-stat-icono total" aria-hidden="true">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0v10l-8 4m8-14l-8 4m0 10V11m0 10l-8-4V7m8 4L4 7"/></svg>
-                    </span>
-                    <div class="min-w-0">
-                        <p class="entradas-stat-numero">{{ $totalTodas }}</p>
-                        <p class="entradas-stat-etiqueta">Entradas</p>
-                        <p class="mt-1 text-xs theme-subtle">Registros en la vista</p>
-                    </div>
-                </div>
-
-                <div class="module-stat entradas-stat">
-                    <span class="entradas-stat-icono positive" aria-hidden="true">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>
-                    </span>
-                    <div class="min-w-0">
-                        <p class="entradas-stat-numero">{{ $totalPedidos ?? 0 }}</p>
-                        <p class="entradas-stat-etiqueta">Pedidos</p>
-                        <p class="mt-1 text-xs theme-subtle">Recepción de proveedores</p>
-                    </div>
-                </div>
-
-                <div class="module-stat entradas-stat">
-                    <span class="entradas-stat-icono warning" aria-hidden="true">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
-                    </span>
-                    <div class="min-w-0">
-                        <p class="entradas-stat-numero">{{ $totalTraspasos ?? 0 }}</p>
-                        <p class="entradas-stat-etiqueta">Traspasos</p>
-                        <p class="mt-1 text-xs theme-subtle">Movimientos entre sucursales</p>
-                    </div>
-                </div>
-
-                <div class="module-stat entradas-stat">
-                    <span class="entradas-stat-icono info" aria-hidden="true">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
-                    </span>
-                    <div class="min-w-0">
-                        <p class="entradas-stat-numero">{{ $unidadesRecibidas ?? 0 }}</p>
-                        <p class="entradas-stat-etiqueta">Unidades</p>
-                        <p class="mt-1 text-xs theme-subtle">Unidades recibidas</p>
-                    </div>
-                </div>
-            </div>
-            @endif
 
             @if(session('success'))
                 <div
@@ -147,7 +111,14 @@
                 </div>
             @endif
 
-            <div class="module-card p-5 sm:p-6" x-data="buscadorTabla()" x-effect="filtrar($el)">
+            <section class="module-card noti-listado" aria-label="Listado de entradas" x-data="buscadorTabla()" x-effect="filtrar($el)">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Listado de entradas</h2>
+                        <p class="theme-subtle text-sm">{{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }} · {{ $totalTodas }} registro(s)</p>
+                    </div>
+                </header>
+                <div class="p-5 sm:p-6">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p class="theme-subtle text-xs uppercase tracking-[0.25em]">Sucursal activa</p>
@@ -382,7 +353,8 @@
                     </div>
                 </section>
                 @endif
-            </div>
+                </div>
+            </section>
         </div>
     </div>
 

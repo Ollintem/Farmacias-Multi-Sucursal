@@ -1,5 +1,5 @@
 <div
-    class="module-page"
+    class="module-page noti-page"
     x-data="{ successFolio: null, avisoCaducado: 0 }"
     @venta-completada.window="successFolio = $event.detail.folio; setTimeout(() => successFolio = null, 4000)"
     @stock-caducado-ignorado.window="avisoCaducado = $event.detail.unidades; setTimeout(() => avisoCaducado = 0, 4000)"
@@ -42,7 +42,15 @@
         </div>
     </template>
 
-    <div class="module-page-inner">
+    <div class="module-page-inner noti-full noti-formal">
+    {{-- Encabezado homologado: hero verde compacto --}}
+    <section class="module-card noti-hero" aria-label="Encabezado de punto de venta">
+        <div class="noti-hero-fondo" aria-hidden="true"></div>
+        <div class="noti-encabezado-texto noti-hero-texto">
+            <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Venta rápida · {{ (\App\Models\Sucursal::find(session('active_sucursal_id') ?? auth()->user()?->id_sucursal))?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+            <h1 class="mt-2">Punto de venta</h1>
+        </div>
+    </section>
     {{-- Barra de búsqueda --}}
     <div class="module-card p-4 sm:p-5">
         <div class="flex items-center gap-3">

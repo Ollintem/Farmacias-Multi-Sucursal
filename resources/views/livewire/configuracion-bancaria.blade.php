@@ -1,8 +1,13 @@
-<div class="mx-auto max-w-2xl py-8">
-    <div class="mb-6">
-        <h1 class="text-xl font-bold text-slate-800 dark:text-white">Configuracion bancaria</h1>
-        <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">Datos bancarios para pagos por transferencia</p>
-    </div>
+<div class="module-page noti-page">
+    <div class="module-page-inner noti-full noti-formal">
+    {{-- Encabezado homologado: hero verde --}}
+    <section class="module-card noti-hero" aria-label="Encabezado de configuración bancaria">
+        <div class="noti-hero-fondo" aria-hidden="true"></div>
+        <div class="noti-encabezado-texto noti-hero-texto">
+            <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Ajustes · Transferencias</p>
+            <h1 class="mt-2">Configuración bancaria</h1>
+        </div>
+    </section>
 
     @if($guardado)
         <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-900/30">
@@ -10,6 +15,14 @@
         </div>
     @endif
 
+    <section class="module-card noti-listado" aria-label="Datos bancarios">
+        <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+            <div>
+                <h2>Datos bancarios</h2>
+                <p class="theme-subtle text-sm">Datos bancarios para pagos por transferencia</p>
+            </div>
+        </header>
+        <div class="p-5 sm:p-6">
     <form wire:submit="guardar" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <div class="space-y-5">
             <div>
@@ -78,4 +91,7 @@
             </button>
         </div>
     </form>
+        </div>
+    </section>
+    </div>
 </div>

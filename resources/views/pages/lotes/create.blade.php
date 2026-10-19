@@ -1,12 +1,17 @@
 <x-layouts::app :title="__('Registrar lote')">
-    <div id="theme-shell">
-        <div class="theme-shell-inner">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Trazabilidad</p>
-                    <h1 class="mt-2 text-3xl font-bold">Registrar nuevo lote</h1>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de lote">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Trazabilidad · Nuevo registro</p>
+                    <h1 class="mt-2">Registrar nuevo lote</h1>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('lotes.index', ['sucursal' => old('sucursal', $selectedSucursalId)]) }}" class="theme-button theme-button-secondary">← Volver</a>
+                    </div>
                 </div>
-            </div>
+            </section>
 
 @php
     $mapaPedidos = $pedidos->mapWithKeys(fn ($pedido) => [
@@ -19,7 +24,15 @@
     ])->all();
 @endphp
 
-            <form action="{{ route('lotes.store') }}" method="POST" class="theme-card">
+            <section class="module-card noti-listado" aria-label="Datos del lote">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Datos del lote</h2>
+                        <p class="theme-subtle text-sm">Folio, pedido, producto, fechas y cantidad inicial</p>
+                    </div>
+                </header>
+                <div class="p-5 sm:p-6">
+            <form action="{{ route('lotes.store') }}" method="POST">
                 @csrf
 
                 <div class="grid gap-5 md:grid-cols-2">
@@ -168,6 +181,8 @@
                     <button type="submit" class="theme-button theme-button-primary">Guardar lote</button>
                 </div>
             </form>
+                </div>
+            </section>
         </div>
     </div>
 

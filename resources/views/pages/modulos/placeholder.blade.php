@@ -35,8 +35,8 @@
 @endphp
 
 <x-layouts::app :title="__($nombre)">
-    <div class="module-page">
-        <div class="module-page-inner">
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
             <div>
                 <button type="button" onclick="history.back()" class="inline-flex items-center gap-2 text-sm font-bold text-emerald-700 transition hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200">← Volver</button>
             </div>
@@ -72,26 +72,33 @@
                 </div>
             @endif
 
-            <section class="module-hero">
-                <div class="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <div class="flex items-center gap-3">
-                            <span class="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-600 text-sm font-black text-white">{{ $detalle['siglas'] }}</span>
-                            <p class="text-xs font-bold uppercase tracking-[0.28em] text-emerald-700 dark:text-emerald-300">FarmaERP · Próximamente</p>
+            <section class="module-card noti-hero" aria-label="Encabezado del módulo">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> FarmaERP · Próximamente</p>
+                    <h1 class="mt-2">{{ $nombre }}</h1>
+                    <dl class="noti-resumen noti-kpis">
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6h.008v.008H6V6z"/></svg> Diseño</dt><dd>Preparado</dd>
                         </div>
-                        <h1 class="mt-5 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">{{ $nombre }}</h1>
-                        <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">{{ $detalle['descripcion'] }}</p>
-                    </div>
-                    <span class="w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">En preparación</span>
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg> Menú</dt><dd>Conectado</dd>
+                        </div>
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Lógica</dt><dd>Pendiente</dd>
+                        </div>
+                    </dl>
                 </div>
-                <div class="absolute -right-10 -top-16 h-48 w-48 rounded-full border-[22px] border-white/35 dark:border-emerald-200/10"></div>
             </section>
 
-            <section class="module-card overflow-hidden">
-                <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-700">
-                    <h2 class="text-base font-bold text-slate-950 dark:text-white">Área de trabajo</h2>
-                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">La navegación ya está disponible para mantener una experiencia consistente.</p>
-                </div>
+            <section class="module-card noti-listado" aria-label="Área de trabajo">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                    <div>
+                        <h2>Área de trabajo</h2>
+                        <p class="theme-subtle text-sm">{{ $detalle['descripcion'] }}</p>
+                    </div>
+                </header>
+                <div>
                 <div class="grid gap-4 px-6 py-10 text-center sm:grid-cols-3">
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-800/60">
                         <span class="mx-auto grid h-10 w-10 place-items-center rounded-xl bg-sky-100 text-sm font-black text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">01</span>
@@ -113,6 +120,8 @@
                     <button type="button" onclick="history.back()" class="theme-button theme-button-secondary">Volver atrás</button>
                     <a href="{{ route('dashboard') }}" class="theme-button theme-button-primary">Ir al dashboard <span class="ml-2">→</span></a>
                 </div>
+                </div>
+            </section>
             </section>
         </div>
     </div>

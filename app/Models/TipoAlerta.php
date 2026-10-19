@@ -5,7 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $nombre
+ * @property int $id_modulo
+ * @property string $nivel
+ * @property bool $activo
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Modulo $modulo
+ */
 class TipoAlerta extends Model
 {
     public const NIVEL_INFO = 'INFO';
@@ -30,11 +41,17 @@ class TipoAlerta extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Modulo, $this>
+     */
     public function modulo(): BelongsTo
     {
         return $this->belongsTo(Modulo::class, 'id_modulo');
     }
 
+    /**
+     * @return HasMany<Alerta, $this>
+     */
     public function alertas(): HasMany
     {
         return $this->hasMany(Alerta::class, 'id_tipo_alerta');

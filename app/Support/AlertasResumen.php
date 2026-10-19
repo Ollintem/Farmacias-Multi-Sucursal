@@ -24,7 +24,10 @@ class AlertasResumen
         }
 
         $pendientes = Traspaso::query()
-            ->where('sucursal_b', $sucursalId)
+            ->where(function ($query) use ($sucursalId): void {
+                $query->where('sucursal_a', $sucursalId)
+                    ->orWhere('sucursal_b', $sucursalId);
+            })
             ->whereIn('estado', ['pendiente', 'enviado'])
             ->count();
 

@@ -1,21 +1,26 @@
 <x-layouts::app :title="__('Usuarios')">
-    <div class="module-page">
-        <div class="module-page-inner">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p class="text-sm uppercase tracking-[0.25em] text-emerald-500">Personal</p>
-                    <h1 class="mt-2 text-3xl font-bold text-slate-800 dark:text-white">Usuarios</h1>
+    <div class="module-page noti-page">
+        <div class="module-page-inner noti-full noti-formal">
+            {{-- Encabezado homologado: hero verde + KPIs blancos --}}
+            <section class="module-card noti-hero" aria-label="Encabezado de usuarios">
+                <div class="noti-hero-fondo" aria-hidden="true"></div>
+                <div class="noti-encabezado-texto noti-hero-texto">
+                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Personal · Gestión de accesos</p>
+                    <h1 class="mt-2">Usuarios</h1>
+                    <dl class="noti-resumen noti-kpis">
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg> Usuarios</dt><dd>{{ $totalUsuarios }}</dd>
+                        </div>
+                        <div class="noti-kpi">
+                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg> Roles</dt><dd>{{ $roles->count() }}</dd>
+                        </div>
+                    </dl>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button type="button" x-on:click="$dispatch('open-modal-rol')" class="theme-button theme-button-secondary">Nuevo rol</button>
+                        <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary">Nuevo usuario</a>
+                    </div>
                 </div>
-
-                <div class="theme-tools">
-                    <button
-                        type="button"
-                        x-on:click="$dispatch('open-modal-rol')"
-                        class="theme-button theme-button-secondary"
-                    >Nuevo rol</button>
-                    <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary">Nuevo usuario</a>
-                </div>
-            </div>
+            </section>
 
             @if(session('success'))
                 <div
@@ -269,7 +274,15 @@
                     @endforeach
                 </div>
 
-                <div class="module-table">
+                <section class="module-card noti-listado" aria-label="Listado de usuarios">
+                    <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+                        <div>
+                            <h2>Listado de usuarios</h2>
+                            <p class="theme-subtle text-sm">{{ $totalUsuarios }} usuario(s) · filtre por rol con las tarjetas</p>
+                        </div>
+                    </header>
+                    <div>
+                    <div class="module-table !rounded-none !border-0 !shadow-none">
                     <div class="overflow-x-auto">
                         <table class="users-table">
                             <thead>
@@ -334,7 +347,9 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
+                    </div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
 
@@ -62,4 +63,62 @@ test('una sucursal existente puede editarse y el formulario regresa al listado',
         'direccion' => 'Av. Central 456',
         'es_activa' => false,
     ]);
+});
+
+function crearContextoSucursales(object $test): array
+{
+    $rol = Rol::firstOrCreate(
+        ['tipo_rol' => 'SuperAdmin'],
+        ['descripcion' => 'Acceso total']
+    );
+
+    $admin = User::factory()->create(['id_rol' => $rol->id]);
+
+    $test->actingAs($admin);
+
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal Test',
+        'direccion' => 'Av. Test 1',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+        'es_activa' => true,
+    ]);
+
+    return [$sucursal, $admin, $rol];
+}
+
+test('el listado muestra las sucursales con su boton de eliminar', function () {
+    [$sucursal] = crearContextoSucursales($this);
+
+    $this->get(route('sucursales.index'))
+        ->assertOk()
+        ->assertSee($sucursal->nombre_sucursal)
+        ->assertSee(route('sucursales.destroy', $sucursal), false);
+});
+
+test('eliminar quita la sucursal sin movimiento del directorio', function () {
+    [$sucursal] = crearContextoSucursales($this);
+
+    $response = $this->delete(route('sucursales.destroy', $sucursal));
+
+    $response->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect(Sucursal::find($sucursal->id))->toBeNull();
+});
+
+test('eliminar se bloquea cuando la sucursal tiene usuarios', function () {
+    [$sucursal, , $rol] = crearContextoSucursales($this);
+
+    User::factory()->create([
+        'id_sucursal' => $sucursal->id,
+        'id_rol' => $rol->id,
+    ]);
+
+    $response = $this->delete(route('sucursales.destroy', $sucursal));
+
+    $response->assertRedirect()
+        ->assertSessionHas('error');
+
+    expect(Sucursal::find($sucursal->id))->not->toBeNull();
 });

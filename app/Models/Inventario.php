@@ -5,7 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $id_sucursal
+ * @property int $id_lote
+ * @property int $stock
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Sucursal $sucursal
+ * @property-read Lote $lote
+ */
 class Inventario extends Model
 {
     protected $table = 'inventario';
@@ -44,11 +55,17 @@ class Inventario extends Model
         });
     }
 
+    /**
+     * @return BelongsTo<Sucursal, $this>
+     */
     public function sucursal(): BelongsTo
     {
         return $this->belongsTo(Sucursal::class, 'id_sucursal');
     }
 
+    /**
+     * @return BelongsTo<Lote, $this>
+     */
     public function lote(): BelongsTo
     {
         return $this->belongsTo(Lote::class, 'id_lote');
@@ -104,6 +121,9 @@ class Inventario extends Model
      *
      * Entrada: id de la sucursal.
      * Salida: el query con el filtro aplicado.
+     *
+     * @param  Builder<Inventario>  $query
+     * @return Builder<Inventario>
      */
     public function scopeForSucursal(Builder $query, int $idSucursal): Builder
     {
