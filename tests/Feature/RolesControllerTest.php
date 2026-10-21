@@ -15,7 +15,6 @@ function crearAdminConRol(string $tipoRol = 'SuperAdmin'): User
     return User::create([
         'nombre' => 'Admin',
         'apellido' => 'Roles',
-        'nombre_usuario' => 'admin_roles_'.str()->random(5),
         'email' => 'admin_roles_'.str()->random(5).'@farmacia.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -53,7 +52,6 @@ it('impide eliminar el rol SuperAdmin o un rol con usuarios', function () {
     User::create([
         'nombre' => 'Ana',
         'apellido' => 'Lopez',
-        'nombre_usuario' => 'ana_'.$admin->id,
         'email' => 'ana_'.$admin->id.'@farmacia.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,

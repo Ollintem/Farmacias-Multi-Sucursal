@@ -114,8 +114,8 @@ test('el inventario guarda un producto con categoria y presentaciones en la sucu
             'descripcion' => 'Analgésico común',
             'es_controlado' => '0',
             'presentaciones' => [
-                ['id_presentacion' => $caja->id, 'unidades' => 10, 'precio' => 22.5, 'es_principal' => 1],
-                ['id_presentacion' => $blister->id, 'unidades' => 10, 'precio' => 3.5, 'es_principal' => 0],
+                ['id_presentacion' => $caja->id, 'unidades' => 10, 'precio' => 22.5, 'stock_minimo' => 5, 'es_principal' => 1],
+                ['id_presentacion' => $blister->id, 'unidades' => 10, 'precio' => 3.5, 'stock_minimo' => 9, 'es_principal' => 0],
             ],
         ]);
 
@@ -138,6 +138,7 @@ test('el inventario guarda un producto con categoria y presentaciones en la sucu
         'id_presentacion' => $caja->id,
         'unidades' => 10,
         'precio_presentacion' => 22.5,
+        'stock_minimo' => 5,
         'es_principal' => true,
     ]);
 
@@ -146,6 +147,7 @@ test('el inventario guarda un producto con categoria y presentaciones en la sucu
         'id_presentacion' => $blister->id,
         'unidades' => 10,
         'precio_presentacion' => 3.5,
+        'stock_minimo' => 0,
         'es_principal' => false,
     ]);
 });
@@ -676,6 +678,7 @@ test('el formulario de edicion precarga las presentaciones del producto', functi
         'id_presentacion' => $caja->id,
         'unidades' => 10,
         'precio_presentacion' => 12,
+        'stock_minimo' => 7,
         'es_principal' => true,
     ]);
 
@@ -685,7 +688,8 @@ test('el formulario de edicion precarga las presentaciones del producto', functi
         ->get(route('inventario.edit', $producto))
         ->assertOk()
         ->assertSee('principalIndex: 0', false)
-        ->assertSee('"unidades":10', false);
+        ->assertSee('"unidades":10', false)
+        ->assertSee('"stock_minimo":7', false);
 });
 
 test('el modulo inventario abre productos por defecto y stock queda en su propia ruta', function () {

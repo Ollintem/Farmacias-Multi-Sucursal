@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             SucursalSeeder::class,
             RolSeeder::class,
             ModuloSeeder::class,
+            PermisoSeeder::class,
+            RolesPermisosSeeder::class,
             PresentacionProductoSeeder::class,
             CategoriaSeeder::class,
             ProveedorSeeder::class,

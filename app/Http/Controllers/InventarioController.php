@@ -378,6 +378,9 @@ class InventarioController extends Controller
                 [
                     'unidades' => $unidades,
                     'precio_presentacion' => $fila['precio'],
+                    'stock_minimo' => $indice === $indicePrincipal
+                        ? max(0, (int) ($fila['stock_minimo'] ?? 0))
+                        : 0,
                     'es_principal' => $indice === $indicePrincipal,
                 ]
             );
@@ -521,6 +524,7 @@ class InventarioController extends Controller
             ],
             'presentaciones.*.unidades' => ['required', 'integer', 'min:1'],
             'presentaciones.*.precio' => ['required', 'numeric', 'min:0'],
+            'presentaciones.*.stock_minimo' => ['nullable', 'integer', 'min:0'],
             'presentaciones.*.es_principal' => ['nullable', 'boolean'],
         ];
     }

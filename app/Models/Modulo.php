@@ -47,6 +47,16 @@ class Modulo extends Model
     }
 
     /**
+     * Permisos granulares del módulo (ver, crear, editar, borrar).
+     *
+     * @return HasMany<Permiso, $this>
+     */
+    public function permisos(): HasMany
+    {
+        return $this->hasMany(Permiso::class, 'id_modulo');
+    }
+
+    /**
      * Tipos de alerta asociados a este módulo.
      *
      * @return HasMany<TipoAlerta, $this>

@@ -60,7 +60,6 @@ class UsuariosController extends Controller
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'apellido' => ['required', 'string', 'max:100'],
-            'nombre_usuario' => ['required', 'string', 'max:80', 'unique:usuarios,nombre_usuario'],
             'email' => ['required', 'email', 'unique:usuarios,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'id_rol' => [
@@ -206,7 +205,6 @@ class UsuariosController extends Controller
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'apellido' => ['required', 'string', 'max:100'],
-            'nombre_usuario' => ['required', 'string', 'max:80', Rule::unique('usuarios', 'nombre_usuario')->ignore($usuario->id)],
             'email' => ['required', 'email', Rule::unique('usuarios', 'email')->ignore($usuario->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'id_rol' => [
@@ -228,7 +226,6 @@ class UsuariosController extends Controller
         $usuario->update([
             'nombre' => $data['nombre'],
             'apellido' => $data['apellido'],
-            'nombre_usuario' => $data['nombre_usuario'],
             'email' => $data['email'],
             'id_rol' => $data['id_rol'],
             'id_sucursal' => $data['id_sucursal'] ?? null,

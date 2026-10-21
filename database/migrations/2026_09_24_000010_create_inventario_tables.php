@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('producto')->constrained('productos')->cascadeOnDelete();
             $table->decimal('precio_presentacion', 12, 2);
             $table->integer('unidades')->default(1);
+            $table->integer('stock_minimo')->default(0);
             $table->timestamps();
             $table->unique(['id_presentacion', 'producto'], 'presentacion_producto_unique');
         });

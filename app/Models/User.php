@@ -21,7 +21,6 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int $id
  * @property string $nombre
  * @property string $apellido
- * @property string $nombre_usuario
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $password
@@ -36,7 +35,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $updated_at
  * @property-read string $name
  */
-#[Fillable(['nombre', 'apellido', 'nombre_usuario', 'email', 'password', 'es_activo', 'id_rol', 'id_sucursal'])]
+#[Fillable(['nombre', 'apellido', 'email', 'password', 'es_activo', 'id_rol', 'id_sucursal'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
@@ -170,6 +169,8 @@ class User extends Authenticatable
     /** @var array<int, string>|null */
     private ?array $modulosVisiblesCache = null;
 
+    private ?bool $rolPermisosConfiguradosCache = null;
+
     /**
      * Nombres de módulos con permiso de ver activo.
      *
@@ -181,6 +182,28 @@ class User extends Authenticatable
     {
         if ($this->modulosVisiblesCache !== null) {
             return $this->modulosVisiblesCache;
+        }
+
+        if ($this->rol?->tipo_rol === 'SuperAdmin') {
+            return $this->modulosVisiblesCache = Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
+        }
+
+        if ($this->rolTienePermisosConfigurados()) {
+            $modulosVisibles = Modulo::query()
+                ->whereHas('permisos', fn ($query) => $query
+                    ->where('accion', 'ver')
+                    ->whereHas('rolesPermisos', fn ($rolPermisoQuery) => $rolPermisoQuery
+                        ->where('id_rol', $this->id_rol)
+                        ->where('activo', true)))
+                ->whereDoesntHave('permisosActivados', fn ($query) => $query
+                    ->where('id_usuario', $this->id)
+                    ->where('puede_ver', false))
+                ->pluck('nombre_modulo')
+                ->filter()
+                ->unique()
+                ->values();
+
+            return $this->modulosVisiblesCache = $modulosVisibles->all();
         }
 
         $modulosVisibles = $this->permisosActivados()
@@ -198,10 +221,6 @@ class User extends Authenticatable
 
         $totalPermisosActivados = $this->permisosActivados()->count();
         if ($totalPermisosActivados === 0) {
-            return $this->modulosVisiblesCache = Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
-        }
-
-        if ($this->rol?->tipo_rol === 'SuperAdmin') {
             return $this->modulosVisiblesCache = Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
         }
 
@@ -230,6 +249,18 @@ class User extends Authenticatable
     ];
 
     /**
+     * Acciones equivalentes a cada bandera individual.
+     *
+     * @var array<string, string>
+     */
+    private const MAPA_ACCIONES = [
+        'puede_ver' => 'ver',
+        'puede_crear' => 'crear',
+        'puede_editar' => 'editar',
+        'puede_borrar' => 'borrar',
+    ];
+
+    /**
      * @var array<string, string>
      */
     private const MAPA_MODULOS = [
@@ -253,15 +284,47 @@ class User extends Authenticatable
      * Indica si el usuario tiene activo un permiso sobre un módulo.
      * Acepta los nombres cortos de las rutas (ver/crear/editar/eliminar
      * y el slug del módulo) o los nombres tal como están en el catálogo.
+     *
+     * Precedencia:
+     * 1. SuperAdmin siempre pasa.
+     * 2. Si el rol tiene configuración en `roles_permisos`, el rol es la base.
+     *    Un permiso individual de `permisos_activados` solo puede restringir,
+     *    nunca ampliar lo que el rol ya permite.
+     * 3. Si el rol no tiene configuración, se conserva la lógica individual
+     *    existente para mantener compatibilidad.
      */
     public function permisosHabilitados(string $permiso, string $modulo): bool
     {
-        if ($this->permisosActivados()->count() === 0) {
+        if ($this->rol?->tipo_rol === 'SuperAdmin') {
             return true;
         }
 
         $columna = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
         $nombreModulo = self::MAPA_MODULOS[strtolower($modulo)] ?? $modulo;
+
+        if ($this->rolTienePermisosConfigurados()) {
+            $columnas = $columna === 'todos'
+                ? array_keys(self::MAPA_ACCIONES)
+                : [$columna];
+
+            foreach ($columnas as $columnaPermiso) {
+                $accion = self::MAPA_ACCIONES[$columnaPermiso] ?? null;
+
+                if ($accion === null || ! $this->rolPermite($accion, $nombreModulo)) {
+                    return false;
+                }
+
+                if ($this->permisoIndividual($columnaPermiso, $nombreModulo) === false) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if ($this->permisosActivados()->count() === 0) {
+            return true;
+        }
 
         if ($columna === 'todos') {
             $registro = $this->permisosActivados()
@@ -283,5 +346,55 @@ class User extends Authenticatable
             ->whereHas('modulo', fn ($q) => $q->where('nombre_modulo', $nombreModulo))
             ->where($columna, true)
             ->exists();
+    }
+
+    /**
+     * Indica si el rol del usuario tiene al menos un permiso configurado.
+     */
+    private function rolTienePermisosConfigurados(): bool
+    {
+        if ($this->id_rol === null) {
+            return false;
+        }
+
+        if ($this->rolPermisosConfiguradosCache !== null) {
+            return $this->rolPermisosConfiguradosCache;
+        }
+
+        return $this->rolPermisosConfiguradosCache = RolPermiso::query()
+            ->where('id_rol', $this->id_rol)
+            ->exists();
+    }
+
+    /**
+     * Indica si el rol permite una acción sobre un módulo.
+     */
+    private function rolPermite(string $accion, string $nombreModulo): bool
+    {
+        if ($this->id_rol === null) {
+            return false;
+        }
+
+        return RolPermiso::query()
+            ->where('id_rol', $this->id_rol)
+            ->where('activo', true)
+            ->whereHas('permiso', fn ($query) => $query
+                ->where('accion', $accion)
+                ->whereHas('modulo', fn ($moduloQuery) => $moduloQuery->where('nombre_modulo', $nombreModulo)))
+            ->exists();
+    }
+
+    /**
+     * Estado de la excepción individual del usuario para un módulo.
+     *
+     * Salida: null si no hay excepción registrada para ese módulo.
+     */
+    private function permisoIndividual(string $columna, string $nombreModulo): ?bool
+    {
+        $registro = $this->permisosActivados()
+            ->whereHas('modulo', fn ($query) => $query->where('nombre_modulo', $nombreModulo))
+            ->first();
+
+        return $registro === null ? null : (bool) $registro->{$columna};
     }
 }

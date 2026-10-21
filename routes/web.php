@@ -10,6 +10,7 @@ use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\PresentacionController;
 use App\Http\Controllers\ProveedoresController;
 use App\Http\Controllers\RolesController;
+use App\Http\Controllers\RolPermisoController;
 use App\Http\Controllers\SucursalesController;
 use App\Http\Controllers\TraspasoController;
 use App\Http\Controllers\UsuariosController;
@@ -56,6 +57,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/usuarios/{usuario}', [UsuariosController::class, 'update'])->name('usuarios.update')->middleware('checarPermisos:editar,usuarios');
     Route::delete('/usuarios/{usuario}', [UsuariosController::class, 'delete'])->name('usuarios.delete')->middleware('checarPermisos:eliminar,usuarios');
     // Roles
+    Route::get('/roles/permisos', [RolPermisoController::class, 'index'])->name('roles.permisos')->middleware('checarPermisos:ver,usuarios');
+    Route::put('/roles/{rol}/permisos', [RolPermisoController::class, 'update'])->name('roles.permisos.update')->middleware('checarPermisos:editar,usuarios');
     Route::post('/roles', [RolesController::class, 'store'])->name('roles.store')->middleware('checarPermisos:crear,roles');
     Route::put('/roles/{rol}', [RolesController::class, 'update'])->name('roles.update')->middleware('checarPermisos:editar,roles');
     Route::delete('/roles/{rol}', [RolesController::class, 'destroy'])->name('roles.destroy')->middleware('checarPermisos:eliminar,roles');

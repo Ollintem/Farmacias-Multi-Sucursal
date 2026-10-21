@@ -31,4 +31,14 @@ class Rol extends Model
     {
         return $this->hasMany(User::class, 'id_rol');
     }
+
+    /**
+     * Configuración de permisos predeterminados del rol.
+     *
+     * @return HasMany<RolPermiso, $this>
+     */
+    public function rolesPermisos(): HasMany
+    {
+        return $this->hasMany(RolPermiso::class, 'id_rol');
+    }
 }

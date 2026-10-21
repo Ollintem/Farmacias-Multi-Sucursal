@@ -60,14 +60,6 @@
                             </div>
 
                             <div>
-                                <label class="mb-2 block text-sm font-medium">Nombre de usuario</label>
-                                <input name="nombre_usuario" value="{{ old('nombre_usuario', $usuario->nombre_usuario) }}" class="theme-input" required>
-                                @error('nombre_usuario')
-                                    <span class="mt-1 block text-xs text-red-500">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div>
                                 <label class="mb-2 block text-sm font-medium">Email</label>
                                 <input type="email" name="email" value="{{ old('email', $usuario->email) }}" class="theme-input" required>
                                 @error('email')

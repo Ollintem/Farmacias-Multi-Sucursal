@@ -17,6 +17,7 @@
                     </dl>
                     <div class="mt-4 flex flex-wrap gap-2">
                         <button type="button" x-on:click="$dispatch('open-modal-rol')" class="theme-button theme-button-secondary">Nuevo rol</button>
+                        <a href="{{ route('roles.permisos') }}" class="theme-button theme-button-secondary">Permisos por rol</a>
                         <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary">Nuevo usuario</a>
                     </div>
                 </div>
@@ -288,7 +289,6 @@
                             <thead>
                                 <tr>
                                     <th>Nombre</th>
-                                    <th>Usuario</th>
                                     <th>Email</th>
                                     <th>Rol</th>
                                     <th>Sucursal</th>
@@ -304,7 +304,6 @@
                                         <td>
                                             <div class="font-medium text-slate-800 dark:text-white">{{ $usuario->nombre }} {{ $usuario->apellido }}</div>
                                         </td>
-                                        <td class="text-slate-600 dark:text-zinc-300">{{ $usuario->nombre_usuario }}</td>
                                         <td class="text-slate-500 dark:text-zinc-400">{{ $usuario->email }}</td>
                                         <td>
                                             <span class="inline-flex items-center rounded-full bg-[#0c9f9c]/10 px-2.5 py-0.5 text-xs font-semibold text-[#0c9f9c]">{{ $usuario->rol?->tipo_rol ?? 'Sin rol' }}</span>

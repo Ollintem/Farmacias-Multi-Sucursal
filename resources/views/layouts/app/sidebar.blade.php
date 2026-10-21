@@ -71,7 +71,7 @@
 
             <flux:spacer />
 
-            <div class="erp-sidebar-version px-3 pb-2 text-xs">v2.4.1 - Julio 2026</div>
+            <div class="erp-sidebar-version px-3 pb-2 text-xs"></div>
 
             {{-- Selector de Sucursal Global (mismo estilo que usuario) --}}
             <flux:dropdown position="bottom" align="start" class="erp-user-menu">

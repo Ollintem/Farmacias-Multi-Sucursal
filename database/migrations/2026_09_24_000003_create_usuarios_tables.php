@@ -18,7 +18,6 @@ return new class extends Migration
             $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->string('nombre');
             $table->string('apellido');
-            $table->string('nombre_usuario')->unique();
             $table->boolean('es_activo')->default(true);
             $table->foreignId('id_rol')->nullable()->constrained('roles')->nullOnDelete();
             $table->foreignId('id_sucursal')->nullable()->constrained('sucursales')->nullOnDelete();

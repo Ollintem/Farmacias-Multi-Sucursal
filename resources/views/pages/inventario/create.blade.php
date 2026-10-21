@@ -42,6 +42,7 @@
                             'id_presentacion' => $presentacion->id_presentacion,
                             'unidades' => $presentacion->unidades,
                             'precio' => $presentacion->precio_presentacion,
+                            'stock_minimo' => $presentacion->stock_minimo,
                             'es_principal' => (int) $presentacion->es_principal,
                             'error' => '',
                         ])
@@ -52,6 +53,7 @@
                         'id_presentacion' => $presentacionCaja?->id ?? '',
                         'unidades' => '',
                         'precio' => '',
+                        'stock_minimo' => 0,
                         'es_principal' => 1,
                         'error' => '',
                     ]];
@@ -60,7 +62,7 @@
                 $filasOld = old('presentaciones');
                 $filasIniciales = is_array($filasOld) && $filasOld !== [] ? $filasOld : $filasBase;
                 $filasIniciales = collect($filasIniciales)
-                    ->map(fn ($fila) => array_merge(['id_presentacion' => '', 'unidades' => '', 'precio' => '', 'es_principal' => 0, 'error' => ''], is_array($fila) ? $fila : []))
+                    ->map(fn ($fila) => array_merge(['id_presentacion' => '', 'unidades' => '', 'precio' => '', 'stock_minimo' => 0, 'es_principal' => 0, 'error' => ''], is_array($fila) ? $fila : []))
                     ->values()
                     ->all();
 
@@ -291,7 +293,7 @@
                                         ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/40 dark:border-emerald-400 dark:bg-emerald-500/10 dark:ring-emerald-400/40'
                                         : 'border-slate-200 dark:border-zinc-700'"
                                 >
-                                    <div class="grid gap-4 md:grid-cols-3">
+                                    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                                         <div>
                                             <label class="mb-2 block text-sm font-medium">Presentación</label>
 
@@ -405,6 +407,21 @@
                                                 required
                                             >
                                         </div>
+
+                                        <template x-if="principalIndex === indice">
+                                            <div>
+                                                <label class="mb-2 block text-sm font-medium">Stock mínimo</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    :name="'presentaciones[' + indice + '][stock_minimo]'"
+                                                    x-model="fila.stock_minimo"
+                                                    class="theme-input"
+                                                    placeholder="0"
+                                                >
+                                                <span class="mt-1 block text-xs text-slate-400">Cantidad mínima de la presentación principal.</span>
+                                            </div>
+                                        </template>
                                     </div>
 
                                     <div class="mt-3 flex justify-end">
@@ -607,11 +624,12 @@
                         return;
                     }
 
-                    this.filas.push({ id_presentacion: '', unidades: '', precio: '', es_principal: 0, error: '' });
+                    this.filas.push({ id_presentacion: '', unidades: '', precio: '', stock_minimo: 0, es_principal: 0, error: '' });
                 },
 
                 continuarAgregarPresentacion() {
                     const precioUnidad = this.filas[0] ? this.filas[0].precio : '';
+                    const stockMinimoUnidad = this.filas[0] ? this.filas[0].stock_minimo : 0;
 
                     this.confirmarAgregarPresentacion = false;
                     this.presentacionesQuitadas = false;
@@ -619,12 +637,13 @@
                         id_presentacion: this.presentacionCajaId ? String(this.presentacionCajaId) : '',
                         unidades: '',
                         precio: precioUnidad,
+                        stock_minimo: stockMinimoUnidad,
                         es_principal: 1,
                         error: '',
                     }];
                     this.principalIndex = 0;
                     this.dropdownAbierto = null;
-                    this.filas.push({ id_presentacion: '', unidades: '', precio: '', es_principal: 0, error: '' });
+                    this.filas.push({ id_presentacion: '', unidades: '', precio: '', stock_minimo: 0, es_principal: 0, error: '' });
                 },
 
                 quitarFila(indice) {
@@ -673,6 +692,7 @@
                         id_presentacion: this.presentacionUnidadId ? String(this.presentacionUnidadId) : '',
                         unidades: 1,
                         precio: filaUnidad ? filaUnidad.precio : (this.filas[0] ? this.filas[0].precio : ''),
+                        stock_minimo: filaUnidad ? filaUnidad.stock_minimo : (this.filas[0] ? this.filas[0].stock_minimo : 0),
                         es_principal: 1,
                         error: '',
                     }];

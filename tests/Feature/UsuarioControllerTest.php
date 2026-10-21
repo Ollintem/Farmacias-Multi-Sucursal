@@ -28,7 +28,6 @@ it('permite al superadmin crear un supervisor', function () {
     $superAdmin = User::create([
         'nombre' => 'Admin',
         'apellido' => 'Sistema',
-        'nombre_usuario' => 'admin_sistema',
         'email' => 'admin@sistema.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -40,7 +39,6 @@ it('permite al superadmin crear un supervisor', function () {
         ->post(route('usuarios.store'), [
             'nombre' => 'Ana',
             'apellido' => 'Lopez',
-            'nombre_usuario' => 'ana_supervisor',
             'email' => 'ana@farmacia.test',
             'password' => 'password123',
             'password_confirmation' => 'password123',
@@ -54,7 +52,6 @@ it('permite al superadmin crear un supervisor', function () {
 
     $this->assertDatabaseHas('usuarios', [
         'email' => 'ana@farmacia.test',
-        'nombre_usuario' => 'ana_supervisor',
         'id_rol' => $rolSupervisor->id,
         'id_sucursal' => $sucursal->id,
     ]);
@@ -67,7 +64,6 @@ it('muestra el formulario de edición con los datos y permisos del usuario', fun
     $admin = User::create([
         'nombre' => 'Admin',
         'apellido' => 'Sistema',
-        'nombre_usuario' => 'admin_sistema',
         'email' => 'admin@sistema.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -77,7 +73,6 @@ it('muestra el formulario de edición con los datos y permisos del usuario', fun
     $usuario = User::create([
         'nombre' => 'Ana',
         'apellido' => 'Lopez',
-        'nombre_usuario' => 'ana_cajera',
         'email' => 'ana@farmacia.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -97,7 +92,7 @@ it('muestra el formulario de edición con los datos y permisos del usuario', fun
         ->get(route('usuarios.edit', $usuario));
 
     $response->assertOk()
-        ->assertSee('ana_cajera')
+        ->assertSee('ana@farmacia.test')
         ->assertSee(route('usuarios.permisos', $usuario));
 
     $this->actingAs($admin)
@@ -115,7 +110,6 @@ it('impide eliminar al propio usuario o a un SuperAdmin', function () {
     $admin = User::create([
         'nombre' => 'Admin',
         'apellido' => 'Sistema',
-        'nombre_usuario' => 'admin_sistema',
         'email' => 'admin@sistema.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -132,7 +126,6 @@ it('impide eliminar al propio usuario o a un SuperAdmin', function () {
     $otroSuperAdmin = User::create([
         'nombre' => 'Otro',
         'apellido' => 'Admin',
-        'nombre_usuario' => 'otro_admin',
         'email' => 'otro@sistema.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -149,7 +142,6 @@ it('impide eliminar al propio usuario o a un SuperAdmin', function () {
     $cajero = User::create([
         'nombre' => 'Ana',
         'apellido' => 'Lopez',
-        'nombre_usuario' => 'ana_cajera',
         'email' => 'ana@farmacia.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -171,7 +163,6 @@ it('actualiza los datos del usuario y sus permisos granulares', function () {
     $admin = User::create([
         'nombre' => 'Admin',
         'apellido' => 'Sistema',
-        'nombre_usuario' => 'admin_sistema',
         'email' => 'admin@sistema.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -181,7 +172,6 @@ it('actualiza los datos del usuario y sus permisos granulares', function () {
     $usuario = User::create([
         'nombre' => 'Ana',
         'apellido' => 'Lopez',
-        'nombre_usuario' => 'ana_cajera',
         'email' => 'ana@farmacia.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -192,7 +182,6 @@ it('actualiza los datos del usuario y sus permisos granulares', function () {
         ->put(route('usuarios.update', $usuario), [
             'nombre' => 'Ana María',
             'apellido' => 'Lopez',
-            'nombre_usuario' => 'ana_cajera',
             'email' => 'ana@farmacia.test',
             'id_rol' => $rol->id,
             'id_sucursal' => null,
@@ -225,7 +214,6 @@ it('muestra los permisos activados del usuario en modo solo lectura', function (
     $admin = User::create([
         'nombre' => 'Admin',
         'apellido' => 'Sistema',
-        'nombre_usuario' => 'admin_sistema',
         'email' => 'admin@sistema.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -235,7 +223,6 @@ it('muestra los permisos activados del usuario en modo solo lectura', function (
     $usuario = User::create([
         'nombre' => 'Ana',
         'apellido' => 'Lopez',
-        'nombre_usuario' => 'ana_cajera',
         'email' => 'ana@farmacia.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -267,7 +254,6 @@ it('muestra el modo edición con controles para modificar los permisos', functio
     $admin = User::create([
         'nombre' => 'Admin',
         'apellido' => 'Sistema',
-        'nombre_usuario' => 'admin_sistema',
         'email' => 'admin@sistema.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
@@ -277,7 +263,6 @@ it('muestra el modo edición con controles para modificar los permisos', functio
     $usuario = User::create([
         'nombre' => 'Ana',
         'apellido' => 'Lopez',
-        'nombre_usuario' => 'ana_cajera',
         'email' => 'ana@farmacia.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,

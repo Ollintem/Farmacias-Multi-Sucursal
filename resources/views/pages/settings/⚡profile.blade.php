@@ -11,7 +11,6 @@ use Livewire\Component;
 new #[Title('Ajustes de perfil')] class extends Component {
     public string $nombre = '';
     public string $apellido = '';
-    public string $nombre_usuario = '';
     public string $email = '';
 
     /**
@@ -23,7 +22,6 @@ new #[Title('Ajustes de perfil')] class extends Component {
 
         $this->nombre = $user->nombre;
         $this->apellido = $user->apellido;
-        $this->nombre_usuario = $user->nombre_usuario;
         $this->email = $user->email;
     }
 
@@ -37,7 +35,6 @@ new #[Title('Ajustes de perfil')] class extends Component {
         $validated = $this->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'apellido' => ['required', 'string', 'max:255'],
-            'nombre_usuario' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
                 'string',
@@ -71,8 +68,6 @@ new #[Title('Ajustes de perfil')] class extends Component {
             <flux:input wire:model="nombre" label="Nombre" type="text" required autofocus autocomplete="given-name" />
 
             <flux:input wire:model="apellido" label="Apellido" type="text" required autocomplete="family-name" />
-
-            <flux:input wire:model="nombre_usuario" label="Nombre de usuario" type="text" required autocomplete="username" />
 
             <div>
                 <flux:input wire:model="email" label="Correo electrónico" type="email" required autocomplete="email" />

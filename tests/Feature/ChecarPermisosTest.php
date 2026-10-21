@@ -13,7 +13,6 @@ function crearUsuarioConRol(string $tipoRol): User
     return User::create([
         'nombre' => 'Test',
         'apellido' => 'User',
-        'nombre_usuario' => 'test_'.str()->random(6),
         'email' => 'test_'.str()->random(6).'@farmacia.test',
         'password' => Hash::make('password123'),
         'es_activo' => true,
