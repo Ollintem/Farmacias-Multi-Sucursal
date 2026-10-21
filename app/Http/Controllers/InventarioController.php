@@ -349,10 +349,11 @@ class InventarioController extends Controller
     /**
      * Guarda las presentaciones del producto y garantiza una única principal.
      *
-     * La principal la elige el usuario (`es_principal`); si ninguna viene
-     * marcada se usa «caja» y, en su defecto, la primera. La presentación
-     * «unidad» siempre vale 1. Las presentaciones que ya no vienen en el
-     * formulario se eliminan.
+     * La principal no se toma del formulario: en el alta es «caja», en la
+     * edición se conserva la actual y, al quitar las presentaciones, «unidad»
+     * queda como principal. Así una petición manipulada no puede cambiar la
+     * presentación principal. La presentación «unidad» siempre vale 1. Las
+     * presentaciones que ya no vienen en el formulario se eliminan.
      *
      * Entrada: producto y filas validadas del formulario.
      * Salida: ninguna (escribe `presentacion_producto`).
@@ -364,7 +365,7 @@ class InventarioController extends Controller
             ->get()
             ->keyBy('id');
 
-        $indicePrincipal = $this->indicePresentacionPrincipal($presentaciones, $catalogo);
+        $indicePrincipal = $this->indicePresentacionPrincipal($presentaciones, $catalogo, $producto);
         $ids = [];
 
         foreach ($presentaciones as $indice => $fila) {
@@ -392,26 +393,51 @@ class InventarioController extends Controller
     /**
      * Índice de la fila que será la presentación principal.
      *
-     * Respeta la elección del usuario; si no hay ninguna marcada prefiere
-     * «caja» y, en último caso, la primera fila.
+     * No confía en `es_principal` del formulario. En una edición conserva la
+     * principal actual si sigue presente; en un alta nueva usa «caja». Al
+     * quitar presentaciones (solo se envía «unidad») esa pasa a ser la
+     * principal. En último caso se usa la primera fila.
      *
-     * Entrada: filas validadas y catálogo indexado por id.
+     * Entrada: filas validadas, catálogo indexado por id y producto en edición.
      * Salida: índice de la fila principal.
      */
-    private function indicePresentacionPrincipal(array $presentaciones, Collection $catalogo): int
+    private function indicePresentacionPrincipal(array $presentaciones, Collection $catalogo, ?Producto $producto = null): int
     {
+        $indiceCaja = null;
+        $indiceUnidad = null;
+
         foreach ($presentaciones as $indice => $fila) {
-            if (! empty($fila['es_principal'])) {
-                return $indice;
+            $nombre = mb_strtolower((string) ($catalogo[(int) $fila['id_presentacion']]->presentacion ?? ''));
+
+            if ($nombre === 'caja' && $indiceCaja === null) {
+                $indiceCaja = $indice;
+            }
+
+            if ($nombre === 'unidad' && $indiceUnidad === null) {
+                $indiceUnidad = $indice;
             }
         }
 
-        foreach ($presentaciones as $indice => $fila) {
-            $esCaja = mb_strtolower((string) ($catalogo[(int) $fila['id_presentacion']]->presentacion ?? '')) === 'caja';
+        if ($producto !== null) {
+            $idPrincipalActual = $producto->presentacionesPrecio()
+                ->where('es_principal', true)
+                ->value('id_presentacion');
 
-            if ($esCaja) {
-                return $indice;
+            if ($idPrincipalActual !== null) {
+                foreach ($presentaciones as $indice => $fila) {
+                    if ((int) $fila['id_presentacion'] === (int) $idPrincipalActual) {
+                        return $indice;
+                    }
+                }
             }
+        }
+
+        if ($indiceCaja !== null) {
+            return $indiceCaja;
+        }
+
+        if ($indiceUnidad !== null && count($presentaciones) === 1) {
+            return $indiceUnidad;
         }
 
         return 0;
@@ -469,10 +495,11 @@ class InventarioController extends Controller
     /**
      * Reglas compartidas entre el alta y la edición de productos.
      *
-     * Todo producto necesita al menos una presentación (la principal), por lo
-     * que las presentaciones son obligatorias. La presentación elegida como
-     * principal se marca con `es_principal`; la «unidad» se admite con 1
-     * unidad, el resto exige al menos 2.
+     * Todo producto necesita al menos una presentación, por lo que las
+     * presentaciones son obligatorias. La principal se calcula en el servidor
+     * («caja» o, al quitar presentaciones, «unidad»), no se confía en
+     * `es_principal`; la «unidad» se admite con 1 unidad, el resto exige al
+     * menos 2.
      *
      * Salida: arreglo de reglas de validación.
      *

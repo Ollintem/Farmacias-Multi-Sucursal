@@ -42,7 +42,8 @@ test('el formulario de creacion carga con categorias y presentaciones', function
         ->assertSee('nombre_producto')
         ->assertSee('Analgésicos')
         ->assertSee('Agregar presentación')
-        ->assertSee('principal_presentacion')
+        ->assertSee('La venta y distribución del producto se realizará según la presentación seleccionada.')
+        ->assertSee('Al agregar un presentación la unidad se dejará de distribuir por unidades individuales. Lo hará por cajas y otras presentaciones derivadas')
         ->assertSee('catalogoPresentaciones')
         ->assertDontSee('Stock inicial');
 });
@@ -311,7 +312,7 @@ test('no se generan productos con multiples presentaciones principales', functio
     expect($producto->presentacionesPrecio()->where('es_principal', true)->count())->toBe(1);
 });
 
-test('el formulario permite elegir la presentacion principal', function () {
+test('el formulario bloquea la presentacion principal y no permite elegirla', function () {
     $sucursal = Sucursal::create([
         'nombre_sucursal' => 'Sucursal Fila',
         'direccion' => 'Av. Fila 1',
@@ -329,9 +330,10 @@ test('el formulario permite elegir la presentacion principal', function () {
         ->get(route('inventario.create'));
 
     $response->assertOk()
-        ->assertSee('principal_presentacion', false)
-        ->assertSee('marcarPrincipal', false)
-        ->assertSee('es_principal', false);
+        ->assertSee('bloquearPresentacion', false)
+        ->assertSee('presentacionesQuitadas', false)
+        ->assertDontSee('marcarPrincipal', false)
+        ->assertDontSee('>Principal</label>', false);
 
     preg_match('/catalogoPresentaciones:\s*(\[[^\]]*\])/', $response->getContent(), $coincidencia);
 
@@ -359,7 +361,7 @@ test('el formulario avisa si no hay presentaciones en el catalogo', function () 
     $response->assertOk()->assertSee('No hay presentaciones registradas');
 });
 
-test('el store respeta la presentacion principal elegida por el usuario', function () {
+test('el store ignora la presentacion principal enviada y mantiene caja', function () {
     $sucursal = Sucursal::create([
         'nombre_sucursal' => 'Sucursal Fija',
         'direccion' => 'Av. Fija 3',
@@ -387,6 +389,68 @@ test('el store respeta la presentacion principal elegida por el usuario', functi
     $response->assertRedirect(route('inventario.productos', ['sucursal' => $sucursal->id]));
 
     $producto = Producto::where('codigo_barras', '7504445556667')->firstOrFail();
+
+    $this->assertDatabaseHas('presentacion_producto', [
+        'producto' => $producto->id,
+        'id_presentacion' => $caja->id,
+        'es_principal' => true,
+    ]);
+
+    $this->assertDatabaseHas('presentacion_producto', [
+        'producto' => $producto->id,
+        'id_presentacion' => $blister->id,
+        'es_principal' => false,
+    ]);
+});
+
+test('la edicion conserva la presentacion principal aunque el formulario intente cambiarla', function () {
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal PrincipalFija',
+        'direccion' => 'Av. PrincipalFija 1',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+    ]);
+
+    $categoria = Categoria::create(['nombre' => 'Gastro']);
+    $caja = PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
+    $blister = PresentacionProducto::create(['presentacion' => 'Blister', 'descripcion' => '']);
+
+    $producto = Producto::create([
+        'codigo_barras' => '7504445556674',
+        'nombre_producto' => 'Omeprazol 10mg',
+        'descripcion' => '',
+        'id_categoria' => $categoria->id,
+        'es_controlado' => false,
+        'es_activo' => true,
+    ]);
+
+    $producto->presentacionesPrecio()->create([
+        'id_presentacion' => $caja->id,
+        'unidades' => 14,
+        'precio_presentacion' => 45,
+        'es_principal' => false,
+    ]);
+
+    $producto->presentacionesPrecio()->create([
+        'id_presentacion' => $blister->id,
+        'unidades' => 10,
+        'precio_presentacion' => 30,
+        'es_principal' => true,
+    ]);
+
+    $this->actingAs(crearUsuarioDePrueba($sucursal));
+
+    $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->put(route('inventario.update', $producto), [
+            'codigo_barras' => $producto->codigo_barras,
+            'nombre_producto' => $producto->nombre_producto,
+            'id_categoria' => $categoria->id,
+            'presentaciones' => [
+                ['id_presentacion' => $caja->id, 'unidades' => 14, 'precio' => 45, 'es_principal' => 1],
+                ['id_presentacion' => $blister->id, 'unidades' => 10, 'precio' => 30, 'es_principal' => 0],
+            ],
+        ])
+        ->assertRedirect(route('inventario.productos', ['sucursal' => $sucursal->id]));
 
     $this->assertDatabaseHas('presentacion_producto', [
         'producto' => $producto->id,
@@ -566,7 +630,7 @@ test('la edicion puede dejar solo la presentacion unidad como principal', functi
     ]);
 });
 
-test('el formulario de crear ofrece marcar la presentacion principal', function () {
+test('el formulario de crear muestra la presentacion principal bloqueada', function () {
     $sucursal = Sucursal::create([
         'nombre_sucursal' => 'Sucursal ModalUnitaria',
         'direccion' => 'Av. Modal 10',
@@ -582,8 +646,9 @@ test('el formulario de crear ofrece marcar la presentacion principal', function 
     $this->withSession(['active_sucursal_id' => $sucursal->id])
         ->get(route('inventario.create'))
         ->assertOk()
-        ->assertSee('marcarPrincipal', false)
+        ->assertSee('bloquearPresentacion', false)
         ->assertSee('principalIndex', false)
+        ->assertDontSee('marcarPrincipal', false)
         ->assertDontSee('confirmarUnitario', false);
 });
 

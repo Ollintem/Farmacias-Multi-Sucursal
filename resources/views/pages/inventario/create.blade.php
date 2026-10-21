@@ -64,7 +64,14 @@
                     ->values()
                     ->all();
 
-                $indicePrincipalInicial = 0;
+                $presentacionUnidad = $presentaciones->first(
+                    fn ($presentacion) => mb_strtolower((string) $presentacion->presentacion) === 'unidad'
+                );
+
+                // Se resalta la presentación marcada internamente como
+                // principal. En altas nuevas la caja viene marcada por
+                // defecto y, si no hay marca, se usa la caja como respaldo.
+                $indicePrincipalInicial = null;
 
                 foreach ($filasIniciales as $indice => $fila) {
                     if (! empty($fila['es_principal'])) {
@@ -72,6 +79,21 @@
                         break;
                     }
                 }
+
+                if ($indicePrincipalInicial === null && $presentacionCaja !== null) {
+                    foreach ($filasIniciales as $indice => $fila) {
+                        if ((string) $fila['id_presentacion'] === (string) $presentacionCaja->id) {
+                            $indicePrincipalInicial = $indice;
+                            break;
+                        }
+                    }
+                }
+
+                $indicePrincipalInicial ??= 0;
+
+                $soloUnidadInicial = $presentacionUnidad !== null
+                    && count($filasIniciales) === 1
+                    && (string) $filasIniciales[0]['id_presentacion'] === (string) $presentacionUnidad->id;
             @endphp
 
             @if($faltanCatalogos)
@@ -241,29 +263,38 @@
                                 <h2 class="text-lg font-bold text-slate-800 dark:text-white">Presentaciones</h2>
                                 <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">Define las presentaciones del producto con sus unidades y precio.</p>
                             </div>
-                            <button
-                                type="button"
-                                x-on:click="agregarFila()"
-                                class="theme-button theme-button-secondary"
-                            >
-                                + Agregar presentación
-                            </button>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <button
+                                    type="button"
+                                    x-on:click="confirmarQuitarPresentaciones = true"
+                                    x-bind:disabled="!presentacionUnidadId"
+                                    x-bind:aria-disabled="!presentacionUnidadId"
+                                    class="theme-button theme-button-secondary"
+                                >
+                                    Quitar presentaciones
+                                </button>
+                                <button
+                                    type="button"
+                                    x-on:click="agregarFila()"
+                                    class="theme-button theme-button-secondary"
+                                >
+                                    + Agregar presentación
+                                </button>
+                            </div>
                         </div>
 
                         <div class="mt-4 flex flex-col gap-4">
                             <template x-for="(fila, indice) in filas" :key="indice">
-                                <div class="rounded-xl border border-slate-200 p-4 dark:border-zinc-700">
+                                <div
+                                    class="rounded-xl border p-4 transition-colors"
+                                    x-bind:class="principalIndex === indice
+                                        ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/40 dark:border-emerald-400 dark:bg-emerald-500/10 dark:ring-emerald-400/40'
+                                        : 'border-slate-200 dark:border-zinc-700'"
+                                >
                                     <div class="grid gap-4 md:grid-cols-3">
                                         <div>
-                                            <label class="mb-2 block text-sm font-medium">
-                                                Presentación
-                                                <span x-show="principalIndex === indice" class="font-normal text-slate-400">(principal)</span>
-                                            </label>
+                                            <label class="mb-2 block text-sm font-medium">Presentación</label>
 
-                                            <label class="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-zinc-400">
-                                                <input type="radio" name="principal_presentacion" :checked="principalIndex === indice" x-on:change="marcarPrincipal(indice)">
-                                                Principal
-                                            </label>
                                             <input
                                                 type="hidden"
                                                 :name="'presentaciones[' + indice + '][es_principal]'"
@@ -279,9 +310,12 @@
 
                                                 <button
                                                     type="button"
-                                                    class="theme-input flex cursor-pointer items-center justify-between gap-2 text-left"
+                                                    class="theme-input flex items-center justify-between gap-2 text-left"
+                                                    x-bind:class="bloquearPresentacion(indice) ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'"
+                                                    x-bind:disabled="bloquearPresentacion(indice)"
                                                     x-on:click="dropdownAbierto = dropdownAbierto === ('presentacion-' + indice) ? null : ('presentacion-' + indice)"
                                                     x-bind:aria-expanded="dropdownAbierto === ('presentacion-' + indice)"
+                                                    x-bind:aria-disabled="bloquearPresentacion(indice)"
                                                     aria-haspopup="listbox"
                                                 >
                                                     <span x-bind:class="fila.id_presentacion === '' ? 'opacity-60' : 'font-semibold'" x-text="nombrePresentacion(fila.id_presentacion)"></span>
@@ -346,14 +380,16 @@
                                             <input
                                                 type="number"
                                                 min="1"
-                                                :readonly="esUnidad(fila.id_presentacion)"
+                                                :readonly="unidadesBloqueadas(indice)"
                                                 :name="'presentaciones[' + indice + '][unidades]'"
                                                 x-model="fila.unidades"
                                                 class="theme-input"
+                                                x-bind:class="unidadesBloqueadas(indice) ? 'cursor-not-allowed opacity-70' : ''"
                                                 placeholder="Ej. 10"
                                                 required
                                             >
                                             <span x-show="esUnidad(fila.id_presentacion)" x-cloak class="mt-1 block text-xs text-slate-400">La unidad siempre vale 1.</span>
+                                            <span x-show="presentacionesQuitadas" x-cloak class="mt-1 block text-xs text-slate-400">Las unidades quedan bloqueadas al quitar las presentaciones.</span>
                                         </div>
 
                                         <div>
@@ -374,7 +410,7 @@
                                     <div class="mt-3 flex justify-end">
                                         <button
                                             type="button"
-                                            x-show="filas.length > 1"
+                                            x-show="filas.length > 1 && !esFilaPrincipal(indice)"
                                             x-on:click="quitarFila(indice)"
                                             class="text-xs font-medium text-red-500 transition hover:text-red-600"
                                         >
@@ -383,6 +419,10 @@
                                     </div>
                                 </div>
                             </template>
+                        </div>
+
+                        <div class="mt-4 rounded-xl border border-sky-500/25 bg-sky-500/10 px-4 py-3 text-sm text-sky-700 dark:text-sky-300">
+                            La venta y distribución del producto se realizará según la presentación seleccionada.
                         </div>
                     </div>
 
@@ -404,6 +444,80 @@
                         x-bind:disabled="filas.length === 0"
                         x-bind:aria-disabled="filas.length === 0"
                     >{{ $esEdicion ? 'Guardar cambios' : 'Guardar producto' }}</button>
+                </div>
+
+                {{-- Modal: confirmar quitar todas las presentaciones --}}
+                <div
+                    x-show="confirmarQuitarPresentaciones"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style="display:none;"
+                    x-cloak
+                >
+                    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="confirmarQuitarPresentaciones = false"></div>
+
+                    <div
+                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        x-on:click.stop
+                    >
+                        <div class="mb-5 flex items-center justify-between">
+                            <h2 class="text-lg font-bold">Quitar presentaciones</h2>
+                            <button type="button" x-on:click="confirmarQuitarPresentaciones = false" class="opacity-50 transition hover:opacity-100">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+
+                        <p class="text-sm text-slate-600 dark:text-slate-300">
+                            Al quitar las presentaciones, la venta y distribución de este producto será por unidades. La presentación principal quedará como «Unidad».
+                        </p>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button type="button" x-on:click="confirmarQuitarPresentaciones = false" class="theme-button theme-button-secondary">Cancelar</button>
+                            <button type="button" x-on:click="quitarTodasPresentaciones()" class="theme-button theme-button-primary">Sí, quitar</button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Modal: advertencia al agregar presentaciones después de quitarlas --}}
+                <div
+                    x-show="confirmarAgregarPresentacion"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style="display:none;"
+                    x-cloak
+                >
+                    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="confirmarAgregarPresentacion = false"></div>
+
+                    <div
+                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        x-on:click.stop
+                    >
+                        <div class="mb-5 flex items-center justify-between">
+                            <h2 class="text-lg font-bold">Advertencia</h2>
+                            <button type="button" x-on:click="confirmarAgregarPresentacion = false" class="opacity-50 transition hover:opacity-100">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+
+                        <p class="text-sm text-slate-600 dark:text-slate-300">
+                            Al agregar un presentación la unidad se dejará de distribuir por unidades individuales. Lo hará por cajas y otras presentaciones derivadas
+                        </p>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button type="button" x-on:click="confirmarAgregarPresentacion = false" class="theme-button theme-button-secondary">Cancelar</button>
+                            <button type="button" x-on:click="continuarAgregarPresentacion()" class="theme-button theme-button-primary">Continuar</button>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Modal: nueva categoría / nueva presentación --}}
@@ -472,6 +586,8 @@
                 categorias: @json($categorias->map(fn ($categoria) => ['id' => $categoria->id, 'nombre' => $categoria->nombre])->values(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT),
                 filas: @json($filasIniciales),
                 principalIndex: {{ (int) $indicePrincipalInicial }},
+                presentacionCajaId: @json($presentacionCaja?->id),
+                presentacionUnidadId: @json($presentacionUnidad?->id),
                 catalogoPresentaciones: @json($presentaciones->map(fn ($p) => ['id' => $p->id, 'presentacion' => $p->presentacion])->values()),
                 modalAbierto: false,
                 modalModo: 'categoria',
@@ -479,24 +595,91 @@
                 modalError: '',
                 guardando: false,
                 indiceFilaOrigen: null,
+                confirmarQuitarPresentaciones: false,
+                confirmarAgregarPresentacion: false,
+                presentacionesQuitadas: @json($soloUnidadInicial),
 
                 agregarFila() {
+                    if (this.presentacionesQuitadas) {
+                        this.confirmarAgregarPresentacion = true;
+                        this.dropdownAbierto = null;
+
+                        return;
+                    }
+
+                    this.filas.push({ id_presentacion: '', unidades: '', precio: '', es_principal: 0, error: '' });
+                },
+
+                continuarAgregarPresentacion() {
+                    const precioUnidad = this.filas[0] ? this.filas[0].precio : '';
+
+                    this.confirmarAgregarPresentacion = false;
+                    this.presentacionesQuitadas = false;
+                    this.filas = [{
+                        id_presentacion: this.presentacionCajaId ? String(this.presentacionCajaId) : '',
+                        unidades: '',
+                        precio: precioUnidad,
+                        es_principal: 1,
+                        error: '',
+                    }];
+                    this.principalIndex = 0;
+                    this.dropdownAbierto = null;
                     this.filas.push({ id_presentacion: '', unidades: '', precio: '', es_principal: 0, error: '' });
                 },
 
                 quitarFila(indice) {
+                    if (this.esFilaPrincipal(indice)) {
+                        return;
+                    }
+
                     this.filas.splice(indice, 1);
                     this.dropdownAbierto = null;
 
-                    if (this.principalIndex === indice) {
-                        this.principalIndex = 0;
-                    } else if (this.principalIndex > indice) {
+                    if (this.principalIndex > indice) {
                         this.principalIndex--;
                     }
                 },
 
-                marcarPrincipal(indice) {
-                    this.principalIndex = indice;
+                esFilaPrincipal(indice) {
+                    return this.principalIndex === indice;
+                },
+
+                bloquearPresentacion(indice) {
+                    const fila = this.filas[indice];
+
+                    if (!fila) {
+                        return false;
+                    }
+
+                    if (this.presentacionesQuitadas) {
+                        return true;
+                    }
+
+                    return this.esFilaPrincipal(indice) && fila.id_presentacion !== '' && fila.id_presentacion !== null;
+                },
+
+                unidadesBloqueadas(indice) {
+                    const fila = this.filas[indice];
+
+                    return this.presentacionesQuitadas || this.esUnidad(fila ? fila.id_presentacion : '');
+                },
+
+                quitarTodasPresentaciones() {
+                    const filaUnidad = this.filas.find(
+                        (fila) => String(fila.id_presentacion) === String(this.presentacionUnidadId)
+                    );
+
+                    this.filas = [{
+                        id_presentacion: this.presentacionUnidadId ? String(this.presentacionUnidadId) : '',
+                        unidades: 1,
+                        precio: filaUnidad ? filaUnidad.precio : (this.filas[0] ? this.filas[0].precio : ''),
+                        es_principal: 1,
+                        error: '',
+                    }];
+                    this.principalIndex = 0;
+                    this.dropdownAbierto = null;
+                    this.presentacionesQuitadas = true;
+                    this.confirmarQuitarPresentaciones = false;
                 },
 
                 seguirDesplegable() {
