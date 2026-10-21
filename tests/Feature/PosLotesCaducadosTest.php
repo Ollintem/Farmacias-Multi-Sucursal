@@ -166,3 +166,50 @@ test('un lote sin fecha de caducidad sigue vendible y no lanza el aviso', functi
 
     $this->assertSame(9, (int) Inventario::where('id_lote', $lote->id)->value('stock_individual'));
 });
+
+test('el catálogo muestra stock vendible, badge caducado y botón inactivo para producto solo caducado', function () {
+    [$sucursal, $caja] = contextoPosCaducados($this);
+
+    $producto = productoCaducadoPos($caja, '7500000000432', 'Naproxeno Solo Caducado');
+    loteCaducadoPos($producto, $sucursal, 20, now()->subDays(5)->toDateString());
+
+    $component = Livewire::test(PuntoDeVenta::class);
+
+    // El stock del catálogo excluye lotes caducados: nada de "20 disp.".
+    $component->assertSee('0 disp.');
+    $component->assertSee('Caducado');
+    $component->assertDontSee('¡Últimas!');
+    $component->assertSee('Sin existencias vigentes — solo lotes caducados');
+});
+
+test('agregar un producto solo caducado despacha pos-error y no llena el carrito', function () {
+    [$sucursal, $caja] = contextoPosCaducados($this);
+
+    $producto = productoCaducadoPos($caja, '7500000000439', 'Cefalexina Solo Caducada');
+    loteCaducadoPos($producto, $sucursal, 15, now()->subDays(3)->toDateString());
+
+    $component = Livewire::test(PuntoDeVenta::class);
+
+    $component->call('agregarAlCarrito', $producto->id);
+
+    $component->assertSet('carrito', []);
+    $component->assertDispatched('pos-error');
+});
+
+test('al alcanzar la cantidad máxima disponible el POS despacha pos-error', function () {
+    [$sucursal, $caja] = contextoPosCaducados($this);
+
+    $producto = productoCaducadoPos($caja, '7500000000446', 'Aspirina Vigente');
+    loteCaducadoPos($producto, $sucursal, 1, now()->addMonths(4)->toDateString());
+
+    $component = Livewire::test(PuntoDeVenta::class);
+
+    $component->call('agregarAlCarrito', $producto->id);
+    $component->assertSet('carrito.0.cantidad', 1);
+
+    // Segundo intento: ya no hay más disponible, debe avisar y no subir.
+    $component->call('agregarAlCarrito', $producto->id);
+
+    $component->assertSet('carrito.0.cantidad', 1);
+    $component->assertDispatched('pos-error');
+});

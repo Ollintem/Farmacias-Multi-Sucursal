@@ -758,6 +758,34 @@ select.theme-input option {
     }
 }
 
+/* Punto de venta: usa todo el ancho disponible. Anula el padding doble
+   heredado de flux:main + module-page y el tope de ancho del inner.
+   El modificador .pos-page solo lo lleva la vista del POS. */
+[data-flux-main]:has(> .pos-page) {
+    padding: 0;
+}
+
+.module-page.pos-page {
+    padding: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .module-page.pos-page {
+        padding: 0.875rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .module-page.pos-page {
+        padding: 1rem;
+    }
+}
+
+.module-page.pos-page .module-page-inner {
+    max-width: none;
+    gap: 1rem;
+}
+
 .theme-dark .theme-table {
     background: rgba(15, 23, 42, 0.72);
     border-color: rgba(148, 163, 184, 0.25);

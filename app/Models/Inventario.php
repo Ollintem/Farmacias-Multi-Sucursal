@@ -137,17 +137,27 @@ class Inventario extends Model
      * `inventario` solo guarda `id_sucursal`, `id_lote` y `stock`. Suma
      * `stock_individual` porque el sistema trabaja en unidades individuales.
      *
-     * Entrada: id de sucursal opcional para acotar la suma.
+     * Entrada: id de sucursal opcional para acotar la suma; bandera opcional
+     * para contar solo lotes no caducados (misma regla que Lote::estaCaducado()).
      * Salida: arreglo `[id_producto => stock_total]`.
      *
      * @return array<int, int>
      */
-    public static function stockPorProducto(?int $idSucursal = null): array
+    public static function stockPorProducto(?int $idSucursal = null, bool $excluirCaducados = false): array
     {
+        $hoy = now()->toDateString();
+
         return static::query()
             ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
             ->whereNotNull('lotes.id_producto')
             ->when($idSucursal !== null, fn (Builder $query) => $query->forSucursal($idSucursal))
+            ->when($excluirCaducados, function (Builder $query) use ($hoy) {
+                $query->where(function (Builder $sub) use ($hoy) {
+                    $sub->whereNull('lotes.fecha_de_caducidad')
+                        ->whereNull('lotes.fecha_caducidad')
+                        ->orWhereRaw('COALESCE(lotes.fecha_de_caducidad, lotes.fecha_caducidad) > ?', [$hoy]);
+                });
+            })
             ->groupBy('lotes.id_producto')
             ->selectRaw('lotes.id_producto as id_producto, COALESCE(SUM(inventario.stock_individual), 0) as total')
             ->pluck('total', 'id_producto')

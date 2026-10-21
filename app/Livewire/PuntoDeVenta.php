@@ -159,11 +159,18 @@ class PuntoDeVenta extends Component
 
         $productos = $query->orderBy('nombre_producto')->get();
         $stockSucursal = $this->stockPorSucursal();
+        $stockTotal = $this->stockPorSucursal(excluirCaducados: false);
 
-        return $productos->each(fn (Producto $producto) => $producto->setAttribute(
-            'stock_sucursal',
-            (int) ($stockSucursal[$producto->id] ?? 0)
-        ));
+        return $productos->each(function (Producto $producto) use ($stockSucursal, $stockTotal) {
+            $disponible = (int) ($stockSucursal[$producto->id] ?? 0);
+
+            $producto->setAttribute('stock_sucursal', $disponible);
+            // Inventario con existencia pero todo en lotes caducados: no es vendible.
+            $producto->setAttribute(
+                'solo_caducado',
+                $disponible === 0 && (int) ($stockTotal[$producto->id] ?? 0) > 0
+            );
+        });
     }
 
     public function getCantidadArticulosProperty(): int
@@ -189,15 +196,18 @@ class PuntoDeVenta extends Component
     }
 
     /**
-     * Stock disponible por producto en la sucursal activa.
+     * Stock por producto en la sucursal activa para el catálogo POS.
      *
-     * Entrada: ninguna (lee session('active_sucursal_id')).
+     * Por defecto solo cuenta lotes no caducados (misma regla que
+     * Lote::estaCaducado()): el stock caducado no es vendible.
+     *
+     * Entrada: bandera para incluir lotes caducados (detección del badge).
      * Salida: arreglo [id_producto => unidades] del inventario de la sucursal;
      * vacío cuando no hay sucursal activa.
      *
      * @return array<int, int>
      */
-    private function stockPorSucursal(): array
+    private function stockPorSucursal(bool $excluirCaducados = true): array
     {
         $sucursalId = (int) (session('active_sucursal_id') ?? 0);
 
@@ -205,7 +215,7 @@ class PuntoDeVenta extends Component
             return [];
         }
 
-        return Inventario::stockPorProducto($sucursalId);
+        return Inventario::stockPorProducto($sucursalId, excluirCaducados: $excluirCaducados);
     }
 
     /**
@@ -343,6 +353,10 @@ class PuntoDeVenta extends Component
             if ($item['producto_id'] === $productoId && ($item['tipo_venta'] ?? 'unidad') === 'unidad') {
                 if ($this->carrito[$index]['cantidad'] < $disponible) {
                     $this->carrito[$index]['cantidad']++;
+                } elseif ($disponible > 0) {
+                    $this->avisarCantidadMaxima($producto->nombre_producto, $disponible);
+                } else {
+                    $this->avisarSinStock($producto);
                 }
                 if ($receta !== null) {
                     $this->carrito[$index]['receta'] = $receta;
@@ -352,23 +366,27 @@ class PuntoDeVenta extends Component
             }
         }
 
-        if (! $existe && $disponible > 0) {
-            $item = [
-                'producto_id' => $producto->id,
-                'nombre' => $producto->nombre_producto,
-                'precio' => $precioUnidad,
-                'cantidad' => 1,
-                'stock' => $disponible,
-                'presentacion' => '',
-                'es_controlado' => $producto->es_controlado,
-                'tipo_venta' => 'unidad',
-            ];
+        if (! $existe) {
+            if ($disponible > 0) {
+                $item = [
+                    'producto_id' => $producto->id,
+                    'nombre' => $producto->nombre_producto,
+                    'precio' => $precioUnidad,
+                    'cantidad' => 1,
+                    'stock' => $disponible,
+                    'presentacion' => '',
+                    'es_controlado' => $producto->es_controlado,
+                    'tipo_venta' => 'unidad',
+                ];
 
-            if ($receta !== null) {
-                $item['receta'] = $receta;
+                if ($receta !== null) {
+                    $item['receta'] = $receta;
+                }
+
+                $this->carrito[] = $item;
+            } else {
+                $this->avisarSinStock($producto);
             }
-
-            $this->carrito[] = $item;
         }
 
         $this->guardarCarrito();
@@ -472,8 +490,15 @@ class PuntoDeVenta extends Component
         $unidades = max(1, (int) $relacion->unidades);
         $disponible = $this->stockDisponibleEnSucursal($productoId);
         $maxPresentaciones = (int) floor($disponible / $unidades);
+        $etiqueta = $producto->nombre_producto.' ('.($relacion->presentacion?->presentacion ?? '').')';
 
         if ($maxPresentaciones < 1) {
+            if ($disponible === 0) {
+                $this->avisarSinStock($producto);
+            } else {
+                $this->dispatch('pos-error', mensaje: "No se agregó «{$etiqueta}»: el stock disponible ({$disponible} uds.) no alcanza para una presentación completa.");
+            }
+
             return;
         }
 
@@ -486,6 +511,8 @@ class PuntoDeVenta extends Component
             ) {
                 if ($this->carrito[$index]['cantidad'] < $maxPresentaciones) {
                     $this->carrito[$index]['cantidad']++;
+                } else {
+                    $this->avisarCantidadMaxima($etiqueta, $maxPresentaciones);
                 }
                 if ($receta !== null) {
                     $this->carrito[$index]['receta'] = $receta;
@@ -926,6 +953,58 @@ class PuntoDeVenta extends Component
             ->whereRaw(self::FECHA_EFECTIVA_LOTE.' IS NOT NULL')
             ->whereRaw(self::FECHA_EFECTIVA_LOTE.' <= ?', [now()->toDateString()])
             ->sum('inventario.stock_individual');
+    }
+
+    /**
+     * Avisa por toast que un producto no se pudo agregar por falta de stock.
+     *
+     * Distingue el caso "solo lotes caducados" del "sin existencias" simple.
+     *
+     * Entrada: producto intentado.
+     * Salida: void (despacha el evento pos-error al navegador).
+     */
+    private function avisarSinStock(Producto $producto): void
+    {
+        $mensaje = $this->hayLotesCaducadosConStock($producto->id)
+            ? "No se agregó «{$producto->nombre_producto}»: solo tiene lotes caducados."
+            : "No se agregó «{$producto->nombre_producto}»: sin existencias disponibles.";
+
+        $this->dispatch('pos-error', mensaje: $mensaje);
+    }
+
+    /**
+     * Avisa por toast que se alcanzó la cantidad máxima disponible en el carrito.
+     *
+     * Entrada: etiqueta del producto/ítem y máximo alcanzable.
+     * Salida: void (despacha el evento pos-error al navegador).
+     */
+    private function avisarCantidadMaxima(string $etiqueta, int $disponible): void
+    {
+        $this->dispatch('pos-error', mensaje: "Cantidad máxima de «{$etiqueta}» alcanzada: {$disponible} disponible(s).");
+    }
+
+    /**
+     * Indica si el producto aún tiene inventario en la sucursal pero
+     * todo su stock está en lotes ya caducados.
+     *
+     * Entrada: id del producto.
+     * Salida: true cuando existe inventario y todo caducado.
+     */
+    private function hayLotesCaducadosConStock(int $productoId): bool
+    {
+        $sucursalId = (int) (session('active_sucursal_id') ?? 0);
+
+        if ($sucursalId <= 0) {
+            return false;
+        }
+
+        return Inventario::forSucursal($sucursalId)
+            ->join('lotes', 'lotes.id', '=', 'inventario.id_lote')
+            ->where('lotes.id_producto', $productoId)
+            ->where('inventario.stock_individual', '>', 0)
+            ->whereRaw(self::FECHA_EFECTIVA_LOTE.' IS NOT NULL')
+            ->whereRaw(self::FECHA_EFECTIVA_LOTE.' <= ?', [now()->toDateString()])
+            ->exists();
     }
 
     public function render(): View

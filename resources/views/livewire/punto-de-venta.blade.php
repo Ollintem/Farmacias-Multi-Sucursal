@@ -1,8 +1,9 @@
 <div
-    class="module-page noti-page"
-    x-data="{ successFolio: null, avisoCaducado: 0 }"
+    class="module-page pos-page noti-page"
+    x-data="{ successFolio: null, avisoCaducado: 0, avisoError: '' }"
     @venta-completada.window="successFolio = $event.detail.folio; setTimeout(() => successFolio = null, 4000)"
     @stock-caducado-ignorado.window="avisoCaducado = $event.detail.unidades; setTimeout(() => avisoCaducado = 0, 4000)"
+    @pos-error.window="avisoError = $event.detail.mensaje; setTimeout(() => avisoError = '', 5000)"
 >
     {{-- Toast de éxito --}}
     <template x-if="successFolio">
@@ -42,6 +43,24 @@
         </div>
     </template>
 
+    {{-- Toast de error al agregar al carrito (sin stock o cantidad máxima) --}}
+    <template x-if="avisoError">
+        <div
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed right-4 top-36 z-[100] rounded-2xl border border-red-300 bg-red-50 px-5 py-3 shadow-xl dark:border-red-700 dark:bg-red-900/90"
+        >
+            <div class="flex items-center gap-2">
+                <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-red-600 text-xs font-bold text-white">✕</span>
+                <span class="text-sm font-semibold text-red-800 dark:text-red-200" x-text="avisoError"></span>
+            </div>
+        </div>
+    </template>
+
     <div class="module-page-inner noti-full noti-formal">
     {{-- Encabezado homologado: hero verde compacto --}}
     <section class="module-card noti-hero" aria-label="Encabezado de punto de venta">
@@ -52,7 +71,7 @@
         </div>
     </section>
     {{-- Barra de búsqueda --}}
-    <div class="module-card p-4 sm:p-5">
+    <div class="module-card p-3 sm:p-4">
         <div class="flex items-center gap-3">
             <div class="relative flex-1">
                 <svg class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,9 +109,9 @@
     </div>
 
     {{-- Área de productos + carrito --}}
-    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+    <div class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_22rem]">
         {{-- Grid de productos --}}
-        <div class="module-card min-w-0 p-4 sm:p-5">
+        <div class="module-card min-w-0 p-3 sm:p-4">
             <div class="mb-4 flex items-center justify-between">
                 <h2 class="text-lg font-bold">Catálogo</h2>
                 <span class="theme-badge">{{ $productos->count() }} {{ Str::plural('producto', $productos->count()) }}</span>
@@ -104,13 +123,15 @@
                     <p class="mt-1 text-xs text-slate-400 dark:text-zinc-500">Prueba con otro nombre o código de barras</p>
                 </div>
             @else
-                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 2xl:grid-cols-4">
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 min-[1700px]:grid-cols-5">
                     @foreach($productos as $producto)
                         <div class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-[#0e9384] hover:shadow-lg hover:shadow-teal-900/10 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:border-[#0c9f9c]">
                             @if($producto->es_controlado)
                                 <span class="absolute left-2 top-2 z-10 rounded-lg bg-red-600 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white shadow">RX</span>
                             @endif
-                            @if($producto->stock_sucursal <= 15)
+                            @if($producto->solo_caducado)
+                                <span class="absolute right-2 top-2 z-10 rounded-lg bg-red-600 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white shadow">Caducado</span>
+                            @elseif($producto->stock_sucursal > 0 && $producto->stock_sucursal <= 15)
                                 <span class="absolute right-2 top-2 z-10 rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">¡Últimas!</span>
                             @endif
 
@@ -146,8 +167,16 @@
                                             wire:click="agregarAlCarrito({{ $producto->id }})"
                                             @disabled($producto->stock_sucursal <= 0)
                                             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-                                            title="Agregar al carrito"
-                                            aria-label="Agregar {{ $producto->nombre_producto }} al carrito"
+                                            @if($producto->solo_caducado)
+                                                title="Sin existencias vigentes — solo lotes caducados"
+                                                aria-label="No se puede agregar {{ $producto->nombre_producto }}: solo tiene lotes caducados"
+                                            @elseif($producto->stock_sucursal <= 0)
+                                                title="Sin existencias"
+                                                aria-label="No se puede agregar {{ $producto->nombre_producto }}: sin existencias"
+                                            @else
+                                                title="Agregar al carrito"
+                                                aria-label="Agregar {{ $producto->nombre_producto }} al carrito"
+                                            @endif
                                         >
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
