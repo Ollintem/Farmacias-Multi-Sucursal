@@ -58,7 +58,6 @@ class SucursalesController extends Controller
             'direccion' => ['required', 'string', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:30'],
             'correo_contacto' => ['nullable', 'email', 'max:150'],
-            'responsable' => ['nullable', 'string', 'max:150'],
             'hora_apertura' => ['required', 'date_format:H:i'],
             'hora_cierre' => ['required', 'date_format:H:i', 'after:hora_apertura'],
             'es_activa' => ['boolean'],
@@ -88,7 +87,6 @@ class SucursalesController extends Controller
             'direccion' => ['required', 'string', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:30'],
             'correo_contacto' => ['nullable', 'email', 'max:150'],
-            'responsable' => ['nullable', 'string', 'max:150'],
             'hora_apertura' => ['required', 'date_format:H:i'],
             'hora_cierre' => ['required', 'date_format:H:i', 'after:hora_apertura'],
         ]);

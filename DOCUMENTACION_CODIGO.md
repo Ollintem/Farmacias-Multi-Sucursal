@@ -118,7 +118,7 @@ Define las rutas publicas y principales del panel.
 - `/lotes-y-caducidades`: consulta y alta de lotes.
 - Punto de venta, entradas, traspasos, caja, reportes y alertas: vistas placeholder.
 
-El modulo de sucursales permite consultar, registrar y editar nombre, direccion, telefono, correo de contacto, responsable, horario y estado activo. Estos datos se almacenan en `sucursales`; la migracion `add_operational_details_to_sucursales_table` agrega los campos operativos nuevos.
+El modulo de sucursales permite consultar, registrar y editar nombre, direccion, telefono, correo de contacto, horario y estado activo. Estos datos se almacenan en `sucursales`; la migracion `add_operational_details_to_sucursales_table` agrega los campos operativos nuevos.
 
 El grupo principal usa los middleware `auth` y `verified`. Si una URL redirige al login, revisa primero estos middleware y el estado de verificacion del usuario.
 

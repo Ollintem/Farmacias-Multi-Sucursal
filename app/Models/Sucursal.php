@@ -16,14 +16,13 @@ use Illuminate\Support\Carbon;
  * @property string $hora_cierre
  * @property string|null $telefono
  * @property string|null $correo_contacto
- * @property string|null $responsable
  * @property bool $es_activa
  * @property Carbon|null $fecha_creacion
  * @property Carbon|null $fecha_actualizacion
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['nombre_sucursal', 'direccion', 'telefono', 'correo_contacto', 'responsable', 'hora_apertura', 'hora_cierre', 'es_activa'])]
+#[Fillable(['nombre_sucursal', 'direccion', 'telefono', 'correo_contacto', 'hora_apertura', 'hora_cierre', 'es_activa'])]
 class Sucursal extends Model
 {
     /**

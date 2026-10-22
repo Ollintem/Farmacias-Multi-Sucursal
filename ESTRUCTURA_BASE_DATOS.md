@@ -33,7 +33,6 @@ sucursales ── alertas
 | direccion | varchar(255) | No | — | |
 | telefono | varchar(30) | Sí | NULL | |
 | correo_contacto | varchar(150) | Sí | NULL | |
-| responsable | varchar(150) | Sí | NULL | |
 | hora_apertura / hora_cierre | time | No | — | |
 | es_activa | boolean | No | true | |
 | fecha_creacion / fecha_actualizacion | timestamp | No | current | |
