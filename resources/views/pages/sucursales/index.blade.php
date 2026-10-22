@@ -71,7 +71,6 @@
                                                 <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-xl font-black text-white shadow-md shadow-teal-900/20">{{ strtoupper(substr($sucursal->nombre_sucursal, 0, 1)) }}</span>
                                                 <div class="min-w-0">
                                                     <p class="text-base font-bold text-slate-800 dark:text-slate-100">{{ $sucursal->nombre_sucursal }}</p>
-                                                    <p class="theme-subtle mt-1 text-sm">{{ $sucursal->responsable ?: 'Responsable pendiente' }}</p>
                                                 </div>
                                             </div>
                                         </td>

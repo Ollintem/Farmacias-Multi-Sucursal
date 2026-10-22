@@ -34,17 +34,10 @@
                                 <p class="theme-subtle text-xs">Cómo se identificará este punto de atención.</p>
                             </div>
                         </div>
-                        <div class="grid gap-5 sm:grid-cols-2">
-                            <div>
-                                <label for="nombre_sucursal" class="mb-2 block text-sm font-semibold">Nombre de la sucursal</label>
-                                <input id="nombre_sucursal" name="nombre_sucursal" value="{{ old('nombre_sucursal', $sucursal?->nombre_sucursal) }}" class="theme-input" placeholder="Ej. Sucursal Poniente" required>
-                                @error('nombre_sucursal')<span class="mt-1 block text-sm text-red-500">{{ $message }}</span>@enderror
-                            </div>
-                            <div>
-                                <label for="responsable" class="mb-2 block text-sm font-semibold">Responsable</label>
-                                <input id="responsable" name="responsable" value="{{ old('responsable', $sucursal?->responsable) }}" class="theme-input" placeholder="Nombre del encargado">
-                                @error('responsable')<span class="mt-1 block text-sm text-red-500">{{ $message }}</span>@enderror
-                            </div>
+                        <div>
+                            <label for="nombre_sucursal" class="mb-2 block text-sm font-semibold">Nombre de la sucursal</label>
+                            <input id="nombre_sucursal" name="nombre_sucursal" value="{{ old('nombre_sucursal', $sucursal?->nombre_sucursal) }}" class="theme-input" placeholder="Ej. Sucursal Poniente" required>
+                            @error('nombre_sucursal')<span class="mt-1 block text-sm text-red-500">{{ $message }}</span>@enderror
                         </div>
                     </div>
 
