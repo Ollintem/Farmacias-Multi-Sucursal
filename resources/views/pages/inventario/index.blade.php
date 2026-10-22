@@ -106,10 +106,6 @@
                     </div>
 
                     <form method="GET" action="{{ route('inventario.stock') }}" class="entradas-toolbar-form">
-                        <label class="entradas-toolbar-select">
-                            <span>Sucursal</span>
-                            <x-option-pick name="sucursal" label="Sucursales" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="$selectedSucursal?->id" placeholder="Seleccionar sucursal" :autoSubmit="true" />
-                        </label>
                         <div class="entradas-toolbar-buscar">
                             <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre…" class="theme-input" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
                             <button type="submit" class="theme-button theme-button-secondary !min-h-0 !py-2.5">Buscar</button>

@@ -34,7 +34,9 @@
 
                     <div>
                         <label class="mb-2 block text-sm font-medium">Sucursal destino</label>
-                        <x-option-pick name="id_sucursal" label="Sucursales" placeholder="Selecciona una sucursal" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="old('id_sucursal', $selectedSucursalId ?? '')" />
+                        <input type="hidden" name="id_sucursal" value="{{ $selectedSucursalId ?? '' }}">
+                        <p class="theme-input flex items-center font-semibold" aria-readonly="true">{{ $sucursales->firstWhere('id', $selectedSucursalId)?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                        <p class="mt-1 text-xs theme-subtle">El destino es tu sucursal activa y solo cambia desde el menú lateral.</p>
                         @error('id_sucursal')
                             <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>
                         @enderror

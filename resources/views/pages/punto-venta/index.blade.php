@@ -7,14 +7,6 @@
                     <h1>Punto de venta</h1>
                     <p class="pos-context">{{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
                 </div>
-                <label class="pos-branch-picker">
-                    <span>Sucursal</span>
-                    <select onchange="window.location.href = '{{ route('punto-venta.index') }}?sucursal=' + this.value">
-                        @foreach($sucursales as $sucursal)
-                            <option value="{{ $sucursal->id }}" {{ $selectedSucursal?->id === $sucursal->id ? 'selected' : '' }}>{{ $sucursal->nombre_sucursal }}</option>
-                        @endforeach
-                    </select>
-                </label>
             </header>
 
             <div class="pos-layout">

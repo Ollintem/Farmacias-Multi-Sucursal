@@ -112,18 +112,6 @@
                     </div>
                     <form method="GET" action="{{ route('entradas-de-almacen.index') }}" class="entradas-toolbar-form">
                         <input type="hidden" name="tipo" value="{{ $tipoActual === 'todas' ? '' : $tipoActual }}">
-                        <label class="entradas-toolbar-select">
-                            <span>Sucursal</span>
-                            <select name="sucursal" class="branch-select" aria-label="Seleccionar sucursal" onchange="this.form.submit()">
-                                @forelse($sucursales ?? [] as $sucursal)
-                                    <option value="{{ $sucursal->id }}" {{ ($selectedSucursal && $selectedSucursal->id === $sucursal->id) ? 'selected' : '' }}>
-                                        {{ $sucursal->nombre_sucursal }}
-                                    </option>
-                                @empty
-                                    <option value="">Sin sucursales registradas</option>
-                                @endforelse
-                            </select>
-                        </label>
                         <div class="entradas-toolbar-buscar">
                             <input type="search" name="buscar" value="{{ old('buscar', $busqueda ?? '') }}" placeholder="Buscar folio, proveedor o producto" class="theme-input" aria-label="Buscar entrada" @input.debounce.200ms="texto = $event.target.value">
                             <button type="submit" class="theme-button theme-button-secondary">Buscar</button>
