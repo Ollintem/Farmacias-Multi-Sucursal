@@ -6,15 +6,16 @@
 
             this.pendiente = {
                 ...datos,
-                titulo: datos.modo === 'eliminar' ? 'Eliminar producto' : 'Desactivar producto',
+                titulo: `${datos.modo === 'eliminar' ? 'Eliminar' : 'Desactivar'} ${datos.etiqueta ?? 'producto'}`,
                 mensaje: datos.modo === 'eliminar'
                     ? `¿Eliminar «${datos.nombre}» del catálogo?`
                     : `¿Desactivar «${datos.nombre}»?`,
                 detalle: datos.modo === 'eliminar'
                     ? 'Dejará de aparecer del catálogo y no se puede deshacer.'
-                    : 'Dejará de aparecer en Punto de Venta y en Productos y stock.',
+                    : (datos.detalle ?? 'Dejará de aparecer en Punto de Venta y en Productos y stock.'),
                 accion: datos.modo === 'eliminar' ? 'Eliminar' : 'Desactivar',
                 metodo: datos.modo === 'eliminar' ? 'DELETE' : 'PATCH',
+                campo: datos.campo ?? 'es_activo',
             };
         },
         cerrar() {
@@ -57,7 +58,7 @@
         <form :action="pendiente?.ruta ?? ''" method="POST">
             @csrf
             <input type="hidden" name="_method" :value="pendiente?.metodo ?? 'DELETE'">
-            <input type="hidden" name="es_activo" value="0" :disabled="pendiente?.modo !== 'desactivar'">
+            <input type="hidden" :name="pendiente?.campo ?? 'es_activo'" value="0" :disabled="pendiente?.modo !== 'desactivar'">
 
             <div class="mt-6 flex justify-end gap-3">
                 <button type="button" x-ref="botonCancelar" @click="cerrar()" class="theme-button theme-button-secondary">Cancelar</button>

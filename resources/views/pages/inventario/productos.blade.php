@@ -163,28 +163,44 @@
                                             </td>
 
                                             <td class="!py-4 text-center">
-                                                <form action="{{ route('inventario.estado', $producto) }}" method="POST" style="margin:0;">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="es_activo" value="{{ $producto->es_activo ? 0 : 1 }}">
-                                                    <button
-                                                        type="{{ $producto->es_activo ? 'button' : 'submit' }}"
-                                                        @class([
-                                                            'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition',
-                                                            'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300' => $producto->es_activo,
-                                                            'border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' => ! $producto->es_activo,
-                                                        ])
-                                                        @if($producto->es_activo)
+                                                <span
+                                                    class="inline-flex items-center gap-2"
+                                                    x-data="{
+                                                        activo: {{ $producto->es_activo ? 'true' : 'false' }},
+                                                        cambiar(el) {
+                                                            if (el.checked === this.activo) return;
+
+                                                            if (this.activo) {
+                                                                queueMicrotask(() => { el.checked = true; });
+                                                                this.$dispatch('confirmar-accion', { modo: el.dataset.modo, ruta: el.dataset.ruta, nombre: el.dataset.nombre });
+                                                            } else {
+                                                                this.activo = true;
+                                                                this.$nextTick(() => el.closest('form').submit());
+                                                            }
+                                                        },
+                                                    }"
+                                                    title="Clic para {{ $producto->es_activo ? 'desactivar' : 'activar' }} el producto"
+                                                >
+                                                    <form action="{{ route('inventario.estado', $producto) }}" method="POST" style="margin:0;">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="es_activo" :value="activo ? 1 : 0">
+                                                        <flux:switch
+                                                            :checked="$producto->es_activo"
+                                                            class="cursor-pointer"
+                                                            aria-label="Estado de {{ $producto->nombre_producto }}"
                                                             data-modo="desactivar"
                                                             data-ruta="{{ route('inventario.estado', $producto) }}"
                                                             data-nombre="{{ $producto->nombre_producto }}"
-                                                            @click="$dispatch('confirmar-accion', { modo: $event.currentTarget.dataset.modo, ruta: $event.currentTarget.dataset.ruta, nombre: $event.currentTarget.dataset.nombre })"
-                                                        @endif
-                                                    >
-                                                        <span @class(['h-1.5 w-1.5 rounded-full', 'bg-emerald-500' => $producto->es_activo, 'bg-slate-400' => ! $producto->es_activo])></span>
-                                                        {{ $producto->es_activo ? 'Activo' : 'Inactivo' }}
-                                                    </button>
-                                                </form>
+                                                            @change="cambiar($event.target)"
+                                                        />
+                                                    </form>
+                                                    <span
+                                                        class="text-sm font-semibold"
+                                                        :class="activo ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'"
+                                                        x-text="activo ? 'Activo' : 'Inactivo'"
+                                                    >{{ $producto->es_activo ? 'Activo' : 'Inactivo' }}</span>
+                                                </span>
                                             </td>
 
                                             <td class="!py-4 text-right">

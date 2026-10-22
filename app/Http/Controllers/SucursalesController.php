@@ -91,13 +91,32 @@ class SucursalesController extends Controller
             'responsable' => ['nullable', 'string', 'max:150'],
             'hora_apertura' => ['required', 'date_format:H:i'],
             'hora_cierre' => ['required', 'date_format:H:i', 'after:hora_apertura'],
-            'es_activa' => ['boolean'],
         ]);
 
-        $data['es_activa'] = $request->boolean('es_activa');
         $sucursal->update($data);
 
         return redirect()->route('sucursales.index')->with('success', 'Sucursal actualizada correctamente.');
+    }
+
+    /**
+     * Cambia el estado operativo de una sucursal desde el interruptor de la
+     * tabla; editar sus datos nunca toca este flag.
+     *
+     * Entrada: bandera `es_activa` (0/1) y sucursal resuelta por la ruta.
+     * Salida: misma página con mensaje de éxito.
+     */
+    public function cambiarEstado(Request $request, Sucursal $sucursal): RedirectResponse
+    {
+        $activa = $request->boolean('es_activa');
+
+        $sucursal->update(['es_activa' => $activa]);
+
+        return back()->with(
+            'success',
+            $activa
+                ? "«{$sucursal->nombre_sucursal}» está activa de nuevo: ya vuelve a aparecer en los selectores."
+                : "«{$sucursal->nombre_sucursal}» quedó inactiva: deja de aparecer en los selectores. Sus ventas e historial se conservan."
+        );
     }
 
     /**

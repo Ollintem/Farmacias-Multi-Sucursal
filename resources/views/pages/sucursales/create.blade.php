@@ -96,14 +96,6 @@
                         </div>
                     </div>
 
-                    <label class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-                        <input type="checkbox" name="es_activa" value="1" @checked(old('es_activa', $sucursal?->es_activa ?? true))>
-                        <span>
-                            <span class="block text-sm font-bold text-emerald-900 dark:text-emerald-100">Sucursal activa</span>
-                            <span class="block text-xs text-emerald-800/75 dark:text-emerald-200/75">Permite identificarla como disponible para la operación.</span>
-                        </span>
-                    </label>
-
                     <div class="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end dark:border-slate-700">
                         <a href="{{ route('sucursales.index') }}" class="theme-button theme-button-secondary">Cancelar</a>
                         <button type="submit" class="theme-button theme-button-primary">{{ $esEdicion ? 'Guardar cambios' : 'Guardar sucursal' }} <span class="ml-2">→</span></button>

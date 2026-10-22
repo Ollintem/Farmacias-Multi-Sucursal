@@ -82,7 +82,7 @@
                 />
 
                 <flux:menu class="w-56">
-                    @foreach(\App\Models\Sucursal::orderBy('nombre_sucursal')->get() as $sucursal)
+                    @foreach(\App\Models\Sucursal::where('es_activa', true)->orderBy('nombre_sucursal')->get() as $sucursal)
                         <a
                             href="{{ request()->fullUrlWithQuery(array_merge(request()->query(), ['sucursal' => $sucursal->id])) }}"
                             class="flex items-center gap-2 px-3 py-2 text-sm text-[#d5e5e0] hover:bg-white/10 rounded-lg transition
@@ -119,7 +119,7 @@
                 />
 
                 <flux:menu class="w-48">
-                    @foreach(\App\Models\Sucursal::orderBy('nombre_sucursal')->get() as $sucursal)
+                    @foreach(\App\Models\Sucursal::where('es_activa', true)->orderBy('nombre_sucursal')->get() as $sucursal)
                         <a
                             href="{{ request()->fullUrlWithQuery(array_merge(request()->query(), ['sucursal' => $sucursal->id])) }}"
                             class="flex items-center gap-2 px-3 py-2 text-sm text-[#d5e5e0] hover:bg-white/10 rounded-lg transition

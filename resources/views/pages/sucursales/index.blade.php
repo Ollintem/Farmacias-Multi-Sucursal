@@ -86,11 +86,45 @@
                                             <span class="font-semibold">{{ substr($sucursal->hora_cierre, 0, 5) }}</span>
                                         </td>
                                         <td class="px-6 py-5">
-                                            @if($sucursal->es_activa)
-                                                <span class="inventory-status inventory-status-available !px-4 !py-1.5 !text-sm">Activa</span>
-                                            @else
-                                                <span class="inventory-status inventory-status-low !px-4 !py-1.5 !text-sm">Inactiva</span>
-                                            @endif
+                                            <span
+                                                class="inline-flex items-center gap-2"
+                                                x-data="{
+                                                    activa: {{ $sucursal->es_activa ? 'true' : 'false' }},
+                                                    cambiar(el) {
+                                                        if (el.checked === this.activa) return;
+
+                                                        if (this.activa) {
+                                                            queueMicrotask(() => { el.checked = true; });
+                                                            this.$dispatch('confirmar-accion', { modo: el.dataset.modo, ruta: el.dataset.ruta, nombre: el.dataset.nombre, etiqueta: 'sucursal', campo: 'es_activa', detalle: el.dataset.detalle });
+                                                        } else {
+                                                            this.activa = true;
+                                                            this.$nextTick(() => el.closest('form').submit());
+                                                        }
+                                                    },
+                                                }"
+                                                title="Clic para {{ $sucursal->es_activa ? 'desactivar' : 'activar' }} la sucursal"
+                                            >
+                                                <form action="{{ route('sucursales.estado', $sucursal) }}" method="POST" style="margin:0;">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="hidden" name="es_activa" :value="activa ? 1 : 0">
+                                                    <flux:switch
+                                                        :checked="$sucursal->es_activa"
+                                                        class="cursor-pointer"
+                                                        aria-label="Estado de {{ $sucursal->nombre_sucursal }}"
+                                                        data-modo="desactivar"
+                                                        data-ruta="{{ route('sucursales.estado', $sucursal) }}"
+                                                        data-nombre="{{ $sucursal->nombre_sucursal }}"
+                                                        data-detalle="Dejará de aparecer en los selectores de sucursal; sus ventas e historial se conservan."
+                                                        @change="cambiar($event.target)"
+                                                    />
+                                                </form>
+                                                <span
+                                                    class="text-sm font-semibold"
+                                                    :class="activa ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'"
+                                                    x-text="activa ? 'Activa' : 'Inactiva'"
+                                                >{{ $sucursal->es_activa ? 'Activa' : 'Inactiva' }}</span>
+                                            </span>
                                         </td>
                                         <td class="px-6 py-5 text-right">
                                             <div class="inline-flex items-center gap-2">
@@ -116,4 +150,6 @@
             </section>
         </div>
     </div>
+
+    @include('partials.confirmacion-accion')
 </x-layouts::app>

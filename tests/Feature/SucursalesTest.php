@@ -61,7 +61,7 @@ test('una sucursal existente puede editarse y el formulario regresa al listado',
         'id' => $sucursal->id,
         'nombre_sucursal' => 'Sucursal Centro Renovada',
         'direccion' => 'Av. Central 456',
-        'es_activa' => false,
+        'es_activa' => true,
     ]);
 });
 
@@ -93,7 +93,11 @@ test('el listado muestra las sucursales con su boton de eliminar', function () {
     $this->get(route('sucursales.index'))
         ->assertOk()
         ->assertSee($sucursal->nombre_sucursal)
-        ->assertSee(route('sucursales.destroy', $sucursal), false);
+        ->assertSee(route('sucursales.destroy', $sucursal), false)
+        ->assertSee('data-flux-switch', false)
+        ->assertSee('botonCancelar', false)
+        ->assertDontSee('@if(')
+        ->assertDontSee('@endif');
 });
 
 test('eliminar quita la sucursal sin movimiento del directorio', function () {
@@ -121,4 +125,95 @@ test('eliminar se bloquea cuando la sucursal tiene usuarios', function () {
         ->assertSessionHas('error');
 
     expect(Sucursal::find($sucursal->id))->not->toBeNull();
+});
+
+test('editar los datos de una sucursal inactiva no cambia su estado', function () {
+    $this->actingAs(User::factory()->create());
+
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal Norte',
+        'direccion' => 'Blvd. Norte 10',
+        'hora_apertura' => '09:00',
+        'hora_cierre' => '19:00',
+        'es_activa' => false,
+    ]);
+
+    $this->put(route('sucursales.update', $sucursal), [
+        'nombre_sucursal' => 'Sucursal Norte Editada',
+        'direccion' => 'Blvd. Norte 20',
+        'hora_apertura' => '09:00',
+        'hora_cierre' => '21:00',
+    ])->assertRedirect(route('sucursales.index'));
+
+    $actual = Sucursal::find($sucursal->id);
+    expect($actual->nombre_sucursal)->toBe('Sucursal Norte Editada');
+    expect($actual->es_activa)->toBeFalse();
+});
+
+test('el interruptor de estado desactiva una sucursal', function () {
+    [$sucursal] = crearContextoSucursales($this);
+
+    $this->patch(route('sucursales.estado', $sucursal), ['es_activa' => 0])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect(Sucursal::find($sucursal->id)->es_activa)->toBeFalse();
+});
+
+test('el interruptor de estado reactiva una sucursal', function () {
+    [$sucursal] = crearContextoSucursales($this);
+    $sucursal->update(['es_activa' => false]);
+
+    $this->patch(route('sucursales.estado', $sucursal), ['es_activa' => 1])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect(Sucursal::find($sucursal->id)->es_activa)->toBeTrue();
+});
+
+test('el formulario de sucursal ya no muestra el checkbox de sucursal activa', function () {
+    [$sucursal] = crearContextoSucursales($this);
+
+    $this->get(route('sucursales.create'))
+        ->assertOk()
+        ->assertDontSee('Sucursal activa');
+
+    $this->get(route('sucursales.edit', $sucursal))
+        ->assertOk()
+        ->assertDontSee('Sucursal activa');
+});
+
+test('las sucursales inactivas no aparecen en el selector de sucursales', function () {
+    [$sucursal] = crearContextoSucursales($this);
+
+    Sucursal::create([
+        'nombre_sucursal' => 'Sucursal Cerrada',
+        'direccion' => 'Calle Cerrada 1',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '14:00',
+        'es_activa' => false,
+    ]);
+
+    $this->get(route('sucursales.create'))
+        ->assertOk()
+        ->assertSee($sucursal->nombre_sucursal)
+        ->assertDontSee('Sucursal Cerrada');
+});
+
+test('no se puede elegir una sucursal inactiva desde la URL', function () {
+    [$sucursal] = crearContextoSucursales($this);
+
+    $cerrada = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal Cerrada',
+        'direccion' => 'Calle Cerrada 1',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '14:00',
+        'es_activa' => false,
+    ]);
+
+    $this->get(route('sucursales.create', ['sucursal' => $cerrada->id]))
+        ->assertOk()
+        ->assertSee($sucursal->nombre_sucursal);
+
+    expect((int) session('active_sucursal_id'))->not->toBe($cerrada->id);
 });

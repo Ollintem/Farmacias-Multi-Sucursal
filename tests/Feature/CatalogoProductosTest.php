@@ -94,7 +94,10 @@ test('la pestana productos muestra el catalogo con sus columnas', function () {
         ->assertSee('+ Agregar producto nuevo')
         ->assertSee(route('inventario.edit', $producto))
         ->assertSee('value="PATCH"', false)
-        ->assertSee('data-modo="eliminar"', false);
+        ->assertSee('data-modo="eliminar"', false)
+        ->assertSee('data-flux-switch', false)
+        ->assertDontSee('@if(')
+        ->assertDontSee('@endif');
 });
 
 test('el boton de agregar producto nuevo se mueve a la pestana productos', function () {
