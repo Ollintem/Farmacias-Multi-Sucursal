@@ -72,24 +72,43 @@
                 </div>
             @endif
 
-            <section class="module-card noti-hero" aria-label="Encabezado del módulo">
-                <div class="noti-hero-fondo" aria-hidden="true"></div>
-                <div class="noti-encabezado-texto noti-hero-texto">
-                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> FarmaERP · Próximamente</p>
-                    <h1 class="mt-2">{{ $nombre }}</h1>
-                    <dl class="noti-resumen noti-kpis">
-                        <div class="noti-kpi">
-                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6h.008v.008H6V6z"/></svg> Diseño</dt><dd>Preparado</dd>
-                        </div>
-                        <div class="noti-kpi">
-                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg> Menú</dt><dd>Conectado</dd>
-                        </div>
-                        <div class="noti-kpi">
-                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Lógica</dt><dd>Pendiente</dd>
-                        </div>
-                    </dl>
+            <header class="mb-6" aria-label="Encabezado del módulo">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">FarmaERP · Próximamente</p>
+                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $nombre }}</h1>
+                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+  <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-zinc-800 lg:grid-cols-3">
+    <div class="relative flex items-center gap-2.5 bg-white px-3.5 py-3 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
+    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 ring-1">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 6h.008v.008H6V6z"/></svg>
+        </span>
+        <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Diseño</p>
+            <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">Preparado</p>
+        </div>
+</div>
+    <div class="relative flex items-center gap-2.5 bg-white px-3.5 py-3 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
+    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 ring-1">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+        </span>
+        <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Menú</p>
+            <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">Conectado</p>
+        </div>
+</div>
+    <div class="relative flex items-center gap-2.5 bg-white px-3.5 py-3 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
+    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 ring-1">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </span>
+        <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Lógica</p>
+            <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">Pendiente</p>
+        </div>
+</div>
+  </dl>
+</div>
                 </div>
-            </section>
+            </header>
 
             <section class="module-card noti-listado" aria-label="Área de trabajo">
                 <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
@@ -121,7 +140,6 @@
                     <a href="{{ route('dashboard') }}" class="theme-button theme-button-primary">Ir al dashboard <span class="ml-2">→</span></a>
                 </div>
                 </div>
-            </section>
             </section>
         </div>
     </div>

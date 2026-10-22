@@ -1,17 +1,16 @@
 <x-layouts::app :title="__('Editar usuario: ' . $usuario->nombre . ' ' . $usuario->apellido)">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado homologado: hero verde --}}
-            <section class="module-card noti-hero" aria-label="Encabezado de usuario">
-                <div class="noti-hero-fondo" aria-hidden="true"></div>
-                <div class="noti-encabezado-texto noti-hero-texto">
-                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Gestión de personal · Edición</p>
-                    <h1 class="mt-2">Editar usuario: {{ $usuario->nombre }} {{ $usuario->apellido }}</h1>
+            {{-- Encabezado limpio --}}
+            <header class="mb-6" aria-label="Encabezado de usuario">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Gestión de personal · Edición</p>
+                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Editar usuario: {{ $usuario->nombre }} {{ $usuario->apellido }}</h1>
                     <div class="mt-4 flex flex-wrap gap-2">
                         <a href="{{ route('usuarios.permisos', $usuario) }}" class="theme-button theme-button-secondary">Permisos</a>
                     </div>
                 </div>
-            </section>
+            </header>
 
             @if(session('success'))
                 <div

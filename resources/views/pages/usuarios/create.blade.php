@@ -1,14 +1,13 @@
 <x-layouts::app :title="__('Nuevo usuario')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado homologado: hero verde --}}
-            <section class="module-card noti-hero" aria-label="Encabezado de usuario">
-                <div class="noti-hero-fondo" aria-hidden="true"></div>
-                <div class="noti-encabezado-texto noti-hero-texto">
-                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Alta de personal · Nuevo registro</p>
-                    <h1 class="mt-2">Registrar nuevo usuario</h1>
+            {{-- Encabezado limpio --}}
+            <header class="mb-6" aria-label="Encabezado de usuario">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Alta de personal · Nuevo registro</p>
+                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Registrar nuevo usuario</h1>
                 </div>
-            </section>
+            </header>
 
             @if(session('error'))
                 <div

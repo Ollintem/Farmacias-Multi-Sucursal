@@ -1,13 +1,12 @@
 <div class="module-page noti-page">
     <div class="module-page-inner noti-full noti-formal">
-    {{-- Encabezado homologado: hero verde --}}
-    <section class="module-card noti-hero" aria-label="Encabezado de ajustes">
-        <div class="noti-hero-fondo" aria-hidden="true"></div>
-        <div class="noti-encabezado-texto noti-hero-texto">
-            <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Cuenta · {{ $heading ?? 'Ajustes' }}</p>
-            <h1 class="mt-2">{{ $heading ?? 'Ajustes' }}</h1>
+    {{-- Encabezado limpio --}}
+    <header class="mb-6" aria-label="Encabezado de ajustes">
+        <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Cuenta · {{ $heading ?? 'Ajustes' }}</p>
+            <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $heading ?? 'Ajustes' }}</h1>
         </div>
-    </section>
+            </header>
 
     <section class="module-card noti-listado" aria-label="Ajustes de cuenta">
         <div class="p-5 sm:p-6">

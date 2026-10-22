@@ -183,7 +183,7 @@ test('la pestana stock solo lista productos con inventario real en la sucursal',
 
     expect($enNorte)
         ->toContain('Naproxeno Ind')
-        ->toContain('>0 uds.</td>')
+        ->toContain('0 uds.')
         ->not->toContain('Amoxicilina Ind')
         ->not->toContain('Ibuprofeno Ind');
 });

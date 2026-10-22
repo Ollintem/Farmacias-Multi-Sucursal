@@ -63,13 +63,12 @@
 
     <div class="module-page-inner noti-full noti-formal">
     {{-- Encabezado homologado: hero verde compacto --}}
-    <section class="module-card noti-hero" aria-label="Encabezado de punto de venta">
-        <div class="noti-hero-fondo" aria-hidden="true"></div>
-        <div class="noti-encabezado-texto noti-hero-texto">
-            <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Venta rápida · {{ (\App\Models\Sucursal::find(session('active_sucursal_id') ?? auth()->user()?->id_sucursal))?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-            <h1 class="mt-2">Punto de venta</h1>
+    <header class="mb-6" aria-label="Encabezado de punto de venta">
+        <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Venta rápida · {{ (\App\Models\Sucursal::find(session('active_sucursal_id') ?? auth()->user()?->id_sucursal))?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+            <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Punto de venta</h1>
         </div>
-    </section>
+            </header>
     {{-- Barra de búsqueda --}}
     <div class="module-card p-3 sm:p-4">
         <div class="flex items-center gap-3">

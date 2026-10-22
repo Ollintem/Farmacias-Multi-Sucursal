@@ -1,14 +1,14 @@
 <x-layouts::app :title="__('Productos')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado homologado: hero verde --}}
-            <section class="module-card noti-hero" aria-label="Encabezado de productos">
-                <div class="noti-hero-fondo" aria-hidden="true"></div>
-                <div class="noti-encabezado-texto noti-hero-texto">
-                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Catálogo · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                    <h1 class="mt-2">Productos</h1>
+            {{-- Encabezado limpio --}}
+            <header class="mb-6" aria-label="Encabezado de productos">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Catálogo · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Productos</h1>
+                    <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">Catálogo central por sucursal: presentaciones, precios y estado comercial en un listado claro y accionable.</p>
                 </div>
-            </section>
+            </header>
 
             @include('pages.inventario.tabs', ['seccion' => 'productos', 'selectedSucursal' => $selectedSucursal])
 
@@ -48,38 +48,43 @@
                 <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                     <div>
                         <h2>Catálogo de productos</h2>
-                        <p class="theme-subtle text-sm">{{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                        <p class="theme-subtle text-sm">{{ $productos->count() }} producto(s) · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
                     </div>
+                    <a href="{{ route('inventario.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary hidden sm:inline-flex">+ Agregar producto nuevo</a>
                 </header>
-                <div class="p-5 sm:p-6">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <p class="theme-subtle text-xs uppercase tracking-[0.25em]">Sucursal activa</p>
-                        <h2 class="mt-2 text-2xl font-bold">{{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</h2>
+
+                {{-- Toolbar empresarial --}}
+                <div class="entradas-toolbar border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
+                    <div class="entradas-toolbar-sucursal">
+                        <span class="entradas-toolbar-label">Sucursal activa</span>
+                        <span class="entradas-toolbar-valor flex items-center gap-2">
+                            <span class="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-sm font-black text-white shadow-sm">{{ mb_strtoupper(mb_substr($selectedSucursal?->nombre_sucursal ?? '?', 0, 1)) }}</span>
+                            {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}
+                        </span>
                     </div>
-
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <form method="GET" action="{{ route('inventario.productos') }}" class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre" class="theme-input w-full sm:w-64" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
-                            <button type="submit" class="theme-button theme-button-secondary whitespace-nowrap">Buscar</button>
-                        </form>
-
-                        <a href="{{ route('inventario.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary whitespace-nowrap">+ Agregar producto nuevo</a>
+                    <div class="entradas-toolbar-form !flex-row !items-center">
+                        <div class="entradas-toolbar-buscar !max-w-[22rem]">
+                            <form method="GET" action="{{ route('inventario.productos') }}" class="flex w-full items-center gap-2">
+                                <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre…" class="theme-input flex-1" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
+                                <button type="submit" class="theme-button theme-button-secondary !min-h-0 !py-2.5">Buscar</button>
+                            </form>
+                        </div>
+                        <a href="{{ route('inventario.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary sm:hidden">+ Nuevo</a>
                     </div>
                 </div>
 
-                <div class="module-table mt-6">
+                <div class="entradas-tabla-wrap !border-0" style="max-height:380px">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full text-left text-sm">
-                            <thead class="text-slate-600 dark:text-slate-300">
+                        <table class="entradas-tabla !min-w-[980px]">
+                            <thead>
                                 <tr>
-                                    <th class="px-4 py-3 font-semibold">Nombre</th>
-                                    <th class="px-4 py-3 font-semibold">Categoría</th>
-                                    <th class="px-4 py-3 font-semibold">Presentación</th>
-                                    <th class="px-4 py-3 font-semibold">Precio</th>
-                                    <th class="px-4 py-3 font-semibold">Controlado</th>
-                                    <th class="px-4 py-3 font-semibold">Estado</th>
-                                    <th class="px-4 py-3 font-semibold">Acciones</th>
+                                    <th class="!py-3.5">Producto</th>
+                                    <th class="!py-3.5">Categoría</th>
+                                    <th class="!py-3.5">Presentación</th>
+                                    <th class="!py-3.5 text-right">Precio</th>
+                                    <th class="!py-3.5 text-center">Controlado</th>
+                                    <th class="!py-3.5 text-center">Estado</th>
+                                    <th class="!py-3.5 text-right">Acciones</th>
                                 </tr>
                             </thead>
                                 @foreach($productos as $producto)
@@ -92,28 +97,36 @@
                                             $totalDesplegable = $presentacionesLista->count();
                                             $mostrarDesplegable = $totalDesplegable > 0;
                                         @endphp
-                                    <tbody x-data="{ abierta: false }" data-buscar="{{ $producto->codigo_barras }} {{ $producto->nombre_producto }}">
+                                    <tbody x-data="{ abierta: false }" data-buscar="{{ $producto->codigo_barras }} {{ $producto->nombre_producto }}" class="group/tbody">
                                         <tr @class([
-                                            'border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5',
+                                            'transition',
                                             'opacity-60' => ! $producto->es_activo,
                                         ])>
-                                            <td class="px-4 py-3">
-                                                <span class="block font-medium text-slate-800 dark:text-slate-100">{{ $producto->nombre_producto }}</span>
-                                                <span class="block text-xs theme-subtle">{{ $producto->codigo_barras }}</span>
+                                            <td class="!py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <span class="hidden h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-sm font-bold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 sm:grid">{{ mb_strtoupper(mb_substr($producto->nombre_producto, 0, 2)) }}</span>
+                                                    <div class="min-w-0">
+                                                        <p class="truncate text-[15px] font-bold leading-tight text-slate-800 dark:text-slate-100">{{ $producto->nombre_producto }}</p>
+                                                        <p class="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                                            <svg class="h-3.5 w-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                            {{ $producto->codigo_barras }}
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </td>
 
-                                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
-                                                {{ $producto->categoria?->nombre ?? 'Sin categoría' }}
+                                            <td class="!py-4">
+                                                <span class="stat-pill info !px-3 !py-1 !text-xs !normal-case !font-bold">{{ $producto->categoria?->nombre ?? 'Sin categoría' }}</span>
                                             </td>
 
-                                            <td class="px-4 py-3">
+                                            <td class="!py-4">
                                                 @if($principal)
-                                                    <span class="block font-medium text-slate-800 dark:text-slate-100">{{ $principal->presentacion?->presentacion ?? 'Presentación' }}</span>
-                                                    <span class="block text-xs theme-subtle">
+                                                    <p class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ $principal->presentacion?->presentacion ?? 'Presentación' }}</p>
+                                                    <p class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                                                         {{ $principal->unidades >= 2 ? $principal->unidades.' uds. por presentación' : 'Se vende por unidad' }}
-                                                    </span>
+                                                    </p>
                                                 @else
-                                                    <span class="block theme-subtle">Sin presentación</span>
+                                                    <span class="text-sm font-medium text-slate-400">Sin presentación</span>
                                                 @endif
 
                                                 @if($mostrarDesplegable)
@@ -122,33 +135,34 @@
                                                         @click="abierta = !abierta"
                                                         :aria-expanded="abierta"
                                                         aria-controls="presentaciones-{{ $producto->id }}"
-                                                        class="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-slate-500 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400"
+                                                        class="mt-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 shadow-sm transition hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0c7569] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-500/40"
                                                     >
                                                         <svg class="h-3.5 w-3.5 transition-transform duration-200" :class="abierta && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
                                                         </svg>
                                                         + {{ $totalDesplegable }} {{ $totalDesplegable === 1 ? 'presentación' : 'presentaciones' }}
                                                     </button>
                                                 @endif
                                             </td>
 
-                                            <td class="px-4 py-3">
+                                            <td class="!py-4 text-right">
                                                 @if($principal)
-                                                    <span class="font-semibold text-emerald-600 dark:text-emerald-400">${{ number_format((float) $principal->precio_presentacion, 2) }}</span>
+                                                    <span class="text-[15px] font-extrabold text-emerald-700 dark:text-emerald-300">${{ number_format((float) $principal->precio_presentacion, 2) }}</span>
+                                                    <p class="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">precio principal</p>
                                                 @else
-                                                    <span class="theme-subtle">—</span>
+                                                    <span class="text-sm font-medium text-slate-400">—</span>
                                                 @endif
                                             </td>
 
-                                            <td class="px-4 py-3">
+                                            <td class="!py-4 text-center">
                                                 @if($producto->es_controlado)
-                                                    <span class="inline-flex items-center rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">Sí</span>
+                                                    <span class="stat-pill warning !px-3 !py-1.5 !text-xs !font-bold">Sí · receta</span>
                                                 @else
-                                                    <span class="inline-flex items-center rounded-full bg-slate-500/10 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-slate-400">No</span>
+                                                    <span class="stat-pill info !px-3 !py-1.5 !text-xs !font-semibold">No</span>
                                                 @endif
                                             </td>
 
-                                            <td class="px-4 py-3">
+                                            <td class="!py-4 text-center">
                                                 <form action="{{ route('inventario.estado', $producto) }}" method="POST" style="margin:0;">
                                                     @csrf
                                                     @method('PATCH')
@@ -156,9 +170,9 @@
                                                     <button
                                                         type="{{ $producto->es_activo ? 'button' : 'submit' }}"
                                                         @class([
-                                                            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition',
-                                                            'bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 dark:text-emerald-300' => $producto->es_activo,
-                                                            'bg-slate-500/15 text-slate-600 hover:bg-slate-500/25 dark:text-slate-300' => ! $producto->es_activo,
+                                                            'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition',
+                                                            'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300' => $producto->es_activo,
+                                                            'border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' => ! $producto->es_activo,
                                                         ])
                                                         @if($producto->es_activo)
                                                             data-modo="desactivar"
@@ -173,9 +187,9 @@
                                                 </form>
                                             </td>
 
-                                            <td class="px-4 py-3">
-                                                <div class="flex items-center gap-3">
-                                                    <a href="{{ route('inventario.edit', $producto) }}" title="Editar producto" class="text-slate-500 transition hover:text-emerald-600 dark:text-slate-400">
+                                            <td class="!py-4 text-right">
+                                                <div class="inline-flex items-center gap-1.5">
+                                                    <a href="{{ route('inventario.edit', $producto) }}" title="Editar producto" class="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0c7569] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                         <span class="sr-only">Editar producto</span>
                                                     </a>
@@ -183,7 +197,7 @@
                                                     <button
                                                         type="button"
                                                         title="Eliminar producto"
-                                                        class="text-slate-500 transition hover:text-red-600 dark:text-slate-400"
+                                                        class="grid h-8 w-8 place-items-center rounded-xl border border-red-200 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
                                                         data-modo="eliminar"
                                                         data-ruta="{{ route('inventario.destroy', $producto) }}"
                                                         data-nombre="{{ $producto->nombre_producto }}"
@@ -198,32 +212,34 @@
 
                                         @if($mostrarDesplegable)
                                             <tr>
-                                                <td colspan="7" class="p-0">
+                                                <td colspan="7" class="!p-0">
                                                     <div
                                                         id="presentaciones-{{ $producto->id }}"
                                                         x-show="abierta"
                                                         x-collapse
-                                                        class="border-t border-dashed border-slate-200 bg-slate-50/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40"
+                                                        class="border-t border-dashed border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-slate-700 dark:bg-slate-900/30"
                                                     >
-                                                        <p class="theme-subtle mb-2 text-xs uppercase tracking-[0.2em]">Presentaciones y precios</p>
-                                                        <table class="min-w-full text-xs">
-                                                            <thead>
-                                                                <tr class="theme-subtle text-left">
-                                                                    <th class="py-1 pr-4 font-medium">Presentación</th>
-                                                                    <th class="py-1 pr-4 font-medium">Unidades</th>
-                                                                    <th class="py-1 font-medium">Precio</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach($presentacionesLista as $presentacion)
-                                                                    <tr class="border-t border-slate-200/70 dark:border-slate-700/60">
-                                                                        <td class="py-1.5 pr-4 text-slate-700 dark:text-slate-200">{{ $presentacion->presentacion?->presentacion ?? '—' }}</td>
-                                                                        <td class="py-1.5 pr-4 theme-subtle">{{ $presentacion->unidades }} ud.</td>
-                                                                        <td class="py-1.5 font-semibold text-slate-800 dark:text-slate-100">${{ number_format((float) $presentacion->precio_presentacion, 2) }}</td>
+                                                        <p class="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Presentaciones y precios</p>
+                                                        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+                                                            <table class="min-w-full text-xs">
+                                                                <thead>
+                                                                    <tr class="bg-slate-50 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
+                                                                        <th class="px-4 py-2.5">Presentación</th>
+                                                                        <th class="px-4 py-2.5 text-right">Unidades</th>
+                                                                        <th class="px-4 py-2.5 text-right">Precio</th>
                                                                     </tr>
-                                                                @endforeach
-                                                            </tbody>
-                                                        </table>
+                                                                </thead>
+                                                                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                                                    @foreach($presentacionesLista as $presentacion)
+                                                                        <tr>
+                                                                            <td class="px-4 py-2.5 font-semibold text-slate-700 dark:text-slate-200">{{ $presentacion->presentacion?->presentacion ?? '—' }}</td>
+                                                                            <td class="px-4 py-2.5 text-right font-medium text-slate-600 dark:text-slate-300">{{ $presentacion->unidades }} ud.</td>
+                                                                            <td class="px-4 py-2.5 text-right font-extrabold text-slate-800 dark:text-slate-100">${{ number_format((float) $presentacion->precio_presentacion, 2) }}</td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -232,14 +248,19 @@
                                 @endforeach
                                 <tbody data-vacio @if($productos->isNotEmpty()) style="display: none" @endif>
                                     <tr>
-                                        <td colspan="7" class="px-4 py-10 text-center text-slate-500 dark:text-slate-400">
-                                            No se encontraron productos para esta sucursal o búsqueda.
+                                        <td colspan="7" class="px-4 py-14 text-center">
+                                            <div class="mx-auto flex max-w-sm flex-col items-center gap-3">
+                                                <span class="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800">
+                                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7l-8-4-8 4m16 0v10l-8 4m8-14l-8 4m0 10V11m0 10l-8-4V7m8 4L4 7"/></svg>
+                                                </span>
+                                                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">No se encontraron productos</p>
+                                                <p class="text-sm leading-relaxed text-slate-500 dark:text-slate-400">Prueba con otro código o nombre, o registra un nuevo producto para esta sucursal.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>
                         </table>
                     </div>
-                </div>
                 </div>
             </section>
         </div>

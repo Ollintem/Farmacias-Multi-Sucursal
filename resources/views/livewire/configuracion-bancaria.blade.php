@@ -1,13 +1,12 @@
 <div class="module-page noti-page">
     <div class="module-page-inner noti-full noti-formal">
-    {{-- Encabezado homologado: hero verde --}}
-    <section class="module-card noti-hero" aria-label="Encabezado de configuración bancaria">
-        <div class="noti-hero-fondo" aria-hidden="true"></div>
-        <div class="noti-encabezado-texto noti-hero-texto">
-            <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Ajustes · Transferencias</p>
-            <h1 class="mt-2">Configuración bancaria</h1>
+    {{-- Encabezado limpio --}}
+    <header class="mb-6" aria-label="Encabezado de configuración bancaria">
+        <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Ajustes · Transferencias</p>
+            <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Configuración bancaria</h1>
         </div>
-    </section>
+            </header>
 
     @if($guardado)
         <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-900/30">

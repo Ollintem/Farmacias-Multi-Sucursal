@@ -1,28 +1,17 @@
 <x-layouts::app :title="__('Sucursales')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado homologado: hero verde + KPIs blancos --}}
-            <section class="module-card noti-hero" aria-label="Encabezado de sucursales">
-                <div class="noti-hero-fondo" aria-hidden="true"></div>
-                <div class="noti-encabezado-texto noti-hero-texto">
-                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Red de farmacias</p>
-                    <h1 class="mt-2">Sucursales</h1>
-                    <dl class="noti-resumen noti-kpis">
-                        <div class="noti-kpi">
-                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg> Sucursales</dt><dd>{{ $totalSucursales }}</dd>
-                        </div>
-                        <div class="noti-kpi">
-                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Operando</dt><dd>{{ $sucursalesActivas }}</dd>
-                        </div>
-                        <div @class(['noti-kpi', 'noti-kpi-alerta' => ($totalSucursales - $sucursalesActivas) > 0])>
-                            <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg> Revisión</dt><dd>{{ $totalSucursales - $sucursalesActivas }}</dd>
-                        </div>
-                    </dl>
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <a href="{{ route('sucursales.create') }}" class="theme-button theme-button-primary whitespace-nowrap">+ Nueva sucursal</a>
+            {{-- Encabezado limpio --}}
+            <header class="mb-6" aria-label="Encabezado de sucursales">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Red de farmacias</p>
+                        <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Sucursales</h1>
                     </div>
+                    <a href="{{ route('sucursales.create') }}" class="theme-button theme-button-primary whitespace-nowrap">+ Nueva sucursal</a>
                 </div>
-            </section>
+
+            </header>
 
             @if (session('success'))
                 <div
@@ -61,10 +50,10 @@
                     </div>
                 </header>
                 <div>
-                <div class="module-table !rounded-none !border-0 !shadow-none">
-                    <div class="overflow-x-auto">
+                <div class="module-table !rounded-none !border-0 !shadow-none overflow-hidden">
+                    <div class="max-h-[380px] overflow-y-auto overflow-x-auto overscroll-contain scrollbar-thin">
                         <table class="w-full min-w-[900px] text-left text-[15px]">
-                            <thead class="text-slate-600 dark:text-slate-300">
+                            <thead class="sticky top-0 z-10 bg-slate-50 text-slate-600 shadow-[inset_0_-1px_0_#e2e8f0] dark:bg-zinc-800 dark:text-slate-300 dark:shadow-[inset_0_-1px_0_#3f3f46]">
                                 <tr>
                                     <th class="px-6 py-4 text-base font-semibold">Sucursal</th>
                                     <th class="px-6 py-4 text-base font-semibold">Ubicación</th>
