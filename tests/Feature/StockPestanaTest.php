@@ -226,8 +226,8 @@ test('marca bajo o disponible segun la existencia y omite los productos sin inve
         ->not->toContain('Sin registro')
         ->toContain('inventory-status-low')
         ->toContain('inventory-status-available')
-        ->toMatch('/Productos<\/dt><dd>2<\/dd>/')
-        ->toMatch('/Stock crítico<\/dt><dd>1<\/dd>/');
+        ->toMatch('/Productos<\/p>\s*<p[^>]*>2<\/p>/')
+        ->toMatch('/Stock crítico<\/p>\s*<p[^>]*>1<\/p>/');
 });
 
 test('la caja abierta muestra guion cuando el stock es multiplo de la caja', function () {

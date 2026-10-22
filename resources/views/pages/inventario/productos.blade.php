@@ -148,7 +148,6 @@
                                             <td class="!py-4 text-right">
                                                 @if($principal)
                                                     <span class="text-[15px] font-extrabold text-emerald-700 dark:text-emerald-300">${{ number_format((float) $principal->precio_presentacion, 2) }}</span>
-                                                    <p class="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">precio principal</p>
                                                 @else
                                                     <span class="text-sm font-medium text-slate-400">—</span>
                                                 @endif
