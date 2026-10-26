@@ -282,6 +282,7 @@ class InventarioController extends Controller
             });
 
         return view('pages.inventario.productos', compact(
+            'sucursales',
             'selectedSucursal',
             'productos',
             'busqueda',

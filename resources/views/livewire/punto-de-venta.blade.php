@@ -356,9 +356,9 @@
                     </div>
                     <div class="flex items-center gap-2">
                         @if(count($carrito) > 0)
-                            <button wire:click="limpiarCarrito" class="text-xs font-medium text-red-500 hover:text-red-600">Vaciar</button>
+                            <button wire:click="limpiarCarrito" class="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 transition hover:bg-red-100 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">Vaciar</button>
                         @endif
-                        <button wire:click="$set('mostrandoCarrito', false)" class="rounded p-1 text-slate-400 hover:text-slate-600">
+                        <button wire:click="$set('mostrandoCarrito', false)" class="rounded p-1 text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
@@ -485,7 +485,7 @@
                 {{-- Métodos de pago --}}
                 <div class="px-6 pt-5">
                     <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Método de pago</p>
-                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div class="grid grid-cols-2 gap-2">
                         <button
                             wire:click="seleccionarMetodo('efectivo')"
                             class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition

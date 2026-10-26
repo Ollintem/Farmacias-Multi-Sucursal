@@ -4598,15 +4598,32 @@ a.noti-kpi[aria-current="true"] {
     color: #e6efec;
 }
 
-/* Inventario: anula el min-height de viewport y el flex:1 del listado para que el scroll
-   de la vista no genere un área blanca extra más allá del contenido. La tabla usa
-   max-height clamp con scroll interno. */
+/* Inventario: scroll solo al tamaño del contenido, como las demás vistas.
+   Anula el min-height de viewport (calc 100vh) y el flex:1 que estiraba la página
+   aunque solo hubiera 2 productos, dejando área blanca extra. */
+.module-page.inventario-page,
 .module-page.noti-page.inventario-page {
-    min-height: 0 !important;
+    min-height: auto !important;
+    height: auto !important;
+    display: block !important;
 }
+.module-page-inner.inventario-inner,
 .module-page-inner.noti-full.inventario-inner {
+    display: block !important;
     flex: none !important;
 }
+.noti-listado.inventario-listado,
+.module-card.inventario-listado,
 .noti-full .noti-listado.inventario-listado {
     flex: none !important;
+    display: block !important;
+}
+[data-flux-main]:has(> .module-page.inventario-page),
+[data-flux-main]:has(.inventario-page) {
+    min-height: auto !important;
+    height: auto !important;
+    display: block !important;
+}
+body:has(.inventario-page) {
+    min-height: auto !important;
 }

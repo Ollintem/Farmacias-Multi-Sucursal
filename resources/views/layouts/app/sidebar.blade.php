@@ -144,7 +144,19 @@
                 class="hidden sm:inline-block text-xs font-medium text-[#6b7280] font-mono mr-3"
             ></span>
 
-            @include('partials.notificaciones-campana')
+            @if(request()->routeIs('inventario.productos') && (auth()->user()?->permisosHabilitados('crear', 'inventario') ?? false))
+                @php($topProductoSucursalMobile = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
+                <a href="{{ route('inventario.create', array_filter(['sucursal' => $topProductoSucursalMobile])) }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">+ Agregar producto</a>
+            @endif
+            @if(request()->routeIs('lotes.*') && (auth()->user()?->permisosHabilitados('crear', 'lotes-y-caducidades') ?? false))
+                @php($topLoteSucursalMobile = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
+                <a href="{{ route('lotes.create', array_filter(['sucursal' => $topLoteSucursalMobile])) }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">+ Nuevo lote</a>
+            @endif
+            @if(request()->routeIs('usuarios.*') && (auth()->user()?->permisosHabilitados('crear', 'usuarios') ?? false))
+                <button type="button" x-on:click="$dispatch('open-modal-rol')" class="theme-button theme-button-secondary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">+ Nuevo rol</button>
+                <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">+ Nuevo usuario</a>
+            @endif
+            <livewire:campana-notificaciones />
 
             <x-theme-toggle :compacto="true" />
 
@@ -211,12 +223,83 @@
             }
         </script>
 
-        {{-- Barra superior de escritorio: el interruptor de tema vive aquí,
-             arriba a la derecha, visible en todas las vistas. --}}
-        <div class="farma-topbar hidden lg:flex">
-            <span x-text="currentDate" class="farma-topbar-fecha"></span>
-            @include('partials.notificaciones-campana')
-            <x-theme-toggle :compacto="true" />
+        {{-- Barra superior de escritorio: herramientas según módulo + campana + tema --}}
+        <div class="farma-topbar hidden lg:flex !justify-between">
+            <div class="flex min-w-0 flex-1 items-center">
+                <?php if(request()->routeIs('alertas.*')): ?>
+                    <?php
+                        $topSucursalIdAlertas = (int) (session('active_sucursal_id', auth()->user()?->id_sucursal ?? 0) ?: 0);
+                        $topUsuarioIdAlertas = auth()->id();
+                        $topAvisosAlertas = $topSucursalIdAlertas ? \App\Support\AlertasFeed::listado($topSucursalIdAlertas, $topUsuarioIdAlertas) : [];
+                        $topTotalAlertas = count($topAvisosAlertas);
+                        $topNoLeidasAlertas = collect($topAvisosAlertas)->where('leida', false)->count();
+                        $topTiposAlertas = [
+                            'stock' => collect($topAvisosAlertas)->where('grupo', 'stock')->count(),
+                            'caducidad' => collect($topAvisosAlertas)->where('grupo', 'caducidad')->count(),
+                            'traspasos' => collect($topAvisosAlertas)->where('grupo', 'traspasos')->count(),
+                            'ventas' => collect($topAvisosAlertas)->where('grupo', 'ventas')->count(),
+                        ];
+                        $topFiltroAlertas = strtolower(trim((string) (request()->query('filtro') ?? request()->query('seccion') ?? 'todas')));
+                        if ($topFiltroAlertas === 'traspaso') $topFiltroAlertas = 'traspasos';
+                        if ($topFiltroAlertas === 'caducidades') $topFiltroAlertas = 'caducidad';
+                        if (!in_array($topFiltroAlertas, ['todas','no_leidas','stock','caducidad','traspasos','ventas'], true)) {
+                            // Intentar leer desde Livewire (si no hay query, viene de componente, usar todas)
+                            $topFiltroAlertas = 'todas';
+                        }
+                        // Si la petición Livewire ya tiene filtro en session/component, no lo sabemos aquí; usamos query como fuente principal
+                        $topPills = [
+                            'todas' => ['Todas', $topTotalAlertas],
+                            'no_leidas' => ['No leídas', $topNoLeidasAlertas],
+                            'stock' => ['Stock', $topTiposAlertas['stock']],
+                            'caducidad' => ['Caducidad', $topTiposAlertas['caducidad']],
+                            'traspasos' => ['Traspasos', $topTiposAlertas['traspasos']],
+                            'ventas' => ['Ventas', $topTiposAlertas['ventas']],
+                        ];
+                    ?>
+                    <nav class="flex flex-wrap items-center gap-1.5" aria-label="Filtros de notificaciones">
+                        @foreach($topPills as $valor => [$etiqueta, $conteo])
+                            @php($esActivo = $topFiltroAlertas === $valor)
+                            <a href="{{ request()->fullUrlWithQuery(['filtro' => $valor]) }}" wire:navigate @class([
+                                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition',
+                                'border-[#0e9384] bg-[#0e9384] text-white shadow-sm' => $esActivo,
+                                'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/30 hover:bg-teal-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' => !$esActivo,
+                            ])>
+                                <span>{{ $etiqueta }}</span>
+                                <span class="grid min-w-[1.4rem] place-items-center rounded-full px-1.5 py-0.5 text-[11px] font-black @if($esActivo) bg-white/20 text-white @else bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300 @endif">{{ $conteo }}</span>
+                            </a>
+                        @endforeach
+                    </nav>
+                <?php elseif(request()->routeIs('inventario.*') || request()->routeIs('lotes.*')): ?>
+                    <?php
+                        $topIsProductos = request()->routeIs('inventario.productos');
+                        $topIsStock = request()->routeIs('inventario.stock') || request()->routeIs('inventario.index');
+                        $topIsLotes = request()->routeIs('lotes.*');
+                        $topSeccion = $topIsProductos ? 'productos' : ($topIsStock ? 'stock' : ($topIsLotes ? 'lotes' : 'productos'));
+                        $topSucursalIdTb = (int) (session('active_sucursal_id', auth()->user()?->id_sucursal ?? 0) ?: 0);
+                        $topSucursalTb = $topSucursalIdTb ? \App\Models\Sucursal::find($topSucursalIdTb) : null;
+                    ?>
+                    <div class="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+                        @include('pages.inventario.tabs', ['seccion' => $topSeccion, 'selectedSucursal' => $topSucursalTb])
+                    </div>
+                <?php endif; ?>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+                <span x-text="currentDate" class="farma-topbar-fecha"></span>
+                @if(request()->routeIs('inventario.productos') && (auth()->user()?->permisosHabilitados('crear', 'inventario') ?? false))
+                    @php($topProductoSucursal = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
+                    <a href="{{ route('inventario.create', array_filter(['sucursal' => $topProductoSucursal])) }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Agregar producto nuevo</a>
+                @endif
+                @if(request()->routeIs('lotes.*') && (auth()->user()?->permisosHabilitados('crear', 'lotes-y-caducidades') ?? false))
+                    @php($topLoteSucursal = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
+                    <a href="{{ route('lotes.create', array_filter(['sucursal' => $topLoteSucursal])) }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Registrar nuevo lote</a>
+                @endif
+                @if(request()->routeIs('usuarios.*') && (auth()->user()?->permisosHabilitados('crear', 'usuarios') ?? false))
+                    <button type="button" x-on:click="$dispatch('open-modal-rol')" class="theme-button theme-button-secondary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Nuevo rol</button>
+                    <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Nuevo usuario</a>
+                @endif
+                <livewire:campana-notificaciones />
+                <x-theme-toggle :compacto="true" />
+            </div>
         </div>
 
         {{ $slot }}

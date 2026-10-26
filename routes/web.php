@@ -14,6 +14,7 @@ use App\Http\Controllers\RolPermisoController;
 use App\Http\Controllers\SucursalesController;
 use App\Http\Controllers\TraspasoController;
 use App\Http\Controllers\UsuariosController;
+use App\Livewire\CentroNotificaciones;
 use App\Livewire\PuntoDeVenta;
 use App\Models\Sucursal;
 use Illuminate\Support\Facades\Route;
@@ -89,7 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/presentaciones', [PresentacionController::class, 'store'])->name('presentaciones.store')->middleware('checarPermisos:crear,inventario');
     Route::view('/caja', 'pages.modulos.placeholder', ['tituloModulo' => 'Caja'])->name('caja.index')->middleware('checarPermisos:ver,caja');
     Route::view('/reportes', 'pages.modulos.placeholder', ['tituloModulo' => 'Reportes'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
-    Route::get('/alertas', [AlertasController::class, 'index'])->name('alertas.index')->middleware('checarPermisos:ver,alertas');
+    Route::get('/alertas', CentroNotificaciones::class)->name('alertas.index')->middleware('checarPermisos:ver,alertas');
     Route::get('/alertas/feed', [AlertasController::class, 'feed'])->name('alertas.feed')->middleware('checarPermisos:ver,alertas');
     Route::get('/alertas/detalle', [AlertasController::class, 'detalle'])->name('alertas.detalle')->middleware('checarPermisos:ver,alertas');
     Route::post('/alertas/leidas', [AlertasController::class, 'marcarLeidas'])->name('alertas.leidas')->middleware('checarPermisos:ver,alertas');

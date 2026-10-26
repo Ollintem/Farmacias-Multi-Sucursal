@@ -50,11 +50,8 @@
                         <p class="theme-subtle text-sm">{{ $totalProveedores }} registro(s) · información vigente de cada proveedor</p>
                     </div>
                 </header>
-                <div>
-                <div class="module-table">
-                <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
-                    <input type="search" placeholder="Buscar proveedor, correo o teléfono" class="theme-input w-full sm:w-64" aria-label="Buscar proveedor" @input.debounce.200ms="texto = $event.target.value">
-                    <span class="stat-pill info w-fit whitespace-nowrap">{{ $totalProveedores }} registros</span>
+                <div class="flex px-5 py-4 sm:px-6">
+                    <input type="search" placeholder="Buscar proveedor, correo o teléfono" class="theme-input w-full sm:max-w-sm" aria-label="Buscar proveedor" @input.debounce.200ms="texto = $event.target.value">
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-[1080px] text-left text-[15px]">
@@ -127,7 +124,6 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
                 </div>
             </section>
         </div>

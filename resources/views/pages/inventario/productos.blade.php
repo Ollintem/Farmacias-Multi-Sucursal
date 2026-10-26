@@ -1,16 +1,17 @@
 <x-layouts::app :title="__('Productos')">
-    <div class="module-page noti-page">
-        <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado de productos">
+    <div class="module-page inventario-page" style="min-height:auto !important; display:block !important; padding:0.75rem;">
+        <div class="module-page-inner inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
+            {{-- Encabezado ultra-compacto --}}
+            <header class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between" aria-label="Encabezado de productos">
                 <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Catálogo · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Productos</h1>
-                    <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">Catálogo central por sucursal: presentaciones, precios y estado comercial en un listado claro y accionable.</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Catálogo · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                    <h1 class="mt-0.5 text-lg font-black tracking-tight text-slate-900 dark:text-white">Productos</h1>
                 </div>
             </header>
 
-            @include('pages.inventario.tabs', ['seccion' => 'productos', 'selectedSucursal' => $selectedSucursal])
+            <div class="lg:hidden">
+                @include('pages.inventario.tabs', ['seccion' => 'productos', 'selectedSucursal' => $selectedSucursal])
+            </div>
 
             @if(session('success'))
                 <div
@@ -44,47 +45,42 @@
                 </div>
             @endif
 
-            <section class="module-card noti-listado" aria-label="Catálogo de productos" x-data="buscadorTabla()" x-effect="filtrar($el)">
-                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+            <section class="module-card noti-listado inventario-listado !flex-none !p-0" style="display:block !important;" aria-label="Catálogo de productos" x-data="buscadorTabla()" x-effect="filtrar($el)">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa !py-2.5 !px-3">
                     <div>
-                        <h2>Catálogo de productos</h2>
-                        <p class="theme-subtle text-sm">{{ $productos->count() }} producto(s) · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                        <h2 class="!text-sm">Catálogo de productos</h2>
+                        <p class="theme-subtle !text-xs">{{ $productos->count() }} producto(s) · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
                     </div>
-                    <a href="{{ route('inventario.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary hidden sm:inline-flex">+ Agregar producto nuevo</a>
                 </header>
 
-                {{-- Toolbar empresarial --}}
-                <div class="entradas-toolbar border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
-                    <div class="entradas-toolbar-sucursal">
-                        <span class="entradas-toolbar-label">Sucursal activa</span>
-                        <span class="entradas-toolbar-valor flex items-center gap-2">
-                            <span class="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-sm font-black text-white shadow-sm">{{ mb_strtoupper(mb_substr($selectedSucursal?->nombre_sucursal ?? '?', 0, 1)) }}</span>
-                            {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}
-                        </span>
-                    </div>
-                    <div class="entradas-toolbar-form !flex-row !items-center">
-                        <div class="entradas-toolbar-buscar !max-w-[22rem]">
-                            <form method="GET" action="{{ route('inventario.productos') }}" class="flex w-full items-center gap-2">
-                                <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre…" class="theme-input flex-1" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
-                                <button type="submit" class="theme-button theme-button-secondary !min-h-0 !py-2.5">Buscar</button>
-                            </form>
+                {{-- Toolbar compacta --}}
+                <div class="entradas-toolbar !py-2 !px-3 border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
+                    <form method="GET" action="{{ route('inventario.productos') }}" class="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        @isset($sucursales)
+                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            <span class="shrink-0">Sucursal</span>
+                            <span class="min-w-[12rem]"><x-option-pick name="sucursal" label="Sucursales" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="$selectedSucursal?->id" placeholder="Seleccionar sucursal" :autoSubmit="true" /></span>
+                        </label>
+                        @endisset
+                        <div class="flex items-center gap-2">
+                            <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre…" class="theme-input w-full sm:w-72" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
+                            <button type="submit" class="theme-button theme-button-secondary !min-h-0 shrink-0 !py-2.5">Buscar</button>
                         </div>
-                        <a href="{{ route('inventario.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary sm:hidden">+ Nuevo</a>
-                    </div>
+                    </form>
                 </div>
 
-                <div class="entradas-tabla-wrap !border-0" style="max-height:380px">
+                <div class="entradas-tabla-wrap !border-0 !max-h-none">
                     <div class="overflow-x-auto">
-                        <table class="entradas-tabla !min-w-[980px]">
+                        <table class="entradas-tabla !min-w-[860px] !text-sm">
                             <thead>
                                 <tr>
-                                    <th class="!py-3.5">Producto</th>
-                                    <th class="!py-3.5">Categoría</th>
-                                    <th class="!py-3.5">Presentación</th>
-                                    <th class="!py-3.5 text-right">Precio</th>
-                                    <th class="!py-3.5 text-center">Controlado</th>
-                                    <th class="!py-3.5 text-center">Estado</th>
-                                    <th class="!py-3.5 text-right">Acciones</th>
+                                    <th class="!py-2.5 !text-xs">Producto</th>
+                                    <th class="!py-2.5 !text-xs">Categoría</th>
+                                    <th class="!py-2.5 !text-xs">Presentación</th>
+                                    <th class="!py-2.5 !text-xs text-right">Precio</th>
+                                    <th class="!py-2.5 !text-xs text-center">Controlado</th>
+                                    <th class="!py-2.5 !text-xs text-center">Estado</th>
+                                    <th class="!py-2.5 !text-xs text-right">Acciones</th>
                                 </tr>
                             </thead>
                                 @foreach($productos as $producto)
@@ -102,24 +98,24 @@
                                             'transition',
                                             'opacity-60' => ! $producto->es_activo,
                                         ])>
-                                            <td class="!py-4">
-                                                <div class="flex items-center gap-3">
-                                                    <span class="hidden h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-sm font-bold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 sm:grid">{{ mb_strtoupper(mb_substr($producto->nombre_producto, 0, 2)) }}</span>
+                                            <td class="!py-2.5">
+                                                <div class="flex items-center gap-2.5">
+                                                    <span class="hidden h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-xs font-bold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 sm:grid">{{ mb_strtoupper(mb_substr($producto->nombre_producto, 0, 2)) }}</span>
                                                     <div class="min-w-0">
-                                                        <p class="truncate text-[15px] font-bold leading-tight text-slate-800 dark:text-slate-100">{{ $producto->nombre_producto }}</p>
-                                                        <p class="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                                            <svg class="h-3.5 w-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                        <p class="truncate text-sm font-bold leading-tight text-slate-800 dark:text-slate-100">{{ $producto->nombre_producto }}</p>
+                                                        <p class="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                                            <svg class="h-3 w-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                                             {{ $producto->codigo_barras }}
                                                         </p>
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            <td class="!py-4">
-                                                <span class="stat-pill info !px-3 !py-1 !text-xs !normal-case !font-bold">{{ $producto->categoria?->nombre ?? 'Sin categoría' }}</span>
+                                            <td class="!py-2.5">
+                                                <span class="stat-pill info !px-2.5 !py-0.5 !text-[11px] !normal-case !font-bold">{{ $producto->categoria?->nombre ?? 'Sin categoría' }}</span>
                                             </td>
 
-                                            <td class="!py-4">
+                                            <td class="!py-2.5">
                                                 @if($principal)
                                                     <p class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ $principal->presentacion?->presentacion ?? 'Presentación' }}</p>
                                                     <p class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -145,80 +141,65 @@
                                                 @endif
                                             </td>
 
-                                            <td class="!py-4 text-right">
+                                            <td class="!py-2.5 text-right">
                                                 @if($principal)
-                                                    <span class="text-[15px] font-extrabold text-emerald-700 dark:text-emerald-300">${{ number_format((float) $principal->precio_presentacion, 2) }}</span>
+                                                    <span class="text-sm font-extrabold text-emerald-700 dark:text-emerald-300">${{ number_format((float) $principal->precio_presentacion, 2) }}</span>
+                                                    <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">precio por presentación</p>
                                                 @else
-                                                    <span class="text-sm font-medium text-slate-400">—</span>
+                                                    <span class="text-xs font-medium text-slate-400">—</span>
                                                 @endif
                                             </td>
 
-                                            <td class="!py-4 text-center">
+                                            <td class="!py-2.5 text-center">
                                                 @if($producto->es_controlado)
-                                                    <span class="stat-pill warning !px-3 !py-1.5 !text-xs !font-bold">Sí · receta</span>
+                                                    <span class="stat-pill warning !px-2.5 !py-1 !text-[11px] !font-bold">Sí · receta</span>
                                                 @else
-                                                    <span class="stat-pill info !px-3 !py-1.5 !text-xs !font-semibold">No</span>
+                                                    <span class="stat-pill info !px-2.5 !py-1 !text-[11px] !font-semibold">No</span>
                                                 @endif
                                             </td>
 
-                                            <td class="!py-4 text-center">
-                                                <span
-                                                    class="inline-flex items-center gap-2"
-                                                    x-data="{
-                                                        activo: {{ $producto->es_activo ? 'true' : 'false' }},
-                                                        cambiar(el) {
-                                                            if (el.checked === this.activo) return;
-
-                                                            if (this.activo) {
-                                                                queueMicrotask(() => { el.checked = true; });
-                                                                this.$dispatch('confirmar-accion', { modo: el.dataset.modo, ruta: el.dataset.ruta, nombre: el.dataset.nombre });
-                                                            } else {
-                                                                this.activo = true;
-                                                                this.$nextTick(() => el.closest('form').submit());
-                                                            }
-                                                        },
-                                                    }"
-                                                    title="Clic para {{ $producto->es_activo ? 'desactivar' : 'activar' }} el producto"
-                                                >
-                                                    <form action="{{ route('inventario.estado', $producto) }}" method="POST" style="margin:0;">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <input type="hidden" name="es_activo" :value="activo ? 1 : 0">
-                                                        <flux:switch
-                                                            :checked="$producto->es_activo"
-                                                            class="cursor-pointer"
-                                                            aria-label="Estado de {{ $producto->nombre_producto }}"
+                                            <td class="!py-2.5 text-center">
+                                                <form action="{{ route('inventario.estado', $producto) }}" method="POST" style="margin:0;">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="hidden" name="es_activo" value="{{ $producto->es_activo ? 0 : 1 }}">
+                                                    <button
+                                                        type="{{ $producto->es_activo ? 'button' : 'submit' }}"
+                                                        @class([
+                                                            'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold transition',
+                                                            'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300' => $producto->es_activo,
+                                                            'border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' => ! $producto->es_activo,
+                                                        ])
+                                                        @if($producto->es_activo)
                                                             data-modo="desactivar"
                                                             data-ruta="{{ route('inventario.estado', $producto) }}"
                                                             data-nombre="{{ $producto->nombre_producto }}"
-                                                            @change="cambiar($event.target)"
-                                                        />
-                                                    </form>
-                                                    <span
-                                                        class="text-sm font-semibold"
-                                                        :class="activo ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'"
-                                                        x-text="activo ? 'Activo' : 'Inactivo'"
-                                                    >{{ $producto->es_activo ? 'Activo' : 'Inactivo' }}</span>
-                                                </span>
+                                                            @click="$dispatch('confirmar-accion', { modo: $event.currentTarget.dataset.modo, ruta: $event.currentTarget.dataset.ruta, nombre: $event.currentTarget.dataset.nombre })"
+                                                        @endif
+                                                    >
+                                                        <span @class(['h-1.5 w-1.5 rounded-full', 'bg-emerald-500' => $producto->es_activo, 'bg-slate-400' => ! $producto->es_activo])></span>
+                                                        {{ $producto->es_activo ? 'Activo' : 'Inactivo' }}
+                                                    </button>
+                                                </form>
                                             </td>
 
-                                            <td class="!py-4 text-right">
-                                                <div class="inline-flex items-center gap-1.5">
-                                                    <a href="{{ route('inventario.edit', $producto) }}" title="Editar producto" class="grid h-8 w-8 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0c7569] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            <td class="!py-2.5 text-right">
+                                                <div class="inline-flex items-center gap-1">
+                                                    <a href="{{ route('inventario.edit', $producto) }}" title="Editar producto" class="grid h-7 w-7 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0c7569] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                         <span class="sr-only">Editar producto</span>
                                                     </a>
 
                                                     <button
                                                         type="button"
                                                         title="Eliminar producto"
-                                                        class="grid h-8 w-8 place-items-center rounded-xl border border-red-200 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+                                                        class="grid h-7 w-7 place-items-center rounded-lg border border-red-200 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
                                                         data-modo="eliminar"
                                                         data-ruta="{{ route('inventario.destroy', $producto) }}"
                                                         data-nombre="{{ $producto->nombre_producto }}"
                                                         @click="$dispatch('confirmar-accion', { modo: $event.currentTarget.dataset.modo, ruta: $event.currentTarget.dataset.ruta, nombre: $event.currentTarget.dataset.nombre })"
                                                     >
-                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                         <span class="sr-only">Eliminar producto</span>
                                                     </button>
                                                 </div>

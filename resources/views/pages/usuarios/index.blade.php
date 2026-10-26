@@ -260,10 +260,6 @@
                             @endif
                         </div>
                     @endforeach
-                    <div class="flex flex-col justify-center gap-2 pl-1 shrink-0">
-                        <button type="button" x-on:click="$dispatch('open-modal-rol')" class="theme-button theme-button-secondary whitespace-nowrap !px-4 !py-2 !text-sm">+ Nuevo rol</button>
-                        <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary whitespace-nowrap !px-4 !py-2 !text-sm">+ Nuevo usuario</a>
-                    </div>
                 </div>
 
                 <section class="module-card noti-listado" aria-label="Listado de usuarios">
@@ -284,7 +280,8 @@
                                     <th>Rol</th>
                                     <th>Sucursal</th>
                                     <th>Estado</th>
-                                    <th colspan="2">Acciones</th>
+                                    <th class="text-center">Permisos</th>
+                                    <th class="text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -307,11 +304,14 @@
                                                 <span class="inline-flex rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-600 dark:text-red-400">Inactivo</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            <div class="flex items-center gap-3">
-                                                <a href="{{ route('usuarios.permisos', $usuario) }}" class="text-slate-400 hover:text-[#0c9f9c] dark:hover:text-[#0c9f9c] transition" title="Permisos">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                                </a>
+                                        <td class="text-center">
+                                            <a href="{{ route('usuarios.permisos', $usuario) }}" class="inline-flex items-center gap-1.5 rounded-full border border-[#0c9f9c]/20 bg-[#0c9f9c]/10 px-2.5 py-1 text-xs font-semibold text-[#0c9f9c] hover:bg-[#0c9f9c] hover:text-white transition" title="Modificar permisos de {{ $usuario->nombre }}">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                                Permisos
+                                            </a>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="flex items-center justify-end gap-3">
                                                 <a href="{{ route('usuarios.edit', $usuario) }}" class="text-[#0c9f9c] hover:text-[#0a8582] transition" title="Editar">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 </a>

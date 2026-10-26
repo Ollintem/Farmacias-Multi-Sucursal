@@ -105,53 +105,32 @@
                         <p class="theme-subtle text-sm">{{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }} · {{ $totalTodas }} registro(s)</p>
                     </div>
                 </header>
-                <div class="entradas-toolbar">
-                    <div class="entradas-toolbar-sucursal">
-                        <span class="entradas-toolbar-label">Sucursal activa</span>
-                        <span class="entradas-toolbar-valor">{{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</span>
+                <form method="GET" action="{{ route('entradas-de-almacen.index') }}" class="flex flex-wrap items-center gap-2 border-b border-slate-200 px-5 py-4 dark:border-slate-700 sm:px-6">
+                    <input type="hidden" name="tipo" value="{{ $tipoActual === 'todas' ? '' : $tipoActual }}">
+                    <div class="w-full sm:w-64">
+                        <x-option-pick name="sucursal" label="Sucursales" placeholder="Seleccionar sucursal" :options="($sucursales ?? collect())->pluck('nombre_sucursal', 'id')" :value="$selectedSucursal?->id" :autoSubmit="true" />
                     </div>
-                    <form method="GET" action="{{ route('entradas-de-almacen.index') }}" class="entradas-toolbar-form">
-                        <input type="hidden" name="tipo" value="{{ $tipoActual === 'todas' ? '' : $tipoActual }}">
-                        <div class="entradas-toolbar-buscar">
-                            <input type="search" name="buscar" value="{{ old('buscar', $busqueda ?? '') }}" placeholder="Buscar folio, proveedor o producto" class="theme-input" aria-label="Buscar entrada" @input.debounce.200ms="texto = $event.target.value">
-                            <button type="submit" class="theme-button theme-button-secondary">Buscar</button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="flex flex-1 items-center gap-2 min-w-[240px]">
+                        <input type="search" name="buscar" value="{{ old('buscar', $busqueda ?? '') }}" placeholder="Buscar folio, proveedor o producto" class="theme-input flex-1" aria-label="Buscar entrada" @input.debounce.200ms="texto = $event.target.value">
+                        <button type="submit" class="theme-button theme-button-secondary shrink-0">Buscar</button>
+                    </div>
+                </form>
                 <div class="p-5 sm:p-6">
 
                 @if($tipoActual === 'traspasos')
                     <div class="entradas-traspasos-grid">
-                        <section class="entradas-seccion entradas-seccion--traspaso" aria-label="Solicitudes de traspasos" x-data="{ abierto: false }">
-                            <button type="button" @click="abierto = true" class="entradas-seccion-head entradas-seccion-head--boton" aria-haspopup="dialog" :aria-expanded="abierto.toString()" aria-controls="modal-solicitudes">
+                        <section class="entradas-seccion entradas-seccion--traspaso" aria-label="Solicitudes de traspasos">
+                            <div class="entradas-seccion-head">
                                 <span class="entradas-stat-icono warning" aria-hidden="true">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5M7.5 21L3 16.5m0 0L7.5 12"/></svg>
                                 </span>
-                                <div class="min-w-0 flex-1 text-left">
+                                <div class="min-w-0 flex-1">
                                     <h3>Solicitudes de traspasos</h3>
                                     <p class="theme-subtle text-sm">Lo que otras sucursales solicitan a {{ $selectedSucursal?->nombre_sucursal ?? 'esta sucursal' }}.</p>
                                 </div>
                                 <span class="seg-contador">{{ ($solicitudes ?? collect())->count() }}</span>
-                                <span class="entradas-toggle" aria-hidden="true">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                </span>
-                            </button>
-                            <div x-show="abierto" x-transition.opacity x-cloak class="entradas-modal" @keydown.escape.window="abierto = false">
-                                <div class="entradas-modal-backdrop" @click="abierto = false"></div>
-                                <div class="entradas-modal-panel" role="dialog" aria-modal="true" aria-labelledby="titulo-solicitudes" @click.stop>
-                                    <div class="entradas-modal-header">
-                                        <div class="flex items-center gap-3">
-                                            <span class="entradas-stat-icono warning" aria-hidden="true">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5M7.5 21L3 16.5m0 0L7.5 12"/></svg>
-                                            </span>
-                                            <div>
-                                                <h3 id="titulo-solicitudes">Solicitudes de traspasos</h3>
-                                                <p class="theme-subtle text-xs">Lo que otras sucursales solicitan a {{ $selectedSucursal?->nombre_sucursal ?? 'esta sucursal' }}.</p>
-                                            </div>
-                                        </div>
-                                        <button type="button" @click="abierto = false" class="entradas-modal-close" aria-label="Cerrar">✕</button>
-                                    </div>
-                                    <div id="modal-solicitudes" class="entradas-tabla-wrap entradas-tabla-wrap--modal">
+                            </div>
+                            <div class="entradas-tabla-wrap">
                                 <table class="entradas-tabla entradas-tabla--compact">
                                     <thead>
                                         <tr>
@@ -180,14 +159,14 @@
                                                 </td>
                                                 <td class="text-right">
                                                     @if(($solicitud['estado_raw'] ?? '') === 'enviado')
-                                                        <div class="entradas-acciones justify-end">
+                                                        <div class="flex items-center justify-end gap-2">
                                                             <form method="POST" action="{{ route('traspasos.aceptar', $solicitud['id']) }}">
                                                                 @csrf
-                                                                <button type="submit" class="theme-button theme-button-primary">Aceptar</button>
+                                                                <button type="submit" class="theme-button theme-button-primary !min-h-0 !px-4 !py-2 !text-sm">Aceptar</button>
                                                             </form>
                                                             <form method="POST" action="{{ route('traspasos.rechazar', $solicitud['id']) }}">
                                                                 @csrf
-                                                                <button type="submit" class="theme-button theme-button-secondary">Rechazar</button>
+                                                                <button type="submit" class="theme-button theme-button-secondary !min-h-0 !px-4 !py-2 !text-sm">Rechazar</button>
                                                             </form>
                                                         </div>
                                                     @elseif(($solicitud['estado_raw'] ?? '') === 'pendiente')
@@ -212,41 +191,21 @@
                                         @endforelse
                                     </tbody>
                                 </table>
-                                    </div>
-                                </div>
                             </div>
                         </section>
 
-                        <section class="entradas-seccion entradas-seccion--traspaso" aria-label="Traspasos solicitados" x-data="{ abierto: false }">
-                            <button type="button" @click="abierto = true" class="entradas-seccion-head entradas-seccion-head--boton" aria-haspopup="dialog" :aria-expanded="abierto.toString()" aria-controls="modal-solicitados">
+                        <section class="entradas-seccion entradas-seccion--traspaso" aria-label="Traspasos solicitados">
+                            <div class="entradas-seccion-head">
                                 <span class="entradas-stat-icono info" aria-hidden="true">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 7.5H7.5m0 13.5L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12"/></svg>
                                 </span>
-                                <div class="min-w-0 flex-1 text-left">
+                                <div class="min-w-0 flex-1">
                                     <h3>Traspasos solicitados</h3>
                                     <p class="theme-subtle text-sm">Lo que {{ $selectedSucursal?->nombre_sucursal ?? 'esta sucursal' }} solicitó a otras sucursales.</p>
                                 </div>
                                 <span class="seg-contador">{{ ($solicitados ?? collect())->count() }}</span>
-                                <span class="entradas-toggle" aria-hidden="true">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                </span>
-                            </button>
-                            <div x-show="abierto" x-transition.opacity x-cloak class="entradas-modal" @keydown.escape.window="abierto = false">
-                                <div class="entradas-modal-backdrop" @click="abierto = false"></div>
-                                <div class="entradas-modal-panel" role="dialog" aria-modal="true" aria-labelledby="titulo-solicitados" @click.stop>
-                                    <div class="entradas-modal-header">
-                                        <div class="flex items-center gap-3">
-                                            <span class="entradas-stat-icono info" aria-hidden="true">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 7.5H7.5m0 13.5L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12"/></svg>
-                                            </span>
-                                            <div>
-                                                <h3 id="titulo-solicitados">Traspasos solicitados</h3>
-                                                <p class="theme-subtle text-xs">Lo que {{ $selectedSucursal?->nombre_sucursal ?? 'esta sucursal' }} solicitó a otras sucursales.</p>
-                                            </div>
-                                        </div>
-                                        <button type="button" @click="abierto = false" class="entradas-modal-close" aria-label="Cerrar">✕</button>
-                                    </div>
-                                    <div id="modal-solicitados" class="entradas-tabla-wrap entradas-tabla-wrap--modal">
+                            </div>
+                            <div class="entradas-tabla-wrap">
                                 <table class="entradas-tabla entradas-tabla--compact">
                                     <thead>
                                         <tr>
@@ -275,16 +234,16 @@
                                                 </td>
                                                 <td class="text-right">
                                                     @if($solicitado['pendiente'])
-                                                        <div class="entradas-acciones justify-end">
+                                                        <div class="flex items-center justify-end gap-2">
                                                             @if(($solicitado['estado_raw'] ?? '') === 'pendiente')
                                                                 <form method="POST" action="{{ route('traspasos.enviar', $solicitado['id']) }}">
                                                                     @csrf
-                                                                    <button type="submit" class="theme-button theme-button-primary">Enviar</button>
+                                                                    <button type="submit" class="theme-button theme-button-primary !min-h-0 !px-4 !py-2 !text-sm">Enviar</button>
                                                                 </form>
                                                             @endif
                                                             <form method="POST" action="{{ route('traspasos.cancelar', $solicitado['id']) }}">
                                                                 @csrf
-                                                                <button type="submit" class="theme-button theme-button-secondary">Cancelar</button>
+                                                                <button type="submit" class="theme-button theme-button-secondary !min-h-0 !px-4 !py-2 !text-sm">Cancelar</button>
                                                             </form>
                                                         </div>
                                                     @else
@@ -307,42 +266,22 @@
                                         @endforelse
                                     </tbody>
                                 </table>
-                                    </div>
-                                </div>
                             </div>
                         </section>
                     </div>
                 @else
-                <section class="entradas-seccion" aria-label="Listado de entradas" x-data="{ abierto: false }">
-                    <button type="button" @click="abierto = true" class="entradas-seccion-head entradas-seccion-head--boton" aria-haspopup="dialog" :aria-expanded="abierto.toString()" aria-controls="modal-entradas">
+                <section class="entradas-seccion" aria-label="Listado de entradas">
+                    <div class="entradas-seccion-head">
                         <span class="entradas-stat-icono total" aria-hidden="true">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0v10l-8 4m8-14l-8 4m0 10V11m0 10l-8-4V7m8 4L4 7"/></svg>
                         </span>
-                        <div class="min-w-0 flex-1 text-left">
+                        <div class="min-w-0 flex-1">
                             <h3>{{ $tipoActual === 'pedidos' ? 'Pedidos recibidos' : 'Todas las entradas' }}</h3>
                             <p class="theme-subtle text-sm">{{ $tipoActual === 'pedidos' ? 'Recepción de proveedores en ' . ($selectedSucursal?->nombre_sucursal ?? 'la sucursal') . '.' : 'Pedidos y traspasos recibidos en ' . ($selectedSucursal?->nombre_sucursal ?? 'la sucursal') . '.' }}</p>
                         </div>
                         <span class="seg-contador">{{ ($entradas ?? collect())->count() }}</span>
-                        <span class="entradas-toggle" aria-hidden="true">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                        </span>
-                    </button>
-                    <div x-show="abierto" x-transition.opacity x-cloak class="entradas-modal" @keydown.escape.window="abierto = false">
-                        <div class="entradas-modal-backdrop" @click="abierto = false"></div>
-                        <div class="entradas-modal-panel" role="dialog" aria-modal="true" aria-labelledby="titulo-entradas" @click.stop>
-                            <div class="entradas-modal-header">
-                                <div class="flex items-center gap-3">
-                                    <span class="entradas-stat-icono total" aria-hidden="true">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0v10l-8 4m8-14l-8 4m0 10V11m0 10l-8-4V7m8 4L4 7"/></svg>
-                                    </span>
-                                    <div>
-                                        <h3 id="titulo-entradas">{{ $tipoActual === 'pedidos' ? 'Pedidos recibidos' : 'Todas las entradas' }}</h3>
-                                        <p class="theme-subtle text-xs">{{ $tipoActual === 'pedidos' ? 'Recepción de proveedores en ' . ($selectedSucursal?->nombre_sucursal ?? 'la sucursal') . '.' : 'Pedidos y traspasos recibidos en ' . ($selectedSucursal?->nombre_sucursal ?? 'la sucursal') . '.' }}</p>
-                                    </div>
-                                </div>
-                                <button type="button" @click="abierto = false" class="entradas-modal-close" aria-label="Cerrar">✕</button>
-                            </div>
-                            <div id="modal-entradas" class="entradas-tabla-wrap entradas-tabla-wrap--modal">
+                    </div>
+                    <div class="entradas-tabla-wrap">
                         <table class="entradas-tabla entradas-tabla--compact">
                             <thead>
                                 <tr>
@@ -394,8 +333,6 @@
                                 @endforelse
                             </tbody>
                         </table>
-                            </div>
-                        </div>
                     </div>
                 </section>
                 @endif

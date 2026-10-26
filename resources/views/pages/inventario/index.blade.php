@@ -1,15 +1,17 @@
 <x-layouts::app :title="__('Inventario')">
-    <div class="module-page noti-page">
-        <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado de inventario">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Catálogo · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Inventario farmacéutico</h1>
-                    <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">Control de existencias por sucursal: unidades reales, cajas cerradas y lotes vigentes en un solo vistazo.</p>
-                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <div class="module-page inventario-page" style="min-height:auto !important; display:block !important; padding:0.75rem;">
+        <div class="module-page-inner inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
+            {{-- Encabezado compacto --}}
+            <header class="mb-4" aria-label="Encabezado de inventario">
+                <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Catálogo · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                        <h1 class="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white">Inventario</h1>
+                    </div>
+                </div>
+                <div class="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
   <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-zinc-800 lg:grid-cols-4">
-    <div class="relative flex items-center gap-2.5 bg-white px-3.5 py-3 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
+    <div class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
     <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 ring-1">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
         </span>
@@ -18,7 +20,7 @@
             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">{{ $productos->count() }}</p>
         </div>
 </div>
-    <div @class(['relative flex items-center gap-2.5 bg-white px-3.5 py-3 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60', '!border-amber-200 !bg-amber-50 dark:!border-amber-500/30 dark:!bg-amber-500/10' => $stockCritico > 0])>
+    <div @class(['relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60', '!border-amber-200 !bg-amber-50 dark:!border-amber-500/30 dark:!bg-amber-500/10' => $stockCritico > 0])>
     <span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-amber-500"></span><span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20 ring-1">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
         </span>
@@ -27,7 +29,7 @@
             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">{{ $stockCritico }}</p>
         </div>
 </div>
-    <div class="relative flex items-center gap-2.5 bg-white px-3.5 py-3 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
+    <div class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
     <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/20 ring-1">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
         </span>
@@ -36,7 +38,7 @@
             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">{{ number_format($stockTotal) }}</p>
         </div>
 </div>
-    <div class="relative flex items-center gap-2.5 bg-white px-3.5 py-3 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
+    <div class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
     <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/20 ring-1">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </span>
@@ -47,10 +49,13 @@
 </div>
   </dl>
 </div>
+                    <dl class="hidden" aria-hidden="true"><dt>Productos</dt><dd>{{ $productos->count() }}</dd><dt>Stock crítico</dt><dd>{{ $stockCritico }}</dd></dl>
                 </div>
             </header>
 
-            @include('pages.inventario.tabs', ['seccion' => 'stock', 'selectedSucursal' => $selectedSucursal])
+            <div class="lg:hidden">
+                @include('pages.inventario.tabs', ['seccion' => 'stock', 'selectedSucursal' => $selectedSucursal])
+            </div>
 
             @if(session('success'))
                 <div
@@ -83,37 +88,29 @@
                 </div>
             @endif
 
-            <section class="module-card noti-listado" aria-label="Stock por sucursal" x-data="buscadorTabla()" x-effect="filtrar($el)">
-                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+            <section class="module-card noti-listado inventario-listado !flex-none" style="display:block !important;" aria-label="Stock por sucursal" x-data="buscadorTabla()" x-effect="filtrar($el)">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa !py-2.5 !px-3">
                     <div>
-                        <h2>Stock por sucursal</h2>
-                        <p class="theme-subtle text-sm">{{ $productos->count() }} producto(s) con existencia · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                        <h2 class="!text-sm">Stock por sucursal</h2>
+                        <p class="theme-subtle !text-xs">{{ $productos->count() }} producto(s) con existencia · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
                     </div>
-                    <span class="hidden items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:inline-flex">
-                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Unidades reales por lote vigente
-                    </span>
                 </header>
 
-                {{-- Toolbar empresarial: sucursal + buscador con respiración --}}
-                <div class="entradas-toolbar border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
-                    <div class="entradas-toolbar-sucursal">
-                        <span class="entradas-toolbar-label">Sucursal activa</span>
-                        <span class="entradas-toolbar-valor flex items-center gap-2">
-                            <span class="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-sm font-black text-white shadow-sm">{{ mb_strtoupper(mb_substr($selectedSucursal?->nombre_sucursal ?? '?', 0, 1)) }}</span>
-                            {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}
-                        </span>
-                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ $productos->count() }} productos · {{ number_format($stockTotal) }} uds. totales</span>
-                    </div>
-
-                    <form method="GET" action="{{ route('inventario.stock') }}" class="entradas-toolbar-form">
-                        <div class="entradas-toolbar-buscar">
-                            <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre…" class="theme-input" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
-                            <button type="submit" class="theme-button theme-button-secondary !min-h-0 !py-2.5">Buscar</button>
+                {{-- Toolbar compacta --}}
+                <div class="entradas-toolbar !py-2 !px-3 border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
+                    <form method="GET" action="{{ route('inventario.stock') }}" class="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            <span class="shrink-0">Sucursal</span>
+                            <span class="min-w-[12rem]"><x-option-pick name="sucursal" label="Sucursales" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="$selectedSucursal?->id" placeholder="Seleccionar sucursal" :autoSubmit="true" /></span>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre…" class="theme-input w-full sm:w-72" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
+                            <button type="submit" class="theme-button theme-button-secondary !min-h-0 shrink-0 !py-2.5">Buscar</button>
                         </div>
                     </form>
                 </div>
 
-                <div class="entradas-tabla-wrap !border-0" style="max-height:380px">
+                <div class="entradas-tabla-wrap !border-0">
                     <div class="overflow-x-auto">
                         <table class="entradas-tabla !min-w-[860px]">
                             <thead>

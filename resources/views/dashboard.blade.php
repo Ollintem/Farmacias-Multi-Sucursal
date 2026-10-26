@@ -7,14 +7,14 @@
             @endphp
 
             {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado del dashboard">
+            <header class="mb-6 flex flex-wrap items-end justify-between gap-4" aria-label="Encabezado del dashboard">
                 <div>
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Panel general · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
                     <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Dashboard farmacéutico</h1>
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-primary">Ver usuarios</a>
-                        <a href="{{ route('sucursales.create') }}" class="theme-button theme-button-secondary">+ Agregar sucursal</a>
-                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary text-sm !px-3 !py-2">Ver usuarios</a>
+                    <a href="{{ route('sucursales.create') }}" class="theme-button theme-button-secondary text-sm !px-3 !py-2">+ Agregar sucursal</a>
                 </div>
             </header>
 
@@ -27,63 +27,30 @@
                         </div>
 
                         <div class="grid gap-4 md:grid-cols-3">
-                            <a href="{{ route('usuarios.index') }}" class="rounded-2xl border border-[#cfddd7] bg-[#eef5f2] p-4 transition hover:-translate-y-0.5 hover:border-[#0e9384] hover:bg-[#dcebe5] dark:border-[#33505c] dark:bg-[#1e3039] dark:hover:border-[#3fbda9]">
+                            <a href="{{ route('usuarios.index') }}" class="rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#0c9f9c] hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:border-[#0c9f9c]">
                                 <p class="text-base font-semibold">Usuarios</p>
-                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Gestión de personal</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">Gestión de personal</p>
                             </a>
 
-                            <a href="#" class="rounded-2xl border border-[#bccfdd] bg-[#e8eff3] p-4 transition hover:-translate-y-0.5 hover:border-[#2a7fa0] hover:bg-[#d7e5e8] dark:border-[#33505c] dark:bg-[#1e3039] dark:hover:border-[#2a7fa0]">
+                            <a href="#" class="rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#0c9f9c] hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:border-[#0c9f9c]">
                                 <p class="text-base font-semibold">Inventario</p>
-                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Productos y stock</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">Productos y stock</p>
                             </a>
 
-                            <a href="#" class="rounded-2xl border border-[#d8cfae] bg-[#f3efe2] p-4 transition hover:-translate-y-0.5 hover:border-[#b7791f] hover:bg-[#ece5cf] dark:border-[#33505c] dark:bg-[#1e3039] dark:hover:border-[#b7791f]">
+                            <a href="#" class="rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#0c9f9c] hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:border-[#0c9f9c]">
                                 <p class="text-base font-semibold">Sucursales</p>
-                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-300">Control por tienda</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">Control por tienda</p>
                             </a>
-                        </div>
-                    </div>
-
-                    <div class="module-card p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="theme-subtle text-sm">Resumen de operación</p>
-                                <h3 class="mt-1 text-xl font-bold">Farmacia hoy</h3>
-                            </div>
-                            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-zinc-800 dark:text-zinc-300">Sin datos</span>
-                        </div>
-
-                        <div class="mt-5 grid gap-4 md:grid-cols-2">
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/60">
-                                <p class="text-sm font-medium text-slate-700 dark:text-zinc-300">Ventas en línea</p>
-                                <p class="mt-2 text-2xl font-bold text-slate-500 dark:text-zinc-400">Sin datos</p>
-                            </div>
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/60">
-                                <p class="text-sm font-medium text-slate-700 dark:text-zinc-300">Pedidos pendientes</p>
-                                <p class="mt-2 text-2xl font-bold text-slate-500 dark:text-zinc-400">Sin datos</p>
-                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="space-y-4">
                     <div class="module-card p-5">
-                        <h2 class="text-lg font-semibold">Estado del sistema</h2>
-
-                        <div class="mt-5 space-y-4">
-                            <p class="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm theme-subtle">
-                                Aún no hay información del sistema para mostrar.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="module-card p-5">
                         <h2 class="text-lg font-semibold">Actividad reciente</h2>
-                        <ul class="mt-4 space-y-3">
-                            <li class="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm theme-subtle">
-                                No hay actividad reciente.
-                            </li>
-                        </ul>
+                        <p class="mt-3 rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm theme-subtle dark:border-zinc-600">
+                            No hay actividad reciente.
+                        </p>
                     </div>
                 </div>
             </div>

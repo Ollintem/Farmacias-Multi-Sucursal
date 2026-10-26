@@ -22,6 +22,7 @@ class UserSeeder extends Seeder
             [
                 'nombre' => 'Admin',
                 'apellido' => 'Sistema',
+                'nombre_usuario' => 'admin',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
                 'es_activo' => true,
@@ -34,6 +35,7 @@ class UserSeeder extends Seeder
             [
                 'nombre' => 'Usuario',
                 'apellido' => 'Pruebas',
+                'nombre_usuario' => 'test',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
                 'es_activo' => true,

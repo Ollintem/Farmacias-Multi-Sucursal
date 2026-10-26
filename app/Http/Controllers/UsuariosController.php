@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Modulo;
+use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
+use App\Models\RolPermiso;
 use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -52,7 +56,48 @@ class UsuariosController extends Controller
         $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
         $selectedSucursalId = session('active_sucursal_id') ?? auth()->user()?->id_sucursal;
 
-        return view('pages.usuarios.create', compact('roles', 'sucursales', 'selectedSucursalId'));
+        $modulos = Modulo::orderBy('id')->get();
+        $permisosPorRol = $this->mapaPermisosPorRol($roles);
+
+        return view('pages.usuarios.create', compact('roles', 'sucursales', 'selectedSucursalId', 'modulos', 'permisosPorRol'));
+    }
+
+    /**
+     * Mapa rol => modulo => flags desde roles_permisos (fuente BD, no hardcode).
+     *
+     * @param  Collection<int, Rol>  $roles
+     * @return array<int, array<int, array{ver:bool, crear:bool, editar:bool, borrar:bool}>>
+     */
+    private function mapaPermisosPorRol($roles): array
+    {
+        $mapa = [];
+        $permisos = Permiso::with('modulo')->get()->keyBy('id');
+
+        $activos = RolPermiso::whereIn('id_rol', $roles->pluck('id'))
+            ->where('activo', true)
+            ->get()
+            ->groupBy('id_rol');
+
+        foreach ($roles as $rol) {
+            $porModulo = [];
+            foreach ($activos->get($rol->id, collect()) as $rp) {
+                $permiso = $permisos->get($rp->id_permiso);
+                if (! $permiso) {
+                    continue;
+                }
+                $idModulo = $permiso->id_modulo;
+                $accion = strtolower($permiso->accion);
+                if (! isset($porModulo[$idModulo])) {
+                    $porModulo[$idModulo] = ['ver' => false, 'crear' => false, 'editar' => false, 'borrar' => false];
+                }
+                if (array_key_exists($accion, $porModulo[$idModulo])) {
+                    $porModulo[$idModulo][$accion] = true;
+                }
+            }
+            $mapa[$rol->id] = $porModulo;
+        }
+
+        return $mapa;
     }
 
     public function store(Request $request): RedirectResponse
@@ -68,6 +113,11 @@ class UsuariosController extends Controller
             ],
             'id_sucursal' => ['nullable', 'exists:sucursales,id'],
             'es_activo' => ['boolean'],
+            'permisos' => ['nullable', 'array'],
+            'permisos.*.ver' => ['nullable', 'boolean'],
+            'permisos.*.crear' => ['nullable', 'boolean'],
+            'permisos.*.editar' => ['nullable', 'boolean'],
+            'permisos.*.borrar' => ['nullable', 'boolean'],
         ], [
             'password.required' => 'Escribe una contrasena para el usuario.',
             'password.min' => 'La contrasena debe tener al menos 8 caracteres.',
@@ -79,11 +129,39 @@ class UsuariosController extends Controller
             $data['id_sucursal'] = session('active_sucursal_id') ?? auth()->user()?->id_sucursal;
         }
 
-        User::create([
-            ...$data,
-            'password' => bcrypt($data['password']),
-            'es_activo' => $request->boolean('es_activo', true),
-        ]);
+        $usuario = null;
+        DB::transaction(function () use ($request, $data, &$usuario) {
+            $usuario = User::create([
+                'nombre' => $data['nombre'],
+                'apellido' => $data['apellido'],
+                'email' => $data['email'],
+                'password' => bcrypt($data['password']),
+                'id_rol' => $data['id_rol'],
+                'id_sucursal' => $data['id_sucursal'],
+                'es_activo' => $request->boolean('es_activo', true),
+            ]);
+
+            $permisosInput = $request->input('permisos', []);
+            if (is_array($permisosInput) && $permisosInput !== []) {
+                $modulos = Modulo::orderBy('id')->get();
+                foreach ($modulos as $modulo) {
+                    $flags = is_array($permisosInput[$modulo->id] ?? null) ? $permisosInput[$modulo->id] : [];
+                    $fila = [
+                        'puede_ver' => ! empty($flags['ver']),
+                        'puede_crear' => ! empty($flags['crear']),
+                        'puede_editar' => ! empty($flags['editar']),
+                        'puede_borrar' => ! empty($flags['borrar']),
+                    ];
+                    if (in_array(true, $fila, true)) {
+                        PermisoActivado::create([
+                            'id_usuario' => $usuario->id,
+                            'id_modulo' => $modulo->id,
+                            ...$fila,
+                        ]);
+                    }
+                }
+            }
+        });
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario registrado correctamente.');
     }

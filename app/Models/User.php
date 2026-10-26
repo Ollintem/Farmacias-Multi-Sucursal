@@ -35,12 +35,55 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $updated_at
  * @property-read string $name
  */
-#[Fillable(['nombre', 'apellido', 'email', 'password', 'es_activo', 'id_rol', 'id_sucursal'])]
+#[Fillable(['nombre', 'apellido', 'nombre_usuario', 'email', 'password', 'es_activo', 'id_rol', 'id_sucursal'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            if (empty($user->nombre_usuario)) {
+                $user->nombre_usuario = static::generarNombreUsuario($user);
+            }
+        });
+
+        static::updating(function (User $user): void {
+            if (empty($user->nombre_usuario) && ! empty($user->email)) {
+                $user->nombre_usuario = static::generarNombreUsuario($user);
+            }
+        });
+    }
+
+    /**
+     * Genera un nombre_usuario único a partir del email o nombre+apellido.
+     */
+    public static function generarNombreUsuario(User $user): string
+    {
+        $base = '';
+
+        if (! empty($user->email) && str_contains($user->email, '@')) {
+            $base = strstr($user->email, '@', true);
+        }
+
+        if ($base === '' && ! empty($user->nombre)) {
+            $base = strtolower(trim($user->nombre.(($user->apellido ?? '') !== '' ? '.'.$user->apellido : '')));
+            $base = preg_replace('/[^a-z0-9._-]+/', '', $base) ?? 'usuario';
+        }
+
+        $base = $base !== '' ? $base : 'usuario';
+        $candidato = $base;
+        $contador = 1;
+
+        while (static::where('nombre_usuario', $candidato)->whereKeyNot($user->id ?? 0)->exists()) {
+            $candidato = $base.$contador;
+            $contador++;
+        }
+
+        return $candidato;
+    }
 
     /**
      * The table associated with the model.
