@@ -1,4 +1,4 @@
-@props(['name', 'options' => [], 'value' => '', 'autoSubmit' => false, 'label' => null, 'placeholder' => 'Seleccionar una opción'])
+@props(['name', 'options' => [], 'value' => '', 'autoSubmit' => false, 'label' => null, 'placeholder' => 'Seleccionar una opción', 'id' => null])
 
 {{-- Selector colapsable: cerrado muestra solo la opción elegida (o el
      texto de ayuda); la lista con scroll aparece únicamente al abrirlo.
@@ -20,6 +20,7 @@
             this.etiqueta = etiqueta;
             this.abierto = false;
             this.detener();
+            this.$dispatch("option-pick-changed", { name: @json($name), value: this.valor, label: etiqueta });
             if (this.auto) { this.$el.closest("form").requestSubmit(); }
         },
         alternar() {
@@ -63,6 +64,7 @@
     <button
         type="button"
         x-ref="gatillo"
+        @if($id) id="{{ $id }}" @endif
         @click="alternar()"
         :aria-expanded="abierto"
         aria-haspopup="listbox"

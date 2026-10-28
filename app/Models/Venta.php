@@ -10,14 +10,14 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
- * @property int $id_caja
+ * @property int $id_sucursal
  * @property string $folio
  * @property string $descuento
  * @property string $total
  * @property int $id_pago
  * @property string $estado
  * @property Carbon $creado_en
- * @property-read Caja $caja
+ * @property-read Sucursal $sucursal
  * @property-read Pago $pago
  */
 class Venta extends Model
@@ -27,7 +27,7 @@ class Venta extends Model
     protected $table = 'ventas';
 
     protected $fillable = [
-        'id_caja',
+        'id_sucursal',
         'folio',
         'descuento',
         'total',
@@ -36,17 +36,18 @@ class Venta extends Model
     ];
 
     protected $casts = [
+        'id_sucursal' => 'integer',
         'descuento' => 'decimal:2',
         'total' => 'decimal:2',
         'creado_en' => 'datetime',
     ];
 
     /**
-     * @return BelongsTo<Caja, $this>
+     * @return BelongsTo<Sucursal, $this>
      */
-    public function caja(): BelongsTo
+    public function sucursal(): BelongsTo
     {
-        return $this->belongsTo(Caja::class, 'id_caja');
+        return $this->belongsTo(Sucursal::class, 'id_sucursal');
     }
 
     /**

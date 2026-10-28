@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Models\Caja;
 use App\Models\ConfiguracionBancaria;
 use App\Models\Inventario;
 use App\Models\Pago;
@@ -748,13 +747,10 @@ class PuntoDeVenta extends Component
                 }
             }
 
-            // Find or create caja for this sucursal
-            $caja = Caja::firstOrCreate(['id_sucursal' => $sucursalId]);
-
             // Generate folio
             $folio = 'V-'.date('Ymd').'-'.str_pad((string) (Venta::count() + 1), 5, '0', STR_PAD_LEFT);
 
-            $resultado = DB::transaction(function () use ($caja, $folio, $sucursalId) {
+            $resultado = DB::transaction(function () use ($folio, $sucursalId) {
                 // Create payment(s)
                 $pagoPrincipal = null;
                 $pagosAdicionales = [];
@@ -819,7 +815,7 @@ class PuntoDeVenta extends Component
 
                 // Create venta
                 $venta = Venta::create([
-                    'id_caja' => $caja->id,
+                    'id_sucursal' => (int) $sucursalId,
                     'folio' => $folio,
                     'descuento' => 0,
                     'total' => $this->total,

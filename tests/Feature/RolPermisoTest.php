@@ -67,6 +67,7 @@ it('muestra la configuracion de permisos del rol seleccionado', function () {
         ->assertSee('Permisos por rol')
         ->assertSee('Gerente')
         ->assertSee('Dashboard')
+        ->assertSee('Corte ciego')
         ->assertSee('Guardar permisos');
 });
 
@@ -368,6 +369,10 @@ it('el seeder asigna permisos predeterminados y no sobrescribe cambios manuales'
     expect(RolPermiso::where('id_rol', $cajero->id)
         ->where('id_permiso', obtenerPermisoDe('Caja', 'ver')->id)
         ->value('activo'))->toBeTrue();
+
+    expect($gerente->fresh()->corte_ciego)->toBeFalse()
+        ->and($cajero->fresh()->corte_ciego)->toBeTrue()
+        ->and($superAdmin->fresh()->corte_ciego)->toBeTrue();
 
     expect(RolPermiso::where('id_rol', $cajero->id)
         ->where('id_permiso', obtenerPermisoDe('Dashboard', 'ver')->id)

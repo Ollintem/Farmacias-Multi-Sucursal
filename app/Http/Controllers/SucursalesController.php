@@ -119,7 +119,8 @@ class SucursalesController extends Controller
 
     /**
      * Elimina una sucursal sin movimiento (usuarios, pedidos, inventario,
-     * traspasos o cajas la bloquean porque se borrarían en cascada).
+     * traspasos, ventas o cortes de caja la bloquean porque el historial
+     * debe conservarse).
      *
      * Entrada: sucursal resuelta mediante route model binding.
      * Salida: redirección al listado con mensaje de éxito o de bloqueo.
@@ -144,8 +145,12 @@ class SucursalesController extends Controller
             $bloqueos[] = 'traspasos registrados';
         }
 
-        if ($sucursal->cajas()->exists()) {
-            $bloqueos[] = 'movimientos de caja';
+        if ($sucursal->cortesCaja()->exists()) {
+            $bloqueos[] = 'cortes de caja registrados';
+        }
+
+        if ($sucursal->ventas()->exists()) {
+            $bloqueos[] = 'ventas registradas';
         }
 
         if ($bloqueos !== []) {

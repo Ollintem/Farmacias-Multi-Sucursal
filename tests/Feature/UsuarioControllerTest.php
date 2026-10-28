@@ -298,3 +298,163 @@ it('renderiza el selector option-pick como una lista flotante', function () {
         ->toContain('farma-pick-scroll')
         ->not->toContain('class="farma-pick-scroll mt-2"');
 });
+
+it('muestra el alta de usuario con el selector de rol y campos accesibles', function () {
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal Alta',
+        'direccion' => 'Calle Alta 1',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+    ]);
+
+    $rolSuperAdmin = Rol::create(['tipo_rol' => 'SuperAdmin', 'descripcion' => 'Acceso total']);
+    Rol::create(['tipo_rol' => 'Cajero', 'descripcion' => 'Ventas y cobros']);
+    Modulo::create(['nombre_modulo' => 'Caja']);
+
+    $admin = User::create([
+        'nombre' => 'Admin',
+        'apellido' => 'Sistema',
+        'email' => 'admin@alta.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rolSuperAdmin->id,
+        'id_sucursal' => $sucursal->id,
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('usuarios.create'));
+
+    $response->assertOk()
+        ->assertSee('for="nombre"', false)
+        ->assertSee('id="nombre"', false)
+        ->assertSee('for="id_rol"', false)
+        ->assertSee('name="id_rol"', false)
+        ->assertSee('Contraseña')
+        ->assertSee('autocomplete="new-password"', false)
+        ->assertSee('option-pick-changed', false)
+        ->assertSee('aria-modal="true"', false)
+        ->assertDontSee('<select name="id_rol"', false);
+});
+
+it('guarda los permisos enviados al crear un usuario', function () {
+    $sucursal = Sucursal::create([
+        'nombre_sucursal' => 'Sucursal Permisos Alta',
+        'direccion' => 'Calle Permisos 1',
+        'hora_apertura' => '08:00',
+        'hora_cierre' => '20:00',
+    ]);
+
+    $rolSuperAdmin = Rol::create(['tipo_rol' => 'SuperAdmin', 'descripcion' => 'Acceso total']);
+    $rolCajero = Rol::create(['tipo_rol' => 'Cajero', 'descripcion' => 'Ventas y cobros']);
+    $modulo = Modulo::create(['nombre_modulo' => 'Caja']);
+
+    $admin = User::create([
+        'nombre' => 'Admin',
+        'apellido' => 'Sistema',
+        'email' => 'admin@permisos.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rolSuperAdmin->id,
+        'id_sucursal' => $sucursal->id,
+    ]);
+
+    $response = $this->actingAs($admin)->post(route('usuarios.store'), [
+        'nombre' => 'Ana',
+        'apellido' => 'Lopez',
+        'email' => 'ana@permisos.test',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+        'id_rol' => $rolCajero->id,
+        'id_sucursal' => $sucursal->id,
+        'es_activo' => '1',
+        'permisos' => [
+            $modulo->id => ['ver' => '1', 'crear' => '1'],
+        ],
+    ]);
+
+    $response->assertRedirect(route('usuarios.index'))
+        ->assertSessionHas('success');
+
+    $usuario = User::where('email', 'ana@permisos.test')->firstOrFail();
+
+    $this->assertDatabaseHas('permisos_activados', [
+        'id_usuario' => $usuario->id,
+        'id_modulo' => $modulo->id,
+        'puede_ver' => true,
+        'puede_crear' => true,
+        'puede_editar' => false,
+        'puede_borrar' => false,
+    ]);
+});
+
+it('guarda el permiso de corte ciego del usuario', function () {
+    $rol = Rol::create(['tipo_rol' => 'Cajero', 'descripcion' => 'Ventas y cobros']);
+    $modulo = Modulo::create(['nombre_modulo' => 'Caja']);
+
+    $admin = User::create([
+        'nombre' => 'Admin',
+        'apellido' => 'Sistema',
+        'email' => 'admin.corte@example.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rol->id,
+    ]);
+
+    $usuario = User::create([
+        'nombre' => 'Ana',
+        'apellido' => 'Lopez',
+        'email' => 'ana.corte@example.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rol->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->put(route('usuarios.updatePermisos', $usuario), [
+            'permisos' => [
+                $modulo->id => ['ver' => '1'],
+            ],
+            'corte_ciego' => '1',
+        ])
+        ->assertRedirect(route('usuarios.permisos', $usuario))
+        ->assertSessionHas('success');
+
+    $this->assertDatabaseHas('permisos_activados', [
+        'id_usuario' => $usuario->id,
+        'id_modulo' => $modulo->id,
+        'puede_ver' => true,
+    ]);
+
+    $this->assertDatabaseHas('cortes_ciegos', [
+        'id_usuarios' => $usuario->id,
+        'corte_ciego' => true,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('usuarios.permisos', $usuario))
+        ->assertOk()
+        ->assertSee('Corte ciego');
+});
+
+it('usa el corte ciego del rol cuando el usuario no tiene excepcion', function () {
+    $rol = Rol::create([
+        'tipo_rol' => 'Cajero',
+        'descripcion' => 'Ventas y cobros',
+        'corte_ciego' => true,
+    ]);
+
+    $usuario = User::create([
+        'nombre' => 'Luis',
+        'apellido' => 'Perez',
+        'email' => 'luis.corte@example.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rol->id,
+    ]);
+
+    expect($usuario->tieneCorteCiego())->toBeTrue()
+        ->and($usuario->permisosHabilitados('corte_ciego', 'Caja'))->toBeTrue();
+
+    $usuario->corteCiego()->create(['corte_ciego' => false]);
+
+    expect($usuario->fresh()->tieneCorteCiego())->toBeFalse();
+});

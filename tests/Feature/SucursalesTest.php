@@ -90,8 +90,8 @@ test('el listado muestra las sucursales con su boton de eliminar', function () {
         ->assertOk()
         ->assertSee($sucursal->nombre_sucursal)
         ->assertSee(route('sucursales.destroy', $sucursal), false)
-        ->assertSee('data-flux-switch', false)
-        ->assertSee('botonCancelar', false)
+        ->assertSee('Activa')
+        ->assertSee('Eliminar')
         ->assertDontSee('@if(')
         ->assertDontSee('@endif');
 });

@@ -148,7 +148,7 @@ Tablas principales:
 - sucursales y farmacias.
 - proveedores, presentaciones, productos y lotes.
 - modulos, permisos y permisos activados.
-- pagos, cajas, ventas, cortes de caja y traspasos.
+- pagos, ventas, cortes de caja y traspasos; ventas y cortes se enlazan directamente con sucursales (la tabla `cajas` se elimino).
 - tablas auxiliares de Laravel para cache y jobs.
 
 Para un error SQL, identifica la tabla en el mensaje y abre su migracion antes de modificar el modelo o el controlador.

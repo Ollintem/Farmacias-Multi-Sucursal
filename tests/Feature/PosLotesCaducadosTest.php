@@ -1,7 +1,6 @@
 <?php
 
 use App\Livewire\PuntoDeVenta;
-use App\Models\Caja;
 use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\PresentacionProducto;
@@ -30,7 +29,6 @@ function contextoPosCaducados(object $test): array
         'id_rol' => $rol->id,
     ]);
 
-    Caja::firstOrCreate(['id_sucursal' => $sucursal->id]);
     $caja = PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
 
     $test->actingAs($user);

@@ -89,6 +89,7 @@ class RolPermisoController extends Controller
         $data = $request->validate([
             'permisos' => ['nullable', 'array'],
             'permisos.*' => ['boolean'],
+            'corte_ciego' => ['nullable', 'boolean'],
         ]);
 
         $activos = collect($data['permisos'] ?? [])
@@ -105,14 +106,22 @@ class RolPermisoController extends Controller
                 ->withErrors(['permisos' => 'La configuración contiene permisos que no existen.']);
         }
 
-        DB::transaction(function () use ($rol, $permisos, $activos): void {
+        DB::transaction(function () use ($request, $rol, $permisos, $activos): void {
+            $rol->update([
+                'corte_ciego' => $request->boolean('corte_ciego'),
+            ]);
+
             foreach ($permisos as $permiso) {
+                $activo = $activos->contains($permiso->id);
+
                 RolPermiso::updateOrCreate(
                     [
                         'id_rol' => $rol->id,
                         'id_permiso' => $permiso->id,
                     ],
-                    ['activo' => $activos->contains($permiso->id)]
+                    [
+                        'activo' => $activo,
+                    ]
                 );
             }
         });

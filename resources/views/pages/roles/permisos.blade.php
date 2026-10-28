@@ -101,6 +101,22 @@
                         <p class="theme-subtle text-sm">Marque qué puede hacer el rol en cada módulo</p>
                     </div>
                     <div class="noti-cabecera-lado">
+                        @php
+                            $esSuperAdminHeader = $selectedRol?->tipo_rol === 'SuperAdmin';
+                            $corteCiegoActivo = $esSuperAdminHeader || (bool) ($selectedRol?->corte_ciego ?? false);
+                        @endphp
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input
+                                type="checkbox"
+                                name="corte_ciego"
+                                value="1"
+                                form="permisos-form"
+                                data-permiso-checkbox
+                                @checked($corteCiegoActivo)
+                                @disabled($selectedRol === null || ! $puedeEditar || $esSuperAdminHeader)
+                            >
+                            Corte ciego
+                        </label>
                         <button type="button" id="permisos-toggle-all" class="noti-desplegar" @disabled($selectedRol === null || ! $puedeEditar || $selectedRol->tipo_rol === 'SuperAdmin')>Activar todo</button>
                     </div>
                 </header>
@@ -131,7 +147,7 @@
                             $soloLectura = $esSuperAdmin || ! $puedeEditar;
                         @endphp
 
-                        <form action="{{ route('roles.permisos.update', $selectedRol) }}" method="POST">
+                        <form id="permisos-form" action="{{ route('roles.permisos.update', $selectedRol) }}" method="POST">
                             @csrf
                             @method('PUT')
 
@@ -237,6 +253,7 @@
                     <div class="p-5">
                         @php
                             $columnasExcepcion = ['ver' => 'Ver', 'crear' => 'Crear', 'editar' => 'Editar', 'borrar' => 'Borrar'];
+                            $camposExcepcion = ['ver' => 'puede_ver', 'crear' => 'puede_crear', 'editar' => 'puede_editar', 'borrar' => 'puede_borrar'];
                             $modulosConExcepcion = $modulos->filter(fn ($modulo) => $excepciones->has($modulo->id));
                         @endphp
 
@@ -270,7 +287,7 @@
                                                     </td>
                                                     @foreach($columnasExcepcion as $accion => $etiquetaPermiso)
                                                         @php
-                                                            $campoExcepcion = 'puede_'.$accion;
+                                                            $campoExcepcion = $camposExcepcion[$accion];
                                                         @endphp
                                                         <td class="text-center">
                                                             <input

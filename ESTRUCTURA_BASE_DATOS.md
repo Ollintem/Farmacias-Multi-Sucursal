@@ -12,11 +12,11 @@ y borrado en cascada hacia los catálogos padre.
 sucursales ─┬─ usuarios ─┬─ pedidos ── lotes ── productos ─┬─ inventario ── sucursales
              │            │    │          │          │
              │            │    │          │          ├─ presentacion_producto ── presentaciones
-             │            │    │          │          └─ producto_venta ── ventas ── cajas ── cortes_caja
+             │            │    │          │          └─ producto_venta ── ventas ── sucursales
              │            │    │          └─ proveedores ── pedidos
              │            │    └─ traspasos (sucursal_a / sucursal_b)
              │            └─ permisos_activados ── modulos
-             └─ cajas / inventario / pedidos / traspasos
+             └─ ventas / cortes_caja / inventario / pedidos / traspasos
 roles ── usuarios
 pagos ── ventas
 modulos ── tipo_alerta ── alertas ── alertas_usuarios ── usuarios
@@ -174,13 +174,9 @@ Relaciones: `productos` (1:N vía `productos.id_lote`).
 
 ## Ventas y caja
 
-### `cajas`
-| Columna | Tipo | Nulo | Default |
-|---|---|---|---|
-| id | bigint unsigned PK AI | No | — |
-| id_sucursal → `sucursales.id` | FK | No | —, cascade |
-| creado_en / actualizado_en | timestamp | No | current |
-| created_at / updated_at | timestamp | Sí | NULL |
+Las ventas y los cortes de caja se enlazan directamente con `sucursales`.
+La tabla `cajas` se eliminó: la sucursal es ahora la unidad operativa de
+ambos registros y el historial se conserva al migrar `cajas.id_sucursal`.
 
 ### `pagos`
 | Columna | Tipo | Nulo | Default |
@@ -196,7 +192,7 @@ Relaciones: `productos` (1:N vía `productos.id_lote`).
 | Columna | Tipo | Nulo | Default | Notas |
 |---|---|---|---|---|
 | id | bigint unsigned PK AI | No | — | |
-| id_caja → `cajas.id` | FK | No | — | cascade |
+| id_sucursal → `sucursales.id` | FK | No | — | restrict, protege el historial |
 | folio | varchar(20) | No | — | |
 | descuento / total | double | No | — | |
 | id_pago → `pagos.id` | FK | No | — | cascade |
@@ -216,7 +212,7 @@ Relaciones: `productos` (1:N vía `productos.id_lote`).
 | Columna | Tipo | Nulo | Default |
 |---|---|---|---|
 | id | bigint unsigned PK AI | No | — |
-| id_caja → `cajas.id` | FK | No | —, cascade |
+| id_sucursal → `sucursales.id` | FK | No | —, restrict |
 | id_usuario → `usuarios.id` | FK | No | —, cascade |
 | turno | varchar(20) | No | — |
 | efectivo_inicial / efectivo_declarado / efectivo_esperado / diferencia | double | No | — |
@@ -235,6 +231,25 @@ Relaciones: `productos` (1:N vía `productos.id_lote`).
 | numero_cuenta | varchar(30) | No | `''` |
 | correo_contacto | varchar(100) | No | `''` |
 | created_at / updated_at | timestamp | Sí | NULL |
+
+## Migración de cajas a sucursales
+
+La migración `vincular_cortes_caja_y_ventas_a_sucursales`:
+
+1. Agrega `id_sucursal` nullable a `cortes_caja` y `ventas`.
+2. Copia `cajas.id_sucursal` usando la relación `id_caja = cajas.id`.
+3. Detiene la migración si algún registro queda sin sucursal.
+4. Vuelve `id_sucursal` obligatoria y crea su clave foránea a `sucursales`.
+5. Elimina la clave foránea y la columna `id_caja`.
+6. Elimina la tabla `cajas` al confirmar que ya no tiene dependencias.
+
+Antes de ejecutarla en una base con datos, respalde la base completa. En una
+instalación nueva, `php artisan migrate:fresh --seed` reconstruye el esquema
+y los seeders no escriben en `cajas`.
+
+La reversión reconstruye una caja por sucursal y vuelve a enlazar ventas y
+cortes. No recupera la identidad de cajas duplicadas para una misma sucursal,
+porque esa información se pierde al simplificar la relación.
 
 ## Logística
 

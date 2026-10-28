@@ -186,7 +186,13 @@
                                 </div>
                             </div>
 
-                            <div class="mt-6 flex justify-end gap-3">
+                            <div class="mt-6 flex items-center justify-end gap-3">
+                                <a
+                                    :href="'{{ route('roles.permisos') }}?rol=' + editarRolId"
+                                    class="theme-button theme-button-secondary mr-auto"
+                                >
+                                    Editar permisos
+                                </a>
                                 <button type="button" x-on:click="modalEditarRol = false" class="theme-button theme-button-secondary">Cancelar</button>
                                 <button type="submit" class="theme-button theme-button-primary">Guardar cambios</button>
                             </div>

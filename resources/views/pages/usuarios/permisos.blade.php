@@ -48,11 +48,27 @@
                         <p class="theme-subtle text-sm">Marque qué puede hacer el usuario en cada módulo</p>
                     </div>
                     <div class="noti-cabecera-lado">
+                        @php
+                            $corteCiegoActivo = old('corte_ciego') !== null
+                                ? (bool) old('corte_ciego')
+                                : (bool) ($corteCiegoActivo ?? false);
+                        @endphp
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input
+                                type="checkbox"
+                                name="corte_ciego"
+                                value="1"
+                                form="permisos-form"
+                                data-permiso-checkbox
+                                @checked($corteCiegoActivo)
+                            >
+                            Corte ciego
+                        </label>
                         <button type="button" id="permisos-toggle-all" class="noti-desplegar">Activar todo</button>
                     </div>
                 </header>
                 <div class="p-5">
-            <form action="{{ route('usuarios.updatePermisos', $usuario) }}" method="POST">
+            <form id="permisos-form" action="{{ route('usuarios.updatePermisos', $usuario) }}" method="POST">
                 @csrf
                 @method('PUT')
 

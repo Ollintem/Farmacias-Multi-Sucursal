@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -154,6 +155,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Excepción individual del usuario para el corte ciego.
+     *
+     * @return HasOne<CorteCiego, $this>
+     */
+    public function corteCiego(): HasOne
+    {
+        return $this->hasOne(CorteCiego::class, 'id_usuarios');
+    }
+
+    /**
      * @return HasMany<Pedido, $this>
      */
     public function pedidosSolicitados(): HasMany
@@ -292,6 +303,26 @@ class User extends Authenticatable
     ];
 
     /**
+     * Indica si el usuario puede realizar cortes ciegos.
+     *
+     * La configuración individual del usuario tiene prioridad sobre el rol.
+     */
+    public function tieneCorteCiego(): bool
+    {
+        if ($this->rol?->tipo_rol === 'SuperAdmin') {
+            return true;
+        }
+
+        $excepcion = $this->corteCiego()->first();
+
+        if ($excepcion !== null) {
+            return (bool) $excepcion->corte_ciego;
+        }
+
+        return (bool) ($this->rol?->corte_ciego ?? false);
+    }
+
+    /**
      * Acciones equivalentes a cada bandera individual.
      *
      * @var array<string, string>
@@ -342,6 +373,10 @@ class User extends Authenticatable
             return true;
         }
 
+        if (strtolower($permiso) === 'corte_ciego') {
+            return $this->tieneCorteCiego();
+        }
+
         $columna = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
         $nombreModulo = self::MAPA_MODULOS[strtolower($modulo)] ?? $modulo;
 
@@ -351,7 +386,7 @@ class User extends Authenticatable
                 : [$columna];
 
             foreach ($columnas as $columnaPermiso) {
-                $accion = self::MAPA_ACCIONES[$columnaPermiso] ?? null;
+                $accion = self::MAPA_ACCIONES[$columnaPermiso] ?? $columnaPermiso;
 
                 if ($accion === null || ! $this->rolPermite($accion, $nombreModulo)) {
                     return false;

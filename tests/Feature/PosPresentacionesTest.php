@@ -1,7 +1,6 @@
 <?php
 
 use App\Livewire\PuntoDeVenta;
-use App\Models\Caja;
 use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\PresentacionProducto;
@@ -9,6 +8,7 @@ use App\Models\Producto;
 use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
+use App\Models\Venta;
 use Livewire\Livewire;
 
 function crearContextoPos(object $test): array
@@ -29,8 +29,6 @@ function crearContextoPos(object $test): array
         'id_sucursal' => $sucursal->id,
         'id_rol' => $rol->id,
     ]);
-
-    Caja::firstOrCreate(['id_sucursal' => $sucursal->id]);
 
     $caja = PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
 
@@ -324,6 +322,11 @@ test('el POS abre caja al vender unidad y refleja el estado de cajas', function 
 
     $component->assertSet('errorVenta', '');
     $this->assertSame(9, $producto->fresh()->stockTotal());
+    $this->assertDatabaseHas('ventas', [
+        'id_sucursal' => $sucursal->id,
+        'estado' => 'Completada',
+    ]);
+    expect(Venta::firstOrFail()->sucursal->is($sucursal))->toBeTrue();
 
     $component->call('abrirSelector', $producto->id);
 

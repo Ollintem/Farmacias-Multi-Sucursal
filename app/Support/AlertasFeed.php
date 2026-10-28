@@ -4,7 +4,6 @@ namespace App\Support;
 
 use App\Models\Alerta;
 use App\Models\AlertaUsuario;
-use App\Models\Caja;
 use App\Models\Lote;
 use App\Models\Modulo;
 use App\Models\Producto;
@@ -898,10 +897,8 @@ class AlertasFeed
      */
     private static function resumenVentasHoy(int $sucursalId): array
     {
-        $cajaIds = Caja::where('id_sucursal', $sucursalId)->pluck('id');
-
         $ventasHoy = Venta::query()
-            ->whereIn('id_caja', $cajaIds)
+            ->where('id_sucursal', $sucursalId)
             ->whereDate('creado_en', Carbon::today())
             ->orderByDesc('creado_en')
             ->get();

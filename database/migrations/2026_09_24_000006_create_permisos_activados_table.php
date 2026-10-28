@@ -16,6 +16,7 @@ return new class extends Migration
             $table->boolean('puede_crear')->default(true);
             $table->boolean('puede_editar')->default(true);
             $table->boolean('puede_borrar')->default(true);
+            $table->boolean('corte_ciego')->default(false);
             $table->timestamps();
             $table->unique(['id_modulo', 'id_usuario']);
         });

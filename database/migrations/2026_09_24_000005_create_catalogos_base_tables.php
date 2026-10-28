@@ -12,19 +12,15 @@ return new class extends Migration
             $table->id();
             $table->string('nombre_proveedor', 20);
             $table->text('direccion');
-            $table->string('unidad_entrega', 20);
+            $table->string('RFC', 20);
             $table->string('telefono', 20);
             $table->string('correo', 30);
-            $table->timestamp('creado_en')->useCurrent();
-            $table->timestamp('actualizado_en')->useCurrent()->useCurrentOnUpdate();
             $table->timestamps();
         });
 
         Schema::create('modulos', function (Blueprint $table) {
             $table->id();
             $table->string('nombre_modulo', 20);
-            $table->timestamp('creado_en')->useCurrent();
-            $table->timestamp('actualizado_en')->useCurrent()->useCurrentOnUpdate();
             $table->timestamps();
         });
 

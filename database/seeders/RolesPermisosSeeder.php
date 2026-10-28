@@ -73,6 +73,10 @@ class RolesPermisosSeeder extends Seeder
         $filas = [];
 
         foreach ($roles as $tipoRol => $rol) {
+            $rol->update([
+                'corte_ciego' => $tipoRol === 'Cajero' || $tipoRol === 'SuperAdmin',
+            ]);
+
             $porModulo = $configuracion[$tipoRol] ?? [];
             $esSuperAdmin = $tipoRol === 'SuperAdmin';
 
@@ -82,10 +86,12 @@ class RolesPermisosSeeder extends Seeder
                     : ($porModulo[$modulo->nombre_modulo] ?? []);
 
                 foreach ($modulo->permisos as $permiso) {
+                    $activo = in_array($permiso->accion, $accionesActivas, true);
+
                     $filas[] = [
                         'id_rol' => $rol->id,
                         'id_permiso' => $permiso->id,
-                        'activo' => in_array($permiso->accion, $accionesActivas, true),
+                        'activo' => $activo,
                         'created_at' => $ahora,
                         'updated_at' => $ahora,
                     ];

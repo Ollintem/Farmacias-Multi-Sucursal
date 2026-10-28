@@ -69,7 +69,7 @@ php artisan route:list --except-vendor
 
 ## Datos principales
 
-Las migraciones actuales incluyen roles, usuarios, sucursales, proveedores, productos, presentaciones, lotes, permisos, ventas, caja y traspasos. Antes de modificar un modelo o una relación, revisa primero la migración correspondiente y sus relaciones con otras tablas.
+Las migraciones actuales incluyen roles, usuarios, sucursales, proveedores, productos, presentaciones, lotes, permisos, ventas, cortes de caja y traspasos. Ventas y cortes se enlazan directamente con la sucursal; la tabla `cajas` ya no existe. Antes de modificar un modelo o una relación, revisa primero la migración correspondiente y sus relaciones con otras tablas.
 
 Los modelos de dominio más relevantes son `User`, `Rol`, `Sucursal`, `Producto`, `PresentacionProducto`, `Proveedor`, `Lote`, `Modulo`, `Permiso` y `PermisoActivado`.
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CorteCiego;
 use App\Models\Modulo;
 use App\Models\Permiso;
 use App\Models\PermisoActivado;
@@ -105,8 +106,9 @@ class UsuariosController extends Controller
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'apellido' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email', 'unique:usuarios,email'],
+            'email' => ['required', 'email', 'max:255', 'unique:usuarios,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password_confirmation' => ['required', 'string'],
             'id_rol' => [
                 'required',
                 Rule::exists('roles', 'id')->where(fn ($query) => $query->where('tipo_rol', '!=', 'SuperAdmin')),
@@ -219,6 +221,11 @@ class UsuariosController extends Controller
             }
         }
 
+        CorteCiego::updateOrCreate(
+            ['id_usuarios' => $usuario->id],
+            ['corte_ciego' => $request->boolean('corte_ciego')],
+        );
+
         return redirect()->route('usuarios.permisos', $usuario)->with('success', 'Permisos actualizados correctamente.');
     }
 
@@ -275,7 +282,10 @@ class UsuariosController extends Controller
             }
         }
 
-        return compact('roles', 'sucursales', 'modulos', 'permisosActivos', 'permisosAgrupados');
+        $corteCiego = CorteCiego::where('id_usuarios', $usuario->id)->first();
+        $corteCiegoActivo = $corteCiego?->corte_ciego ?? (bool) $usuario->rol?->corte_ciego;
+
+        return compact('roles', 'sucursales', 'modulos', 'permisosActivos', 'permisosAgrupados', 'corteCiegoActivo');
     }
 
     public function update(Request $request, User $usuario): RedirectResponse

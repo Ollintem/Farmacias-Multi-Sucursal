@@ -73,11 +73,19 @@ class Sucursal extends Model
     }
 
     /**
-     * @return HasMany<Caja, $this>
+     * @return HasMany<CorteCaja, $this>
      */
-    public function cajas(): HasMany
+    public function cortesCaja(): HasMany
     {
-        return $this->hasMany(Caja::class, 'id_sucursal');
+        return $this->hasMany(CorteCaja::class, 'id_sucursal');
+    }
+
+    /**
+     * @return HasMany<Venta, $this>
+     */
+    public function ventas(): HasMany
+    {
+        return $this->hasMany(Venta::class, 'id_sucursal');
     }
 
     /**

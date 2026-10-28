@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Caja;
 use App\Models\Categoria;
 use App\Models\Inventario;
 use App\Models\Lote;
@@ -95,7 +94,7 @@ test('la pestana productos muestra el catalogo con sus columnas', function () {
         ->assertSee(route('inventario.edit', $producto))
         ->assertSee('value="PATCH"', false)
         ->assertSee('data-modo="eliminar"', false)
-        ->assertSee('data-flux-switch', false)
+        ->assertSee('data-modo="desactivar"', false)
         ->assertDontSee('@if(')
         ->assertDontSee('@endif');
 });
@@ -279,7 +278,6 @@ test('no se puede eliminar un producto con ventas y su historial queda intacto',
         'nombre_producto' => 'Con ventas',
     ]);
 
-    $cajaVenta = Caja::firstOrCreate(['id_sucursal' => $sucursal->id]);
     $pago = Pago::create([
         'monto' => 22.5,
         'metodo' => 'Efectivo',
@@ -288,7 +286,7 @@ test('no se puede eliminar un producto con ventas y su historial queda intacto',
     ]);
 
     $venta = Venta::create([
-        'id_caja' => $cajaVenta->id,
+        'id_sucursal' => $sucursal->id,
         'folio' => 'V-0001',
         'descuento' => 0,
         'total' => 22.5,
