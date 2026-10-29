@@ -21,7 +21,7 @@
         <flux:menu.separator />
         <flux:menu.radio.group>
             <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                {{ __('Settings') }}
+                Ajustes
             </flux:menu.item>
             <flux:menu.item :href="route('appearance.edit')" icon="swatch" wire:navigate>
                 Apariencia y modo oscuro

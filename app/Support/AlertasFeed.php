@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Alerta;
 use App\Models\AlertaUsuario;
+use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\Modulo;
 use App\Models\Producto;
@@ -107,6 +108,26 @@ class AlertasFeed
                 'fecha' => $traspaso->creado_en,
                 'prioridad' => 'alta',
                 'icono' => '⇄',
+            ];
+        }
+
+        foreach (self::stockBajoDeSucursal($sucursalId) as $fila) {
+            $producto = $fila['producto'];
+
+            $avisos[] = [
+                'id' => "stock:{$producto->id}",
+                'tipo' => 'stock',
+                'titulo' => "Stock bajo: {$producto->nombre_producto}",
+                'detalle' => "Quedan {$fila['stock']} uds. · mínimo configurado {$fila['minimo']}",
+                'mensaje' => null,
+                'avatar' => mb_strtoupper(mb_substr($producto->nombre_producto, 0, 1)),
+                'nivel' => 'rojo',
+                'url' => route('alertas.index', ['sucursal' => $sucursalId, 'filtro' => 'stock']),
+                'destino_url' => route('inventario.index', ['sucursal' => $sucursalId]),
+                'destino_etiqueta' => 'Ir a inventario',
+                'fecha' => null,
+                'prioridad' => 'alta',
+                'icono' => '⚠',
             ];
         }
 
@@ -361,7 +382,8 @@ class AlertasFeed
     }
 
     /**
-     * Tiempo corto estilo Facebook: "5 min", "4 h", "3 d" o la fecha.
+     * Tiempo corto estilo Facebook: "5 min", "4 h", "3 d", la forma futura
+     * ("en 3 d") o la fecha ya pasada en español.
      */
     public static function tiempoCorto(?CarbonInterface $fecha): string
     {
@@ -369,29 +391,30 @@ class AlertasFeed
             return 'reciente';
         }
 
-        $minutos = (int) $fecha->diffInMinutes(now());
+        $esFutura = $fecha->isFuture();
+        $minutos = (int) round(abs($fecha->diffInMinutes(now())));
 
         if ($minutos < 1) {
-            return 'ahora mismo';
+            return $esFutura ? 'en unos segundos' : 'ahora mismo';
         }
 
         if ($minutos < 60) {
-            return "{$minutos} min";
+            return $esFutura ? "en {$minutos} min" : "{$minutos} min";
         }
 
-        $horas = (int) $fecha->diffInHours(now());
+        $horas = (int) round(abs($fecha->diffInHours(now())));
 
         if ($horas < 24) {
-            return "{$horas} h";
+            return $esFutura ? "en {$horas} h" : "{$horas} h";
         }
 
-        $dias = (int) $fecha->diffInDays(now());
+        $dias = (int) round(abs($fecha->diffInDays(now())));
 
         if ($dias < 7) {
-            return "{$dias} d";
+            return $esFutura ? "en {$dias} d" : "{$dias} d";
         }
 
-        return $fecha->format('d M Y');
+        return $fecha->copy()->locale('es')->isoFormat('D MMM YYYY');
     }
 
     /** @return array<int, string> */
@@ -505,6 +528,33 @@ class AlertasFeed
                 ->where('id_tipo_alerta', $tipoVentasId)
                 ->whereDate('fecha_creado', '<', Carbon::today())
                 ->update(['estado' => Alerta::ESTADO_RESUELTA, 'fecha_resuelto' => now()]);
+        }
+
+        $tipoStockId = TipoAlerta::where('nombre', 'STOCK_BAJO')->value('id');
+
+        if ($tipoStockId) {
+            $stockBajoIds = self::stockBajoDeSucursal($sucursalId)
+                ->pluck('producto.id')
+                ->all();
+
+            $evaluadosIds = Producto::query()
+                ->where('productos.es_activo', true)
+                ->whereHas('inventarios', fn ($query) => $query->where('inventario.id_sucursal', $sucursalId))
+                ->pluck('id')
+                ->all();
+
+            $staleStock = Alerta::query()
+                ->where('id_sucursal', $sucursalId)
+                ->where('estado', Alerta::ESTADO_ACTIVA)
+                ->where('id_tipo_alerta', $tipoStockId)
+                ->where('entidad_tipo', 'producto')
+                ->whereIn('entidad_id', $evaluadosIds);
+
+            if ($stockBajoIds !== []) {
+                $staleStock->whereNotIn('entidad_id', $stockBajoIds);
+            }
+
+            $staleStock->update(['estado' => Alerta::ESTADO_RESUELTA, 'fecha_resuelto' => now()]);
         }
     }
 
@@ -731,6 +781,10 @@ class AlertasFeed
             return ['entidad_tipo' => 'ventas', 'entidad_id' => (int) $partes[1]];
         }
 
+        if ($partes[0] === 'stock' && isset($partes[1]) && is_numeric($partes[1])) {
+            return ['entidad_tipo' => 'producto', 'entidad_id' => (int) $partes[1]];
+        }
+
         return null;
     }
 
@@ -771,6 +825,7 @@ class AlertasFeed
             'traspaso' => self::tipoParaTraspaso($origen['entidad_id']),
             'lote' => self::tipoParaLote($origen['entidad_id']),
             'ventas' => 'VENTAS_RESUMEN',
+            'producto' => 'STOCK_BAJO',
             default => null,
         };
 
@@ -819,6 +874,36 @@ class AlertasFeed
             'entidad_id' => $origen['entidad_id'],
             'estado' => Alerta::ESTADO_ACTIVA,
         ]);
+    }
+
+    /**
+     * Productos de la sucursal cuyo stock está por debajo del mínimo configurado.
+     *
+     * Solo aplica cuando la presentación principal tiene stock_minimo > 0:
+     * sin mínimo explícito no se genera alerta de stock bajo.
+     *
+     * @return Collection<int, array{producto: Producto, stock: int, minimo: int}>
+     */
+    private static function stockBajoDeSucursal(int $sucursalId): Collection
+    {
+        $stockPorProducto = Inventario::stockPorProducto($sucursalId);
+
+        return Producto::query()
+            ->where('productos.es_activo', true)
+            ->whereHas('inventarios', fn ($query) => $query->where('inventario.id_sucursal', $sucursalId))
+            ->with('presentacionesPrecio')
+            ->get()
+            ->filter(function (Producto $producto) use ($stockPorProducto) {
+                $minimo = (int) ($producto->presentacionPrincipalDe()?->stock_minimo ?? 0);
+
+                return $minimo > 0 && (int) ($stockPorProducto[$producto->id] ?? 0) <= $minimo;
+            })
+            ->map(fn (Producto $producto) => [
+                'producto' => $producto,
+                'stock' => (int) ($stockPorProducto[$producto->id] ?? 0),
+                'minimo' => (int) ($producto->presentacionPrincipalDe()?->stock_minimo ?? 0),
+            ])
+            ->values();
     }
 
     private static function tipoParaTraspaso(?int $traspasoId): string

@@ -230,6 +230,34 @@ test('marca bajo o disponible segun la existencia y omite los productos sin inve
         ->toMatch('/Stock crítico<\/p>\s*<p[^>]*>1<\/p>/');
 });
 
+test('el stock critico usa el stock minimo configurado por producto', function () {
+    $contexto = contextoStockPestana();
+
+    $minimoBajo = productoStockPestana($contexto['categoria'], $contexto['caja'], '7500000000318', 'Ibuprofeno Minimo');
+    ProductoPresentacion::create([
+        'id_presentacion' => $contexto['caja']->id,
+        'producto' => $minimoBajo->id,
+        'precio_presentacion' => 90.0,
+        'unidades' => 10,
+        'stock_minimo' => 3,
+        'es_principal' => true,
+    ]);
+    loteStockPestana($contexto['sucursalA'], $minimoBajo, 'L-STOCK-MIN-1', 2);
+
+    $sinMinimo = productoStockPestana($contexto['categoria'], $contexto['caja'], '7500000000319', 'Naproxeno Minimo');
+    loteStockPestana($contexto['sucursalA'], $sinMinimo, 'L-STOCK-MIN-2', 20);
+
+    $contenido = $this->actingAs($contexto['usuario'])
+        ->withSession(['active_sucursal_id' => $contexto['sucursalA']->id])
+        ->get(route('inventario.stock'))
+        ->assertOk()
+        ->getContent();
+
+    // Ibuprofeno (2 uds.) es crítico por su mínimo de 3; Naproxeno (20 uds.)
+    // no lo es porque sin mínimo configurado usa el umbral histórico de 15.
+    expect($contenido)->toMatch('/Stock crítico<\/p>\s*<p[^>]*>1<\/p>/');
+});
+
 test('la caja abierta muestra guion cuando el stock es multiplo de la caja', function () {
     $contexto = contextoStockPestana();
     $producto = productoStockPestana($contexto['categoria'], $contexto['caja'], '7500000000317', 'Aspirina Stock');

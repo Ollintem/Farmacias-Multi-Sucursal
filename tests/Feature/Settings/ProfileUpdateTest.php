@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Rol;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -7,6 +8,25 @@ test('profile page is displayed', function () {
     $this->actingAs($user = User::factory()->create());
 
     $this->get(route('profile.edit'))->assertOk();
+});
+
+test('el super admin no ve la opcion de eliminar cuenta en su perfil', function () {
+    $rol = Rol::firstOrCreate(['tipo_rol' => 'SuperAdmin'], ['descripcion' => 'Acceso total']);
+    $user = User::factory()->create(['id_rol' => $rol->id]);
+
+    $this->actingAs($user)
+        ->get(route('profile.edit'))
+        ->assertOk()
+        ->assertDontSee('Eliminar cuenta');
+});
+
+test('un usuario que no es super admin si ve la opcion de eliminar cuenta', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('profile.edit'))
+        ->assertOk()
+        ->assertSee('Eliminar cuenta');
 });
 
 test('profile information can be updated', function () {

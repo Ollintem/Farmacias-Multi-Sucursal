@@ -157,6 +157,19 @@ class Producto extends Model
     }
 
     /**
+     * Umbral de alerta de stock del producto en unidades base.
+     *
+     * Usa el stock_minimo configurado en la presentación principal; cuando
+     * no existe, cae al umbral histórico de 15 unidades.
+     */
+    public function stockMinimoAlerta(): int
+    {
+        $minimo = (int) ($this->presentacionPrincipalDe()?->stock_minimo ?? 0);
+
+        return $minimo > 0 ? $minimo : 15;
+    }
+
+    /**
      * Presentación con la que se registra un lote del producto: su principal.
      *
      * El alta de lotes no deja elegir presentación: el producto aporta la suya

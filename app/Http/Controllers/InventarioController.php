@@ -87,7 +87,7 @@ class InventarioController extends Controller
 
         $stockTotal = (int) $productos->sum('stock_sucursal');
         $stockCritico = $productos
-            ->filter(fn (Producto $producto) => (int) $producto->stock_sucursal <= 15)
+            ->filter(fn (Producto $producto) => (int) $producto->stock_sucursal <= $producto->stockMinimoAlerta())
             ->count();
         $valorTotal = $productos->sum(function (Producto $producto): float {
             $precio = $producto->precioUnidad()

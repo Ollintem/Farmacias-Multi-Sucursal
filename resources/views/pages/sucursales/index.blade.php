@@ -119,15 +119,12 @@
                             @forelse ($sucursales as $sucursal)
                                 <tr class="group transition hover:bg-emerald-50/50 dark:hover:bg-emerald-500/[0.04]" data-buscar="{{ $sucursal->nombre_sucursal }} {{ $sucursal->direccion }} {{ $sucursal->telefono }} {{ $sucursal->correo_contacto }} {{ $sucursal->es_activa ? 'activa' : 'inactiva' }}">
                                     <td class="px-5 py-4">
-                                        <div class="flex items-center gap-3.5">
-                                            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-[15px] font-black tracking-tight text-white shadow-md shadow-teal-900/15 ring-1 ring-black/5 transition group-hover:shadow-lg group-hover:shadow-teal-900/20">{{ strtoupper(mb_substr($sucursal->nombre_sucursal, 0, 1)) }}</span>
-                                            <div class="min-w-0">
-                                                <p class="truncate text-sm font-bold leading-none text-slate-900 dark:text-white">{{ $sucursal->nombre_sucursal }}</p>
-                                                <p class="theme-subtle mt-1 flex items-center gap-1 truncate text-xs">
-                                                    <svg class="h-3 w-3 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
-                                                    ID #{{ $sucursal->id }}
-                                                </p>
-                                            </div>
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-bold leading-none text-slate-900 dark:text-white">{{ $sucursal->nombre_sucursal }}</p>
+                                            <p class="theme-subtle mt-1 flex items-center gap-1 truncate text-xs">
+                                                <svg class="h-3 w-3 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                                                ID #{{ $sucursal->id }}
+                                            </p>
                                         </div>
                                     </td>
                                     <td class="max-w-[260px] px-5 py-4">

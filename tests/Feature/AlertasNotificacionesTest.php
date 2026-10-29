@@ -1,14 +1,22 @@
 <?php
 
+use App\Models\Alerta;
 use App\Models\AlertaUsuario;
+use App\Models\Categoria;
+use App\Models\Inventario;
+use App\Models\Lote;
 use App\Models\Modulo;
 use App\Models\PermisoActivado;
+use App\Models\PresentacionProducto;
+use App\Models\Producto;
+use App\Models\ProductoPresentacion;
 use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\Traspaso;
 use App\Models\User;
 use App\Support\AlertasFeed;
 use App\Support\AlertasResumen;
+use Illuminate\Support\Carbon;
 
 function crearSucursalAlertas(string $nombre): Sucursal
 {
@@ -112,6 +120,73 @@ it('formatea el tiempo corto estilo red social', function () {
         ->and(AlertasFeed::tiempoCorto(now()->subMinutes(5)))->toBe('5 min')
         ->and(AlertasFeed::tiempoCorto(now()->subHours(4)))->toBe('4 h')
         ->and(AlertasFeed::tiempoCorto(now()->subDays(3)))->toBe('3 d');
+});
+
+it('formatea fechas futuras como "en ..." y fechas lejanas con mes en espanol', function () {
+    expect(AlertasFeed::tiempoCorto(now()->addMinutes(5)))->toBe('en 5 min')
+        ->and(AlertasFeed::tiempoCorto(now()->addHours(4)))->toBe('en 4 h')
+        ->and(AlertasFeed::tiempoCorto(now()->addDays(3)))->toBe('en 3 d')
+        ->and(AlertasFeed::tiempoCorto(now()->addDays(10)))->not->toBe('ahora mismo')
+        ->and(AlertasFeed::tiempoCorto(Carbon::parse('2020-01-15 12:00:00')))->toBe('15 ene. 2020');
+});
+
+it('genera alertas de stock bajo cuando el stock llega al minimo configurado', function () {
+    $sucursal = crearSucursalAlertas('Stock Minimo');
+    $usuario = usuarioConAlertas($sucursal);
+
+    $categoria = Categoria::create(['nombre' => 'Analgésicos Stock']);
+    $caja = PresentacionProducto::create(['presentacion' => 'Caja', 'descripcion' => '']);
+    $producto = Producto::create([
+        'codigo_barras' => '7501234567890',
+        'nombre_producto' => 'Paracetamol Stock',
+        'descripcion' => '',
+        'stock' => 0,
+        'precio' => null,
+        'id_presentacion' => $caja->id,
+        'id_categoria' => $categoria->id,
+        'es_controlado' => false,
+        'es_activo' => true,
+    ]);
+
+    ProductoPresentacion::create([
+        'producto' => $producto->id,
+        'id_presentacion' => $caja->id,
+        'unidades' => 10,
+        'precio_presentacion' => 50,
+        'stock_minimo' => 10,
+        'es_principal' => true,
+    ]);
+
+    $lote = Lote::create([
+        'folio' => 'L-STOCK-ALERTA',
+        'stock_lote' => 8,
+        'id_producto' => $producto->id,
+        'id_presentacion' => $caja->id,
+        'fecha_caducidad' => '2027-12-31',
+    ]);
+
+    Inventario::create([
+        'id_sucursal' => $sucursal->id,
+        'id_lote' => $lote->id,
+        'stock_individual' => 8,
+    ]);
+
+    expect(collect(AlertasFeed::items($sucursal->id))->pluck('id'))
+        ->toContain("stock:{$producto->id}");
+
+    AlertasFeed::marcarUna($sucursal->id, "stock:{$producto->id}", $usuario->id);
+
+    expect(Alerta::where('entidad_tipo', 'producto')->where('entidad_id', $producto->id)->exists())->toBeTrue();
+
+    Inventario::query()->where('id_lote', $lote->id)->update(['stock_individual' => 20]);
+
+    expect(collect(AlertasFeed::listado($sucursal->id, $usuario->id))->pluck('id'))
+        ->not->toContain("stock:{$producto->id}");
+
+    expect(Alerta::where('entidad_tipo', 'producto')
+        ->where('entidad_id', $producto->id)
+        ->where('estado', Alerta::ESTADO_RESUELTA)
+        ->exists())->toBeTrue();
 });
 
 it('muestra el listado estilo facebook con avatar, tiempo y menu', function () {
