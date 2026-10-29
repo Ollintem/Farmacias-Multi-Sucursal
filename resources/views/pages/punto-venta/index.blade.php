@@ -10,24 +10,26 @@
             </header>
 
             <div class="pos-layout">
-                <main class="pos-catalog">
-                    <div class="pos-search-row">
-                        <label class="pos-search">
-                            <span aria-hidden="true">⌕</span>
-                            <input id="pos-search" type="search" placeholder="Buscar producto o código de barras..." autocomplete="off">
-                        </label>
-                        <button type="button" class="pos-scan-button" id="pos-scan-button" title="Escanear código de barras">Escanear</button>
-                        <button type="button" id="scanner-focus-button" class="hidden" tabindex="-1" aria-hidden="true">Abrir cámara</button>
-                        <input id="barcode-input" class="hidden" aria-hidden="true" tabindex="-1">
-                    </div>
-
-                    <div class="pos-toolbar">
-                        <div class="pos-categories" role="tablist" aria-label="Filtrar productos">
-                            <button type="button" class="pos-category is-active" data-category="all">Todos</button>
-                            <button type="button" class="pos-category" data-category="available">Disponibles</button>
-                            <button type="button" class="pos-category" data-category="low">Stock bajo</button>
+                <main class="pos-catalog !border-0 !bg-transparent !p-0 !shadow-none">
+                    <div class="mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                        <div class="flex items-center gap-3">
+                            <label class="relative flex-1">
+                                <svg class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input id="pos-search" type="search" placeholder="Buscar producto o código de barras..." autocomplete="off" class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:border-[#0e9384] focus:outline-none focus:ring-2 focus:ring-[#0e9384]/15 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500">
+                            </label>
+                            <button type="button" class="pos-scan-button shrink-0" id="pos-scan-button" title="Escanear código de barras">Escanear</button>
+                            <button type="button" id="scanner-focus-button" class="hidden" tabindex="-1" aria-hidden="true">Abrir cámara</button>
+                            <input id="barcode-input" class="hidden" aria-hidden="true" tabindex="-1">
                         </div>
-                        <span class="pos-product-count" id="pos-product-count">{{ $productos->count() }} productos</span>
+                        <div class="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 dark:border-zinc-700">
+                            <span class="hidden shrink-0 items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 sm:inline-flex">Presentación</span>
+                            <div class="pos-categories flex flex-1 gap-2 overflow-x-auto scrollbar-hide py-0.5" role="tablist" aria-label="Filtrar productos">
+                                <button type="button" class="pos-category is-active inline-flex items-center gap-1.5 !rounded-full !border-[1.5px] !px-4 !py-1.5 !text-xs !font-bold" data-category="all"><span class="h-1.5 w-1.5 rounded-full bg-white"></span>Todos</button>
+                                <button type="button" class="pos-category inline-flex items-center gap-1.5 !rounded-full !border-[1.5px] !border-slate-200 !bg-white !px-4 !py-1.5 !text-xs !font-bold !text-slate-700 hover:!border-[#0e9384] hover:!bg-emerald-50 dark:!border-zinc-600 dark:!bg-zinc-800 dark:!text-zinc-300" data-category="available"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span>Disponibles</button>
+                                <button type="button" class="pos-category inline-flex items-center gap-1.5 !rounded-full !border-[1.5px] !border-slate-200 !bg-white !px-4 !py-1.5 !text-xs !font-bold !text-slate-700 hover:!border-[#0e9384] hover:!bg-emerald-50 dark:!border-zinc-600 dark:!bg-zinc-800 dark:!text-zinc-300" data-category="low"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span>Stock bajo</button>
+                            </div>
+                            <span class="hidden shrink-0 items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 sm:inline-flex" id="pos-product-count">{{ $productos->count() }} productos</span>
+                        </div>
                     </div>
 
                     <div class="pos-product-grid" id="pos-product-grid">

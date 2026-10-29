@@ -31,77 +31,9 @@
                     </div>
                 </header>
                 <div class="p-5 sm:p-8">
-                <form method="POST" action="{{ route('proveedores.update', $proveedor) }}" class="space-y-8" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('proveedores.update', $proveedor) }}" class="space-y-8">
                     @csrf
                     @method('PUT')
-
-                    <div>
-                        <div class="mb-4">
-                            <div>
-                                <h2 class="text-sm font-bold">Foto de perfil</h2>
-                                <p class="theme-subtle text-xs">Opcional. Si no se sube, se muestra el avatar con la inicial.</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-col gap-4 sm:flex-row sm:items-start"
-                            x-data="{
-                                original: '{{ $proveedor->fotoUrl() }}',
-                                actual: '{{ $proveedor->fotoUrl() }}',
-                                previa: null,
-                                previaUrl: null,
-                                nombre: '',
-                                elegir(evento) {
-                                    const archivo = evento.target.files[0];
-                                    if (! archivo) {
-                                        return;
-                                    }
-                                    if (this.previaUrl) {
-                                        URL.revokeObjectURL(this.previaUrl);
-                                    }
-                                    this.previaUrl = URL.createObjectURL(archivo);
-                                    this.previa = this.previaUrl;
-                                    this.nombre = archivo.name;
-                                },
-                                confirmar() {
-                                    this.actual = this.previa;
-                                    this.limpiarPrevia();
-                                },
-                                cancelar() {
-                                    this.$refs.foto.value = '';
-                                    this.limpiarPrevia();
-                                },
-                                limpiarPrevia() {
-                                    if (this.previaUrl) {
-                                        URL.revokeObjectURL(this.previaUrl);
-                                    }
-                                    this.previa = null;
-                                    this.previaUrl = null;
-                                    this.nombre = '';
-                                }
-                            }">
-                            <div class="shrink-0">
-                                <template x-if="actual">
-                                    <img :src="actual" alt="Foto de {{ $proveedor->nombre_proveedor }}" class="h-20 w-20 rounded-2xl border border-slate-200 object-cover dark:border-slate-700">
-                                </template>
-                                <template x-if="! actual">
-                                    <span class="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-2xl font-black text-white">{{ strtoupper(mb_substr($proveedor->nombre_proveedor ?? '?', 0, 1)) }}</span>
-                                </template>
-                                <button type="button" x-show="actual !== original && ! previa" x-cloak @click="actual = original; $refs.foto.value = '';" class="mt-2 w-fit rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 transition hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25" title="Volver a la foto anterior">Sin guardar · deshacer</button>
-                            </div>
-                            <div class="flex-1">
-                                <input id="foto" x-ref="foto" type="file" name="foto" accept="image/jpeg,image/png,image/webp" class="theme-input" aria-label="Foto del proveedor" @change="elegir($event)">
-                                <p class="theme-subtle mt-1 text-xs">JPG, PNG o WebP de hasta 2 MB. Reemplaza la foto actual.</p>
-                                <div x-show="previa" x-cloak class="mt-3 flex flex-col gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-3 sm:flex-row sm:items-center dark:border-slate-700 dark:bg-slate-900/40">
-                                    <img :src="previa" alt="Vista previa de la foto nueva" class="h-14 w-14 shrink-0 rounded-xl border border-slate-200 object-cover dark:border-slate-700">
-                                    <p class="min-w-0 flex-1 truncate text-sm font-medium" x-text="nombre"></p>
-                                    <div class="flex shrink-0 gap-2">
-                                        <button type="button" @click="confirmar()" class="theme-button theme-button-primary !min-h-0 !px-4 !py-2 !text-xs">Confirmar foto</button>
-                                        <button type="button" @click="cancelar()" class="theme-button theme-button-secondary !min-h-0 !px-4 !py-2 !text-xs">Cancelar</button>
-                                    </div>
-                                </div>
-                                @error('foto')<span class="mt-1 block text-sm text-red-500">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
-                    </div>
 
                     <div>
                         <div class="mb-4">

@@ -62,67 +62,91 @@
     </template>
 
     <div class="module-page-inner noti-full noti-formal">
-    {{-- Encabezado homologado: hero verde compacto --}}
-    <header class="mb-6" aria-label="Encabezado de punto de venta">
+    {{-- Encabezado --}}
+    <header class="mb-4 flex flex-wrap items-start justify-between gap-4" aria-label="Encabezado de punto de venta">
         <div>
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Venta rápida · {{ (\App\Models\Sucursal::find(session('active_sucursal_id') ?? auth()->user()?->id_sucursal))?->nombre_sucursal ?? 'Sin sucursal' }}</p>
             <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Punto de venta</h1>
+            <p class="theme-subtle mt-1 text-sm hidden sm:block">Catálogo por sucursal · {{ $productos->count() }} producto(s) disponible(s)</p>
         </div>
-            </header>
-    {{-- Barra de búsqueda --}}
-    <div class="module-card p-3 sm:p-4">
-        <div class="flex items-center gap-3">
-            <div class="relative flex-1">
-                <svg class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
+        <span class="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 sm:inline-flex">
+            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+            {{ $productos->count() }} en catálogo
+        </span>
+    </header>
+
+    {{-- Barra superior: búsqueda + presentaciones — en escritorio vive en el topbar, aquí solo móvil --}}
+    <div class="module-card !p-0 overflow-hidden border border-slate-200 dark:border-zinc-700 shadow-sm lg:hidden">
+        <div class="flex flex-col">
+            {{-- Fila búsqueda --}}
+            <div class="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800">
+                <div class="relative flex-1 max-w-2xl">
+                    <span class="pointer-events-none absolute left-3.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
                     <input
                         type="search"
                         wire:model.live.debounce.300ms="busqueda"
                         placeholder="Buscar producto o código de barras..."
-                        class="theme-input !pl-11"
+                        class="w-full rounded-full border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-medium leading-none text-slate-700 placeholder:text-slate-400 shadow-sm focus:border-[#0e9384] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0e9384]/15 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-500"
                         aria-label="Buscar producto"
                     >
+                </div>
+                <span class="hidden shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-zinc-700 dark:text-zinc-300 dark:ring-zinc-600 lg:inline-flex">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    Filtra al instante
+                </span>
             </div>
-        </div>
-
-    {{-- Filtros por presentación --}}
-        <div class="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            <button
-                wire:click="$set('filtroPresentacion', '')"
-                class="shrink-0 rounded-full border-[1.5px] px-4 py-2 text-xs font-bold transition
-                    {{ $filtroPresentacion === '' ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100' }}"
-            >
-                Todos
-            </button>
-            @foreach($presentaciones as $presentacion)
-                <button
-                    wire:click="$set('filtroPresentacion', '{{ $presentacion->id }}')"
-                    class="shrink-0 rounded-full border-[1.5px] px-4 py-2 text-xs font-bold transition
-                        {{ $filtroPresentacion == $presentacion->id ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100' }}"
-                >
-                    {{ ucfirst($presentacion->presentacion) }}
-                </button>
-            @endforeach
+            {{-- Fila presentaciones --}}
+            <div class="flex items-center gap-3 bg-slate-50/50 px-4 py-3 dark:bg-zinc-800/50">
+                <span class="hidden shrink-0 items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 sm:inline-flex">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7h12m0 0l-4-4m4 4l-4 4M20 13H4m0 0l4-4m-4 4l4 4"/></svg>
+                    Presentación
+                </span>
+                <div class="flex flex-1 gap-2 overflow-x-auto scrollbar-hide py-0.5 pr-1">
+                    <button
+                        wire:click="$set('filtroPresentacion', '')"
+                        class="inline-flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-4 py-1.5 text-xs font-bold transition
+                            {{ $filtroPresentacion === '' ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-200 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100' }}"
+                    >
+                        <span class="h-1.5 w-1.5 rounded-full {{ $filtroPresentacion === '' ? 'bg-white' : 'bg-slate-300 dark:bg-zinc-500' }}"></span>
+                        Todos
+                    </button>
+                    @foreach($presentaciones as $presentacion)
+                        <button
+                            wire:click="$set('filtroPresentacion', '{{ $presentacion->id }}')"
+                            class="inline-flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-4 py-1.5 text-xs font-bold transition
+                                {{ $filtroPresentacion == $presentacion->id ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-200 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100' }}"
+                        >
+                            <span class="h-1.5 w-1.5 rounded-full {{ $filtroPresentacion == $presentacion->id ? 'bg-white' : 'bg-slate-300 dark:bg-zinc-500' }}"></span>
+                            {{ ucfirst($presentacion->presentacion) }}
+                        </button>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </div>
 
     {{-- Área de productos + carrito --}}
-    <div class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem] items-start">
         {{-- Grid de productos --}}
-        <div class="module-card min-w-0 p-3 sm:p-4">
-            <div class="mb-4 flex items-center justify-between">
-                <h2 class="text-lg font-bold">Catálogo</h2>
-                <span class="theme-badge">{{ $productos->count() }} {{ Str::plural('producto', $productos->count()) }}</span>
+        <div class="module-card min-w-0 !p-0 overflow-hidden flex flex-col max-h-[68vh] shadow-sm">
+            <div class="flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50/60 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800/60">
+                <h2 class="text-sm font-bold tracking-tight text-slate-700 dark:text-white">Catálogo ordenado</h2>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    {{ $productos->count() }} {{ Str::plural('producto', $productos->count()) }}
+                </span>
             </div>
+            <div class="flex-1 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-700">
             @if($productos->isEmpty())
-                <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 px-4 py-20 text-center dark:border-zinc-600">
-                    <span class="grid h-14 w-14 place-items-center rounded-2xl bg-teal-700/10 text-2xl text-teal-800 dark:bg-teal-400/10 dark:text-teal-300">Rx</span>
+                <div class="flex flex-col items-center justify-center px-4 py-16 text-center">
+                    <span class="grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-2xl text-slate-400 dark:bg-zinc-700 dark:text-zinc-500">Rx</span>
                     <p class="mt-3 text-sm font-semibold text-slate-600 dark:text-zinc-300">No se encontraron productos</p>
                     <p class="mt-1 text-xs text-slate-400 dark:text-zinc-500">Prueba con otro nombre o código de barras</p>
                 </div>
             @else
-                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 min-[1700px]:grid-cols-5">
+                <div class="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 min-[1700px]:grid-cols-5">
                     @foreach($productos as $producto)
                         <div class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-[#0e9384] hover:shadow-lg hover:shadow-teal-900/10 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:border-[#0c9f9c]">
                             @if($producto->es_controlado)
@@ -134,12 +158,12 @@
                                 <span class="absolute right-2 top-2 z-10 rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">¡Últimas!</span>
                             @endif
 
-                            <div class="flex h-24 items-center justify-center bg-gradient-to-br from-teal-50 via-emerald-50 to-slate-100 dark:from-teal-950/60 dark:via-zinc-800 dark:to-zinc-800">
-                                <span class="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-sm font-black text-white shadow-md shadow-teal-900/25 transition group-hover:scale-105">Rx</span>
+                            <div class="flex h-20 items-center justify-center bg-slate-50 dark:bg-zinc-800/60 border-b border-slate-100 dark:border-zinc-700/60">
+                                <span class="grid h-10 w-10 place-items-center rounded-xl bg-white text-sm font-black text-[#0c7569] shadow-sm ring-1 ring-slate-200 dark:bg-zinc-700 dark:text-emerald-300 dark:ring-zinc-600 transition group-hover:scale-105">Rx</span>
                             </div>
 
-                            <div class="flex flex-1 flex-col p-3">
-                                <h3 class="text-sm font-bold leading-tight text-slate-800 dark:text-white line-clamp-2" title="{{ $producto->nombre_producto }}">
+                            <div class="flex flex-1 flex-col gap-2 p-4">
+                                <h3 class="min-h-[2.5rem] text-[13px] font-bold leading-tight text-slate-800 dark:text-white line-clamp-2" title="{{ $producto->nombre_producto }}">
                                     {{ $producto->nombre_producto }}
                                 </h3>
 
@@ -147,15 +171,17 @@
                                     $principalPos = $producto->presentacionPrincipalDe();
                                 @endphp
                                 @if($principalPos)
-                                    <p class="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400">
-                                        {{ ucfirst($principalPos->presentacion?->presentacion ?? 'presentación') }}
-                                    </p>
+                                    <span class="inline-flex w-fit items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-zinc-700 dark:text-zinc-300 dark:ring-zinc-600">
+                                        {{ ucfirst($principalPos->presentacion?->presentacion ?? 'presentación') }} · {{ (int) $principalPos->unidades }} uds
+                                    </span>
+                                @else
+                                    <span class="text-xs font-medium text-slate-400 dark:text-zinc-500">Sin presentación</span>
                                 @endif
 
-                                <div class="mt-auto pt-2">
-                                    <div class="flex items-end justify-between gap-2">
+                                <div class="mt-auto flex flex-col gap-2 pt-1">
+                                    <div class="flex items-center justify-between gap-2">
                                         @if($principalPos)
-                                            <span class="text-lg font-extrabold text-[#0b6e68] dark:text-emerald-300">
+                                            <span class="text-base font-black text-[#0b6e68] dark:text-emerald-300">
                                                 ${{ number_format((float) $principalPos->precio_presentacion, 2) }}
                                             </span>
                                         @else
@@ -165,7 +191,7 @@
                                         <button
                                             wire:click="agregarAlCarrito({{ $producto->id }})"
                                             @disabled($producto->stock_sucursal <= 0)
-                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0e9384] text-white shadow-sm transition hover:bg-[#0c7569] hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                                             @if($producto->solo_caducado)
                                                 title="Sin existencias vigentes — solo lotes caducados"
                                                 aria-label="No se puede agregar {{ $producto->nombre_producto }}: solo tiene lotes caducados"
@@ -183,15 +209,17 @@
                                         </button>
                                     </div>
 
-                                    <p class="mt-1.5 text-xs {{ $producto->stock_sucursal <= 15 ? 'font-bold text-amber-700 dark:text-amber-300' : 'font-medium text-slate-500 dark:text-zinc-400' }}">
+                                    <span class="inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-1 text-[11px] font-semibold ring-1 {{ $producto->stock_sucursal <= 0 ? 'bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20' : ($producto->stock_sucursal <= 15 ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20' : 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20') }}">
+                                        <span class="h-1.5 w-1.5 rounded-full {{ $producto->stock_sucursal <= 0 ? 'bg-red-500' : ($producto->stock_sucursal <= 15 ? 'bg-amber-500' : 'bg-emerald-500') }}"></span>
                                         {{ $producto->stock_sucursal }} disp.
-                                    </p>
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
             @endif
+            </div>
         </div>
 
         {{-- Panel derecho: Carrito (desktop) --}}
@@ -314,6 +342,47 @@
         </div>
     </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const topbarSearch = document.getElementById('topbar-pos-search');
+            const livewireSearch = document.querySelector('[wire\\:model\\.live\\.debounce\\.300ms="busqueda"]');
+            const topbarPills = document.querySelectorAll('[data-topbar-presentacion]');
+            const getLivewire = () => {
+                const input = document.querySelector('[wire\\:model\\.live\\.debounce\\.300ms="busqueda"]');
+                const el = input ? input.closest('[wire\\:id]') : document.querySelector('[wire\\:id]');
+                if (!el) return null;
+                const id = el.getAttribute('wire:id') || el.getAttribute('wire\\:id');
+                return window.Livewire ? (window.Livewire.find ? window.Livewire.find(id) : null) : null;
+            };
+            if (topbarSearch && livewireSearch) {
+                topbarSearch.addEventListener('input', (e) => {
+                    livewireSearch.value = e.target.value;
+                    livewireSearch.dispatchEvent(new Event('input', {bubbles:true}));
+                });
+                document.addEventListener('livewire:update', () => {
+                    if (document.activeElement !== topbarSearch) topbarSearch.value = livewireSearch.value;
+                });
+            }
+            topbarPills.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-topbar-presentacion');
+                    const comp = getLivewire();
+                    if (comp) comp.set('filtroPresentacion', id);
+                    topbarPills.forEach(b => {
+                        b.classList.remove('border-[#0a5f56]','bg-[#0e9384]','text-white','shadow-sm');
+                        b.classList.add('border-slate-200','bg-white','text-slate-600');
+                        const dot = b.querySelector('span');
+                        if (dot) { dot.classList.remove('bg-white'); dot.classList.add('bg-slate-300','dark:bg-zinc-500'); }
+                    });
+                    btn.classList.remove('border-slate-200','bg-white','text-slate-600');
+                    btn.classList.add('border-[#0a5f56]','bg-[#0e9384]','text-white','shadow-sm');
+                    const dot = btn.querySelector('span');
+                    if (dot) { dot.classList.remove('bg-slate-300','dark:bg-zinc-500'); dot.classList.add('bg-white'); }
+                });
+            });
+        });
+    </script>
 
     {{-- Botón flotante carrito (móvil) --}}
     <div class="fixed bottom-5 right-5 z-40 sm:bottom-6 sm:right-6 lg:hidden">
@@ -452,7 +521,6 @@
             {{-- Backdrop --}}
             <div
                 class="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                wire:click="cerrarCobro"
                 x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="opacity-0"
                 x-transition:enter-end="opacity-100"
@@ -460,7 +528,7 @@
 
             {{-- Modal --}}
             <div
-                class="relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-900"
+                class="relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-2xl ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10"
                 x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="opacity-0 scale-95"
                 x-transition:enter-end="opacity-100 scale-100"
@@ -469,53 +537,56 @@
                 x-transition:leave-end="opacity-0 scale-95"
             >
                 {{-- Header --}}
-                <div class="bg-gradient-to-r from-[#0c7569] to-[#245a6b] px-6 py-5 text-center">
-                    <p class="text-sm font-medium text-teal-100">Total a pagar</p>
-                    <p class="mt-1 text-3xl font-black text-white">${{ number_format($total, 2) }}</p>
-                    <p class="mt-1 text-xs text-teal-100">{{ $cantidadProductos }} {{ Str::plural('producto', $cantidadProductos) }} en carrito</p>
+                <div class="relative bg-[#0e9384] px-8 py-7 text-center dark:bg-[#0c7569]">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-white/90">Total a pagar</p>
+                    <p class="mt-2 text-4xl font-black tracking-tight text-white">${{ number_format($total, 2) }}</p>
+                    <p class="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-[#0c7569] shadow-sm">
+                        <span class="h-1.5 w-1.5 rounded-full bg-[#0e9384]"></span>
+                        {{ $cantidadProductos }} {{ Str::plural('producto', $cantidadProductos) }} · {{ $cantidadArticulos }} artículos
+                    </p>
                 </div>
 
                 {{-- Error --}}
                 @if($errorVenta)
-                    <div class="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/30">
+                    <div class="mx-6 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/30">
                         <p class="text-sm font-medium text-red-700 dark:text-red-300">{{ $errorVenta }}</p>
                     </div>
                 @endif
 
                 {{-- Métodos de pago --}}
                 <div class="px-6 pt-5">
-                    <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Método de pago</p>
-                    <div class="grid grid-cols-2 gap-2">
+                    <p class="mb-3 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Método de pago</p>
+                    <div class="grid grid-cols-2 gap-3">
                         <button
                             wire:click="seleccionarMetodo('efectivo')"
-                            class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
-                                {{ $metodoPago === 'efectivo' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200' }}"
+                            class="flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-4 text-xs font-bold transition
+                                {{ $metodoPago === 'efectivo' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-md shadow-teal-900/10 dark:border-[#5ec8b4] dark:bg-[#0e9384]/20 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4]/40' }}"
                         >
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            <span class="grid h-9 w-9 place-items-center rounded-xl {{ $metodoPago === 'efectivo' ? 'bg-[#0e9384] text-white' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span>
                             Efectivo
                         </button>
                         <button
                             wire:click="seleccionarMetodo('tarjeta')"
-                            class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
-                                {{ $metodoPago === 'tarjeta' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200' }}"
+                            class="flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-4 text-xs font-bold transition
+                                {{ $metodoPago === 'tarjeta' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-md shadow-teal-900/10 dark:border-[#5ec8b4] dark:bg-[#0e9384]/20 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4]/40' }}"
                         >
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            <span class="grid h-9 w-9 place-items-center rounded-xl {{ $metodoPago === 'tarjeta' ? 'bg-[#0e9384] text-white' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg></span>
                             Tarjeta
                         </button>
                         <button
                             wire:click="seleccionarMetodo('transferencia')"
-                            class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
-                                {{ $metodoPago === 'transferencia' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200' }}"
+                            class="flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-4 text-xs font-bold transition
+                                {{ $metodoPago === 'transferencia' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-md shadow-teal-900/10 dark:border-[#5ec8b4] dark:bg-[#0e9384]/20 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4]/40' }}"
                         >
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                            <span class="grid h-9 w-9 place-items-center rounded-xl {{ $metodoPago === 'transferencia' ? 'bg-[#0e9384] text-white' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg></span>
                             Transf.
                         </button>
                         <button
                             wire:click="seleccionarMetodo('mixto')"
-                            class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-xs font-bold transition
-                                {{ $metodoPago === 'mixto' ? 'border-[#0c9f9c] bg-[#0c9f9c]/10 text-[#0c9f9c] dark:border-[#5ec8b4] dark:bg-[#0e9384]/25 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4] dark:hover:text-emerald-200' }}"
+                            class="flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-4 text-xs font-bold transition
+                                {{ $metodoPago === 'mixto' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-md shadow-teal-900/10 dark:border-[#5ec8b4] dark:bg-[#0e9384]/20 dark:text-[#a7f3d0]' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-[#5ec8b4]/40' }}"
                         >
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                            <span class="grid h-9 w-9 place-items-center rounded-xl {{ $metodoPago === 'mixto' ? 'bg-[#0e9384] text-white' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg></span>
                             Mixto
                         </button>
                     </div>
@@ -526,17 +597,16 @@
                     {{-- Efectivo --}}
                     @if($metodoPago === 'efectivo')
                         <div>
-                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Efectivo recibido</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-400">$</span>
+                            <label class="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-300">Efectivo recibido</label>
+                            <div class="flex items-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition focus-within:border-[#0e9384] focus-within:ring-4 focus-within:ring-[#0e9384]/10 dark:border-zinc-600 dark:bg-zinc-800">
+                                <span class="pl-4 text-2xl font-black text-slate-400 dark:text-zinc-500">$</span>
                                 <input
                                     x-ref="firstInput"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
+                                    type="text"
+                                    inputmode="decimal"
                                     wire:model.live="efectivoRecibido"
                                     placeholder="0.00"
-                                    class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-8 pr-4 text-lg font-bold text-slate-800 outline-none transition focus:border-[#0c9f9c] focus:ring-2 focus:ring-[#0c9f9c]/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                                    class="flex-1 border-0 bg-transparent py-4 pr-4 text-2xl font-black tracking-tight text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-zinc-500"
                                 >
                             </div>
 

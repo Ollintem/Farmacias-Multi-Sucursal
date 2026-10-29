@@ -17,25 +17,8 @@
                     </div>
                 </header>
                 <div class="p-5 sm:p-8">
-                <form method="POST" action="{{ route('proveedores.store') }}" class="space-y-8" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('proveedores.store') }}" class="space-y-8">
                     @csrf
-
-                    <div>
-                        <div class="mb-4">
-                            <div>
-                                <h2 class="text-sm font-bold">Foto de perfil</h2>
-                                <p class="theme-subtle text-xs">Opcional. Si no se sube, se muestra el avatar con la inicial.</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                            <img id="foto-vista-previa" src="" alt="Vista previa de la foto" class="hidden h-20 w-20 rounded-2xl border border-slate-200 object-cover dark:border-slate-700">
-                            <div class="flex-1">
-                                <input id="foto" type="file" name="foto" accept="image/jpeg,image/png,image/webp" class="theme-input" aria-label="Foto del proveedor" onchange="document.getElementById('foto-vista-previa').src = this.files[0] ? URL.createObjectURL(this.files[0]) : ''; document.getElementById('foto-vista-previa').classList.toggle('hidden', !this.files[0]);">
-                                <p class="theme-subtle mt-1 text-xs">JPG, PNG o WebP de hasta 2 MB.</p>
-                                @error('foto')<span class="mt-1 block text-sm text-red-500">{{ $message }}</span>@enderror
-                            </div>
-                        </div>
-                    </div>
 
                     <div>
                         <div class="mb-4">

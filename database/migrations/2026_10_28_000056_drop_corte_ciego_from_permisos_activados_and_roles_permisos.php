@@ -8,13 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('permisos_activados', function (Blueprint $table) {
-            $table->dropColumn('corte_ciego');
-        });
+        if (Schema::hasColumn('permisos_activados', 'corte_ciego')) {
+            Schema::table('permisos_activados', function (Blueprint $table) {
+                $table->dropColumn('corte_ciego');
+            });
+        }
 
-        Schema::table('roles_permisos', function (Blueprint $table) {
-            $table->dropColumn('corte_ciego');
-        });
+        if (Schema::hasColumn('roles_permisos', 'corte_ciego')) {
+            Schema::table('roles_permisos', function (Blueprint $table) {
+                $table->dropColumn('corte_ciego');
+            });
+        }
     }
 
     public function down(): void
