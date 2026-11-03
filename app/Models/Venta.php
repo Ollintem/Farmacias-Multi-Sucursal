@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $id_sucursal
+ * @property int|null $id_corte_caja
  * @property string $folio
  * @property string $descuento
  * @property string $total
@@ -19,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $creado_en
  * @property-read Sucursal $sucursal
  * @property-read Pago $pago
+ * @property-read CorteCaja|null $corteCaja
  */
 class Venta extends Model
 {
@@ -28,6 +30,7 @@ class Venta extends Model
 
     protected $fillable = [
         'id_sucursal',
+        'id_corte_caja',
         'folio',
         'descuento',
         'total',
@@ -37,6 +40,7 @@ class Venta extends Model
 
     protected $casts = [
         'id_sucursal' => 'integer',
+        'id_corte_caja' => 'integer',
         'descuento' => 'decimal:2',
         'total' => 'decimal:2',
         'creado_en' => 'datetime',
@@ -48,6 +52,14 @@ class Venta extends Model
     public function sucursal(): BelongsTo
     {
         return $this->belongsTo(Sucursal::class, 'id_sucursal');
+    }
+
+    /**
+     * @return BelongsTo<CorteCaja, $this>
+     */
+    public function corteCaja(): BelongsTo
+    {
+        return $this->belongsTo(CorteCaja::class, 'id_corte_caja');
     }
 
     /**

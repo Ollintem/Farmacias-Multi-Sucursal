@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AlertasController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CajaController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\EntradasController;
 use App\Http\Controllers\InventarioController;
@@ -88,7 +89,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/inventario/{producto}', [InventarioController::class, 'destroy'])->name('inventario.destroy')->middleware('checarPermisos:eliminar,inventario');
     Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store')->middleware('checarPermisos:crear,inventario');
     Route::post('/presentaciones', [PresentacionController::class, 'store'])->name('presentaciones.store')->middleware('checarPermisos:crear,inventario');
-    Route::view('/caja', 'pages.modulos.placeholder', ['tituloModulo' => 'Caja'])->name('caja.index')->middleware('checarPermisos:ver,caja');
+    Route::get('/caja', [CajaController::class, 'index'])->name('caja.index')->middleware('checarPermisos:ver,caja');
+    Route::get('/caja/auditoria', [CajaController::class, 'auditoria'])->name('caja.auditoria')->middleware('checarPermisos:ver,caja');
+    Route::post('/caja/abrir', [CajaController::class, 'abrir'])->name('caja.abrir')->middleware('checarPermisos:crear,caja');
+    Route::post('/caja/{corte}/movimiento', [CajaController::class, 'movimiento'])->name('caja.movimiento')->middleware('checarPermisos:editar,caja');
+    Route::post('/caja/{corte}/cerrar', [CajaController::class, 'cerrar'])->name('caja.cerrar')->middleware('checarPermisos:editar,caja');
     Route::view('/reportes', 'pages.modulos.placeholder', ['tituloModulo' => 'Reportes'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
     Route::get('/alertas', CentroNotificaciones::class)->name('alertas.index')->middleware('checarPermisos:ver,alertas');
     Route::get('/alertas/feed', [AlertasController::class, 'feed'])->name('alertas.feed')->middleware('checarPermisos:ver,alertas');

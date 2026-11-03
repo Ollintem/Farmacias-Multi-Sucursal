@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -11,6 +13,7 @@ use Illuminate\Support\Carbon;
  * @property int $id_sucursal
  * @property int $id_usuario
  * @property string $turno
+ * @property string $caja
  * @property string $efectivo_inicial
  * @property string $efectivo_declarado
  * @property string $efectivo_esperado
@@ -21,6 +24,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon $creado_en
  * @property-read Sucursal $sucursal
  * @property-read User $usuario
+ * @property-read Collection<int, MovimientoCaja> $movimientos
+ * @property-read Collection<int, Venta> $ventas
  */
 class CorteCaja extends Model
 {
@@ -32,6 +37,7 @@ class CorteCaja extends Model
         'id_sucursal',
         'id_usuario',
         'turno',
+        'caja',
         'efectivo_inicial',
         'efectivo_declarado',
         'efectivo_esperado',
@@ -67,5 +73,26 @@ class CorteCaja extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_usuario');
+    }
+
+    /**
+     * @return HasMany<MovimientoCaja, $this>
+     */
+    public function movimientos(): HasMany
+    {
+        return $this->hasMany(MovimientoCaja::class, 'id_corte_caja');
+    }
+
+    /**
+     * @return HasMany<Venta, $this>
+     */
+    public function ventas(): HasMany
+    {
+        return $this->hasMany(Venta::class, 'id_corte_caja');
+    }
+
+    public function esAbierto(): bool
+    {
+        return $this->estado === 'abierto';
     }
 }

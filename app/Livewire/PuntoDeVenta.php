@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\ConfiguracionBancaria;
+use App\Models\CorteCaja;
 use App\Models\Inventario;
 use App\Models\Pago;
 use App\Models\PresentacionProducto;
@@ -708,6 +709,14 @@ class PuntoDeVenta extends Component
             return;
         }
 
+        // Validar caja abierta para la sucursal (multi-caja: cualquier caja abierta de la sucursal, prioriza la del usuario)
+        $corteActivo = $this->corteActivoParaVenta((int) $sucursalId, (int) $usuario->id);
+        if (! $corteActivo) {
+            $this->errorVenta = 'No hay caja abierta en esta sucursal. Abre una caja en el módulo Caja antes de cobrar.';
+
+            return;
+        }
+
         // Validate payment BEFORE setting procesando (puedeConfirmar returns false when procesando=true)
         if (! $this->puedeConfirmar) {
             $this->errorVenta = 'El monto recibido es insuficiente.';
@@ -750,7 +759,7 @@ class PuntoDeVenta extends Component
             // Generate folio
             $folio = 'V-'.date('Ymd').'-'.str_pad((string) (Venta::count() + 1), 5, '0', STR_PAD_LEFT);
 
-            $resultado = DB::transaction(function () use ($folio, $sucursalId) {
+            $resultado = DB::transaction(function () use ($folio, $sucursalId, $corteActivo) {
                 // Create payment(s)
                 $pagoPrincipal = null;
                 $pagosAdicionales = [];
@@ -813,9 +822,10 @@ class PuntoDeVenta extends Component
                     throw new \Exception('No se pudo registrar el pago.');
                 }
 
-                // Create venta
+                // Create venta vinculada al corte activo (si existe)
                 $venta = Venta::create([
                     'id_sucursal' => (int) $sucursalId,
+                    'id_corte_caja' => $corteActivo?->id,
                     'folio' => $folio,
                     'descuento' => 0,
                     'total' => $this->total,
@@ -1001,6 +1011,31 @@ class PuntoDeVenta extends Component
             ->whereRaw(self::FECHA_EFECTIVA_LOTE.' IS NOT NULL')
             ->whereRaw(self::FECHA_EFECTIVA_LOTE.' <= ?', [now()->toDateString()])
             ->exists();
+    }
+
+    /**
+     * Corte activo para asignar la venta: prioriza el abierto por el mismo usuario en la sucursal, si no cualquier abierto.
+     */
+    private function corteActivoParaVenta(int $sucursalId, int $usuarioId): ?CorteCaja
+    {
+        if ($sucursalId <= 0) {
+            return null;
+        }
+
+        $cortePropio = CorteCaja::where('id_sucursal', $sucursalId)
+            ->where('estado', 'abierto')
+            ->where('id_usuario', $usuarioId)
+            ->orderByDesc('fecha_inicio')
+            ->first();
+
+        if ($cortePropio) {
+            return $cortePropio;
+        }
+
+        return CorteCaja::where('id_sucursal', $sucursalId)
+            ->where('estado', 'abierto')
+            ->orderByDesc('fecha_inicio')
+            ->first();
     }
 
     public function render(): View

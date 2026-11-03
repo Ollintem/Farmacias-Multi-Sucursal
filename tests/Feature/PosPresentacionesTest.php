@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\PuntoDeVenta;
+use App\Models\CorteCaja;
 use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\PresentacionProducto;
@@ -35,6 +36,19 @@ function crearContextoPos(object $test): array
     // Sesión y auth ANTES de crear productos para que el trait los vincule a la sucursal
     $test->actingAs($user);
     session(['active_sucursal_id' => $sucursal->id]);
+
+    CorteCaja::create([
+        'id_sucursal' => $sucursal->id,
+        'id_usuario' => $user->id,
+        'caja' => 'Caja 1',
+        'turno' => 'Matutino',
+        'efectivo_inicial' => 0,
+        'efectivo_declarado' => 0,
+        'efectivo_esperado' => 0,
+        'diferencia' => 0,
+        'fecha_inicio' => now(),
+        'estado' => 'abierto',
+    ]);
 
     return [$sucursal, $user, $caja];
 }

@@ -437,6 +437,79 @@
                             @endforeach
                         </div>
                     </div>
+                <?php elseif(request()->routeIs('caja.*')): ?>
+                    <?php
+                        $topSucursalIdCaja = (int) (session('active_sucursal_id', auth()->user()?->id_sucursal ?? request()->query('sucursal') ?? 0) ?: 0);
+                        if (!$topSucursalIdCaja) {
+                            $topSucursalIdCaja = \App\Models\Sucursal::orderBy('nombre_sucursal')->value('id') ?? 0;
+                        }
+                        $topAbiertasCaja = $topSucursalIdCaja ? \App\Models\CorteCaja::where('id_sucursal', $topSucursalIdCaja)->where('estado', 'abierto')->count() : 0;
+                        $topEsperadoCaja = 0.0;
+                        if ($topSucursalIdCaja && $topAbiertasCaja > 0) {
+                            $topCortesAbiertos = \App\Models\CorteCaja::where('id_sucursal', $topSucursalIdCaja)->where('estado', 'abierto')->get();
+                            foreach ($topCortesAbiertos as $topCorte) {
+                                $topVentasCorte = (float) \App\Models\Venta::where('id_corte_caja', $topCorte->id)->sum('total');
+                                if ($topVentasCorte === 0.0) {
+                                    $topVentasCorte = (float) \App\Models\Venta::where('ventas.id_sucursal', $topCorte->id_sucursal)->where('ventas.creado_en', '>=', $topCorte->fecha_inicio)->whereNull('ventas.id_corte_caja')->join('pagos','pagos.id','=','ventas.id_pago')->where('pagos.metodo','Efectivo')->sum('ventas.total');
+                                }
+                                $topIngresos = (float) \App\Models\MovimientoCaja::where('id_corte_caja', $topCorte->id)->where('tipo','ingreso')->sum('monto');
+                                $topRetiros = (float) \App\Models\MovimientoCaja::where('id_corte_caja', $topCorte->id)->where('tipo','retiro')->sum('monto');
+                                $topEsperadoCaja += round((float)$topCorte->efectivo_inicial + $topVentasCorte + $topIngresos - $topRetiros, 2);
+                            }
+                        }
+                        $topHoyInicio = now()->startOfDay();
+                        $topVentasHoyCaja = $topSucursalIdCaja ? (float) \App\Models\Venta::where('id_sucursal', $topSucursalIdCaja)->where('creado_en','>=',$topHoyInicio)->sum('total') : 0.0;
+                        $topHistorialCaja = $topSucursalIdCaja ? \App\Models\CorteCaja::where('id_sucursal', $topSucursalIdCaja)->where('estado','cerrado')->count() : 0;
+                    ?>
+                    <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-zinc-800">
+                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            </span>
+                            <span class="leading-none">
+                                <span class="block text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Abiertas</span>
+                                <span class="flex items-baseline gap-1.5">
+                                    <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topAbiertasCaja }}</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">caja(s)</span>
+                                </span>
+                            </span>
+                        </span>
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </span>
+                            <span class="leading-none">
+                                <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Esperado</span>
+                                <span class="flex items-baseline gap-1.5">
+                                    <span class="text-sm font-black leading-none text-slate-900 dark:text-white">${{ number_format($topEsperadoCaja, 2) }}</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">abiertas</span>
+                                </span>
+                            </span>
+                        </span>
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-sky-200 bg-white px-3 py-1.5 shadow-sm dark:border-sky-500/30 dark:bg-zinc-800">
+                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </span>
+                            <span class="leading-none">
+                                <span class="block text-[10px] font-bold uppercase tracking-widest text-sky-700 dark:text-sky-300">Ventas hoy</span>
+                                <span class="flex items-baseline gap-1.5">
+                                    <span class="text-sm font-black leading-none text-slate-900 dark:text-white">${{ number_format($topVentasHoyCaja, 2) }}</span>
+                                </span>
+                            </span>
+                        </span>
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-amber-200 bg-white px-3 py-1.5 shadow-sm dark:border-amber-500/30 dark:bg-zinc-800">
+                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </span>
+                            <span class="leading-none">
+                                <span class="block text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">Historial</span>
+                                <span class="flex items-baseline gap-1.5">
+                                    <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topHistorialCaja }}</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">cierre(s)</span>
+                                </span>
+                            </span>
+                        </span>
+                    </div>
                 <?php endif; ?>
             </div>
             <div class="flex shrink-0 items-center gap-2">
@@ -452,6 +525,35 @@
                 @if(request()->routeIs('usuarios.*') && (auth()->user()?->permisosHabilitados('crear', 'usuarios') ?? false))
                     <button type="button" x-on:click="$dispatch('open-modal-rol')" class="theme-button theme-button-secondary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Nuevo rol</button>
                     <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Nuevo usuario</a>
+                @endif
+                @if(request()->routeIs('caja.index'))
+                    <button type="button" x-on:click="$dispatch('open-abrir-caja')" class="group inline-flex items-center gap-2 rounded-full bg-[#0e9384] px-4 py-2 text-xs font-bold text-white shadow-sm ring-1 ring-[#0e9384]/20 hover:bg-[#0c7a6e] hover:shadow-md hover:-translate-y-px active:translate-y-0 transition-all" title="Abrir nueva caja">
+                        <span class="grid h-6 w-6 place-items-center rounded-full bg-white text-[#0e9384] shadow-sm ring-1 ring-black/5 transition-transform group-hover:rotate-90">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        </span>
+                        Abrir caja
+                    </button>
+                    <button type="button" x-on:click="$dispatch('open-resumen-dia')" class="group inline-flex items-center gap-2 rounded-full bg-[#0e9384] px-4 py-2 text-xs font-bold text-white shadow-sm ring-1 ring-[#0e9384]/20 hover:bg-[#0c7a6e] hover:shadow-md hover:-translate-y-px active:translate-y-0 transition-all" title="Ver resumen del día">
+                        <span class="grid h-6 w-6 place-items-center rounded-full bg-white text-[#0e9384] shadow-sm ring-1 ring-black/5">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M3 13h2.5a2 2 0 012-2H9a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6zM11 9h2.5a2 2 0 012-2H17a2 2 0 012 2v8a2 2 0 01-2 2h-2.5a2 2 0 01-2-2V9zM19 15h1a2 2 0 012 2v2a2 2 0 01-2 2h-1"/></svg>
+                        </span>
+                        Resumen
+                    </button>
+                    @php($cajaTopBtnSucursal = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
+                    <a href="{{ route('caja.auditoria', array_filter(['sucursal' => $cajaTopBtnSucursal])) }}" class="group inline-flex items-center gap-2 rounded-full bg-[#0e9384] px-4 py-2 text-xs font-bold text-white shadow-sm ring-1 ring-[#0e9384]/20 hover:bg-[#0c7a6e] hover:shadow-md hover:-translate-y-px active:translate-y-0 transition-all" title="Historial y auditoría en ventana dedicada">
+                        <span class="grid h-6 w-6 place-items-center rounded-full bg-white text-[#0e9384] shadow-sm ring-1 ring-black/5">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M12 12h4M12 16h4M9 12h.01M9 16h.01"/></svg>
+                        </span>
+                        Historial
+                    </a>
+                @elseif(request()->routeIs('caja.auditoria'))
+                    @php($cajaVolverSucursal = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
+                    <a href="{{ route('caja.index', array_filter(['sucursal' => $cajaVolverSucursal])) }}" class="group inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all" title="Volver a operación de caja">
+                        <span class="grid h-6 w-6 place-items-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200 group-hover:bg-slate-200 dark:bg-zinc-700 dark:text-zinc-300 dark:ring-zinc-600">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        </span>
+                        Volver a caja
+                    </a>
                 @endif
                 <livewire:campana-notificaciones />
                 <x-theme-toggle :compacto="true" />
