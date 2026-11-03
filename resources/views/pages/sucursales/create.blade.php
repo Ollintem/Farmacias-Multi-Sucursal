@@ -71,10 +71,17 @@
                     <div>
                         <div class="mb-4">
                             <div>
-                                <h2 class="text-sm font-bold">Horario operativo</h2>
-                                <p class="theme-subtle text-xs">Define cuándo se encuentra disponible para atención.</p>
+                                <h2 class="text-sm font-bold">Estado de la sucursal</h2>
+                                <p class="theme-subtle text-xs">Marca para que aparezca en los selectores y listados operativos.</p>
                             </div>
                         </div>
+                        <label class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                            <input type="checkbox" name="es_activa" value="1" @checked(old('es_activa', $sucursal?->es_activa ?? true))>
+                            <span>
+                                <span class="block text-sm font-bold text-emerald-900 dark:text-emerald-100">Sucursal activa</span>
+                                <span class="block text-xs text-emerald-800/75 dark:text-emerald-200/75">Permite identificarla como disponible para la operación.</span>
+                            </span>
+                        </label>
                         <div class="grid gap-5 sm:grid-cols-2">
                             <div>
                                 <label for="hora_apertura" class="mb-2 block text-sm font-semibold">Hora de apertura</label>

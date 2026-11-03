@@ -89,8 +89,10 @@ class SucursalesController extends Controller
             'correo_contacto' => ['nullable', 'email', 'max:150'],
             'hora_apertura' => ['required', 'date_format:H:i'],
             'hora_cierre' => ['required', 'date_format:H:i', 'after:hora_apertura'],
+            'es_activa' => ['boolean'],
         ]);
 
+        $data['es_activa'] = $request->boolean('es_activa');
         $sucursal->update($data);
 
         return redirect()->route('sucursales.index')->with('success', 'Sucursal actualizada correctamente.');
