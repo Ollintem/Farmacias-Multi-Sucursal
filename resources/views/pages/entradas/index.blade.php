@@ -4,7 +4,7 @@
             @php($tipoActual = $tipo ?? request('tipo', 'todas'))
             @php($totalTodas = $totalEntradas ?? ($entradas->count() ?? 0))
             @php($esTodas = in_array($tipoActual, ['todas', '', null], true))
-            @php($esPedidos = $tipoActual === 'pedidos')
+            @php($esCompras = $tipoActual === 'compras')
             @php($esTraspasos = $tipoActual === 'traspasos')
 
             {{-- Encabezado con botones a la derecha --}}
@@ -14,16 +14,16 @@
                         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Almacén · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
                         <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Entradas de almacén</h1>
                         <p class="theme-subtle mt-1 text-sm">
-                            @if($esTodas) Pedidos y traspasos recibidos
-                            @elseif($esPedidos) Recepción de pedidos de proveedores
+                            @if($esTodas) Compras y traspasos recibidos
+                            @elseif($esCompras) Recepción de compras a proveedores
                             @else Gestión de traspasos entre sucursales @endif
                             · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}
                         </p>
                     </div>
                     <div class="flex flex-wrap gap-2 shrink-0">
-                        @if(Route::has('pedidos.create'))
-                            <a href="{{ route('pedidos.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary whitespace-nowrap">
-                                + Nuevo pedido
+                        @if(Route::has('compras.create'))
+                            <a href="{{ route('compras.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary whitespace-nowrap">
+                                + Nueva compra
                             </a>
                         @endif
                         @if(Route::has('traspasos.create'))
@@ -222,8 +222,8 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0v10l-8 4m8-14l-8 4m0 10V11m0 10l-8-4V7m8 4L4 7"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
-                            <h3>{{ $tipoActual === 'pedidos' ? 'Pedidos recibidos' : 'Todas las entradas' }}</h3>
-                            <p class="theme-subtle text-sm">{{ $tipoActual === 'pedidos' ? 'Recepción de proveedores en ' . ($selectedSucursal?->nombre_sucursal ?? 'la sucursal') . '.' : 'Pedidos y traspasos recibidos en ' . ($selectedSucursal?->nombre_sucursal ?? 'la sucursal') . '.' }}</p>
+                            <h3>{{ $tipoActual === 'compras' ? 'Compras recibidas' : 'Todas las entradas' }}</h3>
+                            <p class="theme-subtle text-sm">{{ $tipoActual === 'compras' ? 'Recepción de proveedores en ' . ($selectedSucursal?->nombre_sucursal ?? 'la sucursal') . '.' : 'Compras y traspasos recibidos en ' . ($selectedSucursal?->nombre_sucursal ?? 'la sucursal') . '.' }}</p>
                         </div>
                         <span class="seg-contador">{{ ($entradas ?? collect())->count() }}</span>
                     </div>
@@ -248,7 +248,7 @@
                                             @if($tipoEntrada === 'traspaso' || $tipoEntrada === 'traspasos')
                                                 <span class="stat-pill warning">Traspaso</span>
                                             @else
-                                                <span class="stat-pill positive">Pedido</span>
+                                                <span class="stat-pill positive">Compra</span>
                                             @endif
                                         </td>
                                         <td>

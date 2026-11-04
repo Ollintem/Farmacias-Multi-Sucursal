@@ -62,28 +62,33 @@ function proveedorLotePrueba(string $nombre): Proveedor
     ]);
 }
 
-test('el alta de lote guarda el proveedor elegido', function () {
+test('la compra asigna el proveedor elegido a sus lotes', function () {
     $escenario = escenarioLoteProveedor();
     $proveedor = proveedorLotePrueba('Farmacéutica Norte');
 
     $this->actingAs($escenario['usuario'])
         ->withSession(['active_sucursal_id' => $escenario['sucursal']->id])
-        ->post(route('lotes.store'), [
-            'folio' => 'L-PROV-001',
+        ->post(route('compras.store'), [
             'id_proveedor' => $proveedor->id,
-            'sucursal' => $escenario['sucursal']->id,
-            'entregado_en' => '2026-10-01',
-            'fecha_caducidad' => '2027-10-01',
-            'id_producto' => $escenario['producto']->id,
-            'id_presentacion' => $escenario['caja']->id,
-            'stock' => 12,
+            'id_sucursal' => $escenario['sucursal']->id,
+            'lotes' => [
+                [
+                    'id_producto' => $escenario['producto']->id,
+                    'cantidad' => 12,
+                    'fecha_entrada' => '2026-10-01',
+                    'fecha_caducidad' => '2027-10-01',
+                ],
+            ],
         ])
-        ->assertRedirect()
+        ->assertRedirect(route('entradas-de-almacen.index', [
+            'sucursal' => $escenario['sucursal']->id,
+            'tipo' => 'compras',
+        ]))
         ->assertSessionHas('success');
 
     $this->assertDatabaseHas('lotes', [
-        'folio' => 'L-PROV-001',
         'id_proveedor' => $proveedor->id,
+        'id_producto' => $escenario['producto']->id,
     ]);
 });
 

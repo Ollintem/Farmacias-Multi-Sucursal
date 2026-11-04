@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Pedido;
+use App\Models\Compra;
 use App\Models\Proveedor;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -59,7 +59,7 @@ test('el listado muestra los proveedores con sus datos de contacto', function ()
         ->assertSee(route('proveedores.destroy', $proveedor), false);
 });
 
-test('eliminar quita al proveedor sin pedidos del directorio', function () {
+test('eliminar quita al proveedor sin compras del directorio', function () {
     [, $proveedor] = crearContextoProveedores($this);
 
     $response = $this->delete(route('proveedores.destroy', $proveedor));
@@ -70,10 +70,10 @@ test('eliminar quita al proveedor sin pedidos del directorio', function () {
     expect(Proveedor::find($proveedor->id))->toBeNull();
 });
 
-test('eliminar se bloquea cuando el proveedor tiene pedidos', function () {
+test('eliminar se bloquea cuando el proveedor tiene compras', function () {
     [$sucursal, $proveedor, $user] = crearContextoProveedores($this);
 
-    Pedido::create([
+    Compra::create([
         'id_proveedor' => $proveedor->id,
         'id_sucursal' => $sucursal->id,
         'pedido_por' => $user->id,

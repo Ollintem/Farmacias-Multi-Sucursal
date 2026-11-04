@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $folio
  * @property int $stock_lote
- * @property int|null $id_pedido
+ * @property int|null $id_compra
  * @property int|null $id_proveedor
  * @property int|null $id_producto
  * @property int|null $id_presentacion
@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property Carbon|null $fecha_caducidad
  * @property Carbon|null $fecha_de_caducidad
  * @property Carbon|null $anulado_en
- * @property-read Pedido|null $pedido
+ * @property-read Compra|null $compra
  * @property-read Proveedor|null $proveedor
  * @property-read Producto|null $producto
  */
@@ -33,7 +33,7 @@ class Lote extends Model
     protected $fillable = [
         'folio',
         'stock_lote',
-        'id_pedido',
+        'id_compra',
         'id_proveedor',
         'id_producto',
         'id_presentacion',
@@ -80,18 +80,18 @@ class Lote extends Model
     }
 
     /**
-     * Pedido de compra que originó el lote (si vino de uno).
+     * Compra que originó el lote (si vino de una).
      *
-     * @return BelongsTo<Pedido, $this>
+     * @return BelongsTo<Compra, $this>
      */
-    public function pedido(): BelongsTo
+    public function compra(): BelongsTo
     {
-        return $this->belongsTo(Pedido::class, 'id_pedido');
+        return $this->belongsTo(Compra::class, 'id_compra');
     }
 
     /**
      * Proveedor registrado directamente en el lote. Para lotes previos
-     * a la columna sigue resolviéndose vía pedido (`$lote->pedido?->proveedor`).
+     * a la columna sigue resolviéndose vía compra (`$lote->compra?->proveedor`).
      *
      * @return BelongsTo<Proveedor, $this>
      */

@@ -120,7 +120,7 @@ class SucursalesController extends Controller
     }
 
     /**
-     * Elimina una sucursal sin movimiento (usuarios, pedidos, inventario,
+     * Elimina una sucursal sin movimiento (usuarios, compras, inventario,
      * traspasos, ventas o cortes de caja la bloquean porque el historial
      * debe conservarse).
      *
@@ -135,8 +135,8 @@ class SucursalesController extends Controller
             $bloqueos[] = 'usuarios asignados';
         }
 
-        if ($sucursal->pedidos()->exists()) {
-            $bloqueos[] = 'pedidos registrados';
+        if ($sucursal->compras()->exists()) {
+            $bloqueos[] = 'compras registradas';
         }
 
         if ($sucursal->inventarios()->exists()) {

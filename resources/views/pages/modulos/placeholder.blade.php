@@ -20,7 +20,7 @@
         ],
         'Proveedores' => [
             'siglas' => 'Pv',
-            'descripcion' => 'Aquí se administrará el catálogo de proveedores: datos de contacto, condiciones de entrega y su vínculo con pedidos y lotes.',
+            'descripcion' => 'Aquí se administrará el catálogo de proveedores: datos de contacto, condiciones de entrega y su vínculo con compras y lotes.',
         ],
         'Traspasos' => [
             'siglas' => 'Tr',

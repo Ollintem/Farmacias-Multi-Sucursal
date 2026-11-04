@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\Categoria;
+use App\Models\Compra;
 use App\Models\Inventario;
 use App\Models\Lote;
-use App\Models\Pedido;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\ProductoPresentacion;
@@ -161,7 +161,7 @@ test('la pestana productos filtra por codigo y por nombre', function () {
         ->assertDontSee('Ibuprofeno 400mg');
 });
 
-test('el alta de lote vincula el inventario a la sucursal', function () {
+test('la compra vincula el lote y el inventario a la sucursal al registrarla', function () {
     [$sucursalA] = contextoBusquedaInventario($this);
 
     $proveedor = Proveedor::create([
@@ -170,12 +170,6 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
         'unidad_entrega' => 'Caja',
         'telefono' => '5550001',
         'correo' => 'busq@example.com',
-    ]);
-
-    $pedido = Pedido::create([
-        'id_proveedor' => $proveedor->id,
-        'id_sucursal' => $sucursalA->id,
-        'pedido_por' => auth()->id(),
     ]);
 
     $caja = PresentacionProducto::where('presentacion', 'Caja')->firstOrFail();
@@ -190,26 +184,30 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
     ]);
 
     $this->withSession(['active_sucursal_id' => $sucursalA->id])
-        ->post(route('lotes.store'), [
-            'folio' => 'L-BUSQ-2',
-            'id_pedido' => $pedido->id,
+        ->post(route('compras.store'), [
             'id_proveedor' => $proveedor->id,
-            'sucursal' => $sucursalA->id,
-            'entregado_en' => '2026-09-01',
-            'fecha_caducidad' => '2027-09-01',
-            'id_producto' => $producto->id,
-            'id_presentacion' => $caja->id,
-            'stock' => 10,
+            'id_sucursal' => $sucursalA->id,
+            'lotes' => [
+                [
+                    'id_producto' => $producto->id,
+                    'cantidad' => 10,
+                    'fecha_entrada' => '2026-09-01',
+                    'fecha_caducidad' => '2027-09-01',
+                ],
+            ],
         ])
-        ->assertRedirect(route('lotes.index', ['sucursal' => $sucursalA->id]));
+        ->assertRedirect(route('entradas-de-almacen.index', [
+            'sucursal' => $sucursalA->id,
+            'tipo' => 'compras',
+        ]));
 
-    $lote = Lote::where('folio', 'L-BUSQ-2')->firstOrFail();
+    $compra = Compra::latest('id')->firstOrFail();
+    $lote = $compra->lotes()->firstOrFail();
 
     // 10 Cajas x 10 uds = 100 unidades; total = 6 del lote previo + 100 del nuevo.
-    expect($lote->id_producto)->toBe($producto->id)
-        ->and($lote->pedido?->proveedor?->nombre_proveedor)->toBe('Proveedor Busq')
-        ->and($lote->stock_lote)->toBe(100)
-        ->and($producto->fresh()->stockTotal())->toBe(106);
+    expect((int) $lote->id_producto)->toBe((int) $producto->id)
+        ->and($lote->compra?->proveedor?->nombre_proveedor)->toBe('Proveedor Busq')
+        ->and((int) $lote->stock_lote)->toBe(100);
 
     $this->assertDatabaseHas('inventario', [
         'id_sucursal' => $sucursalA->id,
@@ -217,30 +215,29 @@ test('el alta de lote vincula el inventario a la sucursal', function () {
         'stock_individual' => 100,
     ]);
 
-    // El proveedor del lote se resuelve vía pedido en el listado.
+    expect($producto->fresh()->stockTotal())->toBe(106);
+
+    // El proveedor del lote se resuelve vía compra en el listado.
     $this->withSession(['active_sucursal_id' => $sucursalA->id])
-        ->get(route('lotes.index', ['buscar' => 'L-BUSQ-2']))
+        ->get(route('lotes.index', ['buscar' => $lote->folio]))
         ->assertOk()
         ->assertSee('Proveedor Busq');
 });
 
-test('el formulario de lote ofrece los productos y su presentacion fija', function () {
+test('el formulario de compra ofrece los productos', function () {
     [$sucursalA] = contextoBusquedaInventario($this);
 
     $this->withSession(['active_sucursal_id' => $sucursalA->id])
-        ->get(route('lotes.create'))
+        ->get(route('compras.create'))
         ->assertOk()
-        ->assertSee('name="id_producto"', false)
-        ->assertSee('name="id_presentacion"', false)
+        ->assertSee('name="lotes[0][id_producto]"', false)
         ->assertSee('Paracetamol 500mg')
         ->assertSee('Ibuprofeno 400mg');
 });
 
-test('el alta de lote rechaza una presentacion que no pertenece al producto', function () {
+test('la compra rechaza la caducidad anterior a la fecha de entrada', function () {
     [$sucursalA] = contextoBusquedaInventario($this);
 
-    $producto = Producto::where('codigo_barras', '7500000000219')->firstOrFail();
-    $frasco = PresentacionProducto::create(['presentacion' => 'Frasco', 'descripcion' => '']);
     $proveedor = Proveedor::create([
         'nombre_proveedor' => 'Proveedor Busq',
         'direccion' => 'Calle 1',
@@ -249,18 +246,22 @@ test('el alta de lote rechaza una presentacion que no pertenece al producto', fu
         'correo' => 'busq@example.com',
     ]);
 
-    $this->withSession(['active_sucursal_id' => $sucursalA->id])
-        ->post(route('lotes.store'), [
-            'folio' => 'L-BUSQ-3',
-            'id_proveedor' => $proveedor->id,
-            'sucursal' => $sucursalA->id,
-            'entregado_en' => '2026-09-01',
-            'fecha_caducidad' => '2027-09-01',
-            'id_producto' => $producto->id,
-            'id_presentacion' => $frasco->id,
-            'stock' => 5,
-        ])
-        ->assertSessionHasErrors('id_presentacion');
+    $producto = Producto::where('codigo_barras', '7500000000219')->firstOrFail();
 
-    $this->assertDatabaseMissing('lotes', ['folio' => 'L-BUSQ-3']);
+    $this->withSession(['active_sucursal_id' => $sucursalA->id])
+        ->post(route('compras.store'), [
+            'id_proveedor' => $proveedor->id,
+            'id_sucursal' => $sucursalA->id,
+            'lotes' => [
+                [
+                    'id_producto' => $producto->id,
+                    'cantidad' => 1,
+                    'fecha_entrada' => '2027-09-01',
+                    'fecha_caducidad' => '2026-09-01',
+                ],
+            ],
+        ])
+        ->assertSessionHasErrors('lotes.0.fecha_caducidad');
+
+    $this->assertDatabaseCount('compras', 0);
 });

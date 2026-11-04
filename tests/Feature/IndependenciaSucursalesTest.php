@@ -214,7 +214,7 @@ test('el punto de venta solo ofrece productos con inventario en la sucursal acti
         ->assertDontSee('Paracetamol POS');
 });
 
-test('registrar un lote asocia el producto a la sucursal del lote sin duplicarlo', function () {
+test('registrar una compra asocia el producto a la sucursal sin duplicarlo', function () {
     $ctx = contextoIndependenciaSucursal();
 
     $producto = productoIndependencia($ctx['categoria'], $ctx['caja'], '7509998887787', 'Omeprazol Ind');
@@ -230,17 +230,22 @@ test('registrar un lote asocia el producto a la sucursal del lote sin duplicarlo
 
     $this->actingAs($ctx['usuario'])
         ->withSession(['active_sucursal_id' => $ctx['norte']->id])
-        ->post(route('lotes.store'), [
-            'folio' => 'L-IND-ALTA',
+        ->post(route('compras.store'), [
             'id_proveedor' => $proveedor->id,
-            'sucursal' => $ctx['norte']->id,
-            'entregado_en' => '2026-10-01',
-            'fecha_caducidad' => '2027-10-01',
-            'id_producto' => $producto->id,
-            'id_presentacion' => $ctx['caja']->id,
-            'stock' => 3,
+            'id_sucursal' => $ctx['norte']->id,
+            'lotes' => [
+                [
+                    'id_producto' => $producto->id,
+                    'cantidad' => 3,
+                    'fecha_entrada' => '2026-10-01',
+                    'fecha_caducidad' => '2027-10-01',
+                ],
+            ],
         ])
-        ->assertRedirect(route('lotes.index', ['sucursal' => $ctx['norte']->id]));
+        ->assertRedirect(route('entradas-de-almacen.index', [
+            'sucursal' => $ctx['norte']->id,
+            'tipo' => 'compras',
+        ]));
 
     // No se duplica el producto: sigue siendo uno, ahora en ambas sucursales.
     $this->assertDatabaseCount('productos', 1);

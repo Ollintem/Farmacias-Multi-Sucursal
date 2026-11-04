@@ -58,10 +58,10 @@ class Proveedor extends Model
     }
 
     /**
-     * @return HasMany<Pedido, $this>
+     * @return HasMany<Compra, $this>
      */
-    public function pedidos(): HasMany
+    public function compras(): HasMany
     {
-        return $this->hasMany(Pedido::class, 'id_proveedor');
+        return $this->hasMany(Compra::class, 'id_proveedor');
     }
 }

@@ -8,13 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('pedidos', function (Blueprint $table) {
+        Schema::create('compras', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_proveedor')->constrained('proveedores')->cascadeOnDelete();
             $table->foreignId('id_sucursal')->constrained('sucursales')->cascadeOnDelete();
             $table->foreignId('pedido_por')->constrained('usuarios')->cascadeOnDelete();
             $table->foreignId('recibido_por')->nullable()->constrained('usuarios')->nullOnDelete();
-            $table->string('estado', 30)->default('pendiente');
             $table->timestamp('entregado_en')->nullable();
             $table->timestamps();
         });
@@ -22,6 +21,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('pedidos');
+        Schema::dropIfExists('compras');
     }
 };

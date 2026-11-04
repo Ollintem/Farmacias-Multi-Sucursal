@@ -95,7 +95,7 @@ class ProveedoresController extends Controller
     }
 
     /**
-     * Elimina un proveedor sin pedidos asociados (los pedidos son historial
+     * Elimina un proveedor sin compras asociadas (las compras son historial
      * y nunca se eliminan en cascada desde aquí). También borra su foto.
      *
      * Entrada: proveedor resuelto mediante route model binding.
@@ -103,8 +103,8 @@ class ProveedoresController extends Controller
      */
     public function destroy(Proveedor $proveedor): RedirectResponse
     {
-        if ($proveedor->pedidos()->exists()) {
-            return back()->with('error', "No se puede eliminar «{$proveedor->nombre_proveedor}»: tiene pedidos registrados. El historial de pedidos nunca se elimina.");
+        if ($proveedor->compras()->exists()) {
+            return back()->with('error', "No se puede eliminar «{$proveedor->nombre_proveedor}»: tiene compras registradas. El historial de compras nunca se elimina.");
         }
 
         if (filled($proveedor->foto_path)) {

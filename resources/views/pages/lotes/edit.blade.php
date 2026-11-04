@@ -56,8 +56,8 @@
                                 <option value="{{ $proveedor->id }}" @selected((string) old('id_proveedor', $lote->id_proveedor ?? '') === (string) $proveedor->id)>{{ $proveedor->nombre_proveedor }}</option>
                             @endforeach
                         </select>
-                        @if($lote->id_pedido !== null)
-                            <p class="mt-1 text-xs text-slate-500">Ligado al pedido #{{ $lote->id_pedido }}; puedes ajustarlo.</p>
+                        @if($lote->id_compra !== null)
+                            <p class="mt-1 text-xs text-slate-500">Ligado a la compra #{{ $lote->id_compra }}; puedes ajustarlo.</p>
                         @endif
                         @error('id_proveedor')
                             <span class="mt-1 block text-sm text-red-500">{{ $message }}</span>

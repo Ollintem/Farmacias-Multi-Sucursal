@@ -1,10 +1,10 @@
 <?php
 
 use App\Models\Categoria;
+use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
-use App\Models\ProductoPresentacion;
 use App\Models\Proveedor;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -44,7 +44,7 @@ function contextoLoteAlta(object $test): array
     return [$sucursal, $categoria, $caja, $proveedor];
 }
 
-test('un producto sin presentaciones registra el lote en unidades directas', function () {
+test('una compra de un producto sin presentaciones registra el lote en unidades directas', function () {
     [$sucursal, $categoria, , $proveedor] = contextoLoteAlta($this);
 
     $producto = Producto::create([
@@ -60,21 +60,27 @@ test('un producto sin presentaciones registra el lote en unidades directas', fun
     ]);
 
     $this->withSession(['active_sucursal_id' => $sucursal->id])
-        ->post(route('lotes.store'), [
-            'folio' => 'L-ALTA-UNI',
-            'sucursal' => $sucursal->id,
+        ->post(route('compras.store'), [
             'id_proveedor' => $proveedor->id,
-            'entregado_en' => '2026-10-01',
-            'fecha_caducidad' => '2027-10-01',
-            'id_producto' => $producto->id,
-            'stock' => 12,
+            'id_sucursal' => $sucursal->id,
+            'lotes' => [
+                [
+                    'id_producto' => $producto->id,
+                    'cantidad' => 12,
+                    'fecha_entrada' => '2026-10-01',
+                    'fecha_caducidad' => '2027-10-01',
+                ],
+            ],
         ])
-        ->assertRedirect(route('lotes.index', ['sucursal' => $sucursal->id]));
+        ->assertRedirect(route('entradas-de-almacen.index', [
+            'sucursal' => $sucursal->id,
+            'tipo' => 'compras',
+        ]));
 
-    $lote = Lote::where('folio', 'L-ALTA-UNI')->firstOrFail();
+    $lote = Lote::latest('id')->firstOrFail();
 
     expect($lote->id_presentacion)->toBeNull()
-        ->and($lote->stock_lote)->toBe(12);
+        ->and((int) $lote->stock_lote)->toBe(12);
 
     $this->assertDatabaseHas('inventario', [
         'id_sucursal' => $sucursal->id,
@@ -83,44 +89,7 @@ test('un producto sin presentaciones registra el lote en unidades directas', fun
     ]);
 });
 
-test('un producto con presentaciones exige elegir la presentacion del lote', function () {
-    [$sucursal, $categoria, $caja, $proveedor] = contextoLoteAlta($this);
-
-    $producto = Producto::create([
-        'codigo_barras' => '7506667779994',
-        'nombre_producto' => 'Ibuprofeno 400mg',
-        'descripcion' => '',
-        'precio' => null,
-        'vender_por_unidad' => false,
-        'id_presentacion' => $caja->id,
-        'id_categoria' => $categoria->id,
-        'es_controlado' => false,
-        'es_activo' => true,
-    ]);
-
-    $producto->presentacionesPrecio()->create([
-        'id_presentacion' => $caja->id,
-        'unidades' => 10,
-        'precio_presentacion' => 90,
-    ]);
-
-    $this->withSession(['active_sucursal_id' => $sucursal->id])
-        ->from(route('lotes.create'))
-        ->post(route('lotes.store'), [
-            'folio' => 'L-ALTA-SINP',
-            'sucursal' => $sucursal->id,
-            'id_proveedor' => $proveedor->id,
-            'entregado_en' => '2026-10-01',
-            'fecha_caducidad' => '2027-10-01',
-            'id_producto' => $producto->id,
-            'stock' => 3,
-        ])
-        ->assertSessionHasErrors('id_presentacion');
-
-    $this->assertDatabaseMissing('lotes', ['folio' => 'L-ALTA-SINP']);
-});
-
-test('el alta de lote convierte la presentacion elegida a unidades base', function () {
+test('la compra convierte la presentacion principal del producto a unidades base', function () {
     [$sucursal, $categoria, $caja, $proveedor] = contextoLoteAlta($this);
 
     $producto = Producto::create([
@@ -135,31 +104,33 @@ test('el alta de lote convierte la presentacion elegida a unidades base', functi
         'es_activo' => true,
     ]);
 
-    ProductoPresentacion::create([
+    $producto->presentacionesPrecio()->create([
         'id_presentacion' => $caja->id,
-        'producto' => $producto->id,
-        'precio_presentacion' => 90,
         'unidades' => 30,
+        'precio_presentacion' => 90,
+        'es_principal' => true,
     ]);
 
     $this->withSession(['active_sucursal_id' => $sucursal->id])
-        ->post(route('lotes.store'), [
-            'folio' => 'L-ALTA-CONV',
-            'sucursal' => $sucursal->id,
+        ->post(route('compras.store'), [
             'id_proveedor' => $proveedor->id,
-            'entregado_en' => '2026-10-01',
-            'fecha_caducidad' => '2027-10-01',
-            'id_producto' => $producto->id,
-            'id_presentacion' => $caja->id,
-            'stock' => 5,
+            'id_sucursal' => $sucursal->id,
+            'lotes' => [
+                [
+                    'id_producto' => $producto->id,
+                    'cantidad' => 5,
+                    'fecha_entrada' => '2026-10-01',
+                    'fecha_caducidad' => '2027-10-01',
+                ],
+            ],
         ])
-        ->assertRedirect(route('lotes.index', ['sucursal' => $sucursal->id]));
+        ->assertRedirect();
 
-    $lote = Lote::where('folio', 'L-ALTA-CONV')->firstOrFail();
+    $lote = Lote::latest('id')->firstOrFail();
 
     // 5 Cajas x 30 uds = 150 unidades base en lote e inventario.
-    expect($lote->stock_lote)->toBe(150)
-        ->and((int) $lote->id_presentacion)->toBe($caja->id);
+    expect((int) $lote->stock_lote)->toBe(150)
+        ->and((int) $lote->id_presentacion)->toBe((int) $caja->id);
 
     $this->assertDatabaseHas('inventario', [
         'id_sucursal' => $sucursal->id,
@@ -168,7 +139,7 @@ test('el alta de lote convierte la presentacion elegida a unidades base', functi
     ]);
 });
 
-test('el formulario de lote muestra la equivalencia de cajas al capturar la cantidad', function () {
+test('el formulario de compra muestra la equivalencia de cajas al capturar la cantidad', function () {
     [$sucursal, $categoria, $caja] = contextoLoteAlta($this);
 
     $producto = Producto::create([
@@ -187,20 +158,20 @@ test('el formulario de lote muestra la equivalencia de cajas al capturar la cant
         'id_presentacion' => $caja->id,
         'unidades' => 30,
         'precio_presentacion' => 90,
+        'es_principal' => true,
     ]);
 
     $contenido = $this->withSession(['active_sucursal_id' => $sucursal->id])
-        ->get(route('lotes.create'))
+        ->get(route('compras.create'))
         ->assertOk()
         ->getContent();
 
     $this->assertStringContainsString($producto->nombre_producto, $contenido);
-    $this->assertStringContainsString('x-model="cantidad"', $contenido);
-    $this->assertStringContainsString('get equivalencia()', $contenido);
-    $this->assertStringContainsString('${cantidad} × ${elegida.nombre}', $contenido);
+    $this->assertStringContainsString('presentacion(row.producto)', $contenido);
+    $this->assertStringContainsString('"unidades":30', $contenido);
 });
 
-test('el alta de lote exige el proveedor', function () {
+test('la compra exige el proveedor', function () {
     [$sucursal, $categoria, $caja] = contextoLoteAlta($this);
 
     $producto = Producto::create([
@@ -219,24 +190,28 @@ test('el alta de lote exige el proveedor', function () {
         'id_presentacion' => $caja->id,
         'unidades' => 10,
         'precio_presentacion' => 45,
+        'es_principal' => true,
     ]);
 
     $this->withSession(['active_sucursal_id' => $sucursal->id])
-        ->post(route('lotes.store'), [
-            'folio' => 'L-ALTA-NOPROV',
-            'sucursal' => $sucursal->id,
-            'entregado_en' => '2026-10-01',
-            'fecha_caducidad' => '2027-10-01',
-            'id_producto' => $producto->id,
-            'id_presentacion' => $caja->id,
-            'stock' => 3,
+        ->post(route('compras.store'), [
+            'id_sucursal' => $sucursal->id,
+            'lotes' => [
+                [
+                    'id_producto' => $producto->id,
+                    'cantidad' => 3,
+                    'fecha_entrada' => '2026-10-01',
+                    'fecha_caducidad' => '2027-10-01',
+                ],
+            ],
         ])
-        ->assertSessionHasErrors(['id_proveedor' => 'Selecciona el proveedor del lote.']);
+        ->assertSessionHasErrors('id_proveedor');
 
-    $this->assertDatabaseMissing('lotes', ['folio' => 'L-ALTA-NOPROV']);
+    $this->assertDatabaseCount('compras', 0);
+    $this->assertDatabaseCount('lotes', 0);
 });
 
-test('el alta de lote usa la sucursal activa del sidebar y no la sucursal enviada', function () {
+test('la compra usa la sucursal enviada y no mueve inventario de otra sucursal', function () {
     [$sucursalA, $categoria, , $proveedor] = contextoLoteAlta($this);
 
     $sucursalB = Sucursal::create([
@@ -259,50 +234,35 @@ test('el alta de lote usa la sucursal activa del sidebar y no la sucursal enviad
     ]);
 
     $this->withSession(['active_sucursal_id' => $sucursalA->id])
-        ->post(route('lotes.store'), [
-            'folio' => 'L-ALTA-SUC',
+        ->post(route('compras.store'), [
             'id_proveedor' => $proveedor->id,
-            'sucursal' => $sucursalB->id,
-            'entregado_en' => '2026-10-01',
-            'fecha_caducidad' => '2027-10-01',
-            'id_producto' => $producto->id,
-            'stock' => 12,
+            'id_sucursal' => $sucursalB->id,
+            'lotes' => [
+                [
+                    'id_producto' => $producto->id,
+                    'cantidad' => 12,
+                    'fecha_entrada' => '2026-10-01',
+                    'fecha_caducidad' => '2027-10-01',
+                ],
+            ],
         ])
-        ->assertRedirect(route('lotes.index', ['sucursal' => $sucursalA->id]));
+        ->assertRedirect(route('entradas-de-almacen.index', [
+            'sucursal' => $sucursalB->id,
+            'tipo' => 'compras',
+        ]));
 
-    $lote = Lote::where('folio', 'L-ALTA-SUC')->firstOrFail();
+    $lote = Lote::latest('id')->firstOrFail();
 
     $this->assertDatabaseHas('inventario', [
-        'id_sucursal' => $sucursalA->id,
+        'id_sucursal' => $sucursalB->id,
         'id_lote' => $lote->id,
         'stock' => 12,
     ]);
 
     $this->assertDatabaseMissing('inventario', [
-        'id_sucursal' => $sucursalB->id,
+        'id_sucursal' => $sucursalA->id,
         'id_lote' => $lote->id,
     ]);
-});
-
-test('el formulario de lote fija la sucursal, muestra la caja y marca los productos unitarios', function () {
-    [$sucursal] = contextoLoteAlta($this);
-
-    $contenido = $this->withSession(['active_sucursal_id' => $sucursal->id])
-        ->get(route('lotes.create'))
-        ->assertOk()
-        ->getContent();
-
-    // La sucursal no se elige en el formulario: se muestra fija y se envía oculta.
-    $this->assertStringContainsString('name="sucursal"', $contenido);
-    $this->assertStringNotContainsString('<select name="sucursal"', $contenido);
-    $this->assertStringContainsString($sucursal->nombre_sucursal, $contenido);
-
-    // La presentación tampoco se elige: se envía oculta y se muestra solo lectura.
-    $this->assertStringContainsString('name="id_presentacion"', $contenido);
-    $this->assertStringNotContainsString('<select name="id_presentacion"', $contenido);
-
-    // Sin presentaciones el producto se muestra como unitario.
-    $this->assertStringContainsString("'Producto unitario'", $contenido);
 });
 
 test('el producto aporta su caja como presentacion del lote', function () {
@@ -323,15 +283,16 @@ test('el producto aporta su caja como presentacion del lote', function () {
     ]);
 
     $producto->presentacionesPrecio()->create([
-        'id_presentacion' => $caja->id,
-        'unidades' => 10,
-        'precio_presentacion' => 90,
-    ]);
-
-    $producto->presentacionesPrecio()->create([
         'id_presentacion' => $blister->id,
         'unidades' => 4,
         'precio_presentacion' => 40,
+    ]);
+
+    $producto->presentacionesPrecio()->create([
+        'id_presentacion' => $caja->id,
+        'unidades' => 10,
+        'precio_presentacion' => 90,
+        'es_principal' => true,
     ]);
 
     $unitario = Producto::create([
@@ -346,12 +307,12 @@ test('el producto aporta su caja como presentacion del lote', function () {
         'es_activo' => true,
     ]);
 
-    // Aunque tenga más presentaciones, el lote siempre usa la caja.
+    // Aunque tenga más presentaciones, el lote siempre usa la principal (caja).
     $this->assertSame($caja->id, $producto->presentacionParaLote()?->id_presentacion);
     $this->assertNull($unitario->presentacionParaLote());
 
     $contenido = $this->withSession(['active_sucursal_id' => $sucursal->id])
-        ->get(route('lotes.create'))
+        ->get(route('compras.create'))
         ->assertOk()
         ->getContent();
 

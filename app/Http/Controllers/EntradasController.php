@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pedido;
+use App\Models\Compra;
 use App\Models\Sucursal;
 use App\Models\Traspaso;
 use Carbon\Carbon;
@@ -14,10 +14,10 @@ use Illuminate\View\View;
 class EntradasController extends Controller
 {
     /**
-     * Muestra el listado unificado de entradas: pedidos de proveedores
+     * Muestra el listado unificado de entradas: compras de proveedores
      * y traspasos entre sucursales recibidos en la sucursal activa.
      *
-     * Entrada: query string `sucursal`, `tipo` (todas|pedidos|traspasos) y `buscar`.
+     * Entrada: query string `sucursal`, `tipo` (todas|compras|traspasos) y `buscar`.
      * Salida: resources/views/pages/entradas/index.blade.php.
      */
     public function index(Request $request): View
@@ -28,25 +28,25 @@ class EntradasController extends Controller
 
         $tipo = strtolower(trim((string) $request->query('tipo', 'todas')));
         $tipo = match ($tipo) {
-            'pedido', 'pedidos' => 'pedidos',
+            'compra', 'compras' => 'compras',
             'traspaso', 'traspasos' => 'traspasos',
             default => 'todas',
         };
 
         $busqueda = trim((string) $request->query('buscar', ''));
 
-        $pedidos = $this->entradasPedidos($selectedSucursal?->id, $busqueda);
+        $compras = $this->entradasCompras($selectedSucursal?->id, $busqueda);
         $traspasos = $this->entradasTraspasos($selectedSucursal?->id, $busqueda);
         $solicitudes = $this->traspasosRecibidos($selectedSucursal?->id, $busqueda);
         $solicitados = $this->traspasosSolicitados($selectedSucursal?->id, $busqueda);
 
-        $totalPedidos = $pedidos->count();
+        $totalCompras = $compras->count();
         $totalTraspasos = $traspasos->count();
 
         $entradas = match ($tipo) {
-            'pedidos' => $pedidos,
+            'compras' => $compras,
             'traspasos' => $traspasos,
-            default => $pedidos->concat($traspasos)->sortByDesc('orden_fecha')->values(),
+            default => $compras->concat($traspasos)->sortByDesc('orden_fecha')->values(),
         };
 
         return view('pages.entradas.index', [
@@ -58,14 +58,14 @@ class EntradasController extends Controller
             'busqueda' => $busqueda,
             'tipo' => $tipo,
             'totalEntradas' => $entradas->count(),
-            'totalPedidos' => $totalPedidos,
+            'totalCompras' => $totalCompras,
             'totalTraspasos' => $totalTraspasos,
             'unidadesRecibidas' => (int) $entradas->sum('unidades'),
         ]);
     }
 
     /**
-     * Mapea los pedidos de la sucursal al formato unificado de la vista.
+     * Mapea las compras de la sucursal al formato unificado de la vista.
      *
      * Entrada: id de sucursal destino (nullable) y texto de búsqueda.
      * Salida: colección de arreglos con folio, tipo, origen, destino,
@@ -73,15 +73,14 @@ class EntradasController extends Controller
      *
      * @return Collection<int, array<string, mixed>>
      */
-    private function entradasPedidos(?int $sucursalId, string $busqueda): Collection
+    private function entradasCompras(?int $sucursalId, string $busqueda): Collection
     {
-        return Pedido::query()
+        return Compra::query()
             ->with(['proveedor', 'sucursal', 'lotes'])
             ->when($sucursalId, fn ($query) => $query->where('id_sucursal', $sucursalId))
             ->when($busqueda !== '', function ($query) use ($busqueda) {
                 $query->where(function ($subQuery) use ($busqueda) {
-                    $subQuery->where('estado', 'like', "%{$busqueda}%")
-                        ->orWhereHas('proveedor', fn ($q) => $q->where('nombre_proveedor', 'like', "%{$busqueda}%"));
+                    $subQuery->whereHas('proveedor', fn ($q) => $q->where('nombre_proveedor', 'like', "%{$busqueda}%"));
                     if (is_numeric($busqueda)) {
                         $subQuery->orWhere('id', (int) $busqueda);
                     }
@@ -89,31 +88,34 @@ class EntradasController extends Controller
             })
             ->orderByDesc('id')
             ->get()
-            ->map(fn (Pedido $pedido): array => $this->mapeaPedido($pedido))
+            ->map(fn (Compra $compra): array => $this->mapeaCompra($compra))
             ->values();
     }
 
     /**
-     * Mapea un pedido al formato unificado de la tabla de entradas.
+     * Mapea una compra al formato unificado de la tabla de entradas.
      *
      * @return array<string, mixed>
      */
-    private function mapeaPedido(Pedido $pedido): array
+    private function mapeaCompra(Compra $compra): array
     {
-        $fecha = $pedido->entregado_en ?? $pedido->created_at;
+        $fecha = $compra->entregado_en ?? $compra->created_at;
+        $estado = $compra->estaRecibida() ? 'recibida' : 'pendiente';
 
         return [
-            'id' => $pedido->id,
-            'folio' => "#{$pedido->id}",
-            'tipo' => 'pedido',
-            'origen' => $pedido->proveedor->nombre_proveedor,
-            'producto' => $pedido->proveedor->nombre_proveedor,
-            'destino' => $pedido->sucursal->nombre_sucursal,
-            'unidades' => (int) $pedido->lotes->sum('stock_lote'),
+            'id' => $compra->id,
+            'folio' => "#{$compra->id}",
+            'tipo' => 'compra',
+            'origen' => $compra->proveedor->nombre_proveedor,
+            'producto' => $compra->proveedor->nombre_proveedor,
+            'destino' => $compra->sucursal->nombre_sucursal,
+            'unidades' => (int) $compra->lotes->sum('stock_lote'),
             'fecha' => $fecha ? Carbon::parse($fecha)->format('Y-m-d') : '-',
             'orden_fecha' => $fecha ? (int) Carbon::parse($fecha)->timestamp : 0,
-            'estado' => ucfirst((string) $pedido->estado),
-            'estado_class' => $this->claseEstado((string) $pedido->estado),
+            'estado' => ucfirst($estado),
+            'estado_raw' => $estado,
+            'estado_class' => $this->claseEstado($estado),
+            'pendiente' => $compra->estaPendiente(),
         ];
     }
 
@@ -209,7 +211,7 @@ class EntradasController extends Controller
      * Mapea los traspasos recibidos en la sucursal al formato unificado.
      *
      * Entrada: id de sucursal destino (nullable) y texto de búsqueda.
-     * Salida: colección de arreglos con el mismo formato que los pedidos.
+     * Salida: colección de arreglos con el mismo formato que las compras.
      *
      * @return Collection<int, array<string, mixed>>
      */

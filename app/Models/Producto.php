@@ -256,11 +256,12 @@ class Producto extends Model
     }
 
     /**
-     * @return BelongsToMany<Pedido, $this>
+     * @return BelongsToMany<Compra, $this>
      */
-    public function pedidos(): BelongsToMany
+    public function compras(): BelongsToMany
     {
-        return $this->belongsToMany(Pedido::class, 'detalles_pedido', 'producto', 'pedido')
-            ->withPivot('cantidad');
+        return $this->belongsToMany(Compra::class, 'lotes', 'id_producto', 'id_compra')
+            ->withPivot('stock_lote', 'fecha_caducidad', 'entregado_en')
+            ->distinct();
     }
 }

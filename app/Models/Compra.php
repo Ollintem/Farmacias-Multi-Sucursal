@@ -14,24 +14,24 @@ use Illuminate\Support\Carbon;
  * @property int $id_sucursal
  * @property int $pedido_por
  * @property int|null $recibido_por
- * @property string $estado
  * @property Carbon|null $entregado_en
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Proveedor $proveedor
  * @property-read Sucursal $sucursal
  * @property-read User $solicitadoPor
+ * @property-read User|null $recibidoPor
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Lote> $lotes
  */
-class Pedido extends Model
+class Compra extends Model
 {
-    protected $table = 'pedidos';
+    protected $table = 'compras';
 
     protected $fillable = [
         'id_proveedor',
         'id_sucursal',
         'pedido_por',
         'recibido_por',
-        'estado',
         'entregado_en',
     ];
 
@@ -76,7 +76,7 @@ class Pedido extends Model
      */
     public function lotes(): HasMany
     {
-        return $this->hasMany(Lote::class, 'id_pedido');
+        return $this->hasMany(Lote::class, 'id_compra');
     }
 
     /**
@@ -84,15 +84,23 @@ class Pedido extends Model
      */
     public function productos(): BelongsToMany
     {
-        return $this->belongsToMany(Producto::class, 'detalles_pedido', 'pedido', 'producto')
-            ->withPivot('cantidad');
+        return $this->belongsToMany(Producto::class, 'lotes', 'id_compra', 'id_producto')
+            ->withPivot('stock_lote', 'fecha_caducidad', 'entregado_en');
     }
 
     /**
-     * @return HasMany<DetallePedido, $this>
+     * Indica si la compra todavía puede recibirse.
      */
-    public function detalles(): HasMany
+    public function estaPendiente(): bool
     {
-        return $this->hasMany(DetallePedido::class, 'pedido');
+        return $this->recibido_por === null;
+    }
+
+    /**
+     * Indica si la compra ya fue recibida.
+     */
+    public function estaRecibida(): bool
+    {
+        return $this->recibido_por !== null;
     }
 }

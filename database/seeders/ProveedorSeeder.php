@@ -33,7 +33,7 @@ class ProveedorSeeder extends Seeder
                     'direccion' => 'Blvd. Díaz Ordaz 789, Puebla',
                     'unidad_entrega' => 'Granel',
                     'telefono' => '2223456789',
-                    'correo' => 'pedidos@medisur.mx',
+                    'correo' => 'compras@medisur.mx',
                 ],
             ] as $proveedor
         ) {

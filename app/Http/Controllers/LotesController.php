@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\Merma;
-use App\Models\Pedido;
-use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\Sucursal;
 use App\Models\Traspaso;
@@ -44,7 +42,7 @@ class LotesController extends Controller
             $filtroEstado = 'todos';
         }
 
-        $lotes = Lote::with(['producto.presentacionesPrecio', 'presentacion', 'pedido.proveedor', 'proveedor', 'inventarios.sucursal'])
+        $lotes = Lote::with(['producto.presentacionesPrecio', 'presentacion', 'compra.proveedor', 'proveedor', 'inventarios.sucursal'])
             ->when($selectedSucursal, function ($query, $sucursal) {
                 $query->where(function ($subQuery) use ($sucursal) {
                     $subQuery->whereHas('inventarios', function ($inventarioQuery) use ($sucursal) {
@@ -58,7 +56,7 @@ class LotesController extends Controller
                         ->orWhereHas('proveedor', function ($proveedorQuery) use ($busqueda) {
                             $proveedorQuery->where('nombre_proveedor', 'like', "%{$busqueda}%");
                         })
-                        ->orWhereHas('pedido.proveedor', function ($proveedorQuery) use ($busqueda) {
+                        ->orWhereHas('compra.proveedor', function ($proveedorQuery) use ($busqueda) {
                             $proveedorQuery->where('nombre_proveedor', 'like', "%{$busqueda}%");
                         })
                         ->orWhereHas('producto', function ($productoQuery) use ($busqueda) {
@@ -109,8 +107,8 @@ class LotesController extends Controller
                     'producto' => $nombreProducto,
                     'marca' => $lote->id_proveedor !== null
                         ? $lote->proveedor->nombre_proveedor
-                        : ($lote->id_pedido !== null
-                            ? $lote->pedido->proveedor->nombre_proveedor
+                        : ($lote->id_compra !== null
+                            ? $lote->compra?->proveedor?->nombre_proveedor
                             : 'Sin proveedor'),
                     'sucursal' => $nombreSucursal,
                     'cantidad' => (int) $lote->stock_lote,
@@ -162,175 +160,6 @@ class LotesController extends Controller
             'porCaducar',
             'caducados',
         ));
-    }
-
-    /**
-     * Carga los catálogos para registrar un lote sobre un producto existente.
-     *
-     * El formulario elige el producto en un select y muestra debajo la
-     * presentación fija del producto (su caja, o «Producto unitario» cuando
-     * solo se vende por unidad): no se puede cambiar. Por eso se envían los
-     * productos activos con su presentación de lote y el mapa producto →
-     * presentación. La sucursal se muestra fija: es la activa del sidebar y
-     * el alta no la cambia.
-     *
-     * Entrada: query string opcional `sucursal`.
-     * Salida: resources/views/pages/lotes/create.blade.php.
-     */
-    public function create(Request $request): View
-    {
-        $sucursales = Sucursal::orderBy('nombre_sucursal')->get();
-        $pedidos = Pedido::with(['proveedor', 'sucursal'])->orderByDesc('id')->get();
-        $proveedores = Proveedor::orderBy('nombre_proveedor')->get();
-        $selectedSucursalId = session('active_sucursal_id') ?? $request->query('sucursal') ?? $sucursales->first()?->id;
-        $sucursalActiva = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
-
-        $productos = Producto::query()
-            ->where('es_activo', true)
-            ->with('presentacionesPrecio.presentacion')
-            ->orderBy('nombre_producto')
-            ->get();
-
-        $presentacionPorProducto = $productos->mapWithKeys(function (Producto $producto) {
-            $presentacion = $producto->presentacionParaLote();
-
-            return [
-                $producto->id => $presentacion === null ? null : [
-                    'id' => $presentacion->id_presentacion,
-                    'nombre' => $presentacion->presentacion?->presentacion ?? 'Presentación',
-                    'unidades' => (int) $presentacion->unidades,
-                ],
-            ];
-        });
-
-        return view('pages.lotes.create', compact('sucursales', 'pedidos', 'proveedores', 'productos', 'presentacionPorProducto', 'selectedSucursalId', 'sucursalActiva'));
-    }
-
-    /**
-     * Valida y crea el lote vinculado a un producto existente y a la sucursal.
-     *
-     * El producto llega de un select y su presentación (la caja fija del
-     * producto) se envía oculta: no se puede elegir. La presentación debe
-     * pertenecer al producto y es obligatoria solo cuando el producto tiene
-     * presentaciones. La cantidad capturada es la física de esa presentación:
-     * se guarda convertida a unidades base (cantidad × unidades). Sin
-     * presentación la cantidad ya son unidades.
-     *
-     * El proveedor es obligatorio (viene del formulario o del pedido) y la
-     * sucursal es la activa del sidebar: el formulario solo la muestra.
-     *
-     * Entrada: datos del formulario de alta de lote.
-     * Salida: redirección a lotes.index con mensaje de resultado.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        $conPresentaciones = $this->productoConPresentaciones($request->input('id_producto'));
-
-        $data = $request->validate([
-            'folio' => ['required', 'string', 'max:20', 'unique:lotes,folio'],
-            'id_pedido' => ['nullable', 'exists:pedidos,id'],
-            'id_proveedor' => ['required', 'exists:proveedores,id'],
-            'sucursal' => ['required', 'integer', 'exists:sucursales,id'],
-            'entregado_en' => ['required', 'date'],
-            'fecha_caducidad' => ['required', 'date', 'after_or_equal:entregado_en'],
-            'id_producto' => ['required', 'exists:productos,id'],
-            'id_presentacion' => [
-                $conPresentaciones ? 'required' : 'nullable',
-                Rule::exists('presentacion_producto', 'id_presentacion')->where(
-                    fn ($query) => $query->where('producto', $request->input('id_producto'))
-                ),
-            ],
-            'stock' => ['required', 'integer', 'min:1'],
-        ], [
-            'id_proveedor.required' => 'Selecciona el proveedor del lote.',
-            'sucursal.required' => 'Selecciona la sucursal en el menú lateral.',
-        ]);
-
-        $sucursalId = $this->sucursalActiva($request, $data['sucursal']);
-        $data['sucursal'] = $sucursalId;
-
-        DB::transaction(function () use ($data) {
-            $producto = Producto::findOrFail($data['id_producto']);
-            $idPresentacion = $data['id_presentacion'] ?? null;
-
-            $unidades = $idPresentacion === null
-                ? 1
-                : max(1, (int) $producto->presentacionesPrecio()
-                    ->where('id_presentacion', $idPresentacion)
-                    ->value('unidades'));
-
-            $cantidadBase = (int) $data['stock'] * $unidades;
-
-            $lote = Lote::create([
-                'folio' => $data['folio'],
-                'stock_lote' => $cantidadBase,
-                'id_pedido' => $data['id_pedido'] ?? null,
-                'id_proveedor' => $data['id_proveedor'] ?? null,
-                'id_producto' => $producto->id,
-                'id_presentacion' => $idPresentacion,
-                'entregado_en' => $data['entregado_en'],
-                'fecha_caducidad' => $data['fecha_caducidad'],
-                'fecha_de_caducidad' => $data['fecha_caducidad'],
-            ]);
-
-            $inventario = Inventario::updateOrCreate(
-                [
-                    'id_sucursal' => $data['sucursal'],
-                    'id_lote' => $lote->id,
-                ],
-                []
-            );
-
-            // El lote guarda la cantidad en unidades base; el inventario se
-            // sincroniza desde ahí (`stock` en presentaciones, `stock_individual`
-            // en unidades).
-            $inventario->fijarUnidadesIndividuales($cantidadBase);
-
-            // Registrar el primer lote en una sucursal también da de alta el
-            // producto ahí (pivot), para que aparezca en su pestaña Productos.
-            $producto->sucursales()->syncWithoutDetaching([$data['sucursal']]);
-        });
-
-        return redirect()->route('lotes.index', ['sucursal' => $data['sucursal']])
-            ->with('success', 'Lote registrado correctamente.');
-    }
-
-    /**
-     * Indica si un producto tiene presentaciones registradas.
-     *
-     * Entrada: identificador del producto (puede ser nulo o inválido).
-     * Salida: true solo si existe el producto y al menos una presentación.
-     */
-    private function productoConPresentaciones(mixed $idProducto): bool
-    {
-        return ctype_digit((string) $idProducto)
-            && Producto::whereKey((int) $idProducto)->whereHas('presentacionesPrecio')->exists();
-    }
-
-    /**
-     * Sucursal donde se registra el lote: la activa del sidebar.
-     *
-     * El formulario solo muestra la sucursal en un campo oculto; el valor
-     * usable sale de `session('active_sucursal_id')`, que es lo que cambia el
-     * selector global del menú lateral. La sucursal enviada entra únicamente
-     * como respaldo cuando esa sesión todavía no existe.
-     *
-     * Entrada: petición del alta y sucursal enviada por el formulario.
-     * Salida: id de la sucursal vigente.
-     */
-    private function sucursalActiva(Request $request, mixed $sucursalEnviada): int
-    {
-        $sucursalId = (int) (session('active_sucursal_id')
-            ?? $request->user()?->id_sucursal
-            ?? $sucursalEnviada);
-
-        if ($sucursalId <= 0 || ! Sucursal::whereKey($sucursalId)->exists()) {
-            throw ValidationException::withMessages([
-                'sucursal' => 'La sucursal indicada ya no existe.',
-            ]);
-        }
-
-        return $sucursalId;
     }
 
     /**

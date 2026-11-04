@@ -165,19 +165,19 @@ class User extends Authenticatable
     }
 
     /**
-     * @return HasMany<Pedido, $this>
+     * @return HasMany<Compra, $this>
      */
-    public function pedidosSolicitados(): HasMany
+    public function comprasSolicitadas(): HasMany
     {
-        return $this->hasMany(Pedido::class, 'pedido_por');
+        return $this->hasMany(Compra::class, 'pedido_por');
     }
 
     /**
-     * @return HasMany<Pedido, $this>
+     * @return HasMany<Compra, $this>
      */
-    public function pedidosRecibidos(): HasMany
+    public function comprasRecibidas(): HasMany
     {
-        return $this->hasMany(Pedido::class, 'recibido_por');
+        return $this->hasMany(Compra::class, 'recibido_por');
     }
 
     /**
