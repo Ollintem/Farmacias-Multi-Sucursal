@@ -91,6 +91,8 @@ test('el filtro de caducidad clasifica los lotes con existencia y excluye los si
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-CAD', '2020-01-01', 5);
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-CER', now()->addDays(10)->format('Y-m-d'), 5);
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-PORV', now()->addDays(60)->format('Y-m-d'), 5);
+    loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-LIMITE', now()->addDays(90)->format('Y-m-d'), 5);
+    loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-FUERA', now()->addDays(91)->format('Y-m-d'), 5);
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-VIG', now()->addDays(200)->format('Y-m-d'), 5);
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-SIN', null, 5);
     loteAlertasCaducidad($escenario['sucursal'], $escenario['producto'], 'L-ALERT-CERO', now()->addDays(5)->format('Y-m-d'), 0);
@@ -98,16 +100,18 @@ test('el filtro de caducidad clasifica los lotes con existencia y excluye los si
 
     $caducidad = paginaCaducidadesAlertas($escenario['usuario'], $escenario['sucursal'], 'caducidad');
 
-    // Los lotes con existencia aparecen clasificados (rojo/amarillo/verde);
-    // los que no tienen inventario en la sucursal se excluyen.
+    // Solo avisan los caducados, los que vencen dentro de 90 días y los
+    // que no tienen fecha. Los que superan los 3 meses quedan fuera.
     expect($caducidad)
         ->toContain('L-ALERT-CAD')
         ->toContain('L-ALERT-CER')
         ->toContain('L-ALERT-PORV')
-        ->toContain('L-ALERT-VIG')
-        ->toContain('Vigente ·')
+        ->toContain('L-ALERT-LIMITE')
         ->toContain('L-ALERT-SIN')
         ->toContain('Sin fecha de caducidad')
+        ->not->toContain('L-ALERT-FUERA')
+        ->not->toContain('L-ALERT-VIG')
+        ->not->toContain('Vigente ·')
         ->not->toContain('L-ALERT-CERO')
         ->not->toContain('L-ALERT-NOREG')
         ->not->toContain('Caduca en -');
@@ -141,6 +145,7 @@ test('el badge del sidebar cuenta los mismos rojos que las notificaciones de pri
     expect($pagina)
         ->toContain('L-ALERT-CAD')
         ->toContain('L-ALERT-CER')
+        ->not->toContain('L-ALERT-VIG')
         ->not->toContain('L-ALERT-CERO')
         ->not->toContain('L-ALERT-NOREG');
 

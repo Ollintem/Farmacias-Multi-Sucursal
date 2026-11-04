@@ -56,8 +56,6 @@ new #[Title('Ajustes de seguridad')] class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
-
     <flux:heading level="2" class="sr-only">Ajustes de seguridad</flux:heading>
 
     <x-pages::settings.layout heading="Actualizar contraseña" subheading="Usa una contraseña larga y aleatoria para mantener tu cuenta segura">
@@ -90,9 +88,9 @@ new #[Title('Ajustes de seguridad')] class extends Component {
             />
 
             <div class="flex items-center gap-4">
-                <flux:button variant="primary" type="submit" data-test="update-password-button">
+                <button type="submit" class="theme-button theme-button-primary" data-test="update-password-button">
                     Guardar
-                </flux:button>
+                </button>
             </div>
         </form>
 

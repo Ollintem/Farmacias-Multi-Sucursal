@@ -1,13 +1,5 @@
 <div class="module-page noti-page">
     <div class="module-page-inner noti-full noti-formal">
-    {{-- Encabezado limpio --}}
-    <header class="mb-6" aria-label="Encabezado de configuración bancaria">
-        <div>
-            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Ajustes · Transferencias</p>
-            <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Configuración bancaria</h1>
-        </div>
-            </header>
-
     @if($guardado)
         <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-900/30">
             <p class="text-sm font-medium text-emerald-700 dark:text-emerald-300">Configuracion guardada correctamente.</p>

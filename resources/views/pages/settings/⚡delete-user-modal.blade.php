@@ -39,12 +39,12 @@ new class extends Component {
 
         <div class="flex justify-end space-x-2 rtl:space-x-reverse">
             <flux:modal.close>
-                <flux:button variant="filled">Cancelar</flux:button>
+                <button type="button" class="theme-button theme-button-secondary">Cancelar</button>
             </flux:modal.close>
 
-            <flux:button variant="danger" type="submit" data-test="confirm-delete-user-button">
+            <button type="submit" class="theme-button theme-button-danger" data-test="confirm-delete-user-button">
                 Eliminar cuenta
-            </flux:button>
+            </button>
         </div>
     </form>
 </flux:modal>

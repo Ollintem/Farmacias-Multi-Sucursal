@@ -1,15 +1,9 @@
 <x-layouts::app :title="__('Inventario')">
     <div class="module-page inventario-page" style="min-height:auto !important; display:block !important; padding:0.75rem;">
         <div class="module-page-inner inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
-            {{-- Encabezado compacto --}}
-            <header class="mb-4" aria-label="Encabezado de inventario">
-                <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Catálogo · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                        <h1 class="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white">Inventario</h1>
-                    </div>
-                </div>
-                <div class="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            {{-- KPIs --}}
+            <header class="mb-4" aria-label="Indicadores de inventario">
+                <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
   <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-zinc-800 lg:grid-cols-4">
     <div class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">
     <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 ring-1">

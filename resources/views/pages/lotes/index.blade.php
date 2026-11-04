@@ -18,12 +18,10 @@
                 };
             @endphp
 
-            {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado de lotes y caducidades">
+            {{-- KPIs --}}
+            <header class="mb-6" aria-label="Indicadores de lotes y caducidades">
                 <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Trazabilidad · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Lotes y caducidades</h1>
-                    <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
   <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-zinc-800 lg:grid-cols-4">
     <a class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60" href="{{ $enlaceTarjeta('todos') }}" @if($filtroEstado === 'todos') aria-current="true" @endif>
     <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 ring-1">
@@ -220,7 +218,7 @@
                                         </td>
                                         <td class="px-4 py-3">
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <a href="{{ route('lotes.edit', $lote['id']) }}" title="Editar lote" class="text-slate-500 transition hover:text-emerald-600 dark:text-slate-400">
+                                                <a href="{{ route('lotes.edit', $lote['id']) }}" title="Editar lote" class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-lg">
                                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                     <span class="sr-only">Editar lote</span>
                                                 </a>
@@ -229,7 +227,7 @@
                                                     <button
                                                         type="button"
                                                         title="Dar de baja"
-                                                        class="text-slate-500 transition hover:text-red-600 dark:text-slate-400"
+                                                        class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-lg"
                                                         data-lote="{{ $lote['id'] }}"
                                                         data-folio="{{ $lote['folio'] }}"
                                                         data-restante="{{ $lote['restante'] }}"
@@ -246,7 +244,7 @@
                                                     <button
                                                         type="button"
                                                         title="Anular lote"
-                                                        class="text-slate-500 transition hover:text-red-600 dark:text-slate-400"
+                                                        class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-lg"
                                                         data-folio="{{ $lote['folio'] }}"
                                                         data-accion="{{ route('lotes.anular', $lote['id']) }}"
                                                         x-on:click="abrirAnular($event.currentTarget.dataset)"
@@ -463,7 +461,7 @@
 
                             <div class="mt-6 flex justify-end gap-3">
                                 <button type="button" x-on:click="anular.abierto = false" class="theme-button theme-button-secondary">Cancelar</button>
-                                <button type="submit" class="theme-button bg-red-600 text-white transition hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700">Anular</button>
+                                <button type="submit" class="theme-button theme-button-danger">Anular</button>
                             </div>
                         </form>
                     </div>

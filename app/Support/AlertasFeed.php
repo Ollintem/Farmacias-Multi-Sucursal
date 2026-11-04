@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Alerta;
 use App\Models\AlertaUsuario;
+use App\Models\CorteCaja;
 use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\Modulo;
@@ -14,6 +15,7 @@ use App\Models\Venta;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -23,7 +25,7 @@ use Illuminate\Support\Collection;
  * Lo leído se persiste en alertas/alertas_usuarios (fecha_leido + estado).
  *
  * @phpstan-type FechaAviso Carbon|CarbonImmutable
- * @phpstan-type Aviso array{id: string, tipo: string, titulo: string, detalle: string, url: string, fecha: FechaAviso|null, prioridad: string, icono: string, mensaje?: string|null, avatar?: string, nivel?: string, destino_url?: string, destino_etiqueta?: string, traspaso_id?: int, grupo?: string, subtipo?: string, alerta_id?: int, leida?: bool, tiempo?: string, fecha_texto?: string|null}
+ * @phpstan-type Aviso array{id: string, tipo: string, titulo: string, detalle: string, url: string, fecha: FechaAviso|null, prioridad: string, icono: string, mensaje?: string|null, avatar?: string, nivel?: string, destino_url?: string, destino_etiqueta?: string, traspaso_id?: int, grupo?: string, subtipo?: string, alerta_id?: int, leida?: bool, tiempo?: string, fecha_texto?: string|null, usuario_id?: int|null, corte_id?: int}
  */
 class AlertasFeed
 {
@@ -34,6 +36,8 @@ class AlertasFeed
     public const GRUPO_TRASPASOS = 'traspasos';
 
     public const GRUPO_VENTAS = 'ventas';
+
+    public const GRUPO_CAJA = 'caja';
 
     /**
      * Clasificación de cada tipo de alerta en su grupo del centro de alertas.
@@ -49,6 +53,7 @@ class AlertasFeed
         'TRASPASO_RECIBIDO' => self::GRUPO_TRASPASOS,
         'TRASPASO_RECHAZADO' => self::GRUPO_TRASPASOS,
         'VENTAS_RESUMEN' => self::GRUPO_VENTAS,
+        'CIERRE_CAJA' => self::GRUPO_CAJA,
     ];
 
     /**
@@ -131,12 +136,8 @@ class AlertasFeed
             ];
         }
 
-        $proximos = Lote::query()
+        $proximos = self::lotesPorCaducarQuery($sucursalId)
             ->with(['producto', 'inventarios.sucursal'])
-            ->whereHas('inventarios', function ($query) use ($sucursalId) {
-                $query->where('inventario.id_sucursal', $sucursalId)
-                    ->where('inventario.stock_individual', '>', 0);
-            })
             ->orderByRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) ASC')
             ->limit(60)
             ->get();
@@ -211,6 +212,8 @@ class AlertasFeed
             ];
         }
 
+        $avisos = array_merge($avisos, self::avisosCaja($sucursalId));
+
         usort($avisos, function (array $a, array $b): int {
             $orden = ['alta' => 0, 'media' => 1, 'baja' => 2];
 
@@ -225,6 +228,59 @@ class AlertasFeed
         });
 
         return $avisos;
+    }
+
+    /**
+     * Avisos de cierre de caja para los cortes cuyo turno está por terminar
+     * o ya venció. Cada aviso identifica a su dueño para que solo él lo vea.
+     *
+     * @return array<int, Aviso>
+     */
+    private static function avisosCaja(int $sucursalId): array
+    {
+        return CorteCaja::query()
+            ->where('id_sucursal', $sucursalId)
+            ->where('estado', 'abierto')
+            ->get()
+            ->filter(fn (CorteCaja $corte): bool => $corte->estaPorTerminarTurno() || $corte->turnoVencido())
+            ->map(function (CorteCaja $corte) use ($sucursalId): array {
+                $fin = $corte->finDeTurno();
+                $minutos = (int) $corte->minutosParaFinDeTurno();
+                $horario = CorteCaja::HORARIOS[$corte->claveTurno()] ?? [];
+                $turno = $horario['etiqueta'] ?? ucfirst($corte->claveTurno());
+                $finTexto = $fin?->format('H:i') ?? '—';
+
+                if ($minutos > 0) {
+                    $titulo = 'Cierra tu caja: turno por terminar';
+                    $detalle = "{$corte->caja} · turno {$turno} termina a las {$finTexto}. Te quedan {$minutos} min.";
+                    $prioridad = 'media';
+                } else {
+                    $restantes = max(0, CorteCaja::TOLERANCIA_CIERRE_MINUTOS + $minutos);
+                    $cierreAuto = $fin?->copy()->addMinutes(CorteCaja::TOLERANCIA_CIERRE_MINUTOS)->format('H:i') ?? '—';
+                    $titulo = 'Cierra tu caja: turno terminado';
+                    $detalle = "{$corte->caja} · tolerancia de {$restantes} min. El sistema la cerrará automáticamente a las {$cierreAuto}.";
+                    $prioridad = 'alta';
+                }
+
+                return [
+                    'id' => "caja:{$corte->id}",
+                    'tipo' => self::GRUPO_CAJA,
+                    'titulo' => $titulo,
+                    'detalle' => $detalle,
+                    'mensaje' => null,
+                    'avatar' => mb_strtoupper(mb_substr($corte->caja, 0, 1)),
+                    'url' => route('caja.index', ['sucursal' => $sucursalId]),
+                    'destino_url' => route('caja.index', ['sucursal' => $sucursalId]),
+                    'destino_etiqueta' => 'Ir a caja',
+                    'fecha' => $fin ?? now(),
+                    'prioridad' => $prioridad,
+                    'icono' => '⏱',
+                    'usuario_id' => (int) $corte->id_usuario,
+                    'corte_id' => (int) $corte->id,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /**
@@ -337,6 +393,13 @@ class AlertasFeed
 
         foreach (self::items($sucursalId) as $aviso) {
             if ($aviso['id'] === $id) {
+                // Los avisos de cierre de caja son privados de su dueño.
+                if (isset($aviso['usuario_id'])
+                    && $usuarioId !== null
+                    && (int) $aviso['usuario_id'] !== (int) $usuarioId) {
+                    return null;
+                }
+
                 $aviso['leida'] = in_array($id, self::leidas($sucursalId, $usuarioId), true);
                 $aviso['tiempo'] = self::tiempoCorto($aviso['fecha'] ?? null);
                 $aviso['fecha_texto'] = $aviso['fecha'] !== null
@@ -532,6 +595,28 @@ class AlertasFeed
 
         $tipoStockId = TipoAlerta::where('nombre', 'STOCK_BAJO')->value('id');
 
+        $tipoCierreCajaId = TipoAlerta::where('nombre', 'CIERRE_CAJA')->value('id');
+
+        if ($tipoCierreCajaId) {
+            $cortesAbiertosIds = CorteCaja::query()
+                ->where('id_sucursal', $sucursalId)
+                ->where('estado', 'abierto')
+                ->pluck('id')
+                ->all();
+
+            $staleCaja = Alerta::query()
+                ->where('id_sucursal', $sucursalId)
+                ->where('estado', Alerta::ESTADO_ACTIVA)
+                ->where('id_tipo_alerta', $tipoCierreCajaId)
+                ->where('entidad_tipo', 'corte_caja');
+
+            if ($cortesAbiertosIds !== []) {
+                $staleCaja->whereNotIn('entidad_id', $cortesAbiertosIds);
+            }
+
+            $staleCaja->update(['estado' => Alerta::ESTADO_RESUELTA, 'fecha_resuelto' => now()]);
+        }
+
         if ($tipoStockId) {
             $stockBajoIds = self::stockBajoDeSucursal($sucursalId)
                 ->pluck('producto.id')
@@ -556,6 +641,58 @@ class AlertasFeed
 
             $staleStock->update(['estado' => Alerta::ESTADO_RESUELTA, 'fecha_resuelto' => now()]);
         }
+    }
+
+    /**
+     * Lotes con existencia en la sucursal que deben avisar por caducidad.
+     *
+     * Solo entran los caducados y los que vencen dentro de 90 días
+     * (la misma ventana de EstadoCaducidad::PorVencer). Los lotes sin
+     * fecha se conservan para avisar que falta capturarla. Los lotes
+     * con más de 90 días de vida no generan notificación.
+     */
+    private static function lotesPorCaducarQuery(int $sucursalId): Builder
+    {
+        $limite = Carbon::today()->addDays(90)->endOfDay();
+
+        return Lote::query()
+            ->whereHas('inventarios', function ($query) use ($sucursalId): void {
+                $query->where('inventario.id_sucursal', $sucursalId)
+                    ->where('inventario.stock_individual', '>', 0);
+            })
+            ->where(function ($query) use ($limite): void {
+                $query->where(function ($sinFecha): void {
+                    $sinFecha->whereNull('fecha_de_caducidad')
+                        ->whereNull('fecha_caducidad');
+                })->orWhereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) <= ?', [$limite]);
+            });
+    }
+
+    /**
+     * Ids de lotes cuya caducidad está a más de 90 días.
+     *
+     * Los usa el listado para ocultar alertas persistidas que ya no
+     * corresponden a la ventana de aviso de 3 meses.
+     *
+     * @param  array<int, int|null>  $loteIds
+     * @return array<int, int>
+     */
+    private static function lotesFueraDeVentana(array $loteIds): array
+    {
+        $loteIds = array_values(array_filter(array_map('intval', $loteIds)));
+
+        if ($loteIds === []) {
+            return [];
+        }
+
+        $limite = Carbon::today()->addDays(90)->endOfDay();
+
+        return Lote::query()
+            ->whereKey($loteIds)
+            ->whereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) > ?', [$limite])
+            ->pluck('id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all();
     }
 
     /**
@@ -588,6 +725,10 @@ class AlertasFeed
             ->orderByDesc('id')
             ->get();
 
+        $lotesFueraDeVentana = self::lotesFueraDeVentana(
+            $alertas->where('entidad_tipo', 'lote')->pluck('entidad_id')->filter()->all()
+        );
+
         $delFeed = [];
         $extras = [];
 
@@ -603,7 +744,24 @@ class AlertasFeed
             );
 
             $item = ($avisoId !== null && $items->has($avisoId)) ? $items->get($avisoId) : null;
+
+            // Una alerta de caducidad persistida deja de mostrarse cuando el
+            // lote ya está a más de 3 meses: solo avisamos al acercarse.
+            if ($item === null
+                && $alerta->entidad_tipo === 'lote'
+                && in_array((int) $alerta->entidad_id, $lotesFueraDeVentana, true)) {
+                continue;
+            }
+
             $fila = self::presentarAlerta($alerta, $item, $leida, $sucursalId);
+
+            // Los avisos de cierre de caja son personales: solo su dueño los ve.
+            if (($fila['grupo'] ?? null) === self::GRUPO_CAJA
+                && $usuarioId !== null
+                && isset($fila['usuario_id'])
+                && (int) $fila['usuario_id'] !== (int) $usuarioId) {
+                continue;
+            }
 
             if ($item !== null) {
                 $delFeed[] = $fila;
@@ -644,6 +802,7 @@ class AlertasFeed
             'traspaso' => self::presentarTraspasoGenerico($alerta, $sucursalId),
             'lote' => self::presentarLoteGenerico($alerta, $sucursalId),
             'producto' => self::presentarProductoGenerico($alerta, $sucursalId),
+            'corte_caja' => self::presentarCorteCajaGenerico($alerta, $sucursalId),
             default => null,
         };
 
@@ -760,6 +919,36 @@ class AlertasFeed
     }
 
     /**
+     * Presenta un aviso de cierre de caja desde su corte.
+     *
+     * @return array<string, mixed>
+     */
+    private static function presentarCorteCajaGenerico(Alerta $alerta, int $sucursalId): array
+    {
+        $corte = $alerta->entidad_id === null ? null : CorteCaja::query()->whereKey($alerta->entidad_id)->first();
+
+        if ($corte === null) {
+            return ['titulo' => 'Cierre de caja pendiente'];
+        }
+
+        $fin = $corte->finDeTurno();
+        $horario = CorteCaja::HORARIOS[$corte->claveTurno()] ?? [];
+        $turno = $horario['etiqueta'] ?? ucfirst($corte->claveTurno());
+
+        return [
+            'titulo' => 'Cierra tu caja: turno por terminar',
+            'detalle' => "{$corte->caja} · turno {$turno}".($fin !== null ? " · termina a las {$fin->format('H:i')}" : ''),
+            'avatar' => mb_strtoupper(mb_substr($corte->caja, 0, 1)),
+            'url' => route('caja.index', ['sucursal' => $sucursalId]),
+            'destino_url' => route('caja.index', ['sucursal' => $sucursalId]),
+            'destino_etiqueta' => 'Ir a caja',
+            'icono' => '⏱',
+            'usuario_id' => (int) $corte->id_usuario,
+            'corte_id' => (int) $corte->id,
+        ];
+    }
+
+    /**
      * Traduce el id estable del aviso ("traspaso:5", "caducidad:3",
      * "ventas:1:2026-10-07") a su origen dinámico entidad_tipo + entidad_id.
      *
@@ -785,6 +974,10 @@ class AlertasFeed
             return ['entidad_tipo' => 'producto', 'entidad_id' => (int) $partes[1]];
         }
 
+        if ($partes[0] === 'caja' && isset($partes[1]) && is_numeric($partes[1])) {
+            return ['entidad_tipo' => 'corte_caja', 'entidad_id' => (int) $partes[1]];
+        }
+
         return null;
     }
 
@@ -807,6 +1000,10 @@ class AlertasFeed
             return "ventas:{$entidadId}:{$fecha}";
         }
 
+        if ($entidadTipo === 'corte_caja' && $entidadId !== null) {
+            return "caja:{$entidadId}";
+        }
+
         return null;
     }
 
@@ -826,6 +1023,7 @@ class AlertasFeed
             'lote' => self::tipoParaLote($origen['entidad_id']),
             'ventas' => 'VENTAS_RESUMEN',
             'producto' => 'STOCK_BAJO',
+            'corte_caja' => 'CIERRE_CAJA',
             default => null,
         };
 
@@ -955,6 +1153,7 @@ class AlertasFeed
             'TRASPASO_RECIBIDO' => TipoAlerta::NIVEL_INFO,
             'TRASPASO_RECHAZADO' => TipoAlerta::NIVEL_ADVERTENCIA,
             'VENTAS_RESUMEN' => TipoAlerta::NIVEL_INFO,
+            'CIERRE_CAJA' => TipoAlerta::NIVEL_ADVERTENCIA,
         ];
 
         $modulos = [
@@ -965,6 +1164,7 @@ class AlertasFeed
             'TRASPASO_RECIBIDO' => 'Traspasos',
             'TRASPASO_RECHAZADO' => 'Traspasos',
             'VENTAS_RESUMEN' => 'Alertas',
+            'CIERRE_CAJA' => 'Caja',
         ];
 
         $modulo = Modulo::firstOrCreate(['nombre_modulo' => $modulos[$nombre] ?? 'Alertas']);

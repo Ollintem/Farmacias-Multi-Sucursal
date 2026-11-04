@@ -1,12 +1,10 @@
 <x-layouts::app :title="__('Permisos por rol')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado homologado: hero verde --}}
-            <section class="module-card noti-hero" aria-label="Encabezado de permisos por rol">
+            {{-- Acciones --}}
+            <section class="module-card noti-hero" aria-label="Acciones de permisos por rol">
                 <div class="noti-hero-fondo" aria-hidden="true"></div>
                 <div class="noti-encabezado-texto noti-hero-texto">
-                    <p class="noti-hero-kicker"><span class="noti-hero-dot"></span> Personal · Permisos por rol</p>
-                    <h1 class="mt-2">Permisos por rol</h1>
                     <div class="mt-4 flex flex-wrap gap-2">
                         <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary">← Volver</a>
                     </div>

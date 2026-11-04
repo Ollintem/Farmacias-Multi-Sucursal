@@ -38,7 +38,7 @@
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
             <div>
-                <button type="button" onclick="history.back()" class="inline-flex items-center gap-2 text-sm font-bold text-emerald-700 transition hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200">← Volver</button>
+                <button type="button" onclick="history.back()" class="theme-button theme-button-secondary">← Volver</button>
             </div>
 
             @if(session('success'))
@@ -72,10 +72,8 @@
                 </div>
             @endif
 
-            <header class="mb-6" aria-label="Encabezado del módulo">
+            <header class="mb-6" aria-label="Indicadores del módulo">
                 <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">FarmaERP · Próximamente</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $nombre }}</h1>
                     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
   <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-zinc-800 lg:grid-cols-3">
     <div class="relative flex items-center gap-2.5 bg-white px-3.5 py-3 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">

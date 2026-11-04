@@ -1,13 +1,8 @@
 <x-layouts::app :title="__('Caja')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado --}}
-            <header class="mb-4 flex flex-wrap items-end justify-between gap-4" aria-label="Encabezado de caja">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Caja · {{ $sucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Control de caja</h1>
-                    <p class="theme-subtle mt-1 text-sm">Apertura y cierre por turno, arqueo multi-caja y movimientos de efectivo.</p>
-                </div>
+            {{-- Selector de sucursal --}}
+            <header class="mb-4 flex flex-wrap items-center justify-end gap-4" aria-label="Selector de sucursal">
                 <form method="GET" action="{{ route('caja.index') }}" class="flex items-center gap-2">
                     <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Sucursal</label>
                     <select name="sucursal" onchange="this.form.submit()" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#0e9384] focus:outline-none focus:ring-2 focus:ring-[#0e9384]/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
@@ -63,6 +58,29 @@
                     </div>
                 </dl>
             </div>
+
+            @if($miCorte)
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                    <div class="flex items-start gap-3">
+                        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-black text-emerald-800 dark:text-emerald-200">
+                                Tu caja está activa: {{ $miCorte->caja }} · {{ \App\Http\Controllers\CajaController::TURNOS[$miCorte->turno] ?? $miCorte->turno }}
+                            </p>
+                            <p class="mt-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                                Abierta el {{ $miCorte->fecha_inicio->format('d/m/Y H:i') }} en {{ $sucursal?->nombre_sucursal }}.
+                                @if($miCorte->finDeTurno())
+                                    El turno termina a las {{ $miCorte->finDeTurno()->format('H:i') }} (tolerancia de {{ \App\Models\CorteCaja::TOLERANCIA_CIERRE_MINUTOS }} min para cerrar).
+                                @endif
+                                El Punto de Venta ya puede cobrar y ligar las ventas a este corte.
+                            </p>
+                        </div>
+                    </div>
+                    <a href="{{ route('punto-venta.index') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0" wire:navigate>Ir a cobrar</a>
+                </div>
+            @endif
 
             @if(session('success'))
                 <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200" role="status">
@@ -130,7 +148,12 @@
                                             <div>
                                                 <div class="flex flex-wrap items-center gap-2">
                                                     <span class="inline-flex items-center rounded-full bg-[#0e9384] px-3 py-1 text-xs font-black text-white">{{ $corte->caja }}</span>
-                                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{{ $corte->turno }}</span>
+                                                    @if((int) $corte->id_usuario === (int) auth()->id())
+                                                        <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Tu caja
+                                                        </span>
+                                                    @endif
+                                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{{ \App\Http\Controllers\CajaController::TURNOS[$corte->turno] ?? $corte->turno }}</span>
                                                     <span class="text-xs font-medium text-slate-500 dark:text-zinc-400">por {{ $corte->usuario?->nombre }} {{ $corte->usuario?->apellido }} · {{ $corte->fecha_inicio->format('d/m/Y H:i') }}</span>
                                                 </div>
                                                 <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -205,69 +228,13 @@
                                                     <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">Esperado actual: <span class="font-black">${{ number_format($esperado,2) }}</span></p>
                                                 @endif
                                                 <input type="number" step="0.01" min="0" name="efectivo_declarado" placeholder="Efectivo declarado" required class="mt-2 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm dark:border-amber-500/40 dark:bg-zinc-900 dark:text-white">
-                                                <button type="submit" class="theme-button theme-button-primary mt-2 w-full !bg-amber-600 hover:!bg-amber-700 !py-2 text-sm">Cerrar y arquear</button>
+                                                <button type="submit" class="theme-button theme-button-warning mt-2 w-full !py-2 text-sm">Cerrar y arquear</button>
                                             </form>
                                         </div>
                                     </div>
                                 @endforeach
                             </div>
                         @endif
-                    </section>
-
-                    {{-- Instrucciones de uso — debajo de esta caja --}}
-                    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900" aria-label="Instrucciones de uso de la caja">
-                        <div class="flex items-center gap-2">
-                            <span class="grid h-7 w-7 place-items-center rounded-full bg-[#0e9384]/10 text-[#0e9384] ring-1 ring-[#0e9384]/15">
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            </span>
-                            <h3 class="text-sm font-black text-slate-800 dark:text-white">Cómo usar esta caja</h3>
-                            <span class="ml-auto hidden items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-500 dark:bg-zinc-800 dark:text-zinc-400 sm:inline-flex">Caja 1 · Matutino</span>
-                        </div>
-                        <ol class="mt-4 grid gap-3 text-xs leading-relaxed text-slate-600 dark:text-zinc-300 sm:grid-cols-2">
-                            <li class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-zinc-800 dark:bg-zinc-800/50">
-                                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-[#0e9384] shadow-sm ring-1 ring-slate-200 dark:bg-zinc-900 dark:ring-zinc-700">1</span>
-                                <div>
-                                    <p class="font-bold text-slate-800 dark:text-white">Fondo inicial</p>
-                                    <p>Es el efectivo con el que abriste este turno. Las ventas aún no lo modifican.</p>
-                                </div>
-                            </li>
-                            <li class="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
-                                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-emerald-700 shadow-sm ring-1 ring-emerald-200 dark:bg-zinc-900">2</span>
-                                <div>
-                                    <p class="font-bold text-emerald-800 dark:text-emerald-200">Ventas del corte</p>
-                                    <p>Suma automática de todas las ventas ligadas a <span class="font-semibold">Caja 1 · Matutino</span> desde la apertura.</p>
-                                </div>
-                            </li>
-                            <li class="flex gap-3 rounded-xl border border-slate-100 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-                                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-slate-700 shadow-sm ring-1 ring-slate-200 dark:bg-zinc-800">3</span>
-                                <div>
-                                    <p class="font-bold text-slate-800 dark:text-white">Movimientos</p>
-                                    <p><span class="font-semibold text-emerald-600">+ Ingreso</span> / <span class="font-semibold text-red-600">− Retiro</span> de efectivo con motivo (ej. fondo, pago a proveedor).</p>
-                                </div>
-                            </li>
-                            <li class="flex gap-3 rounded-xl border border-[#0e9384]/15 bg-[#f0fdfa] p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
-                                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-[#0e9384] shadow-sm ring-1 ring-[#0e9384]/15 dark:bg-zinc-900">4</span>
-                                <div>
-                                    <p class="font-bold text-[#0c7569] dark:text-emerald-200">Esperado</p>
-                                    <p><span class="font-mono font-bold">Esperado = Inicial + Ventas + Ingresos − Retiros</span>. En corte ciego se oculta hasta el cierre.</p>
-                                </div>
-                            </li>
-                            <li class="flex gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-zinc-700 dark:bg-zinc-800 sm:col-span-2">
-                                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-slate-700 shadow-sm ring-1 ring-slate-200 dark:bg-zinc-900">5</span>
-                                <div class="flex-1">
-                                    <p class="font-bold text-slate-800 dark:text-white">Registrar movimiento</p>
-                                    <p>Elige <span class="font-semibold">Retiro/Ingreso</span> → escribe <span class="font-semibold">Monto</span> → agrega <span class="font-semibold">Motivo</span> → <span class="font-semibold">Guardar movimiento</span>. Queda auditado con usuario y hora.</p>
-                                </div>
-                            </li>
-                            <li class="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/20 dark:bg-amber-500/10 sm:col-span-2">
-                                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-amber-700 shadow-sm ring-1 ring-amber-200 dark:bg-zinc-900">6</span>
-                                <div class="flex-1">
-                                    <p class="font-bold text-amber-800 dark:text-amber-200">Cerrar caja — Cerrar y arquear</p>
-                                    <p>Cuenta tu efectivo físico, escríbelo en <span class="font-semibold">Efectivo declarado</span> y presiona <span class="font-semibold">Cerrar y arquear</span>. El sistema calcula <span class="font-semibold">Diferencia = Declarado − Esperado</span> y bloquea la caja (multi-caja permite seguir con otra).</p>
-                                </div>
-                            </li>
-                        </ol>
-                        <p class="mt-3 text-center text-[11px] font-medium text-slate-400 dark:text-zinc-500">Tip: Cada caja es independiente por sucursal y turno (Mañana/Tarde). Las ventas del POS se ligan automáticamente a tu caja abierta.</p>
                     </section>
 
                 </div>

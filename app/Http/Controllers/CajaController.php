@@ -8,6 +8,7 @@ use App\Models\MovimientoCaja;
 use App\Models\Sucursal;
 use App\Models\User;
 use App\Models\Venta;
+use App\Support\CierreCajaTurno;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -39,16 +40,25 @@ class CajaController extends Controller
         $sucursales = Sucursal::where('es_activa', true)->orderBy('nombre_sucursal')->get();
 
         $cortesAbiertos = collect();
+        $miCorte = null;
         $esCorteCiego = false;
         $historialCount = 0;
 
         if ($sucursal) {
+            // Cierra de forma perezosa las cajas que ya vencieron su turno
+            // (respaldo del comando programado, útil al recargar la página).
+            CierreCajaTurno::procesar($sucursal->id);
+
             $cortesAbiertos = CorteCaja::with(['usuario', 'movimientos.usuario'])
                 ->where('id_sucursal', $sucursal->id)
                 ->where('estado', 'abierto')
                 ->orderByDesc('fecha_inicio')
                 ->get()
-                ->each(fn (CorteCaja $c) => $c->setAttribute('efectivo_esperado_calculado', $this->calcularEsperado($c)));
+                ->each(fn (CorteCaja $c) => $c->setAttribute('efectivo_esperado_calculado', $c->efectivoEsperado()));
+
+            $miCorte = $usuario
+                ? $cortesAbiertos->firstWhere('id_usuario', $usuario->id)
+                : null;
 
             $historialCount = CorteCaja::where('id_sucursal', $sucursal->id)->where('estado', 'cerrado')->count();
             $esCorteCiego = $usuario ? (bool) CorteCiego::where('id_usuarios', $usuario->id)->value('corte_ciego') : false;
@@ -66,7 +76,7 @@ class CajaController extends Controller
             $resumenHoy = compact('ventasHoy', 'totalHoy', 'efectivoHoy', 'tarjetaHoy', 'transferenciaHoy');
         }
 
-        return view('pages.caja.index', compact('sucursal', 'sucursales', 'cortesAbiertos', 'esCorteCiego', 'resumenHoy', 'sucursalId', 'historialCount'));
+        return view('pages.caja.index', compact('sucursal', 'sucursales', 'cortesAbiertos', 'miCorte', 'esCorteCiego', 'resumenHoy', 'sucursalId', 'historialCount'));
     }
 
     /**
@@ -153,6 +163,7 @@ class CajaController extends Controller
             'caja' => ['required', 'string', 'max:30'],
             'turno' => ['required', 'string', 'in:Matutino,Vespertino'],
             'efectivo_inicial' => ['required', 'numeric', 'min:0', 'max:9999999'],
+            'redirect_to' => ['nullable', 'string', 'in:punto-venta,caja'],
         ]);
 
         $sucursal = Sucursal::findOrFail($data['id_sucursal']);
@@ -185,7 +196,15 @@ class CajaController extends Controller
             'estado' => 'abierto',
         ]);
 
-        return redirect()->route('caja.index', ['sucursal' => $sucursal->id])->with('success', "Caja «{$data['caja']}» abierta en {$sucursal->nombre_sucursal} — turno {$data['turno']} con $".number_format((float) $data['efectivo_inicial'], 2).' inicial.');
+        $mensaje = "Caja «{$data['caja']}» abierta en {$sucursal->nombre_sucursal} — turno {$data['turno']} con $".number_format((float) $data['efectivo_inicial'], 2).' inicial.';
+
+        // Abrir la caja desde el Punto de Venta devuelve al usuario a su venta
+        // en curso (el carrito vive en sesión y se conserva) y reabre el cobro.
+        if (($data['redirect_to'] ?? null) === 'punto-venta') {
+            return redirect()->route('punto-venta.index', ['cobrar' => 1])->with('success', $mensaje);
+        }
+
+        return redirect()->route('caja.index', ['sucursal' => $sucursal->id])->with('success', $mensaje);
     }
 
     /**
@@ -227,9 +246,10 @@ class CajaController extends Controller
 
         $data = $request->validate([
             'efectivo_declarado' => ['required', 'numeric', 'min:0', 'max:9999999'],
+            'redirect_to' => ['nullable', 'string', 'in:punto-venta,caja'],
         ]);
 
-        $esperado = $this->calcularEsperado($corte);
+        $esperado = $corte->efectivoEsperado();
         $declarado = (float) $data['efectivo_declarado'];
         $diferencia = round($declarado - $esperado, 2);
 
@@ -239,44 +259,19 @@ class CajaController extends Controller
             'diferencia' => $diferencia,
             'fecha_cierre' => now(),
             'estado' => 'cerrado',
+            'cierre_automatico' => false,
         ]);
 
         $mensaje = $diferencia === 0.0
             ? "Caja «{$corte->caja}» cerrada sin diferencia. Esperado y declarado: $".number_format($esperado, 2).'.'
             : "Caja «{$corte->caja}» cerrada. Esperado $".number_format($esperado, 2).', declarado $'.number_format($declarado, 2).' — diferencia $'.number_format($diferencia, 2).'.';
 
-        return back()->with('success', $mensaje);
-    }
-
-    /**
-     * Calcula el efectivo esperado de un corte: inicial + ventas en efectivo vinculadas + ingresos - retiros.
-     */
-    private function calcularEsperado(CorteCaja $corte): float
-    {
-        $inicial = (float) $corte->efectivo_inicial;
-
-        // Ventas vinculadas directamente al corte
-        $ventasCorte = (float) Venta::where('id_corte_caja', $corte->id)->sum('total');
-
-        // Fallback: si aún no hay ventas vinculadas (corte antiguo), usar ventas de la sucursal en el rango del corte donde el pago fue en efectivo.
-        if ($ventasCorte === 0.0) {
-            $query = Venta::where('ventas.id_sucursal', $corte->id_sucursal)
-                ->where('ventas.creado_en', '>=', $corte->fecha_inicio);
-
-            if ($corte->fecha_cierre) {
-                $query->where('ventas.creado_en', '<=', $corte->fecha_cierre);
-            } else {
-                $query->whereNull('ventas.id_corte_caja');
-            }
-
-            $ventasCorte = (float) $query->join('pagos', 'pagos.id', '=', 'ventas.id_pago')
-                ->where('pagos.metodo', 'Efectivo')
-                ->sum('ventas.total');
+        // Cerrar la caja desde el Punto de Venta devuelve al usuario a su
+        // operación (el carrito vive en sesión y se conserva).
+        if (($data['redirect_to'] ?? null) === 'punto-venta') {
+            return redirect()->route('punto-venta.index')->with('success', $mensaje);
         }
 
-        $ingresos = (float) MovimientoCaja::where('id_corte_caja', $corte->id)->where('tipo', 'ingreso')->sum('monto');
-        $retiros = (float) MovimientoCaja::where('id_corte_caja', $corte->id)->where('tipo', 'retiro')->sum('monto');
-
-        return round($inicial + $ventasCorte + $ingresos - $retiros, 2);
+        return back()->with('success', $mensaje);
     }
 }

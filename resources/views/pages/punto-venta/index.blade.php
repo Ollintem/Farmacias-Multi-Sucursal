@@ -1,14 +1,6 @@
 <x-layouts::app :title="__('Punto de venta')">
     <div class="pos-page">
         <div class="pos-shell">
-            <header class="pos-header">
-                <div>
-                    <p class="pos-kicker">Venta rápida</p>
-                    <h1>Punto de venta</h1>
-                    <p class="pos-context">{{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                </div>
-            </header>
-
             <div class="pos-layout">
                 <main class="pos-catalog !border-0 !bg-transparent !p-0 !shadow-none">
                     <div class="mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">

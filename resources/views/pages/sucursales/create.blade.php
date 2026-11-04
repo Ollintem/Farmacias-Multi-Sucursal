@@ -5,14 +5,6 @@
 <x-layouts::app :title="$esEdicion ? __('Editar sucursal') : __('Nueva sucursal')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado de sucursal">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Red de farmacias · {{ $esEdicion ? 'Edición' : 'Nuevo registro' }}</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $esEdicion ? 'Editar sucursal' : 'Agregar sucursal' }}</h1>
-                </div>
-            </header>
-
             <section class="module-card noti-listado" aria-label="Datos de la sucursal">
                 <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                     <div>
@@ -71,17 +63,10 @@
                     <div>
                         <div class="mb-4">
                             <div>
-                                <h2 class="text-sm font-bold">Estado de la sucursal</h2>
-                                <p class="theme-subtle text-xs">Marca para que aparezca en los selectores y listados operativos.</p>
+                                <h2 class="text-sm font-bold">Horario de la sucursal</h2>
+                                <p class="theme-subtle text-xs">Defina el horario operativo. El estado (activa/inactiva) se cambia desde el interruptor del listado.</p>
                             </div>
                         </div>
-                        <label class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-                            <input type="checkbox" name="es_activa" value="1" @checked(old('es_activa', $sucursal?->es_activa ?? true))>
-                            <span>
-                                <span class="block text-sm font-bold text-emerald-900 dark:text-emerald-100">Sucursal activa</span>
-                                <span class="block text-xs text-emerald-800/75 dark:text-emerald-200/75">Permite identificarla como disponible para la operación.</span>
-                            </span>
-                        </label>
                         <div class="grid gap-5 sm:grid-cols-2">
                             <div>
                                 <label for="hora_apertura" class="mb-2 block text-sm font-semibold">Hora de apertura</label>

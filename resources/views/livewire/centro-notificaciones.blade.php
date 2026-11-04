@@ -1,15 +1,5 @@
 <div class="module-page noti-page" wire:poll.30s x-data x-on:abrir-notificacion.window="$wire.abrirDetalle($event.detail.id)">
     <div class="module-page-inner noti-full noti-formal">
-        {{-- Encabezado compacto — filtros movidos al topbar --}}
-        <header class="flex flex-col gap-3" aria-label="Encabezado de notificaciones">
-            <div class="min-w-0">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-zinc-400">Centro de notificaciones · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                <h1 class="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white">Panel operativo de avisos</h1>
-            </div>
-        </header>
-
-
-
         <div wire:loading.delay class="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
             <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
             Actualizando…

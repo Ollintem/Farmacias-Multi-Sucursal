@@ -560,6 +560,91 @@ select.theme-input option {
     color: #ffffff;
 }
 
+.theme-button-danger {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-color: #991b1b;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 12px 28px rgba(220, 38, 38, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.theme-button-danger:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+    border-color: #7f1d1d;
+    color: #ffffff;
+    box-shadow: 0 16px 32px rgba(220, 38, 38, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.theme-dark .theme-button-danger,
+.dark .theme-button-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border-color: #fca5a5;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 10px 22px rgba(239, 68, 68, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.theme-button-warning {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    border-color: #92400e;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 12px 28px rgba(217, 119, 6, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.theme-button-warning:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #92400e 100%);
+    border-color: #78350f;
+    color: #ffffff;
+    box-shadow: 0 16px 32px rgba(217, 119, 6, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.theme-dark .theme-button-warning,
+.dark .theme-button-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border-color: #fcd34d;
+    color: #78350f;
+    text-shadow: none;
+    box-shadow: 0 10px 22px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.theme-button-icon {
+    width: 2rem;
+    height: 2rem;
+    min-height: 0;
+    padding: 0;
+    border-radius: 0.6rem;
+    font-size: 0.85rem;
+}
+
+.theme-button-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: #475569;
+    box-shadow: none;
+    min-height: 0;
+    padding: 0.4rem 0.6rem;
+}
+
+.theme-button-ghost:hover {
+    background: rgba(14, 147, 132, 0.08);
+    border-color: transparent;
+    color: #0c7569;
+    box-shadow: none;
+    transform: none;
+}
+
+.dark .theme-button-ghost,
+.theme-dark .theme-button-ghost {
+    color: #94a3b8;
+}
+
+.dark .theme-button-ghost:hover,
+.theme-dark .theme-button-ghost:hover {
+    background: rgba(94, 200, 180, 0.12);
+    color: #5ec8b4;
+}
+
 .theme-button:disabled,
 .theme-button[aria-disabled="true"] {
     cursor: not-allowed;

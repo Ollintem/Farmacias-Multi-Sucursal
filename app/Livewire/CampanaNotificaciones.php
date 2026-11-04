@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Support\AlertasFeed;
+use App\Support\CierreCajaTurno;
 use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -50,6 +51,11 @@ class CampanaNotificaciones extends Component
 
             return;
         }
+
+        // Aprovecha el polling de la campana para cerrar las cajas cuyo
+        // turno venció la tolerancia (respaldo del comando programado).
+        CierreCajaTurno::procesar($sucursalId);
+
         $listado = AlertasFeed::listado($sucursalId, $user->id);
         $this->noLeidas = collect($listado)->where('leida', false)->count();
         $this->avisos = array_slice(array_map(function (array $aviso): array {

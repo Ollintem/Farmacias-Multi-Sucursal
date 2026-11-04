@@ -1,12 +1,10 @@
 <x-layouts::app :title="__('Permisos: ' . $usuario->nombre)">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado de permisos">
+            {{-- Acciones --}}
+            <header class="mb-6" aria-label="Acciones de permisos">
                 <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Permisos · {{ $usuario->rol?->tipo_rol ?? 'Sin rol' }} · {{ $usuario->email }}</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $usuario->nombre }} {{ $usuario->apellido }}</h1>
-                    <div class="mt-4 flex flex-wrap gap-2">
+                    <div class="flex flex-wrap gap-2">
                         <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary">← Volver</a>
                         <a href="{{ route('usuarios.edit', $usuario) }}" class="theme-button theme-button-primary">Editar usuario</a>
                     </div>

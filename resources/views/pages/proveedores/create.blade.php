@@ -1,14 +1,6 @@
 <x-layouts::app :title="__('Nuevo proveedor')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado de proveedor">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Catálogo de suministro · Nuevo registro</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Agregar proveedor</h1>
-                </div>
-            </header>
-
             <section class="module-card noti-listado" aria-label="Datos del proveedor">
                 <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                     <div>

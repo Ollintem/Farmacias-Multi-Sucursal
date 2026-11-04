@@ -8,8 +8,6 @@ new #[Title('Ajustes de apariencia')] class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
-
     <flux:heading level="2" class="sr-only">Ajustes de apariencia</flux:heading>
 
     <x-pages::settings.layout heading="Apariencia" subheading="Elige el tema de FarmaERP, igual que el interruptor del dashboard">

@@ -1,21 +1,10 @@
 <x-layouts::app :title="__('Dashboard')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            @php
-                $sucursalId = session('active_sucursal_id') ?? auth()->user()?->id_sucursal;
-                $selectedSucursal = $sucursalId ? \App\Models\Sucursal::find($sucursalId) : null;
-            @endphp
-
-            {{-- Encabezado limpio --}}
-            <header class="mb-6 flex flex-wrap items-end justify-between gap-4" aria-label="Encabezado del dashboard">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Panel general · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Dashboard farmacéutico</h1>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary text-sm !px-3 !py-2">Ver usuarios</a>
-                    <a href="{{ route('sucursales.create') }}" class="theme-button theme-button-secondary text-sm !px-3 !py-2">+ Agregar sucursal</a>
-                </div>
+            {{-- Acciones del panel --}}
+            <header class="mb-4 flex flex-wrap justify-end gap-2" aria-label="Acciones del panel">
+                <a href="{{ route('usuarios.index') }}" class="theme-button theme-button-secondary text-sm !px-3 !py-2">Ver usuarios</a>
+                <a href="{{ route('sucursales.create') }}" class="theme-button theme-button-secondary text-sm !px-3 !py-2">+ Agregar sucursal</a>
             </header>
 
             <div class="grid gap-4 lg:grid-cols-[1.8fr_1fr]">

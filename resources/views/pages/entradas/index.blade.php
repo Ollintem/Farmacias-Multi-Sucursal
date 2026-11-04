@@ -3,23 +3,10 @@
         <div class="module-page-inner noti-full noti-formal">
             @php($tipoActual = $tipo ?? request('tipo', 'todas'))
             @php($totalTodas = $totalEntradas ?? ($entradas->count() ?? 0))
-            @php($esTodas = in_array($tipoActual, ['todas', '', null], true))
-            @php($esCompras = $tipoActual === 'compras')
-            @php($esTraspasos = $tipoActual === 'traspasos')
 
-            {{-- Encabezado con botones a la derecha --}}
-            <header class="mb-6" aria-label="Encabezado de entradas de almacén">
-                <div class="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Almacén · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                        <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Entradas de almacén</h1>
-                        <p class="theme-subtle mt-1 text-sm">
-                            @if($esTodas) Compras y traspasos recibidos
-                            @elseif($esCompras) Recepción de compras a proveedores
-                            @else Gestión de traspasos entre sucursales @endif
-                            · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}
-                        </p>
-                    </div>
+            {{-- Acciones del encabezado --}}
+            <header class="mb-6" aria-label="Acciones de entradas de almacén">
+                <div class="flex flex-wrap items-start justify-end gap-4">
                     <div class="flex flex-wrap gap-2 shrink-0">
                         @if(Route::has('compras.create'))
                             <a href="{{ route('compras.create', ['sucursal' => $selectedSucursal?->id]) }}" class="theme-button theme-button-primary whitespace-nowrap">

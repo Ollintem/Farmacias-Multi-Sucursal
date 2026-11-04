@@ -214,6 +214,14 @@
 
         const ir = evento.target.closest('[data-noti-ir]');
         if (ir && ir.getAttribute('data-noti-ir')) {
+            // En /alertas el centro Livewire ya maneja wire:click.prevent="irAlApartado";
+            // no duplicar el fetch/navegación clásico cuando hay centro montado.
+            if (document.querySelector('[x-on\\:abrir-notificacion\\.window]') && evento.defaultPrevented) {
+                return;
+            }
+            if (document.querySelector('[x-on\\:abrir-notificacion\\.window]') && ir.closest('[wire\\:click]')) {
+                return;
+            }
             evento.preventDefault();
             irAlApartado(ir);
             return;
@@ -221,6 +229,14 @@
 
         const abrirBtn = evento.target.closest('[data-noti-detalle]');
         if (abrirBtn) {
+            // Si el centro Livewire está presente, su wire:click ya abre el modal Livewire;
+            // evitar abrir el modal clásico duplicado en /alertas.
+            if (document.querySelector('[x-on\\:abrir-notificacion\\.window]') && abrirBtn.hasAttribute('wire:click')) {
+                return;
+            }
+            if (document.querySelector('[x-on\\:abrir-notificacion\\.window]')) {
+                return;
+            }
             evento.preventDefault();
             abrir(abrirBtn.getAttribute('data-noti-detalle'));
             return;

@@ -11,9 +11,9 @@ new class extends Component {}; ?>
     </div>
 
     <flux:modal.trigger name="confirm-user-deletion">
-        <flux:button variant="danger" data-test="delete-user-button">
+        <button type="button" class="theme-button theme-button-danger" data-test="delete-user-button">
             Eliminar cuenta
-        </flux:button>
+        </button>
     </flux:modal.trigger>
 
     <livewire:pages::settings.delete-user-modal />

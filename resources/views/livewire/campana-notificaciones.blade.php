@@ -1,8 +1,8 @@
 <div
     wire:init="cargar"
     wire:poll.30s="cargar"
-    x-data="{ abierto: @entangle('abierto') }"
-    @click.outside="abierto = false; $wire.cerrar()"
+    x-data
+    @click.outside="$wire.cerrar()"
     class="noti-campana"
 >
     <button
@@ -10,7 +10,7 @@
         wire:click="toggle"
         class="noti-campana-btn"
         aria-label="Notificaciones"
-        :aria-expanded="abierto.toString()"
+        :aria-expanded="$wire.abierto.toString()"
     >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
@@ -20,7 +20,7 @@
         @endif
     </button>
 
-    <div x-show="abierto" x-transition x-cloak class="noti-panel" role="dialog" aria-label="Notificaciones">
+    <div x-show="$wire.abierto" x-transition x-cloak class="noti-panel" role="dialog" aria-label="Notificaciones">
         <div class="noti-panel-head">
             <p class="noti-panel-titulo">Notificaciones</p>
             <div class="noti-panel-acciones">
@@ -33,7 +33,7 @@
             @forelse($avisos as $aviso)
                 <button
                     type="button"
-                    @click="$dispatch('abrir-notificacion', { id: '{{ $aviso['id'] }}' }); abierto = false; $wire.cerrar()"
+                    @click="$dispatch('abrir-notificacion', { id: '{{ $aviso['id'] }}' }); $wire.cerrar()"
                     class="noti-item noti-item-boton {{ ! $aviso['leida'] ? 'no-leida' : '' }}"
                 >
                     <span class="noti-icono prioridad-{{ $aviso['prioridad'] }}">{{ $aviso['icono'] }}</span>
@@ -61,17 +61,20 @@
 
     <script>
         // Fallback: si no hay CentroNotificaciones montado (no estamos en /alertas),
-        // el evento abrir-notificacion abre el modal clásico.
-        document.addEventListener('abrir-notificacion', (e) => {
-            const id = e.detail?.id;
-            if (!id) return;
-            const tieneCentro = document.querySelector('[x-on\\:abrir-notificacion\\.window]');
-            if (!tieneCentro && typeof window.abrirDetalleNotificacion === 'function') {
-                window.abrirDetalleNotificacion(id);
-            }
-            if (!tieneCentro && typeof window.abrirDetalleNotificacion !== 'function') {
-                window.location.href = @json(route('alertas.index')) + '?abrir=' + encodeURIComponent(id);
-            }
-        });
+        // el evento abrir-notificacion abre el modal clásico. Guard contra doble montaje (campana desktop + mobile).
+        if (!window.__campanaFallbackInit) {
+            window.__campanaFallbackInit = true;
+            document.addEventListener('abrir-notificacion', (e) => {
+                const id = e.detail?.id;
+                if (!id) return;
+                const tieneCentro = document.querySelector('[x-on\\:abrir-notificacion\\.window]');
+                if (!tieneCentro && typeof window.abrirDetalleNotificacion === 'function') {
+                    window.abrirDetalleNotificacion(id);
+                }
+                if (!tieneCentro && typeof window.abrirDetalleNotificacion !== 'function') {
+                    window.location.href = @json(route('alertas.index')) + '?abrir=' + encodeURIComponent(id);
+                }
+            });
+        }
     </script>
 </div>

@@ -510,6 +510,64 @@
             </div>
             <div class="flex shrink-0 items-center gap-2">
                 <span x-text="currentDate" class="farma-topbar-fecha"></span>
+                <?php if (request()->routeIs('punto-venta.*')): ?>
+                    <?php
+                        $topPosSucursalId = (int) (session('active_sucursal_id', auth()->user()?->id_sucursal ?? 0) ?: 0);
+                        $topPosUsuarioId = (int) (auth()->id() ?? 0);
+                        $topPosCorte = null;
+                        if ($topPosSucursalId) {
+                            $topPosCorte = \App\Models\CorteCaja::where('id_sucursal', $topPosSucursalId)
+                                ->where('estado', 'abierto')
+                                ->where('id_usuario', $topPosUsuarioId)
+                                ->orderByDesc('fecha_inicio')
+                                ->first()
+                                ?? \App\Models\CorteCaja::where('id_sucursal', $topPosSucursalId)
+                                    ->where('estado', 'abierto')
+                                    ->orderByDesc('fecha_inicio')
+                                    ->first();
+                        }
+                        $topPosCajaPropia = $topPosCorte !== null && (int) $topPosCorte->id_usuario === $topPosUsuarioId;
+                        $topPosTurno = $topPosCorte
+                            ? (\App\Http\Controllers\CajaController::TURNOS[$topPosCorte->turno] ?? $topPosCorte->turno)
+                            : null;
+                    ?>
+                    <div class="flex items-center gap-2">
+                        <?php if ($topPosCorte): ?>
+                            <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-zinc-800" title="Caja que recibirá la próxima venta">
+                                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300"><?php echo e($topPosCajaPropia ? 'Mi caja' : 'Caja'); ?></span>
+                                <span class="text-xs font-black text-slate-900 dark:text-white"><?php echo e($topPosCorte->caja); ?> · <?php echo e($topPosTurno); ?></span>
+                            </span>
+                        <?php else: ?>
+                            <span class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5 shadow-sm dark:border-amber-500/30 dark:bg-zinc-800" title="Las ventas están bloqueadas hasta abrir una caja">
+                                <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">Sin caja abierta</span>
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if (! $topPosCajaPropia): ?>
+                            <button
+                                type="button"
+                                x-on:click="$dispatch('pos-activar-caja')"
+                                class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap"
+                                title="Abrir tu caja y elegir turno sin salir del punto de venta"
+                            >
+                                Activar caja
+                            </button>
+                        <?php endif; ?>
+
+                        <?php if ($topPosCajaPropia): ?>
+                            <button
+                                type="button"
+                                x-on:click="$dispatch('pos-cerrar-caja')"
+                                class="theme-button theme-button-warning !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap"
+                                title="Cerrar tu caja y arquear el turno"
+                            >
+                                Cerrar caja
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
                 @if(request()->routeIs('inventario.productos') && (auth()->user()?->permisosHabilitados('crear', 'inventario') ?? false))
                     @php($topProductoSucursal = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
                     <a href="{{ route('inventario.create', array_filter(['sucursal' => $topProductoSucursal])) }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Agregar producto nuevo</a>

@@ -9,12 +9,14 @@ use App\Models\Pago;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\ProductoPresentacion;
+use App\Models\Sucursal;
 use App\Models\Venta;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -69,6 +71,12 @@ class PuntoDeVenta extends Component
 
     public string $referenciaTarjeta = '';
 
+    // Modal para activar la caja del turno directamente desde el POS
+    public bool $abriendoCaja = false;
+
+    // Modal para cerrar (arquear) la caja propia al terminar el turno
+    public bool $cerrandoCaja = false;
+
     public bool $esSuperAdmin = false;
 
     // Selector de presentación (productos sin precio unitario)
@@ -106,6 +114,18 @@ class PuntoDeVenta extends Component
     {
         $this->carrito = session('carrito_pos', []);
         $this->esSuperAdmin = auth()->user()?->rol?->tipo_rol === 'SuperAdmin';
+        // Si el alta de caja falló (p. ej. caja+turno duplicados) se vuelve a
+        // abrir el modal para corregir sin perder el carrito.
+        $this->abriendoCaja = session()->has('error');
+
+        // Si falló el cierre de caja, se reabre el modal de arqueo.
+        $this->cerrandoCaja = $this->cortePropio !== null
+            && session()->get('errors')?->has('efectivo_declarado') === true;
+
+        // Al volver de abrir la caja desde el POS se retoma el cobro pendiente.
+        if (request()->boolean('cobrar') && ! empty($this->carrito) && $this->cajaAbierta) {
+            $this->abriendoCobro = true;
+        }
     }
 
     private function guardarCarrito(): void
@@ -310,6 +330,52 @@ class PuntoDeVenta extends Component
             'mixto' => (float) $this->pagado >= $this->total,
             default => false,
         };
+    }
+
+    /**
+     * Corte de caja que recibirá la próxima venta: primero el del usuario en
+     * turno; si no tiene uno, cualquier caja abierta de la sucursal activa.
+     */
+    public function getCorteActivoProperty(): ?CorteCaja
+    {
+        $sucursalId = (int) (session('active_sucursal_id') ?? 0);
+        $usuarioId = (int) (auth()->id() ?? 0);
+
+        return $this->corteActivoParaVenta($sucursalId, $usuarioId);
+    }
+
+    public function getCajaAbiertaProperty(): bool
+    {
+        return $this->corteActivo !== null;
+    }
+
+    /**
+     * Corte abierto del usuario autenticado: es el único que puede cerrar
+     * desde el POS (las demás cajas se administran en el módulo Caja).
+     */
+    public function getCortePropioProperty(): ?CorteCaja
+    {
+        $corte = $this->corteActivo;
+
+        return $corte !== null && (int) $corte->id_usuario === (int) auth()->id()
+            ? $corte
+            : null;
+    }
+
+    /**
+     * Turno sugerido según la hora actual: Mañana hasta las 15:00.
+     */
+    public function getTurnoSugeridoProperty(): string
+    {
+        return now()->hour < 15 ? 'Matutino' : 'Vespertino';
+    }
+
+    /**
+     * Sucursal activa con la que opera el punto de venta.
+     */
+    public function getSucursalActivaProperty(): ?Sucursal
+    {
+        return Sucursal::find((int) (session('active_sucursal_id') ?? 0));
     }
 
     public function agregarAlCarrito(int $productoId): void
@@ -660,9 +726,55 @@ class PuntoDeVenta extends Component
             return;
         }
 
+        // Sin caja abierta no se puede cobrar: se abre el modal para activarla.
+        if (! $this->cajaAbierta) {
+            $this->abrirModalCaja();
+
+            return;
+        }
+
+        $this->procesando = false;
         $this->reset(['metodoPago', 'efectivoRecibido', 'errorVenta', 'referenciaTarjeta']);
         $this->pagoMixto = ['efectivo' => '', 'tarjeta' => '', 'transferencia' => ''];
         $this->abriendoCobro = true;
+    }
+
+    public function abrirModalCaja(): void
+    {
+        $this->abriendoCobro = false;
+        $this->errorVenta = '';
+        $this->abriendoCaja = true;
+    }
+
+    public function cerrarModalCaja(): void
+    {
+        $this->abriendoCaja = false;
+    }
+
+    public function abrirModalCierre(): void
+    {
+        if ($this->cortePropio === null) {
+            return;
+        }
+
+        $this->abriendoCaja = false;
+        $this->abriendoCobro = false;
+        $this->errorVenta = '';
+        $this->cerrandoCaja = true;
+    }
+
+    public function cerrarModalCierre(): void
+    {
+        $this->cerrandoCaja = false;
+    }
+
+    /**
+     * Abre el cierre de caja cuando el topbar o el aviso de turno lo piden.
+     */
+    #[On('pos-cerrar-caja')]
+    public function abrirCierreDesdeAviso(): void
+    {
+        $this->abrirModalCierre();
     }
 
     public function cerrarCobro(): void
@@ -860,7 +972,6 @@ class PuntoDeVenta extends Component
             session()->forget('carrito_pos');
 
             $this->abriendoCobro = false;
-            $this->procesando = false;
 
             $this->dispatch('venta-completada', folio: $resultado->folio);
 
@@ -871,6 +982,8 @@ class PuntoDeVenta extends Component
         } catch (\Throwable $e) {
             DB::rollBack();
             $this->errorVenta = 'Error al procesar la venta: '.$e->getMessage();
+        } finally {
+            // Nunca dejar el botón «Confirmar venta» bloqueado tras un intento.
             $this->procesando = false;
         }
     }
@@ -1052,6 +1165,11 @@ class PuntoDeVenta extends Component
             'puedeConfirmar' => $this->puedeConfirmar,
             'configBancaria' => $this->configBancaria,
             'esSuperAdmin' => $this->esSuperAdmin,
+            'corteActivo' => $this->corteActivo,
+            'cortePropio' => $this->cortePropio,
+            'cajaAbierta' => $this->cajaAbierta,
+            'turnoSugerido' => $this->turnoSugerido,
+            'sucursalActiva' => $this->sucursalActiva,
         ]);
     }
 }

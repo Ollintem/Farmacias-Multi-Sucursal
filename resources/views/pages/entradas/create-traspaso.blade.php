@@ -1,12 +1,10 @@
 <x-layouts::app :title="__('Nuevo traspaso')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado de nuevo traspaso">
+            {{-- Acciones --}}
+            <header class="mb-6" aria-label="Acciones de nuevo traspaso">
                 <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Almacén · Nuevo registro</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Registrar nuevo traspaso</h1>
-                    <div class="mt-4 flex flex-wrap gap-2">
+                    <div class="flex flex-wrap gap-2">
                         <a href="{{ route('alertas.index', ['sucursal' => $sucursalLink, 'filtro' => 'traspasos']) }}" class="theme-button theme-button-secondary">← Volver</a>
                     </div>
                 </div>

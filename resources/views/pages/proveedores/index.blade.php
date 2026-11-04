@@ -1,14 +1,9 @@
 <x-layouts::app :title="__('Proveedores')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado --}}
-            <header class="mb-6" aria-label="Encabezado de proveedores">
-                <div class="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Catálogo de suministro</p>
-                        <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Proveedores</h1>
-                        <p class="theme-subtle mt-1 text-sm">Directorio de suministro · {{ $totalProveedores }} proveedor(es) registrado(s)</p>
-                    </div>
+            {{-- Acciones --}}
+            <header class="mb-6" aria-label="Acciones de proveedores">
+                <div class="flex flex-wrap items-start justify-end gap-4">
                     <a href="{{ route('proveedores.create') }}" class="theme-button theme-button-primary whitespace-nowrap">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Nuevo proveedor

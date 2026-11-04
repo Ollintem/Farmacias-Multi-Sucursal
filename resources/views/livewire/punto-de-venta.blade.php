@@ -4,6 +4,7 @@
     @venta-completada.window="successFolio = $event.detail.folio; setTimeout(() => successFolio = null, 4000)"
     @stock-caducado-ignorado.window="avisoCaducado = $event.detail.unidades; setTimeout(() => avisoCaducado = 0, 4000)"
     @pos-error.window="avisoError = $event.detail.mensaje; setTimeout(() => avisoError = '', 5000)"
+    @pos-activar-caja.window="$wire.abrirModalCaja()"
 >
     {{-- Toast de éxito --}}
     <template x-if="successFolio">
@@ -62,13 +63,63 @@
     </template>
 
     <div class="module-page-inner noti-full noti-formal">
-    {{-- Encabezado --}}
-    <header class="mb-4 flex flex-wrap items-start justify-between gap-4" aria-label="Encabezado de punto de venta">
-        <div>
-            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Venta rápida · {{ (\App\Models\Sucursal::find(session('active_sucursal_id') ?? auth()->user()?->id_sucursal))?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-            <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Punto de venta</h1>
-            <p class="theme-subtle mt-1 text-sm hidden sm:block">Catálogo por sucursal · {{ $productos->count() }} producto(s) disponible(s)</p>
+    {{-- Aviso de cierre de turno (se actualiza solo cada minuto) --}}
+    <livewire:aviso-turno-caja />
+
+    @if(session('success'))
+        <div class="mb-3 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200" role="status">
+            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-xs font-bold text-white">✓</span>
+            {{ session('success') }}
         </div>
+    @endif
+    @if(session('error') || $errors->any())
+        <div class="mb-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200" role="alert">
+            {{ session('error') ?? $errors->first() }}
+        </div>
+    @endif
+
+    {{-- Estado de caja + catálogo: la caja se puede activar sin salir del POS --}}
+    <header class="mb-4 flex flex-wrap items-center justify-between gap-3" aria-label="Estado de caja y catálogo">
+        <div class="flex flex-wrap items-center gap-2">
+            @if($corteActivo)
+                <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Caja abierta: {{ $corteActivo->caja }} · {{ \App\Http\Controllers\CajaController::TURNOS[$corteActivo->turno] ?? $corteActivo->turno }}
+                    @if((int) $corteActivo->id_usuario !== (int) auth()->id())
+                        <span class="font-semibold text-emerald-600/80 dark:text-emerald-300/80">({{ $corteActivo->usuario?->nombre }})</span>
+                    @endif
+                    <span class="font-medium text-emerald-600/70 dark:text-emerald-300/70">
+                        desde {{ $corteActivo->fecha_inicio?->format('H:i') ?? '—' }}
+                    </span>
+                </span>
+            @else
+                <span class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                    <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+                    Sin caja abierta · ventas bloqueadas
+                </span>
+            @endif
+
+            <button
+                type="button"
+                wire:click="abrirModalCaja"
+                class="theme-button theme-button-secondary !min-h-0 !px-3 !py-1.5 !text-xs"
+                title="Abrir una caja y elegir turno"
+            >
+                {{ $corteActivo ? 'Abrir otra caja' : 'Activar caja' }}
+            </button>
+
+            @if($cortePropio)
+                <button
+                    type="button"
+                    wire:click="abrirModalCierre"
+                    class="theme-button theme-button-warning !min-h-0 !px-3 !py-1.5 !text-xs"
+                    title="Cerrar mi caja y arquear el turno"
+                >
+                    Cerrar caja
+                </button>
+            @endif
+        </div>
+
         <span class="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 sm:inline-flex">
             <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
             {{ $productos->count() }} en catálogo
@@ -191,7 +242,7 @@
                                         <button
                                             wire:click="agregarAlCarrito({{ $producto->id }})"
                                             @disabled($producto->stock_sucursal <= 0)
-                                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0e9384] text-white shadow-sm transition hover:bg-[#0c7569] hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                                            class="theme-button theme-button-primary !h-8 !w-8 !min-h-0 !p-0 !rounded-full shrink-0"
                                             @if($producto->solo_caducado)
                                                 title="Sin existencias vigentes — solo lotes caducados"
                                                 aria-label="No se puede agregar {{ $producto->nombre_producto }}: solo tiene lotes caducados"
@@ -233,7 +284,7 @@
                 @if(count($carrito) > 0)
                     <button
                         wire:click="limpiarCarrito"
-                        class="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 transition hover:bg-red-100 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300"
+                        class="theme-button theme-button-danger !min-h-0 !px-2.5 !py-1 !text-xs !rounded-lg"
                         title="Vaciar carrito"
                     >
                         Vaciar
@@ -272,7 +323,7 @@
                                     </div>
                                     <button
                                         wire:click="eliminarDelCarrito({{ $index }})"
-                                        class="shrink-0 rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                                        class="theme-button theme-button-ghost !h-7 !w-7 !min-h-0 !p-0 !rounded-md shrink-0"
                                         title="Eliminar"
                                     >
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,7 +336,7 @@
                                     <div class="flex items-center gap-1">
                                         <button
                                             wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] - 1 }})"
-                                            class="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
+                                            class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-md !text-xs"
                                             @disabled($item['cantidad'] <= 1)
                                         >
                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/></svg>
@@ -293,7 +344,7 @@
                                         <span class="w-8 text-center text-sm font-bold text-slate-800 dark:text-white">{{ $item['cantidad'] }}</span>
                                         <button
                                             wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] + 1 }})"
-                                            class="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
+                                            class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-md !text-xs"
                                             @disabled($item['cantidad'] >= (int) floor($item['stock'] / (($item['tipo_venta'] ?? 'unidad') === 'presentacion' ? max(1, (int) ($item['unidades'] ?? 1)) : 1)))
                                         >
                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
@@ -388,7 +439,7 @@
     <div class="fixed bottom-5 right-5 z-40 sm:bottom-6 sm:right-6 lg:hidden">
         <button
             wire:click="$set('mostrandoCarrito', true)"
-            class="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-white shadow-xl shadow-teal-900/30 transition hover:brightness-110 active:scale-95"
+            class="theme-button theme-button-primary relative !h-14 !w-14 !min-h-0 !p-0 !rounded-full shadow-xl"
         >
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
@@ -425,9 +476,9 @@
                     </div>
                     <div class="flex items-center gap-2">
                         @if(count($carrito) > 0)
-                            <button wire:click="limpiarCarrito" class="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 transition hover:bg-red-100 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">Vaciar</button>
+                            <button wire:click="limpiarCarrito" class="theme-button theme-button-danger !min-h-0 !px-2.5 !py-1 !text-xs !rounded-lg">Vaciar</button>
                         @endif
-                        <button wire:click="$set('mostrandoCarrito', false)" class="rounded p-1 text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300">
+                        <button wire:click="$set('mostrandoCarrito', false)" class="theme-button theme-button-ghost !h-8 !w-8 !min-h-0 !p-0 !rounded-full">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
@@ -460,17 +511,17 @@
                                             @endif
                                             <p class="mt-1 text-sm font-bold text-[#0c9f9c]">${{ number_format($item['precio'], 2) }}</p>
                                         </div>
-                                        <button wire:click="eliminarDelCarrito({{ $index }})" class="shrink-0 rounded p-1 text-slate-400 hover:text-red-500">
+                                        <button wire:click="eliminarDelCarrito({{ $index }})" class="theme-button theme-button-ghost !h-7 !w-7 !min-h-0 !p-0 !rounded-md shrink-0">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                         </button>
                                     </div>
                                     <div class="mt-2 flex items-center justify-between">
                                         <div class="flex items-center gap-1">
-                                            <button wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] - 1 }})" class="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600" @disabled($item['cantidad'] <= 1)>
+                                            <button wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] - 1 }})" class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-md !text-xs" @disabled($item['cantidad'] <= 1)>
                                                 <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/></svg>
                                             </button>
                                             <span class="w-8 text-center text-sm font-bold text-slate-800 dark:text-white">{{ $item['cantidad'] }}</span>
-                                            <button wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] + 1 }})" class="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600" @disabled($item['cantidad'] >= (int) floor($item['stock'] / (($item['tipo_venta'] ?? 'unidad') === 'presentacion' ? max(1, (int) ($item['unidades'] ?? 1)) : 1)))>
+                                            <button wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] + 1 }})" class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-md !text-xs" @disabled($item['cantidad'] >= (int) floor($item['stock'] / (($item['tipo_venta'] ?? 'unidad') === 'presentacion' ? max(1, (int) ($item['unidades'] ?? 1)) : 1)))>
                                                 <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                                             </button>
                                         </div>
@@ -500,11 +551,148 @@
                             </div>
                         </div>
                     </div>
-                    <button wire:click="abrirCobro" @disabled(empty($carrito)) class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0c9f9c] px-4 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#0a8582] disabled:opacity-40">
+                    <button wire:click="abrirCobro" @disabled(empty($carrito)) class="theme-button theme-button-primary mt-4 w-full">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                         Cobrar ${{ number_format($total, 2) }}
                     </button>
                 </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════════════════════════════════════════════════ --}}
+    {{-- Modal Activar caja (se abre desde el POS o desde el topbar) --}}
+    {{-- ═══════════════════════════════════════════════════════════ --}}
+    @if($abriendoCaja)
+        <div class="fixed inset-0 z-[65] flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarModalCaja"></div>
+
+            <div class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-900">
+                <div class="bg-[#0e9384] px-6 py-5 text-center dark:bg-[#0c7569]">
+                    <span class="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-white/15 text-white">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    </span>
+                    <h3 class="mt-2 text-lg font-black text-white">Activa tu caja para cobrar</h3>
+                    <p class="mt-1 text-xs font-medium text-white/85">
+                        {{ $sucursalActiva?->nombre_sucursal ?? 'Sin sucursal activa' }} · la venta quedará ligada a esta caja y turno.
+                    </p>
+                </div>
+
+                @if($sucursalActiva)
+                    <form method="POST" action="{{ route('caja.abrir') }}" class="space-y-3 px-6 py-5">
+                        @csrf
+                        <input type="hidden" name="id_sucursal" value="{{ $sucursalActiva->id }}">
+                        <input type="hidden" name="redirect_to" value="punto-venta">
+
+                        <label class="block">
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-300">Caja física</span>
+                            <select name="caja" required class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                <option value="Caja 1">Caja 1 — Mostrador principal</option>
+                                <option value="Caja 2">Caja 2 — Mostrador secundario</option>
+                                <option value="Caja 3">Caja 3</option>
+                                <option value="Caja móvil">Caja móvil</option>
+                            </select>
+                        </label>
+
+                        <label class="block">
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-300">Turno</span>
+                            <select name="turno" required class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                <option value="Matutino" @selected($turnoSugerido === 'Matutino')>Mañana — Matutino (08:00–15:00)</option>
+                                <option value="Vespertino" @selected($turnoSugerido === 'Vespertino')>Tarde — Vespertino (15:00–22:00)</option>
+                            </select>
+                        </label>
+
+                        <label class="block">
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-300">Fondo inicial</span>
+                            <div class="mt-1 flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#0e9384] focus-within:ring-2 focus-within:ring-[#0e9384]/15 dark:border-zinc-700 dark:bg-zinc-800">
+                                <span class="pl-3 text-sm font-black text-slate-400">$</span>
+                                <input type="number" step="0.01" min="0" name="efectivo_inicial" value="0.00" required class="flex-1 border-0 bg-transparent px-2 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-0 dark:text-white">
+                            </div>
+                        </label>
+
+                        @if($errors->any())
+                            <p class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                                {{ $errors->first() }}
+                            </p>
+                        @endif
+
+                        <div class="flex gap-3 pt-1">
+                            <button type="button" wire:click="cerrarModalCaja" class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="theme-button theme-button-primary flex-1 justify-center">
+                                Activar caja
+                            </button>
+                        </div>
+                    </form>
+                @else
+                    <div class="px-6 py-6 text-center">
+                        <p class="text-sm font-semibold text-slate-600 dark:text-zinc-300">Selecciona una sucursal activa para abrir caja.</p>
+                        <button type="button" wire:click="cerrarModalCaja" class="theme-button theme-button-secondary mt-4 w-full justify-center">Cerrar</button>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════════════════════════════════════════════════ --}}
+    {{-- Modal Cerrar caja (arquear el turno desde el POS) --}}
+    {{-- ═══════════════════════════════════════════════════════════ --}}
+    @if($cerrandoCaja && $cortePropio)
+        <div class="fixed inset-0 z-[65] flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarModalCierre"></div>
+
+            <div class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-900">
+                <div class="bg-amber-500 px-6 py-5 text-center dark:bg-amber-600">
+                    <span class="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-white/15 text-white">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </span>
+                    <h3 class="mt-2 text-lg font-black text-white">Cerrar {{ $cortePropio->caja }}</h3>
+                    <p class="mt-1 text-xs font-medium text-white/85">
+                        Turno {{ \App\Http\Controllers\CajaController::TURNOS[$cortePropio->turno] ?? ucfirst($cortePropio->turno) }}
+                        @if($cortePropio->finDeTurno())
+                            · termina a las {{ $cortePropio->finDeTurno()->format('H:i') }}
+                        @endif
+                    </p>
+                </div>
+
+                <form method="POST" action="{{ route('caja.cerrar', $cortePropio) }}" class="space-y-3 px-6 py-5">
+                    @csrf
+                    <input type="hidden" name="redirect_to" value="punto-venta">
+
+                    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                        <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Efectivo esperado</p>
+                        <p class="mt-0.5 text-2xl font-black text-emerald-800 dark:text-emerald-200">${{ number_format($cortePropio->efectivoEsperado(), 2) }}</p>
+                        <p class="mt-1 text-[11px] font-medium text-emerald-700/80 dark:text-emerald-300/80">Fondo inicial + ventas + ingresos − retiros</p>
+                    </div>
+
+                    <label class="block">
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-300">Efectivo contado en caja</span>
+                        <div class="mt-1 flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#0e9384] focus-within:ring-2 focus-within:ring-[#0e9384]/15 dark:border-zinc-700 dark:bg-zinc-800">
+                            <span class="pl-3 text-sm font-black text-slate-400">$</span>
+                            <input type="number" step="0.01" min="0" name="efectivo_declarado" required autofocus class="flex-1 border-0 bg-transparent px-2 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-0 dark:text-white">
+                        </div>
+                    </label>
+
+                    <p class="rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-medium text-slate-500 dark:bg-zinc-800 dark:text-zinc-400">
+                        Al cerrar, la caja deja de recibir ventas. Si no cierras antes de la tolerancia, el sistema la cerrará automáticamente sin diferencia.
+                    </p>
+
+                    @if($errors->any())
+                        <p class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                            {{ $errors->first() }}
+                        </p>
+                    @endif
+
+                    <div class="flex gap-3 pt-1">
+                        <button type="button" wire:click="cerrarModalCierre" class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="theme-button theme-button-warning flex-1 justify-center">
+                            Cerrar caja
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     @endif
@@ -550,9 +738,20 @@
                 @if($errorVenta)
                     <div class="mx-6 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/30">
                         <p class="text-sm font-medium text-red-700 dark:text-red-300">{{ $errorVenta }}</p>
+                        @if(! $cajaAbierta)
+                            <button
+                                type="button"
+                                wire:click="abrirModalCaja"
+                                class="theme-button theme-button-primary mt-3 w-full justify-center !py-2 !text-xs"
+                            >
+                                Activar caja ahora
+                            </button>
+                        @endif
                     </div>
                 @endif
 
+                {{-- Contenido con scroll: métodos + campos del pago --}}
+                <div class="min-h-0 flex-1 overflow-y-auto">
                 {{-- Métodos de pago --}}
                 <div class="px-6 pt-5">
                     <p class="mb-3 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Método de pago</p>
@@ -592,8 +791,8 @@
                     </div>
                 </div>
 
-                {{-- Contenido con scroll --}}
-                <div class="flex-1 overflow-y-auto px-6 py-5">
+                {{-- Campos del método de pago --}}
+                <div class="px-6 py-5">
                     {{-- Efectivo --}}
                     @if($metodoPago === 'efectivo')
                         <div>
@@ -615,7 +814,7 @@
                                 @foreach([500, 200, 100, 50, 20, 10] as $billete)
                                     <button
                                         wire:click="setEfectivoRapido({{ $billete }})"
-                                        class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-[#0c9f9c] hover:text-[#0c9f9c] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-[#0c9f9c]"
+                                        class="theme-button theme-button-secondary !min-h-0 !px-3 !py-1 !text-xs !rounded-lg"
                                     >
                                         +${{ $billete }}
                                     </button>
@@ -927,6 +1126,8 @@
                             </div>
                         </div>
                     @endif
+                </div>
+                {{-- /Contenido con scroll --}}
                 </div>
 
                 {{-- Footer --}}

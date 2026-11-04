@@ -62,7 +62,7 @@
 
             <div class="mt-6 flex justify-end gap-3">
                 <button type="button" x-ref="botonCancelar" @click="cerrar()" class="theme-button theme-button-secondary">Cancelar</button>
-                <button type="submit" class="theme-button bg-red-600 text-white transition hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700" x-text="pendiente?.accion ?? ''"></button>
+                <button type="submit" class="theme-button theme-button-danger" x-text="pendiente?.accion ?? ''"></button>
             </div>
         </form>
     </div>

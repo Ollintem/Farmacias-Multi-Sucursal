@@ -1,14 +1,6 @@
 <x-layouts::app :title="__('Nuevo usuario')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado de usuario">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Alta de personal · Nuevo registro</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Registrar nuevo usuario</h1>
-                </div>
-            </header>
-
             @if(session('error'))
                 <div
                     x-data="{ show: true }"

@@ -21,8 +21,6 @@
         if (guardar) { $wire.cambiarTema(nuevoModo); }
     }
 }">
-    @include('partials.settings-heading')
-
     <flux:heading level="2" class="sr-only">Ajustes de apariencia</flux:heading>
 
     <div class="flex items-start max-md:flex-col">

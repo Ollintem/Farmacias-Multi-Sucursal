@@ -59,8 +59,6 @@ new #[Title('Ajustes de perfil')] class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
-
     <flux:heading level="2" class="sr-only">Ajustes de perfil</flux:heading>
 
     <x-pages::settings.layout heading="Perfil" subheading="Actualiza la información de tu perfil">
@@ -76,9 +74,9 @@ new #[Title('Ajustes de perfil')] class extends Component {
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
+                    <button type="submit" class="theme-button theme-button-primary w-full" data-test="update-profile-button">
                         Guardar
-                    </flux:button>
+                    </button>
                 </div>
 
             </div>

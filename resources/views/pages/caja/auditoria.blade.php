@@ -4,9 +4,6 @@
             <header class="mb-4 flex flex-wrap items-end justify-between gap-4" aria-label="Encabezado de auditoría">
                 <div>
                     <a href="{{ route('caja.index', array_filter(['sucursal' => $sucursal?->id])) }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#0e9384] hover:text-[#0c7569] dark:text-emerald-300">← Volver a caja</a>
-                    <p class="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Caja · {{ $sucursal?->nombre_sucursal ?? 'Sin sucursal' }} · Auditoría</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Historial y auditoría</h1>
-                    <p class="theme-subtle mt-1 text-sm">Filtra por fecha, turno Mañana/Tarde, caja, operador y estado. Trazabilidad completa de aperturas, movimientos y cierres.</p>
                 </div>
                 <form method="GET" action="{{ route('caja.auditoria') }}" class="flex items-center gap-2">
                     <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Sucursal</label>
@@ -87,7 +84,7 @@
                         </label>
                         <div class="sm:col-span-2 lg:col-span-6 flex gap-2">
                             <button type="submit" class="theme-button theme-button-secondary !py-2 text-sm">Filtrar auditoría</button>
-                            <a href="{{ route('caja.auditoria', ['sucursal'=>$sucursal->id]) }}" class="theme-button theme-button-primary !bg-white !text-slate-700 !border !border-slate-200 !py-2 text-sm dark:!bg-zinc-800 dark:!text-white">Limpiar</a>
+                            <a href="{{ route('caja.auditoria', ['sucursal'=>$sucursal->id]) }}" class="theme-button theme-button-secondary !py-2 text-sm">Limpiar</a>
                             <a href="{{ route('caja.auditoria', array_merge(['sucursal'=>$sucursal->id], array_filter($audFiltros))) }}" onclick="window.print(); return false;" class="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">🖨 Imprimir / PDF</a>
                         </div>
                     </form>
@@ -149,7 +146,10 @@
                                 <tr>
                                     <td>
                                         <span class="font-bold text-slate-800 dark:text-white">{{ $h->caja }}</span>
-                                        <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-bold {{ $h->turno==='Matutino' ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-300' }}">{{ $h->turno==='Matutino' ? 'Mañana' : 'Tarde' }}</span><br>
+                                        <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-bold {{ $h->turno==='Matutino' ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-300' }}">{{ $h->turno==='Matutino' ? 'Mañana' : 'Tarde' }}</span>
+                                        @if($h->cierre_automatico)
+                                            <span class="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-500/15 dark:text-red-300" title="El sistema cerró la caja al vencer la tolerancia del turno">Auto</span>
+                                        @endif<br>
                                         <span class="text-xs text-slate-400">{{ $h->fecha_inicio->format('d/m H:i') }} → {{ $h->fecha_cierre?->format('H:i') }}</span>
                                         <span class="text-[11px] text-slate-400">· {{ $duracion }}</span>
                                     </td>

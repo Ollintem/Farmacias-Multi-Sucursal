@@ -226,7 +226,7 @@
 
                         <button
                             type="submit"
-                            class="mt-2 inline-flex h-14 w-full items-center justify-center rounded-2xl bg-[#0e9384] text-lg font-bold text-white shadow-[0_16px_30px_rgba(14,147,132,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#0c7569] focus:outline-none focus:ring-4 focus:ring-[#0e9384]/20"
+                            class="theme-button theme-button-primary mt-2 h-14 w-full rounded-2xl text-lg"
                         >
                             Iniciar sesión
                         </button>

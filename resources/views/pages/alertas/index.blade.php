@@ -3,10 +3,6 @@
         <div class="module-page-inner noti-full noti-feed noti-formal">
             <header class="mb-5" aria-label="Encabezado de notificaciones">
                 <div class="space-y-3">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Centro de notificaciones · {{ $selectedSucursal?->nombre_sucursal ?? 'la sucursal' }}</p>
-                        <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Panel operativo de avisos</h1>
-                    </div>
 <div class="rounded-[20px] border border-slate-200/70 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                             <nav class="noti-tabs !m-0 flex flex-wrap gap-1.5 border-0 bg-transparent p-0" role="tablist" aria-label="Filtrar notificaciones por grupo">
                                 @foreach([
@@ -16,6 +12,7 @@
                                     'caducidad' => ['Caducidad', $tipos['caducidad'], 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z'],
                                     'traspasos' => ['Traspasos', $tipos['traspasos'], 'M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5'],
                                     'ventas' => ['Ventas', $tipos['ventas'], 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .298-.119.585-.33.795a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0Z'],
+                                    'caja' => ['Caja', $tipos['caja'], 'M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
                                 ] as $valor => [$etiqueta, $conteo, $icono])
                                     <a href="{{ route('alertas.index', ['sucursal' => $selectedSucursal?->id, 'filtro' => $valor]) }}"
                                        @class(['noti-filtro !px-3 !py-1.5 !text-xs', 'activo' => $filtro === $valor])
@@ -87,6 +84,7 @@
                             'caducidad' => 'Caducidad',
                             'traspasos' => 'Traspaso',
                             'ventas' => 'Ventas',
+                            'caja' => 'Caja',
                             default => ucfirst((string) $grupo),
                         };
                         $prioridadEtiqueta = match ($aviso['prioridad'] ?? 'media') {

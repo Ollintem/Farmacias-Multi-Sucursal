@@ -1,14 +1,6 @@
 <x-layouts::app :title="__('Productos')">
     <div class="module-page inventario-page" style="min-height:auto !important; display:block !important; padding:0.75rem;">
         <div class="module-page-inner inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
-            {{-- Encabezado ultra-compacto --}}
-            <header class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between" aria-label="Encabezado de productos">
-                <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Catálogo · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
-                    <h1 class="mt-0.5 text-lg font-black tracking-tight text-slate-900 dark:text-white">Productos</h1>
-                </div>
-            </header>
-
             <div class="lg:hidden">
                 @include('pages.inventario.tabs', ['seccion' => 'productos', 'selectedSucursal' => $selectedSucursal])
             </div>

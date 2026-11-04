@@ -40,6 +40,7 @@ class AlertasController extends Controller
                 'caducidades', 'caducidad' => 'caducidad',
                 'stock' => 'stock',
                 'ventas' => 'ventas',
+                'caja' => 'caja',
                 default => 'todas',
             };
         }
@@ -50,7 +51,7 @@ class AlertasController extends Controller
             default => $filtro,
         };
 
-        $filtro = in_array($filtro, ['todas', 'no_leidas', 'stock', 'caducidad', 'traspasos', 'ventas'], true) ? $filtro : 'todas';
+        $filtro = in_array($filtro, ['todas', 'no_leidas', 'stock', 'caducidad', 'traspasos', 'ventas', 'caja'], true) ? $filtro : 'todas';
 
         $nivel = strtolower(trim((string) $request->query('nivel', 'todos')));
         $nivel = in_array($nivel, ['todos', 'rojo', 'amarillo', 'verde'], true) ? $nivel : 'todos';
@@ -64,7 +65,7 @@ class AlertasController extends Controller
         $notificaciones = match ($filtro) {
             'no_leidas' => array_values(array_filter($avisos, fn (array $a): bool => ($a['leida'] ?? false) === false)),
             'caducidad' => array_values(array_filter($avisos, fn (array $a): bool => ($a['grupo'] ?? $a['tipo']) === 'caducidad' && ($nivel === 'todos' || ($a['nivel'] ?? '') === $nivel))),
-            'stock', 'traspasos', 'ventas' => array_values(array_filter($avisos, fn (array $a): bool => ($a['grupo'] ?? $a['tipo']) === $filtro)),
+            'stock', 'traspasos', 'ventas', 'caja' => array_values(array_filter($avisos, fn (array $a): bool => ($a['grupo'] ?? $a['tipo']) === $filtro)),
             default => $avisos,
         };
 
@@ -74,6 +75,7 @@ class AlertasController extends Controller
             'caducidad' => collect($avisos)->where('grupo', 'caducidad')->count(),
             'traspasos' => collect($avisos)->where('grupo', 'traspasos')->count(),
             'ventas' => collect($avisos)->where('grupo', 'ventas')->count(),
+            'caja' => collect($avisos)->where('grupo', 'caja')->count(),
         ];
 
         return view('pages.alertas.index', [

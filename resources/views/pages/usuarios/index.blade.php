@@ -1,15 +1,6 @@
 <x-layouts::app :title="__('Usuarios')">
     <div class="module-page noti-page">
         <div class="module-page-inner noti-full noti-formal">
-            {{-- Encabezado limpio --}}
-            <header class="mb-6" aria-label="Encabezado de usuarios">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Personal · Gestión de accesos</p>
-                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Usuarios</h1>
-                </div>
-
-            </header>
-
             @if(session('success'))
                 <div
                     x-data="{ show: true }"
