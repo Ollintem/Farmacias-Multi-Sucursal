@@ -85,20 +85,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/inventario/{producto}', [InventarioController::class, 'update'])->name('inventario.update')->middleware('checarPermisos:editar,inventario');
     Route::patch('/inventario/{producto}/estado', [InventarioController::class, 'cambiarEstado'])->name('inventario.estado')->middleware('checarPermisos:editar,inventario');
     Route::delete('/inventario/{producto}', [InventarioController::class, 'destroy'])->name('inventario.destroy')->middleware('checarPermisos:eliminar,inventario');
+
+    // Guardar categorias y presentaciones desde el inventario
+
     Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store')->middleware('checarPermisos:crear,inventario');
     Route::post('/presentaciones', [PresentacionController::class, 'store'])->name('presentaciones.store')->middleware('checarPermisos:crear,inventario');
+
+    // Módulo: Caja
+
     Route::get('/caja', [CajaController::class, 'index'])->name('caja.index')->middleware('checarPermisos:ver,caja');
     Route::get('/caja/auditoria', [CajaController::class, 'auditoria'])->name('caja.auditoria')->middleware('checarPermisos:ver,caja');
     Route::post('/caja/abrir', [CajaController::class, 'abrir'])->name('caja.abrir')->middleware('checarPermisos:crear,caja');
     Route::post('/caja/{corte}/movimiento', [CajaController::class, 'movimiento'])->name('caja.movimiento')->middleware('checarPermisos:editar,caja');
     Route::post('/caja/{corte}/cerrar', [CajaController::class, 'cerrar'])->name('caja.cerrar')->middleware('checarPermisos:editar,caja');
+
+    // Módulo: Reportes (por trabajar)
+
     Route::view('/reportes', 'pages.modulos.placeholder', ['tituloModulo' => 'Reportes'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
+
+    // Modulo: Alertas
+
     Route::get('/alertas', CentroNotificaciones::class)->name('alertas.index')->middleware('checarPermisos:ver,alertas');
     Route::get('/alertas/feed', [AlertasController::class, 'feed'])->name('alertas.feed')->middleware('checarPermisos:ver,alertas');
     Route::get('/alertas/detalle', [AlertasController::class, 'detalle'])->name('alertas.detalle')->middleware('checarPermisos:ver,alertas');
     Route::post('/alertas/leidas', [AlertasController::class, 'marcarLeidas'])->name('alertas.leidas')->middleware('checarPermisos:ver,alertas');
     Route::post('/alertas/leer', [AlertasController::class, 'marcarLeida'])->name('alertas.leer')->middleware('checarPermisos:ver,alertas');
     Route::post('/alertas/no-leida', [AlertasController::class, 'marcarNoLeida'])->name('alertas.no-leida')->middleware('checarPermisos:ver,alertas');
+
+    // Módulo: Traspasos
+
     Route::post('/traspasos/{traspaso}/aceptar', [TraspasoController::class, 'aceptar'])->name('traspasos.aceptar')->middleware('checarPermisos:editar,alertas');
     Route::post('/traspasos/{traspaso}/rechazar', [TraspasoController::class, 'rechazar'])->name('traspasos.rechazar')->middleware('checarPermisos:editar,alertas');
     Route::post('/traspasos/{traspaso}/enviar', [TraspasoController::class, 'enviar'])->name('traspasos.enviar')->middleware('checarPermisos:editar,entradas-de-almacen');

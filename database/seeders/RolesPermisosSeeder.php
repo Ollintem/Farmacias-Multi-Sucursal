@@ -10,17 +10,10 @@ use Illuminate\Database\Seeder;
 class RolesPermisosSeeder extends Seeder
 {
     /**
-     * Acciones administradas por módulo.
+     * Permisos predeterminados por rol y módulo.
      *
-     * @var array<int, string>
-     */
-    private const ACCIONES = ['ver', 'crear', 'editar', 'borrar'];
-
-    /**
-     * Permisos operativos por rol.
-     *
-     * Los módulos que no aparecen para un rol se registran con `activo` en
-     * false. SuperAdmin es la excepción: recibe todas las acciones activas.
+     * Los módulos que no aparecen para un rol se registran con todos los flags
+     * en false. SuperAdmin es la excepción: recibe acceso total.
      *
      * @return array<string, array<string, array<int, string>>>
      */
@@ -42,7 +35,7 @@ class RolesPermisosSeeder extends Seeder
             'Cajero' => [
                 'Punto de venta' => ['ver', 'crear'],
                 'Inventario' => ['ver'],
-                'Caja' => ['ver', 'crear'],
+                'Caja' => ['ver', 'crear', 'editar'],
             ],
         ];
     }
@@ -51,13 +44,11 @@ class RolesPermisosSeeder extends Seeder
      * Registra los permisos iniciales de SuperAdmin, Gerente y Cajero.
      *
      * Usa insertOrIgnore para que las filas existentes conserven el valor que
-     * un administrador haya guardado, mientras los permisos nuevos o los
-     * módulos incorporados después se agregan automáticamente.
+     * un administrador haya guardado, mientras los módulos nuevos se agregan
+     * automáticamente.
      */
     public function run(): void
     {
-        $this->call(PermisoSeeder::class);
-
         $configuracion = $this->permisosPorRol();
         $roles = Rol::query()
             ->whereIn('tipo_rol', ['SuperAdmin', 'Gerente', 'Cajero'])
@@ -65,7 +56,6 @@ class RolesPermisosSeeder extends Seeder
             ->keyBy('tipo_rol');
 
         $modulos = Modulo::query()
-            ->with(['permisos' => fn ($query) => $query->orderBy('id')])
             ->orderBy('id')
             ->get();
 
@@ -82,20 +72,19 @@ class RolesPermisosSeeder extends Seeder
 
             foreach ($modulos as $modulo) {
                 $accionesActivas = $esSuperAdmin
-                    ? self::ACCIONES
+                    ? ['ver', 'crear', 'editar', 'borrar']
                     : ($porModulo[$modulo->nombre_modulo] ?? []);
 
-                foreach ($modulo->permisos as $permiso) {
-                    $activo = in_array($permiso->accion, $accionesActivas, true);
-
-                    $filas[] = [
-                        'id_rol' => $rol->id,
-                        'id_permiso' => $permiso->id,
-                        'activo' => $activo,
-                        'created_at' => $ahora,
-                        'updated_at' => $ahora,
-                    ];
-                }
+                $filas[] = [
+                    'id_rol' => $rol->id,
+                    'id_modulo' => $modulo->id,
+                    'puede_ver' => in_array('ver', $accionesActivas, true),
+                    'puede_crear' => in_array('crear', $accionesActivas, true),
+                    'puede_editar' => in_array('editar', $accionesActivas, true),
+                    'puede_borrar' => in_array('borrar', $accionesActivas, true),
+                    'created_at' => $ahora,
+                    'updated_at' => $ahora,
+                ];
             }
         }
 

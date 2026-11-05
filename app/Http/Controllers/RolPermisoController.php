@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Modulo;
-use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\RolPermiso;
@@ -18,7 +17,7 @@ class RolPermisoController extends Controller
     /**
      * Muestra los roles disponibles y la configuración del rol seleccionado.
      *
-     * Entrada: query string opcional `rol`.
+     * Entrada: query string opcional `rol` y `usuario`.
      * Salida: resources/views/pages/roles/permisos.blade.php.
      */
     public function index(Request $request): View
@@ -33,7 +32,6 @@ class RolPermisoController extends Controller
         $selectedRol = $roles->firstWhere('id', $selectedRolId) ?? $roles->first();
 
         $modulos = Modulo::query()
-            ->with(['permisos' => fn ($query) => $query->orderBy('id')])
             ->orderBy('id')
             ->get();
 
@@ -42,7 +40,7 @@ class RolPermisoController extends Controller
             : RolPermiso::query()
                 ->where('id_rol', $selectedRol->id)
                 ->get()
-                ->keyBy('id_permiso');
+                ->keyBy('id_modulo');
 
         $usuarios = $selectedRol === null
             ? collect()
@@ -69,58 +67,63 @@ class RolPermisoController extends Controller
             'usuarios' => $usuarios,
             'selectedUsuario' => $selectedUsuario,
             'excepciones' => $excepciones,
-            'puedeEditar' => $request->user()?->permisosHabilitados('editar', 'usuarios') ?? false,
+            'puedeEditar' => $this->puedeAdministrar($request),
         ]);
     }
 
     /**
-     * Guarda la configuración de permisos de un rol sin tocar otros roles ni
-     * las excepciones individuales de `permisos_activados`.
+     * Guarda la configuración de permisos predeterminados de un rol.
      *
-     * Entrada: rol resuelto por la ruta y permisos marcados en el formulario.
+     * Entrada: rol resuelto por la ruta y flags por módulo del formulario.
      * Salida: redirección a la configuración del mismo rol.
      */
     public function update(Request $request, Rol $rol): RedirectResponse
     {
+        abort_unless($this->puedeAdministrar($request), 403);
+
         if ($rol->tipo_rol === 'SuperAdmin') {
             return back()->with('error', 'El rol SuperAdmin siempre tiene acceso total y no se puede restringir.');
         }
 
         $data = $request->validate([
             'permisos' => ['nullable', 'array'],
-            'permisos.*' => ['boolean'],
+            'permisos.*' => ['array'],
+            'permisos.*.ver' => ['nullable', 'boolean'],
+            'permisos.*.crear' => ['nullable', 'boolean'],
+            'permisos.*.editar' => ['nullable', 'boolean'],
+            'permisos.*.borrar' => ['nullable', 'boolean'],
             'corte_ciego' => ['nullable', 'boolean'],
         ]);
 
-        $activos = collect($data['permisos'] ?? [])
-            ->filter(fn ($valor): bool => (bool) $valor)
-            ->keys()
+        $modulos = Modulo::query()->orderBy('id')->get();
+        $idsValidos = $modulos->pluck('id');
+        $idsEnviados = collect(array_keys($data['permisos'] ?? []))
             ->map(fn ($id): int => (int) $id);
 
-        $permisos = Permiso::query()->orderBy('id')->get();
-        $idsValidos = $permisos->pluck('id');
-
-        if ($activos->diff($idsValidos)->isNotEmpty()) {
+        if ($idsEnviados->diff($idsValidos)->isNotEmpty()) {
             return back()
                 ->withInput()
-                ->withErrors(['permisos' => 'La configuración contiene permisos que no existen.']);
+                ->withErrors(['permisos' => 'La configuración contiene módulos que no existen.']);
         }
 
-        DB::transaction(function () use ($request, $rol, $permisos, $activos): void {
+        DB::transaction(function () use ($request, $rol, $modulos, $data): void {
             $rol->update([
                 'corte_ciego' => $request->boolean('corte_ciego'),
             ]);
 
-            foreach ($permisos as $permiso) {
-                $activo = $activos->contains($permiso->id);
+            foreach ($modulos as $modulo) {
+                $flagsModulo = $data['permisos'][$modulo->id] ?? [];
 
                 RolPermiso::updateOrCreate(
                     [
                         'id_rol' => $rol->id,
-                        'id_permiso' => $permiso->id,
+                        'id_modulo' => $modulo->id,
                     ],
                     [
-                        'activo' => $activo,
+                        'puede_ver' => ! empty($flagsModulo['ver']),
+                        'puede_crear' => ! empty($flagsModulo['crear']),
+                        'puede_editar' => ! empty($flagsModulo['editar']),
+                        'puede_borrar' => ! empty($flagsModulo['borrar']),
                     ]
                 );
             }
@@ -132,5 +135,16 @@ class RolPermisoController extends Controller
                 'usuario' => $request->input('usuario'),
             ]))
             ->with('success', 'Permisos del rol actualizados correctamente.');
+    }
+
+    /**
+     * Indica si el usuario autenticado puede administrar permisos.
+     */
+    private function puedeAdministrar(Request $request): bool
+    {
+        $usuario = $request->user();
+
+        return $usuario !== null
+            && ($usuario->esSuperAdmin() || $usuario->permisosHabilitados('editar', 'usuarios'));
     }
 }

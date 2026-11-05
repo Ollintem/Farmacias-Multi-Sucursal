@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -27,13 +26,5 @@ class Permiso extends Model
     public function modulo(): BelongsTo
     {
         return $this->belongsTo(Modulo::class, 'id_modulo');
-    }
-
-    /**
-     * @return HasMany<RolPermiso, $this>
-     */
-    public function rolesPermisos(): HasMany
-    {
-        return $this->hasMany(RolPermiso::class, 'id_permiso');
     }
 }

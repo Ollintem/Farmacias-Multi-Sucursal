@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\CorteCiego;
 use App\Models\Modulo;
-use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\RolPermiso;
@@ -72,28 +71,20 @@ class UsuariosController extends Controller
     private function mapaPermisosPorRol($roles): array
     {
         $mapa = [];
-        $permisos = Permiso::with('modulo')->get()->keyBy('id');
 
-        $activos = RolPermiso::whereIn('id_rol', $roles->pluck('id'))
-            ->where('activo', true)
+        $permisos = RolPermiso::whereIn('id_rol', $roles->pluck('id'))
             ->get()
             ->groupBy('id_rol');
 
         foreach ($roles as $rol) {
             $porModulo = [];
-            foreach ($activos->get($rol->id, collect()) as $rp) {
-                $permiso = $permisos->get($rp->id_permiso);
-                if (! $permiso) {
-                    continue;
-                }
-                $idModulo = $permiso->id_modulo;
-                $accion = strtolower($permiso->accion);
-                if (! isset($porModulo[$idModulo])) {
-                    $porModulo[$idModulo] = ['ver' => false, 'crear' => false, 'editar' => false, 'borrar' => false];
-                }
-                if (array_key_exists($accion, $porModulo[$idModulo])) {
-                    $porModulo[$idModulo][$accion] = true;
-                }
+            foreach ($permisos->get($rol->id, collect()) as $rp) {
+                $porModulo[$rp->id_modulo] = [
+                    'ver' => (bool) $rp->puede_ver,
+                    'crear' => (bool) $rp->puede_crear,
+                    'editar' => (bool) $rp->puede_editar,
+                    'borrar' => (bool) $rp->puede_borrar,
+                ];
             }
             $mapa[$rol->id] = $porModulo;
         }
@@ -144,24 +135,8 @@ class UsuariosController extends Controller
             ]);
 
             $permisosInput = $request->input('permisos', []);
-            if (is_array($permisosInput) && $permisosInput !== []) {
-                $modulos = Modulo::orderBy('id')->get();
-                foreach ($modulos as $modulo) {
-                    $flags = is_array($permisosInput[$modulo->id] ?? null) ? $permisosInput[$modulo->id] : [];
-                    $fila = [
-                        'puede_ver' => ! empty($flags['ver']),
-                        'puede_crear' => ! empty($flags['crear']),
-                        'puede_editar' => ! empty($flags['editar']),
-                        'puede_borrar' => ! empty($flags['borrar']),
-                    ];
-                    if (in_array(true, $fila, true)) {
-                        PermisoActivado::create([
-                            'id_usuario' => $usuario->id,
-                            'id_modulo' => $modulo->id,
-                            ...$fila,
-                        ]);
-                    }
-                }
+            if (is_array($permisosInput)) {
+                $this->sincronizarPermisosUsuario($usuario, $permisosInput);
             }
         });
 
@@ -191,35 +166,18 @@ class UsuariosController extends Controller
 
     public function updatePermisos(Request $request, User $usuario): RedirectResponse
     {
-        $modulos = Modulo::orderBy('id')->get();
-        $permisosInput = $request->input('permisos', []);
+        $data = $request->validate([
+            'permisos' => ['nullable', 'array'],
+            'permisos.*' => ['array'],
+            'permisos.*.ver' => ['nullable', 'boolean'],
+            'permisos.*.crear' => ['nullable', 'boolean'],
+            'permisos.*.editar' => ['nullable', 'boolean'],
+            'permisos.*.borrar' => ['nullable', 'boolean'],
+            'permisos.*.heredar' => ['nullable', 'boolean'],
+            'corte_ciego' => ['nullable', 'boolean'],
+        ]);
 
-        foreach ($modulos as $modulo) {
-            $flagsModulo = is_array($permisosInput[$modulo->id] ?? null)
-                ? $permisosInput[$modulo->id]
-                : [];
-
-            $flags = [
-                'puede_ver' => ! empty($flagsModulo['ver']),
-                'puede_crear' => ! empty($flagsModulo['crear']),
-                'puede_editar' => ! empty($flagsModulo['editar']),
-                'puede_borrar' => ! empty($flagsModulo['borrar']),
-            ];
-
-            if (in_array(true, $flags, true)) {
-                PermisoActivado::updateOrCreate(
-                    [
-                        'id_usuario' => $usuario->id,
-                        'id_modulo' => $modulo->id,
-                    ],
-                    $flags
-                );
-            } else {
-                PermisoActivado::where('id_usuario', $usuario->id)
-                    ->where('id_modulo', $modulo->id)
-                    ->delete();
-            }
-        }
+        $this->sincronizarPermisosUsuario($usuario, $data['permisos'] ?? []);
 
         CorteCiego::updateOrCreate(
             ['id_usuarios' => $usuario->id],
@@ -227,6 +185,50 @@ class UsuariosController extends Controller
         );
 
         return redirect()->route('usuarios.permisos', $usuario)->with('success', 'Permisos actualizados correctamente.');
+    }
+
+    /**
+     * Sincroniza los permisos personalizados del usuario.
+     *
+     * Si el módulo trae `heredar`, se elimina la configuración individual y el
+     * usuario vuelve a heredar los permisos de su rol. En caso contrario se
+     * guarda una fila propia, incluso si todos los flags son falsos, para que
+     * el override individual tenga prioridad sobre el rol.
+     *
+     * @param  array<int|string, mixed>  $permisosInput
+     */
+    private function sincronizarPermisosUsuario(User $usuario, array $permisosInput): void
+    {
+        $modulos = Modulo::orderBy('id')->get();
+
+        foreach ($modulos as $modulo) {
+            if (! array_key_exists($modulo->id, $permisosInput)) {
+                continue;
+            }
+
+            $flagsModulo = is_array($permisosInput[$modulo->id]) ? $permisosInput[$modulo->id] : [];
+
+            if (! empty($flagsModulo['heredar'])) {
+                PermisoActivado::where('id_usuario', $usuario->id)
+                    ->where('id_modulo', $modulo->id)
+                    ->delete();
+
+                continue;
+            }
+
+            PermisoActivado::updateOrCreate(
+                [
+                    'id_usuario' => $usuario->id,
+                    'id_modulo' => $modulo->id,
+                ],
+                [
+                    'puede_ver' => ! empty($flagsModulo['ver']),
+                    'puede_crear' => ! empty($flagsModulo['crear']),
+                    'puede_editar' => ! empty($flagsModulo['editar']),
+                    'puede_borrar' => ! empty($flagsModulo['borrar']),
+                ]
+            );
+        }
     }
 
     /**
@@ -244,36 +246,64 @@ class UsuariosController extends Controller
             ->get()
             ->keyBy('id_modulo');
 
+        $permisosRol = $usuario->id_rol === null
+            ? collect()
+            : RolPermiso::where('id_rol', $usuario->id_rol)
+                ->get()
+                ->keyBy('id_modulo');
+
+        $rolTieneConfiguracion = $permisosRol->isNotEmpty();
+        $sinConfiguracionAlguna = ! $rolTieneConfiguracion && $filas->isEmpty();
+
         $permisosActivos = [];
         $permisosAgrupados = [];
+        $permisosPersonalizados = [];
 
         foreach ($modulos as $modulo) {
-            /** @var PermisoActivado|null $fila */
-            $fila = $filas->get($modulo->id);
+            /** @var PermisoActivado|null $personalizado */
+            $personalizado = $filas->get($modulo->id);
+            /** @var RolPermiso|null $permisoRol */
+            $permisoRol = $permisosRol->get($modulo->id);
 
-            $tieneVer = $fila !== null && $fila->puede_ver;
-            $tieneCrear = $fila !== null && $fila->puede_crear;
-            $tieneEditar = $fila !== null && $fila->puede_editar;
-            $tieneBorrar = $fila !== null && $fila->puede_borrar;
+            $permisosPersonalizados[$modulo->id] = $personalizado !== null;
 
-            $permisosActivos[$modulo->id] = [
-                'ver' => $tieneVer,
-                'crear' => $tieneCrear,
-                'editar' => $tieneEditar,
-                'borrar' => $tieneBorrar,
-            ];
+            if ($personalizado !== null) {
+                $flags = [
+                    'ver' => (bool) $personalizado->puede_ver,
+                    'crear' => (bool) $personalizado->puede_crear,
+                    'editar' => (bool) $personalizado->puede_editar,
+                    'borrar' => (bool) $personalizado->puede_borrar,
+                ];
+            } elseif ($permisoRol !== null) {
+                $flags = [
+                    'ver' => (bool) $permisoRol->puede_ver,
+                    'crear' => (bool) $permisoRol->puede_crear,
+                    'editar' => (bool) $permisoRol->puede_editar,
+                    'borrar' => (bool) $permisoRol->puede_borrar,
+                ];
+            } else {
+                $heredado = $sinConfiguracionAlguna;
+                $flags = [
+                    'ver' => $heredado,
+                    'crear' => $heredado,
+                    'editar' => $heredado,
+                    'borrar' => $heredado,
+                ];
+            }
+
+            $permisosActivos[$modulo->id] = $flags;
 
             $activos = [];
-            if ($tieneVer) {
+            if ($flags['ver']) {
                 $activos[] = 'Ver';
             }
-            if ($tieneCrear) {
+            if ($flags['crear']) {
                 $activos[] = 'Crear';
             }
-            if ($tieneEditar) {
+            if ($flags['editar']) {
                 $activos[] = 'Editar';
             }
-            if ($tieneBorrar) {
+            if ($flags['borrar']) {
                 $activos[] = 'Borrar';
             }
 
@@ -285,7 +315,7 @@ class UsuariosController extends Controller
         $corteCiego = CorteCiego::where('id_usuarios', $usuario->id)->first();
         $corteCiegoActivo = $corteCiego?->corte_ciego ?? (bool) $usuario->rol?->corte_ciego;
 
-        return compact('roles', 'sucursales', 'modulos', 'permisosActivos', 'permisosAgrupados', 'corteCiegoActivo');
+        return compact('roles', 'sucursales', 'modulos', 'permisosActivos', 'permisosAgrupados', 'permisosPersonalizados', 'corteCiegoActivo');
     }
 
     public function update(Request $request, User $usuario): RedirectResponse
@@ -321,34 +351,9 @@ class UsuariosController extends Controller
             ...($request->filled('password') ? ['password' => bcrypt($data['password'])] : []),
         ]);
 
-        $modulos = Modulo::orderBy('id')->get();
         $permisosInput = $request->input('permisos', []);
-
-        foreach ($modulos as $modulo) {
-            $flagsModulo = is_array($permisosInput[$modulo->id] ?? null)
-                ? $permisosInput[$modulo->id]
-                : [];
-
-            $flags = [
-                'puede_ver' => ! empty($flagsModulo['ver']),
-                'puede_crear' => ! empty($flagsModulo['crear']),
-                'puede_editar' => ! empty($flagsModulo['editar']),
-                'puede_borrar' => ! empty($flagsModulo['borrar']),
-            ];
-
-            if (in_array(true, $flags, true)) {
-                PermisoActivado::updateOrCreate(
-                    [
-                        'id_usuario' => $usuario->id,
-                        'id_modulo' => $modulo->id,
-                    ],
-                    $flags
-                );
-            } else {
-                PermisoActivado::where('id_usuario', $usuario->id)
-                    ->where('id_modulo', $modulo->id)
-                    ->delete();
-            }
+        if (is_array($permisosInput)) {
+            $this->sincronizarPermisosUsuario($usuario, $permisosInput);
         }
 
         return redirect()->route('usuarios.edit', $usuario)->with('success', 'Usuario actualizado correctamente.');

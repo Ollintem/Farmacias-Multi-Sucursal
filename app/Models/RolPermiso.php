@@ -9,15 +9,18 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int $id_modulo
  * @property int $id_rol
- * @property int $id_permiso
- * @property bool $activo
+ * @property bool $puede_ver
+ * @property bool $puede_crear
+ * @property bool $puede_editar
+ * @property bool $puede_borrar
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Rol $rol
- * @property-read Permiso $permiso
+ * @property-read Modulo $modulo
  */
-#[Fillable(['id_rol', 'id_permiso', 'activo'])]
+#[Fillable(['id_rol', 'id_modulo', 'puede_ver', 'puede_crear', 'puede_editar', 'puede_borrar'])]
 class RolPermiso extends Model
 {
     protected $table = 'roles_permisos';
@@ -28,7 +31,10 @@ class RolPermiso extends Model
     protected function casts(): array
     {
         return [
-            'activo' => 'boolean',
+            'puede_ver' => 'boolean',
+            'puede_crear' => 'boolean',
+            'puede_editar' => 'boolean',
+            'puede_borrar' => 'boolean',
         ];
     }
 
@@ -41,10 +47,10 @@ class RolPermiso extends Model
     }
 
     /**
-     * @return BelongsTo<Permiso, $this>
+     * @return BelongsTo<Modulo, $this>
      */
-    public function permiso(): BelongsTo
+    public function modulo(): BelongsTo
     {
-        return $this->belongsTo(Permiso::class, 'id_permiso');
+        return $this->belongsTo(Modulo::class, 'id_modulo');
     }
 }

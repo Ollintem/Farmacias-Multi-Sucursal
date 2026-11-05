@@ -3,6 +3,7 @@
 use App\Models\Modulo;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
+use App\Models\RolPermiso;
 use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -457,4 +458,73 @@ it('usa el corte ciego del rol cuando el usuario no tiene excepcion', function (
     $usuario->corteCiego()->create(['corte_ciego' => false]);
 
     expect($usuario->fresh()->tieneCorteCiego())->toBeFalse();
+});
+
+it('permite heredar del rol o sobrescribir los permisos de un usuario', function () {
+    $rolSuperAdmin = Rol::create(['tipo_rol' => 'SuperAdmin', 'descripcion' => 'Acceso total']);
+    $rol = Rol::create(['tipo_rol' => 'Cajero', 'descripcion' => 'Ventas y cobros']);
+    $modulo = Modulo::create(['nombre_modulo' => 'Caja']);
+
+    $admin = User::create([
+        'nombre' => 'Admin',
+        'apellido' => 'Sistema',
+        'email' => 'admin.herencia@example.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rolSuperAdmin->id,
+    ]);
+
+    $usuario = User::create([
+        'nombre' => 'Ana',
+        'apellido' => 'Hereda',
+        'email' => 'ana.herencia@example.test',
+        'password' => Hash::make('password123'),
+        'es_activo' => true,
+        'id_rol' => $rol->id,
+    ]);
+
+    RolPermiso::create([
+        'id_rol' => $rol->id,
+        'id_modulo' => $modulo->id,
+        'puede_ver' => true,
+        'puede_crear' => false,
+        'puede_editar' => false,
+        'puede_borrar' => false,
+    ]);
+
+    PermisoActivado::create([
+        'id_usuario' => $usuario->id,
+        'id_modulo' => $modulo->id,
+        'puede_ver' => false,
+        'puede_crear' => false,
+        'puede_editar' => false,
+        'puede_borrar' => false,
+    ]);
+
+    expect($usuario->fresh()->permisosHabilitados('ver', 'caja'))->toBeFalse();
+
+    $this->actingAs($admin)
+        ->put(route('usuarios.updatePermisos', $usuario), [
+            'permisos' => [$modulo->id => ['heredar' => '1']],
+        ])
+        ->assertRedirect(route('usuarios.permisos', $usuario));
+
+    expect($usuario->fresh()->permisosHabilitados('ver', 'caja'))->toBeTrue();
+    $this->assertDatabaseMissing('permisos_activados', [
+        'id_usuario' => $usuario->id,
+        'id_modulo' => $modulo->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->put(route('usuarios.updatePermisos', $usuario), [
+            'permisos' => [$modulo->id => ['ver' => '0', 'crear' => '0', 'editar' => '0', 'borrar' => '0']],
+        ])
+        ->assertRedirect(route('usuarios.permisos', $usuario));
+
+    expect($usuario->fresh()->permisosHabilitados('ver', 'caja'))->toBeFalse();
+    $this->assertDatabaseHas('permisos_activados', [
+        'id_usuario' => $usuario->id,
+        'id_modulo' => $modulo->id,
+        'puede_ver' => false,
+    ]);
 });

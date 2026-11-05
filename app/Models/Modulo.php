@@ -57,6 +57,16 @@ class Modulo extends Model
     }
 
     /**
+     * Permisos predeterminados de los roles sobre este módulo.
+     *
+     * @return HasMany<RolPermiso, $this>
+     */
+    public function rolesPermisos(): HasMany
+    {
+        return $this->hasMany(RolPermiso::class, 'id_modulo');
+    }
+
+    /**
      * Tipos de alerta asociados a este módulo.
      *
      * @return HasMany<TipoAlerta, $this>

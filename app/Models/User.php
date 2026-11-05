@@ -223,7 +223,16 @@ class User extends Authenticatable
     /** @var array<int, string>|null */
     private ?array $modulosVisiblesCache = null;
 
-    private ?bool $rolPermisosConfiguradosCache = null;
+    /** @var array<int, Modulo>|null */
+    private ?array $modulosCache = null;
+
+    /** @var array<int, RolPermiso>|null */
+    private ?array $permisosRolCache = null;
+
+    /** @var array<int, PermisoActivado>|null */
+    private ?array $permisosPersonalizadosCache = null;
+
+    private bool $permisosCargados = false;
 
     /**
      * Nombres de módulos con permiso de ver activo.
@@ -238,47 +247,20 @@ class User extends Authenticatable
             return $this->modulosVisiblesCache;
         }
 
-        if ($this->rol?->tipo_rol === 'SuperAdmin') {
+        if ($this->esSuperAdmin()) {
             return $this->modulosVisiblesCache = Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
         }
 
-        if ($this->rolTienePermisosConfigurados()) {
-            $modulosVisibles = Modulo::query()
-                ->whereHas('permisos', fn ($query) => $query
-                    ->where('accion', 'ver')
-                    ->whereHas('rolesPermisos', fn ($rolPermisoQuery) => $rolPermisoQuery
-                        ->where('id_rol', $this->id_rol)
-                        ->where('activo', true)))
-                ->whereDoesntHave('permisosActivados', fn ($query) => $query
-                    ->where('id_usuario', $this->id)
-                    ->where('puede_ver', false))
-                ->pluck('nombre_modulo')
-                ->filter()
-                ->unique()
-                ->values();
+        $this->cargarPermisos();
 
-            return $this->modulosVisiblesCache = $modulosVisibles->all();
-        }
-
-        $modulosVisibles = $this->permisosActivados()
-            ->where('puede_ver', true)
-            ->with('modulo:id,nombre_modulo')
-            ->get()
-            ->pluck('modulo.nombre_modulo')
+        $modulosVisibles = collect($this->modulosCache ?? [])
+            ->filter(fn (Modulo $modulo): bool => $this->resolverPermiso('puede_ver', $modulo->id))
+            ->pluck('nombre_modulo')
             ->filter()
             ->unique()
             ->values();
 
-        if ($modulosVisibles->isNotEmpty()) {
-            return $this->modulosVisiblesCache = $modulosVisibles->all();
-        }
-
-        $totalPermisosActivados = $this->permisosActivados()->count();
-        if ($totalPermisosActivados === 0) {
-            return $this->modulosVisiblesCache = Modulo::query()->pluck('nombre_modulo')->filter()->unique()->values()->all();
-        }
-
-        return $this->modulosVisiblesCache = [];
+        return $this->modulosVisiblesCache = $modulosVisibles->all();
     }
 
     public function puedeVerModulo(string $nombreModulo): bool
@@ -287,8 +269,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Indica si el usuario es SuperAdmin.
+     */
+    public function esSuperAdmin(): bool
+    {
+        return $this->rol?->tipo_rol === 'SuperAdmin';
+    }
+
+    /**
      * Mapas entre los nombres cortos que reciben las rutas
-     * y las columnas de flags en `permisos_activados`.
+     * y las columnas de flags de permisos.
      *
      * @var array<string, string>
      */
@@ -309,7 +299,7 @@ class User extends Authenticatable
      */
     public function tieneCorteCiego(): bool
     {
-        if ($this->rol?->tipo_rol === 'SuperAdmin') {
+        if ($this->esSuperAdmin()) {
             return true;
         }
 
@@ -361,15 +351,16 @@ class User extends Authenticatable
      *
      * Precedencia:
      * 1. SuperAdmin siempre pasa.
-     * 2. Si el rol tiene configuración en `roles_permisos`, el rol es la base.
-     *    Un permiso individual de `permisos_activados` solo puede restringir,
-     *    nunca ampliar lo que el rol ya permite.
-     * 3. Si el rol no tiene configuración, se conserva la lógica individual
-     *    existente para mantener compatibilidad.
+     * 2. Si el usuario tiene configuración individual (`permisos_activados`)
+     *    para el módulo, esa configuración tiene prioridad absoluta.
+     * 3. Si no hay configuración individual, se usan los permisos
+     *    predeterminados del rol (`roles_permisos`).
+     * 4. Si el rol no tiene configuración, se conserva la lógica histórica
+     *    para no dejar sin acceso a instalaciones previas.
      */
     public function permisosHabilitados(string $permiso, string $modulo): bool
     {
-        if ($this->rol?->tipo_rol === 'SuperAdmin') {
+        if ($this->esSuperAdmin()) {
             return true;
         }
 
@@ -380,19 +371,19 @@ class User extends Authenticatable
         $columna = self::MAPA_PERMISOS[strtolower($permiso)] ?? $permiso;
         $nombreModulo = self::MAPA_MODULOS[strtolower($modulo)] ?? $modulo;
 
-        if ($this->rolTienePermisosConfigurados()) {
-            $columnas = $columna === 'todos'
-                ? array_keys(self::MAPA_ACCIONES)
-                : [$columna];
+        $this->cargarPermisos();
 
-            foreach ($columnas as $columnaPermiso) {
-                $accion = self::MAPA_ACCIONES[$columnaPermiso] ?? $columnaPermiso;
+        /** @var Modulo|null $registroModulo */
+        $registroModulo = collect($this->modulosCache ?? [])
+            ->first(fn (Modulo $item): bool => $item->nombre_modulo === $nombreModulo);
 
-                if ($accion === null || ! $this->rolPermite($accion, $nombreModulo)) {
-                    return false;
-                }
+        if ($registroModulo === null) {
+            return $this->permisosRolCache === [] && $this->permisosPersonalizadosCache === [];
+        }
 
-                if ($this->permisoIndividual($columnaPermiso, $nombreModulo) === false) {
+        if ($columna === 'todos') {
+            foreach (array_keys(self::MAPA_ACCIONES) as $columnaPermiso) {
+                if (! $this->resolverPermiso($columnaPermiso, $registroModulo->id)) {
                     return false;
                 }
             }
@@ -400,79 +391,66 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->permisosActivados()->count() === 0) {
-            return true;
-        }
-
-        if ($columna === 'todos') {
-            $registro = $this->permisosActivados()
-                ->whereHas('modulo', fn ($q) => $q->where('nombre_modulo', $nombreModulo))
-                ->first();
-
-            return $registro !== null
-                && $registro->puede_ver
-                && $registro->puede_crear
-                && $registro->puede_editar
-                && $registro->puede_borrar;
-        }
-
-        if (! in_array($columna, ['puede_ver', 'puede_crear', 'puede_editar', 'puede_borrar'], true)) {
+        if (! in_array($columna, array_keys(self::MAPA_ACCIONES), true)) {
             return false;
         }
 
-        return $this->permisosActivados()
-            ->whereHas('modulo', fn ($q) => $q->where('nombre_modulo', $nombreModulo))
-            ->where($columna, true)
-            ->exists();
+        return $this->resolverPermiso($columna, $registroModulo->id);
     }
 
     /**
-     * Indica si el rol del usuario tiene al menos un permiso configurado.
+     * Resuelve una bandera de permiso para un módulo concreto:
+     * override individual, permiso del rol o herencia histórica.
      */
-    private function rolTienePermisosConfigurados(): bool
+    private function resolverPermiso(string $columna, int $idModulo): bool
     {
-        if ($this->id_rol === null) {
-            return false;
+        $personalizado = $this->permisosPersonalizadosCache[$idModulo] ?? null;
+
+        if ($personalizado !== null) {
+            return (bool) $personalizado->{$columna};
         }
 
-        if ($this->rolPermisosConfiguradosCache !== null) {
-            return $this->rolPermisosConfiguradosCache;
+        $permisoRol = $this->permisosRolCache[$idModulo] ?? null;
+
+        if ($permisoRol !== null) {
+            return (bool) $permisoRol->{$columna};
         }
 
-        return $this->rolPermisosConfiguradosCache = RolPermiso::query()
-            ->where('id_rol', $this->id_rol)
-            ->exists();
+        if ($this->permisosRolCache === []) {
+            return $this->permisosPersonalizadosCache === [];
+        }
+
+        return false;
     }
 
     /**
-     * Indica si el rol permite una acción sobre un módulo.
+     * Precarga módulos, permisos del rol y permisos individuales una sola vez.
      */
-    private function rolPermite(string $accion, string $nombreModulo): bool
+    private function cargarPermisos(): void
     {
-        if ($this->id_rol === null) {
-            return false;
+        if ($this->permisosCargados) {
+            return;
         }
 
-        return RolPermiso::query()
-            ->where('id_rol', $this->id_rol)
-            ->where('activo', true)
-            ->whereHas('permiso', fn ($query) => $query
-                ->where('accion', $accion)
-                ->whereHas('modulo', fn ($moduloQuery) => $moduloQuery->where('nombre_modulo', $nombreModulo)))
-            ->exists();
-    }
+        $this->modulosCache = Modulo::query()
+            ->orderBy('id')
+            ->get()
+            ->keyBy('id')
+            ->all();
 
-    /**
-     * Estado de la excepción individual del usuario para un módulo.
-     *
-     * Salida: null si no hay excepción registrada para ese módulo.
-     */
-    private function permisoIndividual(string $columna, string $nombreModulo): ?bool
-    {
-        $registro = $this->permisosActivados()
-            ->whereHas('modulo', fn ($query) => $query->where('nombre_modulo', $nombreModulo))
-            ->first();
+        $this->permisosRolCache = $this->id_rol === null
+            ? []
+            : RolPermiso::query()
+                ->where('id_rol', $this->id_rol)
+                ->get()
+                ->keyBy('id_modulo')
+                ->all();
 
-        return $registro === null ? null : (bool) $registro->{$columna};
+        $this->permisosPersonalizadosCache = $this->permisosActivados()
+            ->get()
+            ->keyBy('id_modulo')
+            ->all();
+
+        $this->permisosCargados = true;
     }
 }

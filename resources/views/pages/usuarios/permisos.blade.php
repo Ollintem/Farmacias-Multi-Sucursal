@@ -43,7 +43,7 @@
                 <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                     <div>
                         <h2>Permisos por módulo</h2>
-                        <p class="theme-subtle text-sm">Marque qué puede hacer el usuario en cada módulo</p>
+                        <p class="theme-subtle text-sm">Desmarque “Heredar” para establecer permisos personalizados que tendrán prioridad sobre el rol</p>
                     </div>
                     <div class="noti-cabecera-lado">
                         @php
@@ -95,6 +95,7 @@
                             <thead>
                                 <tr>
                                     <th>Modulo</th>
+                                    <th class="text-center">Heredar</th>
                                     @foreach($columnasPermiso as $etiquetaPermiso)
                                         <th class="text-center">{{ $etiquetaPermiso }}</th>
                                     @endforeach
@@ -106,10 +107,21 @@
                                     @php
                                         $activosModulo = $permisosSeleccionadosPorModulo[$modulo->id] ?? [];
                                         $todosActivosFila = count(array_filter($activosModulo)) === count($columnasPermiso);
+                                        $esPersonalizado = (bool) ($permisosPersonalizados[$modulo->id] ?? false);
                                     @endphp
                                     <tr data-permisos-row="{{ $modulo->id }}">
                                         <td>
                                             <div class="font-medium text-slate-800 dark:text-white">{{ $modulo->nombre_modulo }}</div>
+                                        </td>
+                                        <td class="text-center">
+                                            <input
+                                                type="checkbox"
+                                                name="permisos[{{ $modulo->id }}][heredar]"
+                                                value="1"
+                                                title="Usar los permisos predeterminados del rol"
+                                                data-heredar-checkbox
+                                                @checked(! $esPersonalizado)
+                                            >
                                         </td>
                                         @foreach($columnasPermiso as $clavePermiso => $etiquetaPermiso)
                                             <td class="text-center">

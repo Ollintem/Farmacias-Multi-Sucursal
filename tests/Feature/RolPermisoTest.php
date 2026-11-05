@@ -1,13 +1,11 @@
 <?php
 
 use App\Models\Modulo;
-use App\Models\Permiso;
 use App\Models\PermisoActivado;
 use App\Models\Rol;
 use App\Models\RolPermiso;
 use App\Models\User;
 use Database\Seeders\ModuloSeeder;
-use Database\Seeders\PermisoSeeder;
 use Database\Seeders\RolesPermisosSeeder;
 use Database\Seeders\RolSeeder;
 use Illuminate\Support\Facades\Hash;
@@ -33,27 +31,29 @@ function crearUsuarioParaPermisos(Rol $rol): User
     ]);
 }
 
-function crearPermisoDeModulo(Modulo $modulo, string $accion): Permiso
+/**
+ * @param  array<string, bool>  $flags
+ */
+function asignarPermisoRol(Rol $rol, Modulo $modulo, array $flags): RolPermiso
 {
-    return Permiso::create([
-        'id_modulo' => $modulo->id,
-        'accion' => $accion,
-    ]);
-}
-
-function obtenerPermisoDe(string $nombreModulo, string $accion): Permiso
-{
-    return Permiso::query()
-        ->whereHas('modulo', fn ($query) => $query->where('nombre_modulo', $nombreModulo))
-        ->where('accion', $accion)
-        ->firstOrFail();
+    return RolPermiso::updateOrCreate(
+        [
+            'id_rol' => $rol->id,
+            'id_modulo' => $modulo->id,
+        ],
+        [
+            'puede_ver' => $flags['ver'] ?? false,
+            'puede_crear' => $flags['crear'] ?? false,
+            'puede_editar' => $flags['editar'] ?? false,
+            'puede_borrar' => $flags['borrar'] ?? false,
+        ]
+    );
 }
 
 it('muestra la configuracion de permisos del rol seleccionado', function () {
     $this->seed([
         RolSeeder::class,
         ModuloSeeder::class,
-        PermisoSeeder::class,
         RolesPermisosSeeder::class,
     ]);
 
@@ -78,64 +78,32 @@ it('actualiza solo el rol seleccionado sin afectar otros roles', function () {
     $admin = crearUsuarioParaPermisos($rolAdmin);
 
     $modulo = Modulo::create(['nombre_modulo' => 'Inventario']);
-    $permisos = collect(['ver', 'crear', 'editar', 'borrar'])
-        ->mapWithKeys(fn (string $accion): array => [$accion => crearPermisoDeModulo($modulo, $accion)]);
 
-    RolPermiso::create([
-        'id_rol' => $cajero->id,
-        'id_permiso' => $permisos['ver']->id,
-        'activo' => true,
-    ]);
+    asignarPermisoRol($cajero, $modulo, ['ver' => true]);
 
     $this->actingAs($admin)
         ->put(route('roles.permisos.update', $gerente), [
-            'permisos' => [$permisos['ver']->id => '1'],
+            'permisos' => [$modulo->id => ['ver' => '1']],
         ])
         ->assertRedirect(route('roles.permisos', ['rol' => $gerente->id]))
         ->assertSessionHas('success');
 
     $this->assertDatabaseHas('roles_permisos', [
         'id_rol' => $gerente->id,
-        'id_permiso' => $permisos['ver']->id,
-        'activo' => true,
-    ]);
-
-    $this->assertDatabaseHas('roles_permisos', [
-        'id_rol' => $gerente->id,
-        'id_permiso' => $permisos['crear']->id,
-        'activo' => false,
+        'id_modulo' => $modulo->id,
+        'puede_ver' => true,
+        'puede_crear' => false,
+        'puede_editar' => false,
+        'puede_borrar' => false,
     ]);
 
     $this->assertDatabaseHas('roles_permisos', [
         'id_rol' => $cajero->id,
-        'id_permiso' => $permisos['ver']->id,
-        'activo' => true,
+        'id_modulo' => $modulo->id,
+        'puede_ver' => true,
     ]);
 
-    $this->assertDatabaseMissing('roles_permisos', [
-        'id_rol' => $cajero->id,
-        'id_permiso' => $permisos['crear']->id,
-    ]);
-
-    $this->actingAs($admin)
-        ->put(route('roles.permisos.update', $gerente), [
-            'permisos' => [$permisos['crear']->id => '1'],
-        ])
-        ->assertRedirect(route('roles.permisos', ['rol' => $gerente->id]));
-
-    expect($admin->fresh()->id_rol)->toBe($rolAdmin->id);
-
-    $this->assertDatabaseCount('roles_permisos', 5);
-    $this->assertDatabaseHas('roles_permisos', [
-        'id_rol' => $gerente->id,
-        'id_permiso' => $permisos['ver']->id,
-        'activo' => false,
-    ]);
-    $this->assertDatabaseHas('roles_permisos', [
-        'id_rol' => $gerente->id,
-        'id_permiso' => $permisos['crear']->id,
-        'activo' => true,
-    ]);
+    $this->assertDatabaseCount('roles_permisos', 2);
 });
 
 it('impide modificar permisos sin autorizacion de edicion', function () {
@@ -144,33 +112,19 @@ it('impide modificar permisos sin autorizacion de edicion', function () {
     $usuario = crearUsuarioParaPermisos($rolCajero);
 
     $moduloUsuarios = Modulo::create(['nombre_modulo' => 'Usuarios y roles']);
-    $permisoVer = crearPermisoDeModulo($moduloUsuarios, 'ver');
-    $permisoEditar = crearPermisoDeModulo($moduloUsuarios, 'editar');
-
-    RolPermiso::create([
-        'id_rol' => $rolCajero->id,
-        'id_permiso' => $permisoVer->id,
-        'activo' => true,
-    ]);
-
-    RolPermiso::create([
-        'id_rol' => $rolCajero->id,
-        'id_permiso' => $permisoEditar->id,
-        'activo' => false,
-    ]);
-
     $moduloInventario = Modulo::create(['nombre_modulo' => 'Inventario']);
-    $permisoInventario = crearPermisoDeModulo($moduloInventario, 'ver');
+
+    asignarPermisoRol($rolCajero, $moduloUsuarios, ['ver' => true, 'editar' => false]);
 
     $this->actingAs($usuario)
         ->put(route('roles.permisos.update', $rolGerente), [
-            'permisos' => [$permisoInventario->id => '1'],
+            'permisos' => [$moduloInventario->id => ['ver' => '1']],
         ])
         ->assertForbidden();
 
     $this->assertDatabaseMissing('roles_permisos', [
         'id_rol' => $rolGerente->id,
-        'id_permiso' => $permisoInventario->id,
+        'id_modulo' => $moduloInventario->id,
     ]);
 });
 
@@ -178,17 +132,16 @@ it('impide restringir el rol SuperAdmin', function () {
     $superAdmin = crearRolParaPermisos('SuperAdmin');
     $usuario = crearUsuarioParaPermisos($superAdmin);
     $modulo = Modulo::create(['nombre_modulo' => 'Inventario']);
-    $permiso = crearPermisoDeModulo($modulo, 'ver');
 
     $this->actingAs($usuario)
         ->put(route('roles.permisos.update', $superAdmin), [
-            'permisos' => [$permiso->id => '1'],
+            'permisos' => [$modulo->id => ['ver' => '1']],
         ])
         ->assertSessionHas('error');
 
     $this->assertDatabaseMissing('roles_permisos', [
         'id_rol' => $superAdmin->id,
-        'id_permiso' => $permiso->id,
+        'id_modulo' => $modulo->id,
     ]);
 });
 
@@ -196,20 +149,8 @@ it('muestra la configuracion en solo lectura cuando no puede editar', function (
     $rol = crearRolParaPermisos('Cajero');
     $usuario = crearUsuarioParaPermisos($rol);
     $modulo = Modulo::create(['nombre_modulo' => 'Usuarios y roles']);
-    $permisoVer = crearPermisoDeModulo($modulo, 'ver');
-    $permisoEditar = crearPermisoDeModulo($modulo, 'editar');
 
-    RolPermiso::create([
-        'id_rol' => $rol->id,
-        'id_permiso' => $permisoVer->id,
-        'activo' => true,
-    ]);
-
-    RolPermiso::create([
-        'id_rol' => $rol->id,
-        'id_permiso' => $permisoEditar->id,
-        'activo' => false,
-    ]);
+    asignarPermisoRol($rol, $modulo, ['ver' => true, 'editar' => false]);
 
     $this->actingAs($usuario)
         ->get(route('roles.permisos'))
@@ -217,45 +158,32 @@ it('muestra la configuracion en solo lectura cuando no puede editar', function (
         ->assertSee('Solo lectura');
 });
 
-it('el rol restringe el acceso aunque exista una excepcion individual', function () {
+it('el permiso personalizado del usuario tiene prioridad sobre el rol', function () {
     $rol = crearRolParaPermisos('Cajero');
     $usuario = crearUsuarioParaPermisos($rol);
     $modulo = Modulo::create(['nombre_modulo' => 'Inventario']);
-    $permiso = crearPermisoDeModulo($modulo, 'ver');
 
-    RolPermiso::create([
-        'id_rol' => $rol->id,
-        'id_permiso' => $permiso->id,
-        'activo' => false,
-    ]);
+    asignarPermisoRol($rol, $modulo, ['ver' => false]);
 
     PermisoActivado::create([
         'id_usuario' => $usuario->id,
         'id_modulo' => $modulo->id,
         'puede_ver' => true,
-        'puede_crear' => true,
-        'puede_editar' => true,
-        'puede_borrar' => true,
+        'puede_crear' => false,
+        'puede_editar' => false,
+        'puede_borrar' => false,
     ]);
 
-    expect($usuario->permisosHabilitados('ver', 'inventario'))->toBeFalse();
-
-    $this->actingAs($usuario)
-        ->get(route('roles.permisos'))
-        ->assertForbidden();
+    expect($usuario->permisosHabilitados('ver', 'inventario'))->toBeTrue()
+        ->and($usuario->puedeVerModulo('Inventario'))->toBeTrue();
 });
 
 it('el rol autoriza sin necesidad de una excepcion individual', function () {
     $rol = crearRolParaPermisos('Cajero');
     $usuario = crearUsuarioParaPermisos($rol);
     $modulo = Modulo::create(['nombre_modulo' => 'Dashboard']);
-    $permiso = crearPermisoDeModulo($modulo, 'ver');
 
-    RolPermiso::create([
-        'id_rol' => $rol->id,
-        'id_permiso' => $permiso->id,
-        'activo' => true,
-    ]);
+    asignarPermisoRol($rol, $modulo, ['ver' => true]);
 
     expect($usuario->permisosHabilitados('ver', 'dashboard'))->toBeTrue()
         ->and($usuario->puedeVerModulo('Dashboard'))->toBeTrue();
@@ -269,13 +197,8 @@ it('una excepcion individual puede restringir un permiso concedido por el rol', 
     $rol = crearRolParaPermisos('Cajero');
     $usuario = crearUsuarioParaPermisos($rol);
     $modulo = Modulo::create(['nombre_modulo' => 'Inventario']);
-    $permiso = crearPermisoDeModulo($modulo, 'ver');
 
-    RolPermiso::create([
-        'id_rol' => $rol->id,
-        'id_permiso' => $permiso->id,
-        'activo' => true,
-    ]);
+    asignarPermisoRol($rol, $modulo, ['ver' => true]);
 
     PermisoActivado::create([
         'id_usuario' => $usuario->id,
@@ -288,6 +211,28 @@ it('una excepcion individual puede restringir un permiso concedido por el rol', 
 
     expect($usuario->permisosHabilitados('ver', 'inventario'))->toBeFalse()
         ->and($usuario->puedeVerModulo('Inventario'))->toBeFalse();
+});
+
+it('modificar permisos de un usuario no altera los del rol ni los de otros usuarios', function () {
+    $rol = crearRolParaPermisos('Cajero');
+    $usuario = crearUsuarioParaPermisos($rol);
+    $otroUsuario = crearUsuarioParaPermisos($rol);
+    $modulo = Modulo::create(['nombre_modulo' => 'Inventario']);
+
+    asignarPermisoRol($rol, $modulo, ['ver' => true]);
+
+    PermisoActivado::create([
+        'id_usuario' => $usuario->id,
+        'id_modulo' => $modulo->id,
+        'puede_ver' => false,
+        'puede_crear' => false,
+        'puede_editar' => false,
+        'puede_borrar' => false,
+    ]);
+
+    expect($usuario->permisosHabilitados('ver', 'inventario'))->toBeFalse()
+        ->and($otroUsuario->permisosHabilitados('ver', 'inventario'))->toBeTrue()
+        ->and(RolPermiso::where('id_rol', $rol->id)->where('id_modulo', $modulo->id)->value('puede_ver'))->toBeTrue();
 });
 
 it('marca solo las excepciones individuales del usuario seleccionado', function () {
@@ -327,82 +272,55 @@ it('el seeder asigna permisos predeterminados y no sobrescribe cambios manuales'
     $this->seed([
         RolSeeder::class,
         ModuloSeeder::class,
-        PermisoSeeder::class,
         RolesPermisosSeeder::class,
     ]);
 
-    $totalPermisos = Permiso::count();
+    $totalModulos = Modulo::count();
     $superAdmin = Rol::where('tipo_rol', 'SuperAdmin')->firstOrFail();
     $gerente = Rol::where('tipo_rol', 'Gerente')->firstOrFail();
     $cajero = Rol::where('tipo_rol', 'Cajero')->firstOrFail();
 
-    expect($totalPermisos)->toBeGreaterThan(0)
-        ->and(RolPermiso::where('id_rol', $superAdmin->id)->count())->toBe($totalPermisos)
-        ->and(RolPermiso::where('id_rol', $superAdmin->id)->where('activo', true)->count())->toBe($totalPermisos)
-        ->and(RolPermiso::where('id_rol', $gerente->id)->count())->toBe($totalPermisos)
-        ->and(RolPermiso::where('id_rol', $cajero->id)->count())->toBe($totalPermisos);
+    expect($totalModulos)->toBeGreaterThan(0)
+        ->and(RolPermiso::where('id_rol', $superAdmin->id)->count())->toBe($totalModulos)
+        ->and(RolPermiso::where('id_rol', $superAdmin->id)->where('puede_ver', true)->count())->toBe($totalModulos)
+        ->and(RolPermiso::where('id_rol', $gerente->id)->count())->toBe($totalModulos)
+        ->and(RolPermiso::where('id_rol', $cajero->id)->count())->toBe($totalModulos);
 
-    expect(RolPermiso::where('id_rol', $gerente->id)
-        ->where('id_permiso', obtenerPermisoDe('Caja', 'ver')->id)
-        ->value('activo'))->toBeTrue();
+    $modulo = fn (string $nombre): Modulo => Modulo::where('nombre_modulo', $nombre)->firstOrFail();
+    $permisoRol = fn (Rol $rol, Modulo $modulo): ?RolPermiso => RolPermiso::where('id_rol', $rol->id)
+        ->where('id_modulo', $modulo->id)
+        ->first();
 
-    expect(RolPermiso::where('id_rol', $gerente->id)
-        ->where('id_permiso', obtenerPermisoDe('Sucursales', 'ver')->id)
-        ->value('activo'))->toBeFalse();
+    expect($permisoRol($gerente, $modulo('Caja'))?->puede_ver)->toBeTrue()
+        ->and($permisoRol($gerente, $modulo('Sucursales'))?->puede_ver)->toBeFalse()
+        ->and($permisoRol($gerente, $modulo('Usuarios y roles'))?->puede_ver)->toBeFalse()
+        ->and($permisoRol($gerente, $modulo('Usuarios y roles'))?->puede_borrar)->toBeFalse();
 
-    expect(RolPermiso::where('id_rol', $gerente->id)
-        ->where('id_permiso', obtenerPermisoDe('Usuarios y roles', 'ver')->id)
-        ->value('activo'))->toBeFalse();
-
-    expect(RolPermiso::where('id_rol', $gerente->id)
-        ->where('id_permiso', obtenerPermisoDe('Usuarios y roles', 'borrar')->id)
-        ->value('activo'))->toBeFalse();
-
-    expect(RolPermiso::where('id_rol', $cajero->id)
-        ->where('id_permiso', obtenerPermisoDe('Punto de venta', 'ver')->id)
-        ->value('activo'))->toBeTrue();
-
-    expect(RolPermiso::where('id_rol', $cajero->id)
-        ->where('id_permiso', obtenerPermisoDe('Inventario', 'ver')->id)
-        ->value('activo'))->toBeTrue();
-
-    expect(RolPermiso::where('id_rol', $cajero->id)
-        ->where('id_permiso', obtenerPermisoDe('Caja', 'ver')->id)
-        ->value('activo'))->toBeTrue();
+    expect($permisoRol($cajero, $modulo('Punto de venta'))?->puede_ver)->toBeTrue()
+        ->and($permisoRol($cajero, $modulo('Punto de venta'))?->puede_crear)->toBeTrue()
+        ->and($permisoRol($cajero, $modulo('Inventario'))?->puede_ver)->toBeTrue()
+        ->and($permisoRol($cajero, $modulo('Caja'))?->puede_ver)->toBeTrue()
+        ->and($permisoRol($cajero, $modulo('Dashboard'))?->puede_ver)->toBeFalse()
+        ->and($permisoRol($cajero, $modulo('Usuarios y roles'))?->puede_ver)->toBeFalse();
 
     expect($gerente->fresh()->corte_ciego)->toBeFalse()
         ->and($cajero->fresh()->corte_ciego)->toBeTrue()
         ->and($superAdmin->fresh()->corte_ciego)->toBeTrue();
 
-    expect(RolPermiso::where('id_rol', $cajero->id)
-        ->where('id_permiso', obtenerPermisoDe('Dashboard', 'ver')->id)
-        ->value('activo'))->toBeFalse();
-
-    expect(RolPermiso::where('id_rol', $cajero->id)
-        ->where('id_permiso', obtenerPermisoDe('Usuarios y roles', 'ver')->id)
-        ->value('activo'))->toBeFalse();
-
-    $permisoEditado = RolPermiso::where('id_rol', $gerente->id)
-        ->where('id_permiso', obtenerPermisoDe('Inventario', 'ver')->id)
-        ->firstOrFail();
-
-    $permisoEditado->update(['activo' => false]);
+    $permisoEditado = $permisoRol($gerente, $modulo('Inventario'));
+    $permisoEditado->update(['puede_ver' => false]);
 
     $this->seed(RolesPermisosSeeder::class);
 
-    expect($permisoEditado->fresh()->activo)->toBeFalse();
+    expect($permisoEditado->fresh()->puede_ver)->toBeFalse();
 
     $nuevoModulo = Modulo::create(['nombre_modulo' => 'Nuevo modulo']);
-    $nuevoPermiso = crearPermisoDeModulo($nuevoModulo, 'ver');
 
     $this->seed(RolesPermisosSeeder::class);
 
-    expect(RolPermiso::where('id_rol', $superAdmin->id)
-        ->where('id_permiso', $nuevoPermiso->id)->value('activo'))->toBeTrue()
-        ->and(RolPermiso::where('id_rol', $gerente->id)
-            ->where('id_permiso', $nuevoPermiso->id)->value('activo'))->toBeFalse()
-        ->and(RolPermiso::where('id_rol', $cajero->id)
-            ->where('id_permiso', $nuevoPermiso->id)->value('activo'))->toBeFalse();
+    expect($permisoRol($superAdmin, $nuevoModulo)?->puede_ver)->toBeTrue()
+        ->and($permisoRol($gerente, $nuevoModulo)?->puede_ver)->toBeFalse()
+        ->and($permisoRol($cajero, $nuevoModulo)?->puede_ver)->toBeFalse();
 
-    expect(RolPermiso::where('id_rol', $superAdmin->id)->count())->toBe(Permiso::count());
+    expect(RolPermiso::where('id_rol', $superAdmin->id)->count())->toBe(Modulo::count());
 });

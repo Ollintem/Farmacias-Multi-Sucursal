@@ -129,7 +129,7 @@
                         </div>
                     @elseif($configuracion->isEmpty())
                         <div class="mb-4 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-600 dark:text-amber-400">
-                            Este rol aún no tiene permisos guardados. Mientras no guardes una configuración, se mantiene la lógica individual existente de cada usuario.
+                            Este rol aún no tiene permisos predeterminados guardados. Mientras no guardes una configuración, se mantiene la lógica individual existente de cada usuario.
                         </div>
                     @endif
 
@@ -178,37 +178,30 @@
                                         <tbody>
                                             @foreach($modulos as $modulo)
                                                 @php
-                                                    $permisosPorAccion = $modulo->permisos->keyBy('accion');
-                                                    $todosActivosFila = $esSuperAdmin || collect($columnasPermiso)
-                                                        ->keys()
-                                                        ->every(function ($accion) use ($permisosPorAccion, $configuracion): bool {
-                                                            $permiso = $permisosPorAccion->get($accion);
-
-                                                            return $permiso !== null
-                                                                && (bool) ($configuracion->get($permiso->id)?->activo ?? false);
-                                                        });
+                                                    $configModulo = $configuracion->get($modulo->id);
+                                                    $flagsModulo = [
+                                                        'ver' => (bool) ($configModulo?->puede_ver),
+                                                        'crear' => (bool) ($configModulo?->puede_crear),
+                                                        'editar' => (bool) ($configModulo?->puede_editar),
+                                                        'borrar' => (bool) ($configModulo?->puede_borrar),
+                                                    ];
+                                                    $todosActivosFila = $esSuperAdmin
+                                                        || ! in_array(false, $flagsModulo, true);
                                                 @endphp
                                                 <tr data-permisos-row="{{ $modulo->id }}">
                                                     <td>
                                                         <div class="font-medium text-slate-800 dark:text-white">{{ $modulo->nombre_modulo }}</div>
                                                     </td>
                                                     @foreach($columnasPermiso as $accion => $etiquetaPermiso)
-                                                        @php
-                                                            $permiso = $permisosPorAccion->get($accion);
-                                                        @endphp
                                                         <td class="text-center">
-                                                            @if($permiso !== null)
-                                                                <input
-                                                                    type="checkbox"
-                                                                    name="permisos[{{ $permiso->id }}]"
-                                                                    value="1"
-                                                                    @checked($esSuperAdmin || ($configuracion->get($permiso->id)?->activo ?? false))
-                                                                    @disabled($soloLectura)
-                                                                    data-permiso-checkbox
-                                                                >
-                                                            @else
-                                                                <span class="text-slate-400">—</span>
-                                                            @endif
+                                                            <input
+                                                                type="checkbox"
+                                                                name="permisos[{{ $modulo->id }}][{{ $accion }}]"
+                                                                value="1"
+                                                                @checked($esSuperAdmin || ($flagsModulo[$accion] ?? false))
+                                                                @disabled($soloLectura)
+                                                                data-permiso-checkbox
+                                                            >
                                                         </td>
                                                     @endforeach
                                                     <td class="text-center">
@@ -245,7 +238,7 @@
                     <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                         <div>
                             <h2>Excepciones de {{ $selectedUsuario->nombre }} {{ $selectedUsuario->apellido }}</h2>
-                            <p class="theme-subtle text-sm">Solo se muestran los permisos registrados individualmente en <code>permisos_activados</code>.</p>
+                            <p class="theme-subtle text-sm">Solo se muestran los permisos personalizados del usuario registrados en <code>permisos_activados</code>; el resto hereda los permisos del rol.</p>
                         </div>
                     </header>
                     <div class="p-5">
