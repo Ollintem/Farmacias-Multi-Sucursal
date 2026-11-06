@@ -103,18 +103,21 @@
                             $esSuperAdminHeader = $selectedRol?->tipo_rol === 'SuperAdmin';
                             $corteCiegoActivo = $esSuperAdminHeader || (bool) ($selectedRol?->corte_ciego ?? false);
                         @endphp
-                        <label class="inline-flex items-center gap-2 text-sm font-medium">
-                            <input
-                                type="checkbox"
-                                name="corte_ciego"
-                                value="1"
-                                form="permisos-form"
-                                data-permiso-checkbox
-                                @checked($corteCiegoActivo)
-                                @disabled($selectedRol === null || ! $puedeEditar || $esSuperAdminHeader)
-                            >
-                            Corte ciego
-                        </label>
+                        {{-- Corte ciego oculto en UI; se conserva funcional --}}
+                        <span class="hidden" aria-hidden="true">
+                            <label class="inline-flex items-center gap-2 text-sm font-medium">
+                                <input
+                                    type="checkbox"
+                                    name="corte_ciego"
+                                    value="1"
+                                    form="permisos-form"
+                                    data-permiso-checkbox
+                                    @checked($corteCiegoActivo)
+                                    @disabled($selectedRol === null || ! $puedeEditar || $esSuperAdminHeader)
+                                >
+                                Corte ciego
+                            </label>
+                        </span>
                         <button type="button" id="permisos-toggle-all" class="noti-desplegar" @disabled($selectedRol === null || ! $puedeEditar || $selectedRol->tipo_rol === 'SuperAdmin')>Activar todo</button>
                     </div>
                 </header>

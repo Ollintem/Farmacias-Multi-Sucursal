@@ -45,8 +45,8 @@
                     </div>
                 </header>
 
-                {{-- Toolbar compacta --}}
-                <div class="entradas-toolbar !py-2 !px-3 border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
+                {{-- Toolbar --}}
+                <div class="entradas-toolbar !py-3 !px-4 border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
                     <form method="GET" action="{{ route('inventario.productos') }}" class="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         @isset($sucursales)
                         <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -61,18 +61,18 @@
                     </form>
                 </div>
 
-                <div class="entradas-tabla-wrap !border-0 !max-h-none">
-                    <div class="overflow-x-auto">
-                        <table class="entradas-tabla !min-w-[860px] !text-sm">
+                <div class="entradas-tabla-wrap !border-0 !max-h-none !overflow-visible rounded-b-2xl" style="max-height:none !important; overflow:visible !important;">
+                    <div class="overflow-x-auto" style="overflow:visible !important;">
+                        <table class="w-full min-w-[920px] text-left">
                             <thead>
-                                <tr>
-                                    <th class="!py-2.5 !text-xs">Producto</th>
-                                    <th class="!py-2.5 !text-xs">Categoría</th>
-                                    <th class="!py-2.5 !text-xs">Presentación</th>
-                                    <th class="!py-2.5 !text-xs text-right">Precio</th>
-                                    <th class="!py-2.5 !text-xs text-center">Controlado</th>
-                                    <th class="!py-2.5 !text-xs text-center">Estado</th>
-                                    <th class="!py-2.5 !text-xs text-right">Acciones</th>
+                                <tr class="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
+                                    <th class="px-5 py-3.5 w-[28%]">Producto</th>
+                                    <th class="px-4 py-3.5 w-[14%]">Categoría</th>
+                                    <th class="px-4 py-3.5 w-[20%]">Presentación</th>
+                                    <th class="px-4 py-3.5 w-[12%] text-right">Precio</th>
+                                    <th class="px-4 py-3.5 w-[9%] text-center">Controlado</th>
+                                    <th class="px-4 py-3.5 w-[9%] text-center">Estado</th>
+                                    <th class="px-4 py-3.5 w-[8%] text-right">Acciones</th>
                                 </tr>
                             </thead>
                                 @foreach($productos as $producto)
@@ -87,12 +87,12 @@
                                         @endphp
                                     <tbody x-data="{ abierta: false }" data-buscar="{{ $producto->codigo_barras }} {{ $producto->nombre_producto }}" class="group/tbody">
                                         <tr @class([
-                                            'transition',
+                                            'transition hover:bg-slate-50/70 dark:hover:bg-slate-800/30',
                                             'opacity-60' => ! $producto->es_activo,
                                         ])>
-                                            <td class="!py-2.5">
-                                                <div class="flex items-center gap-2.5">
-                                                    <span class="hidden h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-xs font-bold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 sm:grid">{{ mb_strtoupper(mb_substr($producto->nombre_producto, 0, 2)) }}</span>
+                                            <td class="px-5 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <span class="hidden h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-xs font-bold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 sm:grid">{{ mb_strtoupper(mb_substr($producto->nombre_producto, 0, 2)) }}</span>
                                                     <div class="min-w-0">
                                                         <p class="truncate text-sm font-bold leading-tight text-slate-800 dark:text-slate-100">{{ $producto->nombre_producto }}</p>
                                                         <p class="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -103,11 +103,11 @@
                                                 </div>
                                             </td>
 
-                                            <td class="!py-2.5">
+                                            <td class="px-4 py-4">
                                                 <span class="stat-pill info !px-2.5 !py-0.5 !text-[11px] !normal-case !font-bold">{{ $producto->categoria?->nombre ?? 'Sin categoría' }}</span>
                                             </td>
 
-                                            <td class="!py-2.5">
+                                            <td class="px-4 py-4">
                                                 @if($principal)
                                                     <p class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ $principal->presentacion?->presentacion ?? 'Presentación' }}</p>
                                                     <p class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -133,7 +133,7 @@
                                                 @endif
                                             </td>
 
-                                            <td class="!py-2.5 text-right">
+                                            <td class="px-4 py-4 text-right">
                                                 @if($principal)
                                                     <span class="text-sm font-extrabold text-emerald-700 dark:text-emerald-300">${{ number_format((float) $principal->precio_presentacion, 2) }}</span>
                                                     <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">precio por presentación</p>
@@ -142,7 +142,7 @@
                                                 @endif
                                             </td>
 
-                                            <td class="!py-2.5 text-center">
+                                            <td class="px-4 py-4 text-center">
                                                 @if($producto->es_controlado)
                                                     <span class="stat-pill warning !px-2.5 !py-1 !text-[11px] !font-bold">Sí · receta</span>
                                                 @else
@@ -150,7 +150,7 @@
                                                 @endif
                                             </td>
 
-                                            <td class="!py-2.5 text-center">
+                                            <td class="px-4 py-4 text-center">
                                                 <form action="{{ route('inventario.estado', $producto) }}" method="POST" style="margin:0;">
                                                     @csrf
                                                     @method('PATCH')
@@ -175,7 +175,7 @@
                                                 </form>
                                             </td>
 
-                                            <td class="!py-2.5 text-right">
+                                            <td class="px-4 py-4 text-right">
                                                 <div class="inline-flex items-center gap-1">
                                                     <a href="{{ route('inventario.edit', $producto) }}" title="Editar producto" class="grid h-7 w-7 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0c7569] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>

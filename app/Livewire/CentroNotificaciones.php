@@ -63,7 +63,7 @@ class CentroNotificaciones extends Component
             'traspaso' => 'traspasos',
             default => $f,
         };
-        $this->filtro = in_array($f, ['todas', 'no_leidas', 'stock', 'caducidad', 'traspasos', 'ventas'], true) ? $f : 'todas';
+        $this->filtro = in_array($f, ['todas', 'no_leidas', 'stock', 'caducidad', 'traspasos', 'ventas', 'caja'], true) ? $f : 'todas';
 
         $n = strtolower(trim((string) ($nivel ?? request()->query('nivel', 'todos'))));
         $this->nivel = in_array($n, ['todos', 'rojo', 'amarillo', 'verde'], true) ? $n : 'todos';
@@ -89,7 +89,7 @@ class CentroNotificaciones extends Component
     public function setFiltro(string $filtro): void
     {
         $filtro = strtolower(trim($filtro));
-        $this->filtro = in_array($filtro, ['todas', 'no_leidas', 'stock', 'caducidad', 'traspasos', 'ventas'], true) ? $filtro : 'todas';
+        $this->filtro = in_array($filtro, ['todas', 'no_leidas', 'stock', 'caducidad', 'traspasos', 'ventas', 'caja'], true) ? $filtro : 'todas';
         if ($this->filtro !== 'caducidad') {
             $this->nivel = 'todos';
         }
@@ -255,13 +255,14 @@ class CentroNotificaciones extends Component
             'caducidad' => collect($avisos)->where('grupo', 'caducidad')->count(),
             'traspasos' => collect($avisos)->where('grupo', 'traspasos')->count(),
             'ventas' => collect($avisos)->where('grupo', 'ventas')->count(),
+            'caja' => collect($avisos)->where('grupo', 'caja')->count(),
         ];
 
         // Filtro principal
         $filtradas = match ($this->filtro) {
             'no_leidas' => array_values(array_filter($avisos, fn (array $a): bool => ($a['leida'] ?? false) === false)),
             'caducidad' => array_values(array_filter($avisos, fn (array $a): bool => ($a['grupo'] ?? $a['tipo']) === 'caducidad' && ($this->nivel === 'todos' || ($a['nivel'] ?? '') === $this->nivel))),
-            'stock', 'traspasos', 'ventas' => array_values(array_filter($avisos, fn (array $a): bool => ($a['grupo'] ?? $a['tipo']) === $this->filtro)),
+            'stock', 'traspasos', 'ventas', 'caja' => array_values(array_filter($avisos, fn (array $a): bool => ($a['grupo'] ?? $a['tipo']) === $this->filtro)),
             default => $avisos,
         };
 

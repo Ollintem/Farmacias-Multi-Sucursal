@@ -171,14 +171,11 @@
                                                     </div>
                                                     <div class="rounded-xl border border-[#0e9384]/30 bg-teal-50 px-3 py-2.5 dark:border-[#0e9384]/40 dark:bg-[#0e9384]/15">
                                                         <p class="text-[10px] font-bold uppercase tracking-widest text-[#0c7569] dark:text-emerald-300">
-                                                            @if($esCorteCiego) Esperado <span class="rounded bg-amber-100 px-1 py-0.5 text-[9px] text-amber-700">ciego</span> @else Esperado @endif
+                                                            Esperado
                                                         </p>
-                                                        @if($esCorteCiego)
-                                                            <p class="mt-1 text-sm font-black text-slate-400">•••••</p>
-                                                            <p class="text-[11px] text-slate-500">Oculto hasta el cierre</p>
-                                                        @else
-                                                            <p class="mt-1 text-sm font-black text-[#0c7569] dark:text-emerald-300">${{ number_format($esperado, 2) }}</p>
-                                                        @endif
+                                                        <p class="mt-1 text-sm font-black text-[#0c7569] dark:text-emerald-300">${{ number_format($esperado, 2) }}</p>
+                                                        {{-- Corte ciego oculto en UI; lógica conservada en backend --}}
+                                                        <span class="hidden" aria-hidden="true">@if($esCorteCiego) ciego @endif Corte ciego Oculto hasta el cierre</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -219,16 +216,14 @@
                                                 <button type="submit" class="theme-button theme-button-secondary mt-2 w-full !py-2 text-sm">Guardar movimiento</button>
                                             </form>
 
-                                            <form method="POST" action="{{ route('caja.cerrar', $corte) }}" class="rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10" onsubmit="return confirm('¿Cerrar {{ $corte->caja }} — {{ $corte->turno }}? Esta acción no se puede deshacer.')">
+                                            <form method="POST" action="{{ route('caja.cerrar', $corte) }}" class="rounded-xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-600/30 dark:bg-teal-900/15" onsubmit="return confirm('¿Cerrar {{ $corte->caja }} — {{ $corte->turno }}? Esta acción no se puede deshacer.')">
                                                 @csrf
-                                                <p class="text-xs font-bold uppercase tracking-widest text-amber-800 dark:text-amber-200">Cerrar caja</p>
-                                                @if($esCorteCiego)
-                                                    <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">Corte ciego: ingresa el efectivo contado sin ver el esperado.</p>
-                                                @else
-                                                    <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">Esperado actual: <span class="font-black">${{ number_format($esperado,2) }}</span></p>
-                                                @endif
-                                                <input type="number" step="0.01" min="0" name="efectivo_declarado" placeholder="Efectivo declarado" required class="mt-2 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm dark:border-amber-500/40 dark:bg-zinc-900 dark:text-white">
-                                                <button type="submit" class="theme-button theme-button-warning mt-2 w-full !py-2 text-sm">Cerrar y arquear</button>
+                                                <p class="text-xs font-bold uppercase tracking-widest text-teal-800 dark:text-teal-200">Cerrar caja</p>
+                                                <p class="mt-1 text-xs text-teal-700 dark:text-teal-300">Esperado actual: <span class="font-black">${{ number_format($esperado,2) }}</span></p>
+                                                {{-- Corte ciego oculto en UI; mensaje original conservado oculto --}}
+                                                <span class="hidden" aria-hidden="true">Corte ciego: ingresa el efectivo contado sin ver el esperado.</span>
+                                                <input type="number" step="0.01" min="0" name="efectivo_declarado" placeholder="Efectivo declarado" required oninvalid="this.setCustomValidity('Por favor, completa este campo.')" oninput="this.setCustomValidity('')" class="mt-2 w-full rounded-lg border border-teal-200 bg-white px-3 py-2 text-sm dark:border-teal-600/40 dark:bg-slate-800 dark:text-slate-100">
+                                                <button type="submit" class="theme-button theme-button-primary mt-2 w-full !py-2 text-sm">Cerrar y arquear</button>
                                             </form>
                                         </div>
                                     </div>

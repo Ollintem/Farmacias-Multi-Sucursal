@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Alerta;
 use App\Models\ConfiguracionBancaria;
 use App\Models\CorteCaja;
 use App\Models\Inventario;
@@ -10,6 +11,7 @@ use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\ProductoPresentacion;
 use App\Models\Sucursal;
+use App\Models\TipoAlerta;
 use App\Models\Venta;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -56,7 +58,7 @@ class PuntoDeVenta extends Component
 
     public string $metodoPago = 'efectivo';
 
-    public float|string $efectivoRecibido = '';
+    public string $efectivoRecibido = '';
 
     /** @var array{efectivo: float|string, tarjeta: float|string, transferencia: float|string} */
     public array $pagoMixto = [
@@ -327,7 +329,7 @@ class PuntoDeVenta extends Component
         return match ($this->metodoPago) {
             'efectivo' => (float) $this->efectivoRecibido >= $this->total,
             'tarjeta', 'transferencia' => true,
-            'mixto' => (float) $this->pagado >= $this->total,
+            'mixto' => round((float) $this->pagado, 2) === round($this->total, 2),
             default => false,
         };
     }
@@ -799,6 +801,11 @@ class PuntoDeVenta extends Component
         $this->efectivoRecibido = round((float) $this->efectivoRecibido + $monto, 2);
     }
 
+    public function limpiarEfectivo(): void
+    {
+        $this->efectivoRecibido = '';
+    }
+
     public function updatedEfectivoRecibido(): void
     {
         // Keep empty string as-is for placeholder; casting happens in computed properties
@@ -831,7 +838,11 @@ class PuntoDeVenta extends Component
 
         // Validate payment BEFORE setting procesando (puedeConfirmar returns false when procesando=true)
         if (! $this->puedeConfirmar) {
-            $this->errorVenta = 'El monto recibido es insuficiente.';
+            if ($this->metodoPago === 'mixto' && round((float) $this->pagado, 2) > round($this->total, 2)) {
+                $this->errorVenta = 'El monto excede el total. Ajusta los montos para que la suma sea exacta.';
+            } else {
+                $this->errorVenta = 'El monto recibido es insuficiente.';
+            }
 
             return;
         }
@@ -966,6 +977,22 @@ class PuntoDeVenta extends Component
                 (int) $sucursalId,
                 array_values(array_unique(array_column($this->carrito, 'producto_id')))
             );
+
+            // Notificación de venta realizada (visible en Campana / Centro de Notificaciones)
+            try {
+                $tipoVentas = TipoAlerta::where('nombre', 'VENTAS_RESUMEN')->first();
+                if ($tipoVentas) {
+                    Alerta::create([
+                        'id_tipo_alerta' => $tipoVentas->id,
+                        'id_sucursal' => (int) $sucursalId,
+                        'entidad_tipo' => 'venta',
+                        'entidad_id' => $resultado->id,
+                        'estado' => Alerta::ESTADO_ACTIVA,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // No bloquear la venta si falla la notificación
+            }
 
             // Clear cart
             $this->carrito = [];
@@ -1127,26 +1154,18 @@ class PuntoDeVenta extends Component
     }
 
     /**
-     * Corte activo para asignar la venta: prioriza el abierto por el mismo usuario en la sucursal, si no cualquier abierto.
+     * Corte activo para asignar la venta: solo la caja abierta del propio usuario.
+     * No se permite usar la caja de un compañero.
      */
     private function corteActivoParaVenta(int $sucursalId, int $usuarioId): ?CorteCaja
     {
-        if ($sucursalId <= 0) {
+        if ($sucursalId <= 0 || $usuarioId <= 0) {
             return null;
-        }
-
-        $cortePropio = CorteCaja::where('id_sucursal', $sucursalId)
-            ->where('estado', 'abierto')
-            ->where('id_usuario', $usuarioId)
-            ->orderByDesc('fecha_inicio')
-            ->first();
-
-        if ($cortePropio) {
-            return $cortePropio;
         }
 
         return CorteCaja::where('id_sucursal', $sucursalId)
             ->where('estado', 'abierto')
+            ->where('id_usuario', $usuarioId)
             ->orderByDesc('fecha_inicio')
             ->first();
     }

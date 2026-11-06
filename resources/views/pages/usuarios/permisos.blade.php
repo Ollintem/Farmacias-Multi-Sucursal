@@ -51,17 +51,20 @@
                                 ? (bool) old('corte_ciego')
                                 : (bool) ($corteCiegoActivo ?? false);
                         @endphp
-                        <label class="inline-flex items-center gap-2 text-sm font-medium">
-                            <input
-                                type="checkbox"
-                                name="corte_ciego"
-                                value="1"
-                                form="permisos-form"
-                                data-permiso-checkbox
-                                @checked($corteCiegoActivo)
-                            >
-                            Corte ciego
-                        </label>
+                        {{-- Corte ciego oculto en UI; se conserva funcional --}}
+                        <span class="hidden" aria-hidden="true">
+                            <label class="inline-flex items-center gap-2 text-sm font-medium">
+                                <input
+                                    type="checkbox"
+                                    name="corte_ciego"
+                                    value="1"
+                                    form="permisos-form"
+                                    data-permiso-checkbox
+                                    @checked($corteCiegoActivo)
+                                >
+                                Corte ciego
+                            </label>
+                        </span>
                         <button type="button" id="permisos-toggle-all" class="noti-desplegar">Activar todo</button>
                     </div>
                 </header>

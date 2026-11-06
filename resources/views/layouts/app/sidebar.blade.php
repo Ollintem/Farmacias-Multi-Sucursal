@@ -274,8 +274,168 @@
                         $topSucursalIdTb = (int) (session('active_sucursal_id', auth()->user()?->id_sucursal ?? 0) ?: 0);
                         $topSucursalTb = $topSucursalIdTb ? \App\Models\Sucursal::find($topSucursalIdTb) : null;
                     ?>
-                    <div class="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-                        @include('pages.inventario.tabs', ['seccion' => $topSeccion, 'selectedSucursal' => $topSucursalTb])
+                    <div class="flex flex-1 items-center gap-3 min-w-0">
+                        <div class="flex items-center gap-1 overflow-x-auto scrollbar-hide shrink-0">
+                            @include('pages.inventario.tabs', ['seccion' => $topSeccion, 'selectedSucursal' => $topSucursalTb])
+                        </div>
+                        @if($topIsStock)
+                            <?php
+                                $topSucursalIdInv = (int) (session('active_sucursal_id', auth()->user()?->id_sucursal ?? request()->query('sucursal') ?? 0) ?: 0);
+                                if (!$topSucursalIdInv) {
+                                    $topSucursalIdInv = \App\Models\Sucursal::orderBy('nombre_sucursal')->value('id') ?? 0;
+                                }
+                                $topProductosCount = 0;
+                                $topStockCritico = 0;
+                                $topUnidades = 0;
+                                $topValorTotal = 0.0;
+                                if ($topSucursalIdInv) {
+                                    try {
+                                        $topStockPorProducto = \App\Models\Inventario::stockPorProducto($topSucursalIdInv);
+                                        $topProductosKpi = \App\Models\Producto::query()
+                                            ->where('productos.es_activo', true)
+                                            ->whereHas('inventarios', fn($q) => $q->where('inventario.id_sucursal', $topSucursalIdInv))
+                                            ->with('presentacionesPrecio.presentacion')
+                                            ->get();
+                                        $topProductosCount = $topProductosKpi->count();
+                                        foreach ($topProductosKpi as $topP) {
+                                            $topStock = (int) ($topStockPorProducto[$topP->id] ?? 0);
+                                            $topUnidades += $topStock;
+                                            if ($topStock <= $topP->stockMinimoAlerta()) {
+                                                $topStockCritico++;
+                                            }
+                                            $topPrecio = $topP->precioUnidad() ?? (float) ($topP->presentacionPrincipalDe()?->precio_presentacion ?? 0);
+                                            $topValorTotal += $topStock * $topPrecio;
+                                        }
+                                    } catch (\Throwable $e) {
+                                        $topProductosCount = 0;
+                                        $topStockCritico = 0;
+                                        $topUnidades = 0;
+                                        $topValorTotal = 0.0;
+                                    }
+                                }
+                            ?>
+                            <div class="hidden lg:flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
+                                <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+                                    </span>
+                                    <span class="leading-none">
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Productos</span>
+                                        <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topProductosCount }}</span>
+                                    </span>
+                                </span>
+                                <span class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topStockCritico > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800' }}">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topStockCritico > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                                    </span>
+                                    <span class="leading-none">
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topStockCritico > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-zinc-400' }}">Stock crítico</span>
+                                        <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topStockCritico }}</span>
+                                    </span>
+                                </span>
+                                <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+                                    </span>
+                                    <span class="leading-none">
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Unidades</span>
+                                        <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ number_format($topUnidades) }}</span>
+                                    </span>
+                                </span>
+                                <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-zinc-800">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </span>
+                                    <span class="leading-none">
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Valor total</span>
+                                        <span class="text-sm font-black leading-none text-slate-900 dark:text-white">${{ number_format($topValorTotal, 2) }}</span>
+                                    </span>
+                                </span>
+                            </div>
+                        @elseif($topIsLotes)
+                            <?php
+                                $topSucursalIdLotes = (int) (session('active_sucursal_id', auth()->user()?->id_sucursal ?? request()->query('sucursal') ?? 0) ?: 0);
+                                if (!$topSucursalIdLotes) {
+                                    $topSucursalIdLotes = \App\Models\Sucursal::orderBy('nombre_sucursal')->value('id') ?? 0;
+                                }
+                                $topTotalLotes = 0;
+                                $topVigentes = 0;
+                                $topPorCaducar = 0;
+                                $topCaducados = 0;
+                                $topFiltrosBase = array_filter(['sucursal' => $topSucursalIdLotes ?: null]);
+                                if ($topSucursalIdLotes) {
+                                    try {
+                                        $topLotesKpi = \App\Models\Lote::with(['inventarios', 'producto'])
+                                            ->where(function ($q) use ($topSucursalIdLotes) {
+                                                $q->whereHas('inventarios', fn($iq) => $iq->where('inventario.id_sucursal', $topSucursalIdLotes))
+                                                  ->orWhereDoesntHave('inventarios');
+                                            })
+                                            ->get();
+                                        $topTotalLotes = $topLotesKpi->count();
+                                        foreach ($topLotesKpi as $topLote) {
+                                            $topFecha = $topLote->fecha_de_caducidad ?? $topLote->fecha_caducidad;
+                                            $topFechaCarbon = $topFecha ? \Carbon\Carbon::parse($topFecha) : null;
+                                            $topClase = \App\Support\EstadoCaducidad::clasificar($topFechaCarbon);
+                                            $topEstadoClass = $topClase->claseLotes();
+                                            if ($topLote->anulado_en !== null) {
+                                                $topEstadoClass = 'expired';
+                                            }
+                                            if ($topEstadoClass === 'vigente') $topVigentes++;
+                                            elseif (in_array($topEstadoClass, ['warning','danger'], true)) $topPorCaducar++;
+                                            elseif ($topEstadoClass === 'expired') $topCaducados++;
+                                        }
+                                    } catch (\Throwable $e) {
+                                        $topTotalLotes = 0;
+                                        $topVigentes = 0;
+                                        $topPorCaducar = 0;
+                                        $topCaducados = 0;
+                                        $topFiltrosBase = [];
+                                    }
+                                }
+                                $topEnlaceLotes = function(string $clave) use ($topFiltrosBase) {
+                                    if ($clave === 'todos') return route('lotes.index', $topFiltrosBase);
+                                    return route('lotes.index', array_merge($topFiltrosBase, ['estado' => $clave]));
+                                };
+                            ?>
+                            <div class="hidden lg:flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
+                                <a href="{{ $topEnlaceLotes('todos') }}" class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm hover:border-slate-300 dark:border-zinc-700 dark:bg-zinc-800">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+                                    </span>
+                                    <span class="leading-none">
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Total de lotes</span>
+                                        <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topTotalLotes }}</span>
+                                    </span>
+                                </a>
+                                <a href="{{ $topEnlaceLotes('vigentes') }}" class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm hover:border-emerald-300 dark:border-emerald-500/30 dark:bg-zinc-800">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </span>
+                                    <span class="leading-none">
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Vigentes</span>
+                                        <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topVigentes }}</span>
+                                    </span>
+                                </a>
+                                <a href="{{ $topEnlaceLotes('por-caducar') }}" class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topPorCaducar > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800' }}">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topPorCaducar > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </span>
+                                    <span class="leading-none">
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topPorCaducar > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-zinc-400' }}">Por caducar</span>
+                                        <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topPorCaducar }}</span>
+                                    </span>
+                                </a>
+                                <a href="{{ $topEnlaceLotes('caducados') }}" class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topCaducados > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800' }}">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topCaducados > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                                    </span>
+                                    <span class="leading-none">
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topCaducados > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-zinc-400' }}">Caducados</span>
+                                        <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topCaducados }}</span>
+                                    </span>
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 <?php elseif(request()->routeIs('sucursales.index')): ?>
                     <?php
@@ -416,19 +576,19 @@
                     ?>
                     <div class="flex flex-1 items-center gap-3 min-w-0">
                         <div class="relative hidden max-w-md flex-1 lg:flex">
-                            <span class="pointer-events-none absolute left-3.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400">
+                            <span class="pointer-events-none absolute left-3.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             </span>
-                            <input id="topbar-pos-search" type="search" placeholder="Buscar producto o código de barras..." class="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-11 pr-3 text-sm font-medium leading-none text-slate-700 placeholder:text-slate-400 shadow-sm focus:border-[#0e9384] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0e9384]/15 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-500" aria-label="Buscar producto en punto de venta">
+                            <input id="topbar-pos-search" type="search" placeholder="Buscar producto o código de barras..." class="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-11 pr-3 text-sm font-medium leading-none text-slate-700 placeholder:text-slate-400 shadow-sm focus:border-[#0e9384] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0e9384]/15 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-slate-800" aria-label="Buscar producto en punto de venta">
                         </div>
                         <div class="hidden items-center gap-2 overflow-x-auto scrollbar-hide pr-1 lg:flex">
-                            <span class="hidden shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 lg:inline-flex">Presentación</span>
+                            <span class="hidden shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 lg:inline-flex">Presentación</span>
                             <button type="button" data-topbar-presentacion="" class="topbar-pos-pill inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-bold transition border-[#0a5f56] bg-[#0e9384] text-white shadow-sm" data-active="true">
                                 <span class="h-1.5 w-1.5 rounded-full bg-white"></span> Todos
                             </button>
                             @foreach($topPresentaciones as $topPres)
-                                <button type="button" data-topbar-presentacion="{{ $topPres->id }}" class="topbar-pos-pill inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:border-[#0e9384]/30 hover:bg-emerald-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-zinc-500"></span> {{ ucfirst($topPres->presentacion) }}
+                                <button type="button" data-topbar-presentacion="{{ $topPres->id }}" class="topbar-pos-pill inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:border-[#0e9384]/30 hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-[#3fbda9] dark:hover:bg-slate-700 dark:hover:text-white">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-500"></span> {{ ucfirst($topPres->presentacion) }}
                                 </button>
                             @endforeach
                         </div>
@@ -520,11 +680,7 @@
                                 ->where('estado', 'abierto')
                                 ->where('id_usuario', $topPosUsuarioId)
                                 ->orderByDesc('fecha_inicio')
-                                ->first()
-                                ?? \App\Models\CorteCaja::where('id_sucursal', $topPosSucursalId)
-                                    ->where('estado', 'abierto')
-                                    ->orderByDesc('fecha_inicio')
-                                    ->first();
+                                ->first();
                         }
                         $topPosCajaPropia = $topPosCorte !== null && (int) $topPosCorte->id_usuario === $topPosUsuarioId;
                         $topPosTurno = $topPosCorte
@@ -533,34 +689,45 @@
                     ?>
                     <div class="flex items-center gap-2">
                         <?php if ($topPosCorte): ?>
-                            <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-zinc-800" title="Caja que recibirá la próxima venta">
+                            <span class="inline-flex items-center gap-2 rounded-full border border-[#0e9384]/20 bg-white px-3 py-1.5 shadow-sm dark:border-[#3fbda9]/30 dark:bg-[#1e3039]" title="Caja que recibirá la próxima venta">
                                 <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300"><?php echo e($topPosCajaPropia ? 'Mi caja' : 'Caja'); ?></span>
-                                <span class="text-xs font-black text-slate-900 dark:text-white"><?php echo e($topPosCorte->caja); ?> · <?php echo e($topPosTurno); ?></span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-[#0c7569] dark:text-[#5ec8b4]"><?php echo e($topPosCajaPropia ? 'MI CAJA' : 'Caja'); ?></span>
+                                <span class="text-xs font-black text-slate-800 dark:text-slate-100"><?php echo e($topPosCorte->caja); ?> · <?php echo e($topPosTurno); ?></span>
                             </span>
                         <?php else: ?>
-                            <span class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5 shadow-sm dark:border-amber-500/30 dark:bg-zinc-800" title="Las ventas están bloqueadas hasta abrir una caja">
+                            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-600 dark:bg-slate-800" title="Las ventas están bloqueadas hasta abrir una caja">
                                 <span class="h-2 w-2 rounded-full bg-amber-500"></span>
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">Sin caja abierta</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Sin caja abierta</span>
                             </span>
                         <?php endif; ?>
 
                         <?php if (! $topPosCajaPropia): ?>
-                            <button
-                                type="button"
-                                x-on:click="$dispatch('pos-activar-caja')"
-                                class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap"
-                                title="Abrir tu caja y elegir turno sin salir del punto de venta"
-                            >
-                                Activar caja
-                            </button>
+                            <?php if ($topPosCorte): ?>
+                                <button
+                                    type="button"
+                                    x-on:click="$dispatch('pos-activar-caja')"
+                                    class="theme-button theme-button-secondary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap"
+                                    title="Abrir otra caja en esta sucursal"
+                                >
+                                    Abrir otra caja
+                                </button>
+                            <?php else: ?>
+                                <button
+                                    type="button"
+                                    x-on:click="$dispatch('pos-activar-caja')"
+                                    class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap"
+                                    title="Abrir tu caja y elegir turno sin salir del punto de venta"
+                                >
+                                    Activar caja
+                                </button>
+                            <?php endif; ?>
                         <?php endif; ?>
 
                         <?php if ($topPosCajaPropia): ?>
                             <button
                                 type="button"
                                 x-on:click="$dispatch('pos-cerrar-caja')"
-                                class="theme-button theme-button-warning !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap"
+                                class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap"
                                 title="Cerrar tu caja y arquear el turno"
                             >
                                 Cerrar caja
@@ -577,12 +744,15 @@
                     <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Nuevo usuario</a>
                 @endif
                 @if(request()->routeIs('caja.index'))
+                    <?php $cajaTopMiAbierta_tmp = \App\Models\CorteCaja::where('id_usuario', (int) (auth()->id() ?? 0))->where('estado','abierto')->exists(); ?>
+                    @if(! $cajaTopMiAbierta_tmp)
                     <button type="button" x-on:click="$dispatch('open-abrir-caja')" class="group inline-flex items-center gap-2 rounded-full bg-[#0e9384] px-4 py-2 text-xs font-bold text-white shadow-sm ring-1 ring-[#0e9384]/20 hover:bg-[#0c7a6e] hover:shadow-md hover:-translate-y-px active:translate-y-0 transition-all" title="Abrir nueva caja">
                         <span class="grid h-6 w-6 place-items-center rounded-full bg-white text-[#0e9384] shadow-sm ring-1 ring-black/5 transition-transform group-hover:rotate-90">
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                         </span>
                         Abrir caja
                     </button>
+                    @endif
                     <button type="button" x-on:click="$dispatch('open-resumen-dia')" class="group inline-flex items-center gap-2 rounded-full bg-[#0e9384] px-4 py-2 text-xs font-bold text-white shadow-sm ring-1 ring-[#0e9384]/20 hover:bg-[#0c7a6e] hover:shadow-md hover:-translate-y-px active:translate-y-0 transition-all" title="Ver resumen del día">
                         <span class="grid h-6 w-6 place-items-center rounded-full bg-white text-[#0e9384] shadow-sm ring-1 ring-black/5">
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M3 13h2.5a2 2 0 012-2H9a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6zM11 9h2.5a2 2 0 012-2H17a2 2 0 012 2v8a2 2 0 01-2 2h-2.5a2 2 0 01-2-2V9zM19 15h1a2 2 0 012 2v2a2 2 0 01-2 2h-1"/></svg>

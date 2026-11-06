@@ -1,8 +1,8 @@
 <x-layouts::app :title="__('Inventario')">
     <div class="module-page inventario-page" style="min-height:auto !important; display:block !important; padding:0.75rem;">
         <div class="module-page-inner inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
-            {{-- KPIs --}}
-            <header class="mb-4" aria-label="Indicadores de inventario">
+            {{-- KPIs: en escritorio viven en el topbar, aquí solo móvil --}}
+            <header class="mb-4 lg:hidden" aria-label="Indicadores de inventario">
                 <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
   <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-zinc-800 lg:grid-cols-4">
     <div class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60">

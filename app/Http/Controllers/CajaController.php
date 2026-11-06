@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alerta;
 use App\Models\CorteCaja;
 use App\Models\CorteCiego;
 use App\Models\MovimientoCaja;
 use App\Models\Sucursal;
+use App\Models\TipoAlerta;
 use App\Models\User;
 use App\Models\Venta;
 use App\Support\CierreCajaTurno;
@@ -172,6 +174,16 @@ class CajaController extends Controller
             return back()->with('error', 'La sucursal seleccionada está inactiva.');
         }
 
+        // Solo una caja abierta por usuario y sucursal: se permite tener cajas abiertas en distintas sucursales.
+        $yaTieneAbierta = CorteCaja::where('id_usuario', $request->user()->id)
+            ->where('id_sucursal', $sucursal->id)
+            ->where('estado', 'abierto')
+            ->exists();
+
+        if ($yaTieneAbierta) {
+            return back()->with('error', 'Ya tienes una caja abierta en esta sucursal. Cierra tu caja actual antes de abrir otra.');
+        }
+
         // Multi-caja: se permite más de un abierto por sucursal, pero no duplicar misma caja+turno abierta.
         $duplicado = CorteCaja::where('id_sucursal', $sucursal->id)
             ->where('caja', $data['caja'])
@@ -183,7 +195,7 @@ class CajaController extends Controller
             return back()->with('error', "Ya existe una caja abierta «{$data['caja']}» en turno {$data['turno']} para {$sucursal->nombre_sucursal}. Cierra ese corte antes de abrir otro igual.");
         }
 
-        CorteCaja::create([
+        $corte = CorteCaja::create([
             'id_sucursal' => $sucursal->id,
             'id_usuario' => $request->user()->id,
             'caja' => $data['caja'],
@@ -195,6 +207,22 @@ class CajaController extends Controller
             'fecha_inicio' => now(),
             'estado' => 'abierto',
         ]);
+
+        // Notificación inmediata de caja activada
+        try {
+            $tipoCaja = TipoAlerta::where('nombre', 'CIERRE_CAJA')->first();
+            if ($tipoCaja) {
+                Alerta::create([
+                    'id_tipo_alerta' => $tipoCaja->id,
+                    'id_sucursal' => $sucursal->id,
+                    'entidad_tipo' => 'corte_caja',
+                    'entidad_id' => $corte->id,
+                    'estado' => Alerta::ESTADO_ACTIVA,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // No bloquear el flujo si falla la notificación
+        }
 
         $mensaje = "Caja «{$data['caja']}» abierta en {$sucursal->nombre_sucursal} — turno {$data['turno']} con $".number_format((float) $data['efectivo_inicial'], 2).' inicial.';
 

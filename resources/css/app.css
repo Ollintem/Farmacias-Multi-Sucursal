@@ -719,8 +719,8 @@ select.theme-input option {
 }
 
 .dark .module-page {
-    background: #0b1322;
-    color: #f8fafc;
+    background: var(--farma-bg);
+    color: var(--farma-text);
 }
 
 .module-page-inner {
@@ -793,8 +793,8 @@ select.theme-input option {
 }
 
 .dark .module-card {
-    border-color: #334155;
-    background: rgba(15, 23, 42, 0.78);
+    border-color: var(--farma-border);
+    background: var(--farma-surface);
 }
 
 .module-stat {
@@ -806,8 +806,8 @@ select.theme-input option {
 }
 
 .dark .module-stat {
-    border-color: #334155;
-    background: rgba(15, 23, 42, 0.7);
+    border-color: var(--farma-border);
+    background: var(--farma-surface);
 }
 
 .module-table {
@@ -819,8 +819,8 @@ select.theme-input option {
 }
 
 .dark .module-table {
-    border-color: #334155;
-    background: rgba(15, 23, 42, 0.78);
+    border-color: var(--farma-border);
+    background: var(--farma-surface);
 }
 
 .module-table thead {
@@ -828,7 +828,7 @@ select.theme-input option {
 }
 
 .dark .module-table thead {
-    background: rgba(30, 41, 59, 0.8);
+    background: var(--farma-surface-2);
 }
 
 @media (min-width: 640px) {
