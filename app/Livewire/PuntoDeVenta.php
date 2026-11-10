@@ -100,6 +100,12 @@ class PuntoDeVenta extends Component
 
     public int $recetaProductoId = 0;
 
+    // Ticket térmico 80mm mostrado tras cobrar
+    public bool $mostrandoTicket = false;
+
+    /** @var array<string, mixed>|null */
+    public ?array $ticketDatos = null;
+
     public ?int $recetaPresentacionId = null;
 
     public string $recetaNombreMedico = '';
@@ -674,6 +680,12 @@ class PuntoDeVenta extends Component
         $this->recetaPresentacionId = null;
     }
 
+    public function cerrarTicket(): void
+    {
+        $this->mostrandoTicket = false;
+        $this->ticketDatos = null;
+    }
+
     public function validarYAgregar(): void
     {
         $this->errorReceta = '';
@@ -993,6 +1005,45 @@ class PuntoDeVenta extends Component
             } catch (\Throwable $e) {
                 // No bloquear la venta si falla la notificación
             }
+
+            // Armar ticket térmico 80mm antes de limpiar el carrito
+            $carritoTicket = $this->carrito;
+            $subtotalTicket = $this->subTotal;
+            $totalTicket = $this->total;
+            $metodoTicket = $this->metodoPago;
+            $pagadoTicket = $this->pagado;
+            $cambioTicket = $this->cambio;
+            $efectivoTicket = $this->efectivoRecibido;
+            $pagoMixtoTicket = $this->pagoMixto;
+            $referenciaTicket = $this->referenciaTarjeta;
+            $sucursalTicket = $sucursalId ? Sucursal::find((int) $sucursalId) : null;
+            $this->ticketDatos = [
+                'folio' => $resultado->folio,
+                'fecha' => ($resultado->creado_en ?? now())->format('d/m/Y H:i'),
+                'sucursal' => $sucursalTicket?->nombre_sucursal ?? '—',
+                'sucursalDireccion' => $sucursalTicket?->direccion ?? null,
+                'caja' => $corteActivo?->caja ?? '—',
+                'turno' => $corteActivo?->turno ?? '—',
+                'cajero' => $usuario->name ?? trim(($usuario->nombre ?? '').' '.($usuario->apellido ?? '')),
+                'items' => array_map(fn (array $it): array => [
+                    'nombre' => $it['nombre'],
+                    'presentacion' => $it['presentacion'] ?? '',
+                    'tipo_venta' => $it['tipo_venta'] ?? 'unidad',
+                    'unidades' => $it['unidades'] ?? 1,
+                    'cantidad' => (int) $it['cantidad'],
+                    'precio' => (float) $it['precio'],
+                    'importe' => (float) $it['precio'] * (int) $it['cantidad'],
+                ], $carritoTicket),
+                'subtotal' => $subtotalTicket,
+                'total' => $totalTicket,
+                'metodoPago' => $metodoTicket,
+                'pagado' => $pagadoTicket,
+                'cambio' => $cambioTicket,
+                'efectivoRecibido' => $efectivoTicket,
+                'pagoMixto' => $pagoMixtoTicket,
+                'referenciaTarjeta' => $referenciaTicket,
+            ];
+            $this->mostrandoTicket = true;
 
             // Clear cart
             $this->carrito = [];

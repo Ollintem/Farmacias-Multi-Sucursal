@@ -72,13 +72,13 @@ new #[Title('Ajustes de perfil')] class extends Component {
 
             </div>
 
-            <div class="flex items-center gap-4">
-                <div class="flex items-center justify-end">
-                    <button type="submit" class="theme-button theme-button-primary w-full" data-test="update-profile-button">
-                        Guardar
-                    </button>
-                </div>
-
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('dashboard') }}" wire:navigate class="theme-button theme-button-secondary">
+                    Cancelar
+                </a>
+                <button type="submit" class="theme-button theme-button-primary" data-test="update-profile-button">
+                    Guardar
+                </button>
             </div>
         </form>
 

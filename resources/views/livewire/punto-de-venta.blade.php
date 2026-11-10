@@ -1157,6 +1157,114 @@
     @endif
 
     {{-- ═══════════════════════════════════════════════════════════ --}}
+    {{-- Ticket térmico 80mm — se muestra tras cobrar para imprimir --}}
+    {{-- ═══════════════════════════════════════════════════════════ --}}
+    @if($mostrandoTicket && $ticketDatos)
+        <div class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarTicket"></div>
+
+            <div class="relative flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+                <div class="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-slate-700">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Ticket de venta</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Folio {{ $ticketDatos['folio'] }}</p>
+                    </div>
+                    <button type="button" wire:click="cerrarTicket" class="grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto bg-slate-100 p-4 dark:bg-slate-950">
+                    <div id="ticket-print" class="ticket-80mm mx-auto bg-white p-4 shadow-sm">
+                        <div class="text-center">
+                            <div class="mx-auto grid h-8 w-8 place-items-center rounded-lg bg-[#0e9384] text-[10px] font-black text-white">Rx</div>
+                            <h1 class="mt-2 text-[13px] font-black uppercase tracking-widest text-slate-900">FarmaERP</h1>
+                            <p class="text-[11px] font-bold text-slate-700">{{ $ticketDatos['sucursal'] }}</p>
+                            @if(!empty($ticketDatos['sucursalDireccion']))
+                                <p class="text-[10px] leading-tight text-slate-500">{{ $ticketDatos['sucursalDireccion'] }}</p>
+                            @endif
+                            <p class="mt-1 text-[10px] text-slate-500">Ticket estándar 80mm — térmico</p>
+                        </div>
+
+                        <div class="ticket-cut my-3"></div>
+
+                        <div class="text-[11px] leading-[1.4]">
+                            <div class="flex justify-between"><span class="font-semibold">Folio:</span> <span class="font-mono font-bold">{{ $ticketDatos['folio'] }}</span></div>
+                            <div class="flex justify-between"><span>Fecha:</span> <span class="font-mono">{{ $ticketDatos['fecha'] }}</span></div>
+                            <div class="flex justify-between"><span>Caja:</span> <span>{{ $ticketDatos['caja'] }} · {{ $ticketDatos['turno'] }}</span></div>
+                            <div class="flex justify-between"><span>Cajero:</span> <span class="truncate ml-2 text-right">{{ $ticketDatos['cajero'] }}</span></div>
+                        </div>
+
+                        <div class="ticket-cut my-3"></div>
+
+                        <div class="text-[11px]">
+                            <div class="flex font-bold uppercase tracking-widest text-slate-600" style="font-size:10px;">
+                                <span class="w-8">Cant</span><span class="flex-1">Producto</span><span class="w-16 text-right">Importe</span>
+                            </div>
+                            <div class="ticket-line-dashed my-1"></div>
+                            @foreach($ticketDatos['items'] as $it)
+                                <div class="flex gap-1.5 py-1 text-[11px] leading-tight">
+                                    <span class="w-8 shrink-0 font-mono font-bold">{{ $it['cantidad'] }}</span>
+                                    <span class="flex-1 min-w-0">
+                                        <span class="block font-semibold leading-tight line-clamp-2">{{ $it['nombre'] }}</span>
+                                        @if($it['presentacion'] !== '')
+                                            <span class="block text-[10px] text-slate-500">{{ $it['presentacion'] }}@if($it['tipo_venta']==='presentacion') · {{ $it['unidades'] }} uds @endif · ${{ number_format($it['precio'],2) }}</span>
+                                        @else
+                                            <span class="block text-[10px] text-slate-500">${{ number_format($it['precio'],2) }} c/u</span>
+                                        @endif
+                                    </span>
+                                    <span class="w-16 shrink-0 text-right font-mono font-bold">${{ number_format($it['importe'],2) }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="ticket-cut my-3"></div>
+
+                        <div class="text-[11px] space-y-1">
+                            <div class="flex justify-between"><span>Subtotal</span><span class="font-mono font-bold">${{ number_format($ticketDatos['subtotal'],2) }}</span></div>
+                            <div class="flex justify-between"><span>Descuento</span><span class="font-mono">$0.00</span></div>
+                            <div class="flex justify-between text-[13px] font-black"><span>Total</span><span class="font-mono">${{ number_format($ticketDatos['total'],2) }}</span></div>
+                        </div>
+
+                        <div class="ticket-cut my-3"></div>
+
+                        <div class="text-[11px] space-y-1">
+                            @php($metodo = $ticketDatos['metodoPago'])
+                            <div class="flex justify-between"><span>Método</span><span class="font-semibold capitalize">{{ $metodo }}</span></div>
+                            @if($metodo === 'efectivo')
+                                <div class="flex justify-between"><span>Recibido</span><span class="font-mono">${{ number_format((float) $ticketDatos['efectivoRecibido'],2) }}</span></div>
+                                <div class="flex justify-between font-bold"><span>Cambio</span><span class="font-mono">${{ number_format((float) $ticketDatos['cambio'],2) }}</span></div>
+                            @elseif($metodo === 'mixto')
+                                @if((float) ($ticketDatos['pagoMixto']['efectivo'] ?? 0) > 0)<div class="flex justify-between"><span>Efectivo</span><span class="font-mono">${{ number_format((float) $ticketDatos['pagoMixto']['efectivo'],2) }}</span></div>@endif
+                                @if((float) ($ticketDatos['pagoMixto']['tarjeta'] ?? 0) > 0)<div class="flex justify-between"><span>Tarjeta</span><span class="font-mono">${{ number_format((float) $ticketDatos['pagoMixto']['tarjeta'],2) }}</span></div>@endif
+                                @if((float) ($ticketDatos['pagoMixto']['transferencia'] ?? 0) > 0)<div class="flex justify-between"><span>Transferencia</span><span class="font-mono">${{ number_format((float) $ticketDatos['pagoMixto']['transferencia'],2) }}</span></div>@endif
+                                <div class="flex justify-between"><span>Pagado</span><span class="font-mono font-bold">${{ number_format((float) $ticketDatos['pagado'],2) }}</span></div>
+                                @if((float) $ticketDatos['cambio'] > 0)<div class="flex justify-between"><span>Cambio</span><span class="font-mono">${{ number_format((float) $ticketDatos['cambio'],2) }}</span></div>@endif
+                            @elseif($metodo === 'tarjeta')
+                                @if(trim($ticketDatos['referenciaTarjeta'] ?? '') !== '')<div class="flex justify-between"><span>Aprobación</span><span class="font-mono">{{ $ticketDatos['referenciaTarjeta'] }}</span></div>@endif
+                            @endif
+                            <div class="flex justify-between"><span>Folio pago</span><span class="font-mono text-[10px]">{{ $ticketDatos['folio'] }}</span></div>
+                        </div>
+
+                        <div class="ticket-cut my-3"></div>
+
+                        <div class="text-center text-[10px] leading-tight text-slate-500">
+                            <p class="font-semibold text-slate-700">¡Gracias por su compra!</p>
+                            <p>Conserve este ticket para cambios o aclaraciones.</p>
+                            <p class="mt-2 font-mono text-[9px] tracking-widest">{{ $ticketDatos['folio'] }} · {{ $ticketDatos['fecha'] }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 border-t border-slate-200 bg-white px-5 py-4 dark:border-slate-700 dark:bg-slate-900">
+                    <button type="button" wire:click="cerrarTicket" class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200">Cerrar</button>
+                    <button type="button" onclick="window.print()" class="flex-1 rounded-xl bg-[#0e9384] px-4 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#0c7a6e]">Imprimir ticket</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════════════════════════════════════════════════ --}}
     {{-- Modal Receta Medica (medicamentos controlados) --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($mostrandoReceta)
@@ -1177,12 +1285,12 @@
                     <p class="mt-1 text-sm font-medium text-amber-100">Receta medica requerida</p>
 
                     @php
-                        $productoReceta = \App\Models\Producto::find($recetaProductoId);
+                        $productoReceta = \App\Models\Producto::find($recetaProductoId ?? 0);
                     @endphp
-                    @if($productoReceta)
+                    @if(!empty($productoReceta))
                         <p class="mt-2 text-sm text-amber-200">
                             {{ $productoReceta->nombre_producto }}
-                            @if($productoReceta->presentacion)
+                            @if(!empty($productoReceta?->presentacion))
                                 &middot; {{ ucfirst($productoReceta->presentacion->presentacion) }}
                             @endif
                         </p>

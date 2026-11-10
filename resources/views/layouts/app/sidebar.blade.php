@@ -4,8 +4,8 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-[#e9efec] text-[#22332f] dark:bg-[#1a2a32] dark:text-[#e6efec]" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
-        <flux:sidebar id="app-sidebar" sticky collapsible class="erp-sidebar border-e border-[#2c545e] bg-[#20444c] text-[#c3d4cf] dark:bg-[#1e3039]">
-            <flux:sidebar.header>
+        <flux:sidebar id="app-sidebar" sticky collapsible class="erp-sidebar erp-sidebar-v2 border-e border-[#2c545e] bg-[#20444c] text-[#c3d4cf] dark:bg-[#1e3039]">
+            <flux:sidebar.header class="!border-b-0">
                 <flux:sidebar.brand name="FarmaERP" href="{{ route('dashboard') }}" wire:navigate>
                     <x-slot name="logo" class="erp-logo flex aspect-square size-8 items-center justify-center rounded-xl bg-[#0e9384] text-white shadow-lg shadow-black/20">
                         <span class="text-xs font-black">Rx</span>
@@ -14,56 +14,56 @@
                 <flux:sidebar.collapse class="text-[#c3d4cf] hover:text-white" />
             </flux:sidebar.header>
 
-            <flux:sidebar.nav class="erp-nav">
+            <flux:sidebar.nav class="erp-nav erp-nav-animated">
                 @php($usuarioActual = auth()->user())
                 @if($usuarioActual?->puedeVerModulo('Dashboard') ?? false)
-                <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate data-erp-label="dashboard">
                     Dashboard
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Punto de venta') ?? false)
-                <flux:sidebar.item icon="receipt-percent" :href="route('punto-venta.index')" :current="request()->routeIs('punto-venta.*')" wire:navigate>
+                <flux:sidebar.item icon="receipt-percent" :href="route('punto-venta.index')" :current="request()->routeIs('punto-venta.*')" wire:navigate data-erp-label="punto venta pos">
                     Punto de venta
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Inventario') ?? false)
-                <flux:sidebar.item icon="archive-box" :href="route('inventario.productos')" :current="request()->routeIs('inventario.*')" wire:navigate>
+                <flux:sidebar.item icon="archive-box" :href="route('inventario.productos')" :current="request()->routeIs('inventario.*')" wire:navigate data-erp-label="inventario stock productos lotes">
                     Inventario
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Entradas de almacén') ?? false)
-                <flux:sidebar.item icon="inbox-arrow-down" :href="route('entradas-de-almacen.index')" :current="request()->routeIs('entradas-de-almacen.*')" wire:navigate>
+                <flux:sidebar.item icon="inbox-arrow-down" :href="route('entradas-de-almacen.index')" :current="request()->routeIs('entradas-de-almacen.*')" wire:navigate data-erp-label="entradas almacen compras traspasos">
                     Entradas de almacén
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Proveedores') ?? false)
-                <flux:sidebar.item icon="truck" :href="route('proveedores.index')" :current="request()->routeIs('proveedores.*')" wire:navigate>
+                <flux:sidebar.item icon="truck" :href="route('proveedores.index')" :current="request()->routeIs('proveedores.*')" wire:navigate data-erp-label="proveedores">
                     Proveedores
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Sucursales') ?? false)
-                <flux:sidebar.item icon="map-pin" :href="route('sucursales.index')" :current="request()->routeIs('sucursales.*')" wire:navigate>
+                <flux:sidebar.item icon="map-pin" :href="route('sucursales.index')" :current="request()->routeIs('sucursales.*')" wire:navigate data-erp-label="sucursales">
                     Sucursales
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Usuarios y roles') ?? false)
-                <flux:sidebar.item icon="users" :href="route('usuarios.index')" :current="request()->routeIs('usuarios.*')" wire:navigate>
+                <flux:sidebar.item icon="users" :href="route('usuarios.index')" :current="request()->routeIs('usuarios.*')" wire:navigate data-erp-label="usuarios roles permisos">
                     Usuarios y roles
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Caja') ?? false)
-                <flux:sidebar.item icon="banknotes" :href="route('caja.index')" :current="request()->routeIs('caja.*')" wire:navigate>
+                <flux:sidebar.item icon="banknotes" :href="route('caja.index')" :current="request()->routeIs('caja.*')" wire:navigate data-erp-label="caja cortes">
                     Caja
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Reportes') ?? false)
-                <flux:sidebar.item icon="list-bullet" :href="route('reportes.index')" :current="request()->routeIs('reportes.*')" wire:navigate>
+                <flux:sidebar.item icon="list-bullet" :href="route('reportes.index')" :current="request()->routeIs('reportes.*')" wire:navigate data-erp-label="reportes">
                     Reportes
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Alertas') ?? false)
                 @php($alertasTotal = \App\Support\AlertasFeed::noLeidasCount((int) (session('active_sucursal_id', $usuarioActual?->id_sucursal ?? 0) ?: 0), $usuarioActual?->id))
-                <flux:sidebar.item icon="bell" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" :badge="$alertasTotal > 0 ? $alertasTotal : null" wire:navigate>
+                <flux:sidebar.item icon="bell" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" :badge="$alertasTotal > 0 ? $alertasTotal : null" wire:navigate data-erp-label="notificaciones alertas">
                     Notificaciones
                 </flux:sidebar.item>
                 @endif
@@ -71,37 +71,68 @@
 
             <flux:spacer />
 
-            <div class="erp-sidebar-version px-3 pb-2 text-xs"></div>
+            {{-- Zona inferior: sucursal + usuario + barra de acciones (como la imagen) --}}
+            <div class="erp-sidebar-bottom flex flex-col gap-2 px-2.5 pb-3 pt-2">
+                <div class="erp-sidebar-bottom-card rounded-2xl border border-white/10 bg-[#16313a]/60 p-1.5 backdrop-blur">
+                    {{-- Selector de Sucursal --}}
+                    <flux:dropdown position="top" align="start" class="erp-user-menu w-full">
+                        <flux:sidebar.profile
+                            :name="\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))?->nombre_sucursal ?? 'Seleccionar sucursal'"
+                            :initials="\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))?->nombre_sucursal ? \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))->nombre_sucursal, 0, 1)) : 'S'"
+                            icon:trailing="chevrons-up-down"
+                            class="w-full"
+                        />
+                        <flux:menu class="w-56">
+                            @foreach(\App\Models\Sucursal::where('es_activa', true)->orderBy('nombre_sucursal')->get() as $sucursal)
+                                <a
+                                    href="{{ request()->fullUrlWithQuery(array_merge(request()->query(), ['sucursal' => $sucursal->id])) }}"
+                                    class="flex items-center gap-2 px-3 py-2 text-sm text-[#d5e5e0] hover:bg-white/10 rounded-lg transition
+                                        {{ (session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id ? 'bg-[#0e9384]/25 text-white font-semibold' : '' }}"
+                                    wire:navigate
+                                >
+                                    <span class="w-5 h-5 flex items-center justify-center rounded bg-[#0e9384]/25 text-[#7fd7c8] text-xs font-bold">
+                                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($sucursal->nombre_sucursal, 0, 1)) }}
+                                    </span>
+                                    <span class="truncate">{{ $sucursal->nombre_sucursal }}</span>
+                                    @if((session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id)
+                                        <svg class="ml-auto w-4 h-4 text-[#7fd7c8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    @endif
+                                </a>
+                            @endforeach
+                        </flux:menu>
+                    </flux:dropdown>
 
-            {{-- Selector de Sucursal Global (mismo estilo que usuario) --}}
-            <flux:dropdown position="bottom" align="start" class="erp-user-menu">
-                <flux:sidebar.profile
-                    :name="\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))?->nombre_sucursal ?? 'Seleccionar sucursal'"
-                    :initials="\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))?->nombre_sucursal ? \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(\App\Models\Sucursal::find(session('active_sucursal_id', auth()->user()?->id_sucursal))->nombre_sucursal, 0, 1)) : 'S'"
-                    icon:trailing="chevrons-up-down"
-                />
+                    <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
+                </div>
 
-                <flux:menu class="w-56">
-                    @foreach(\App\Models\Sucursal::where('es_activa', true)->orderBy('nombre_sucursal')->get() as $sucursal)
-                        <a
-                            href="{{ request()->fullUrlWithQuery(array_merge(request()->query(), ['sucursal' => $sucursal->id])) }}"
-                            class="flex items-center gap-2 px-3 py-2 text-sm text-[#d5e5e0] hover:bg-white/10 rounded-lg transition
-                                {{ (session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id ? 'bg-[#0e9384]/25 text-white font-semibold' : '' }}"
-                            wire:navigate
-                        >
-                            <span class="w-5 h-5 flex items-center justify-center rounded bg-[#0e9384]/25 text-[#7fd7c8] text-xs font-bold">
-                                {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($sucursal->nombre_sucursal, 0, 1)) }}
-                            </span>
-                            <span class="truncate">{{ $sucursal->nombre_sucursal }}</span>
-                            @if((session('active_sucursal_id', auth()->user()?->id_sucursal ?? '')) == $sucursal->id)
-                                <svg class="ml-auto w-4 h-4 text-[#7fd7c8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            @endif
-                        </a>
-                    @endforeach
-                </flux:menu>
-            </flux:dropdown>
+                {{-- Barra de acciones inferior: modo oscuro + ajustes --}}
+                <div class="erp-sidebar-actions grid grid-cols-2 gap-1.5 rounded-2xl border border-white/[0.08] bg-[#0f2a32]/80 p-1.5 backdrop-blur">
+                    {{-- 1. Modo oscuro / claro (botón principal activo) --}}
+                    <button type="button" data-farma-theme-toggle class="erp-sidebar-action erp-sidebar-action--theme" title="Cambiar modo oscuro" aria-label="Cambiar modo oscuro">
+                        <svg data-farma-theme-icon-sun class="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36 6.36l-1.41-1.41M7.05 7.05L5.64 5.64m12.72 0l-1.41 1.41M7.05 16.95l-1.41 1.41M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <svg data-farma-theme-icon-moon class="hidden h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                    </button>
+                    {{-- 2. Ajustes --}}
+                    <a href="{{ route('profile.edit') }}" wire:navigate class="erp-sidebar-action" title="Ajustes" aria-label="Ajustes">
+                        <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </a>
+                </div>
+            </div>
 
-            <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
+            <script>
+                (() => {
+                    // Ripple: guarda coordenadas del click para el efecto radial
+                    document.querySelectorAll('.erp-nav-animated [data-flux-sidebar-item]').forEach((item) => {
+                        item.addEventListener('click', (e) => {
+                            const rect = item.getBoundingClientRect();
+                            const x = ((e.clientX - rect.left) / rect.width) * 100;
+                            const y = ((e.clientY - rect.top) / rect.height) * 100;
+                            item.style.setProperty('--x', x + '%');
+                            item.style.setProperty('--y', y + '%');
+                        });
+                    });
+                })();
+            </script>
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
@@ -153,8 +184,6 @@
                 <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">+ Nuevo usuario</a>
             @endif
             <livewire:campana-notificaciones />
-
-            <x-theme-toggle :compacto="true" />
 
             <flux:dropdown position="top" align="end">
                 <flux:profile
@@ -219,9 +248,11 @@
             }
         </script>
 
-        {{-- Barra superior de escritorio: herramientas según módulo + campana + tema --}}
-        <div class="farma-topbar hidden lg:flex !justify-between">
-            <div class="flex min-w-0 flex-1 items-center">
+        {{-- Barra superior de escritorio: pill flotante (sin botón +) --}}
+        <div class="farma-topbar hidden lg:flex">
+            <div class="farma-topbar-pill-wrap">
+                <div class="farma-topbar-pill">
+                    <div class="flex min-w-0 flex-1 items-center">
                 <?php if(request()->routeIs('alertas.*')): ?>
                     <?php
                         $topSucursalIdAlertas = (int) (session('active_sucursal_id', auth()->user()?->id_sucursal ?? 0) ?: 0);
@@ -776,7 +807,8 @@
                     </a>
                 @endif
                 <livewire:campana-notificaciones />
-                <x-theme-toggle :compacto="true" />
+                </div>
+            </div>
             </div>
         </div>
 

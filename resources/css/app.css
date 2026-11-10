@@ -297,6 +297,66 @@
 @media (max-width: 900px) { .pos-layout { grid-template-columns: 1fr; } .pos-cart { min-height: 24rem; } }
 @media (max-width: 600px) { .pos-page { padding: 0.6rem; } .pos-header { align-items: flex-start; flex-direction: column; } .pos-branch-picker { width: 100%; } .pos-search-row { align-items: stretch; flex-direction: column; } .pos-scan-button { width: 100%; } }
 
+/* Ticket térmico 80mm estándar — impresión */
+.ticket-80mm {
+    width: 80mm;
+    max-width: 80mm;
+    background: #fff;
+    color: #111827;
+    font-family: 'Courier New', ui-monospace, monospace;
+    font-size: 11px;
+    line-height: 1.35;
+    -webkit-font-smoothing: auto;
+}
+
+.ticket-80mm * {
+    color: inherit;
+}
+
+.ticket-cut {
+    border-top: 1px dashed #000;
+    margin: 10px 0;
+}
+
+.ticket-line-dashed {
+    border-top: 1px dashed #9ca3af;
+}
+
+@media print {
+    @page {
+        size: 80mm auto;
+        margin: 0;
+    }
+    html, body {
+        background: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    body * {
+        visibility: hidden !important;
+    }
+    #ticket-print, #ticket-print * {
+        visibility: visible !important;
+    }
+    #ticket-print {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 80mm !important;
+        max-width: 80mm !important;
+        margin: 0 !important;
+        padding: 4mm !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: #fff !important;
+    }
+    /* Oculta el overlay del modal al imprimir */
+    .fixed.inset-0 {
+        background: transparent !important;
+        backdrop-filter: none !important;
+    }
+}
+
 .tema-preview-claro {
     background: linear-gradient(180deg, #f4f9f3 0%, #edf3ef 100%);
     border: 1px solid #d8e5d8;
@@ -1806,13 +1866,204 @@ body {
     position: sticky;
     top: 0;
     z-index: 40;
+    display: flex;
+    justify-content: center;
+    padding: 0.85rem 1.25rem 0.7rem;
+    background: transparent;
+    border: none;
+    pointer-events: none;
+}
+
+.farma-topbar-pill-wrap {
+    position: relative;
+    width: min(100%, 1120px);
+    display: flex;
+    justify-content: center;
+    pointer-events: auto;
+    padding-top: 0;
+}
+
+.farma-topbar-pill {
+    display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    padding: 0.65rem 1.25rem;
-    background: color-mix(in srgb, var(--farma-surface) 88%, transparent);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--farma-border);
+    justify-content: space-between;
+    gap: 0.7rem;
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 1rem 0.5rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(18px) saturate(1.35);
+    -webkit-backdrop-filter: blur(18px) saturate(1.35);
+    border: 1px solid rgba(32, 68, 76, 0.10);
+    box-shadow: 0 12px 36px rgba(16, 42, 50, 0.12), 0 2px 10px rgba(16, 42, 50, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    overflow: visible;
+}
+
+.dark .farma-topbar-pill {
+    background: rgba(30, 48, 57, 0.86);
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Animación atractiva que resalta al sobreponer el cursor — bounce + glow teal */
+@keyframes farma-pill-pop {
+    0% { transform: translateY(0) scale(1); }
+    35% { transform: translateY(-5px) scale(1.09) rotate(0.5deg); }
+    65% { transform: translateY(-2px) scale(1.04); }
+    100% { transform: translateY(-3.5px) scale(1.07) rotate(-0.2deg); }
+}
+
+@keyframes farma-pill-shine {
+    0% { transform: translateX(-140%) skewX(-14deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateX(140%) skewX(-14deg); opacity: 0; }
+}
+
+.farma-topbar-pill a,
+.farma-topbar-pill button {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    transition:
+        transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.28s ease,
+        background 0.22s ease,
+        border-color 0.22s ease,
+        color 0.22s ease,
+        filter 0.22s ease;
+    will-change: transform, box-shadow;
+}
+
+/* brillo deslizante */
+.farma-topbar-pill a::after,
+.farma-topbar-pill button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%);
+    transform: translateX(-140%) skewX(-14deg);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.farma-topbar-pill a:hover,
+.farma-topbar-pill button:hover {
+    transform: translateY(-3.5px) scale(1.07);
+    box-shadow:
+        0 14px 32px rgba(14, 147, 132, 0.28),
+        0 6px 16px rgba(16, 42, 50, 0.14),
+        0 0 0 2px rgba(94, 200, 180, 0.35),
+        inset 0 1px 0 rgba(255,255,255,0.85);
+    border-color: #0e9384 !important;
+    filter: saturate(1.12) brightness(1.03);
+    animation: farma-pill-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.dark .farma-topbar-pill a:hover,
+.dark .farma-topbar-pill button:hover {
+    box-shadow:
+        0 14px 32px rgba(0, 0, 0, 0.45),
+        0 6px 16px rgba(14, 147, 132, 0.22),
+        0 0 0 2px rgba(94, 200, 180, 0.45),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.farma-topbar-pill a:hover::after,
+.farma-topbar-pill button:hover::after {
+    animation: farma-pill-shine 0.65s ease;
+}
+
+.farma-topbar-pill a:active,
+.farma-topbar-pill button:active {
+    transform: translateY(-1px) scale(0.98);
+    transition-duration: 0.12s;
+    animation: none;
+    filter: brightness(0.98);
+}
+
+.farma-topbar-pill #topbar-pos-search {
+    transition:
+        transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.28s ease,
+        border-color 0.22s ease;
+}
+
+.farma-topbar-pill #topbar-pos-search:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 10px 22px rgba(16, 42, 50, 0.10), 0 0 0 2px rgba(94, 200, 180, 0.25);
+    border-color: rgba(14, 147, 132, 0.35) !important;
+}
+
+.farma-topbar-pill #topbar-pos-search:focus {
+    transform: translateY(-2px) scale(1.015);
+    box-shadow: 0 0 0 3px rgba(14, 147, 132, 0.18), 0 12px 28px rgba(16, 42, 50, 0.14);
+}
+
+.farma-topbar-plus {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -50%);
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #0e9384 0%, #0c7569 100%);
+    border: 3px solid #f2f6f3;
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(14, 147, 132, 0.38), 0 2px 8px rgba(16, 42, 50, 0.18);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, filter 0.2s ease;
+    z-index: 2;
+}
+
+.farma-topbar-plus:hover {
+    transform: translate(-50%, -50%) scale(1.06);
+    box-shadow: 0 14px 30px rgba(14, 147, 132, 0.45), 0 4px 12px rgba(16, 42, 50, 0.22);
+    filter: brightness(1.06);
+}
+
+.farma-topbar-plus:active {
+    transform: translate(-50%, -50%) scale(0.96);
+}
+
+.dark .farma-topbar-plus {
+    border-color: #1a2a32;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(94, 200, 180, 0.25);
+}
+
+/* Campana dentro del pill: globo 100% visible con número */
+.farma-topbar-pill .noti-campana {
+    flex-shrink: 0;
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+    overflow: visible;
+}
+
+.farma-topbar-pill .noti-campana-btn {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-width: 1.5px;
+    overflow: visible;
+}
+
+.farma-topbar-pill .noti-campana-globo {
+    top: -0.15rem;
+    right: -0.15rem;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.32rem;
+    font-size: 0.68rem;
+    font-weight: 900;
+    border-width: 2px;
+    z-index: 3;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+    line-height: 1;
+}
+
+html:not(.dark) .farma-topbar {
+    background: transparent !important;
 }
 
 .farma-topbar-fecha {
@@ -4711,4 +4962,188 @@ a.noti-kpi[aria-current="true"] {
 }
 body:has(.inventario-page) {
     min-height: auto !important;
+}
+
+/* ==========================================================================
+   Sidebar v2 — inspiración imagen referencia, conserva paleta #20444c.
+   - Buscador translúcido arriba
+   - Ítems con animación elástica al hover/press/active
+   - Barra inferior con 4 acciones (modo oscuro destacado)
+   ========================================================================== */
+
+.erp-sidebar-v2 {
+    /* mantén degradado existente pero con bordes más suaves */
+    border-radius: 0 1.25rem 1.25rem 0;
+    overflow: hidden;
+}
+
+.erp-sidebar-search-field input::placeholder {
+    color: #8fa9a3;
+}
+
+/* ---- Ítems animados ---- */
+.erp-nav-animated [data-flux-sidebar-item] {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.85rem !important;
+    border-left-width: 0 !important;
+    margin: 2px 8px !important;
+    padding-left: 0.9rem !important;
+    transition:
+        transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.22s ease,
+        color 0.22s ease,
+        box-shadow 0.22s ease,
+        border-color 0.22s ease !important;
+    will-change: transform;
+}
+
+.erp-nav-animated [data-flux-sidebar-item]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 3px;
+    height: 0;
+    background: #5ec8b4;
+    border-radius: 9999px;
+    transform: translateY(-50%);
+    transition: height 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+    opacity: 0;
+}
+
+.erp-nav-animated [data-flux-sidebar-item]:hover {
+    transform: translateX(4px) scale(1.01);
+    background: rgba(255, 255, 255, 0.09) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.erp-nav-animated [data-flux-sidebar-item]:hover::before {
+    height: 55%;
+    opacity: 1;
+}
+
+.erp-nav-animated [data-flux-sidebar-item]:active {
+    transform: translateX(2px) scale(0.97);
+    transition-duration: 0.1s;
+}
+
+.erp-nav-animated [data-flux-sidebar-item][data-current] {
+    background: linear-gradient(135deg, rgba(14, 147, 132, 0.95) 0%, rgba(12, 117, 105, 0.9) 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(14, 147, 132, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    transform: translateX(2px);
+}
+
+.erp-nav-animated [data-flux-sidebar-item][data-current]::before {
+    height: 70%;
+    opacity: 1;
+    background: #a7f3d0;
+}
+
+.erp-nav-animated [data-flux-sidebar-item][data-current] svg {
+    color: #ffffff !important;
+    filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+}
+
+/* Ripple sutil al hacer click */
+.erp-nav-animated [data-flux-sidebar-item]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,0.18) 0%, transparent 55%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+}
+
+.erp-nav-animated [data-flux-sidebar-item]:active::after {
+    opacity: 1;
+}
+
+/* Badge con pulso */
+.erp-nav-animated [data-flux-sidebar-badge],
+.erp-nav-animated [data-flux-navlist-badge] {
+    animation: erp-badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes erp-badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+}
+
+/* ---- Zona inferior ---- */
+.erp-sidebar-bottom-card {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.erp-sidebar-actions {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.erp-sidebar-action {
+    display: grid;
+    place-items: center;
+    height: 2.4rem;
+    border-radius: 0.75rem;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.06);
+    color: #c3d4cf;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.erp-sidebar-action:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.erp-sidebar-action:active {
+    transform: translateY(0) scale(0.96);
+    transition-duration: 0.1s;
+}
+
+.erp-sidebar-action--theme {
+    background: #0e9384;
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 6px 16px rgba(14, 147, 132, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.erp-sidebar-action--theme:hover {
+    background: #14a795;
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(14, 147, 132, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+/* Cuando está en modo oscuro, el botón se aclara para indicar estado */
+.dark .erp-sidebar-action--theme {
+    background: #e6fffa;
+    color: #0b3b35;
+    border-color: #a7f3d0;
+}
+
+/* Colapsado: oculta buscador y ajusta acciones */
+.erp-sidebar-v2[data-collapsed] .erp-sidebar-search,
+.erp-sidebar-v2[data-collapsed] .erp-sidebar-bottom-card {
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+.erp-sidebar-v2[data-collapsed] .erp-sidebar-actions {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+}
+
+.erp-sidebar-v2[data-collapsed] .erp-nav-animated [data-flux-sidebar-item] {
+    margin: 2px 4px !important;
+    justify-content: center;
 }
