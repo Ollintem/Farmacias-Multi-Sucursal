@@ -166,6 +166,7 @@ test('confirmar venta descuenta stock por unidades al vender presentaciones', fu
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 100);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet('errorVenta', '');
     $this->assertSame(20, $producto->fresh()->stockTotal());
@@ -333,6 +334,7 @@ test('el POS abre caja al vender unidad y refleja el estado de cajas', function 
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 100);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet('errorVenta', '');
     $this->assertSame(9, $producto->fresh()->stockTotal());

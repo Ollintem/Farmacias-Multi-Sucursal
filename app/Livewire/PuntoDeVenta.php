@@ -684,6 +684,149 @@ class PuntoDeVenta extends Component
     {
         $this->mostrandoTicket = false;
         $this->ticketDatos = null;
+        // Al cerrar sin imprimir no se registra la venta: el carrito se mantiene.
+    }
+
+    /**
+     * Registra la venta y dispara la impresión.
+     * Solo al imprimir se crea Venta/Pago y se descuenta stock.
+     */
+    public function imprimirTicket(): void
+    {
+        if (empty($this->carrito) || $this->ticketDatos === null) {
+            return;
+        }
+
+        if ($this->procesando) {
+            return;
+        }
+
+        $sucursalId = session('active_sucursal_id');
+        $usuario = auth()->user();
+
+        if (! $sucursalId || ! $usuario) {
+            $this->errorVenta = 'Sesion invalida. Inicia sesion nuevamente.';
+
+            return;
+        }
+
+        $corteActivo = $this->corteActivoParaVenta((int) $sucursalId, (int) $usuario->id);
+        if (! $corteActivo) {
+            $this->errorVenta = 'No hay caja abierta en esta sucursal. Abre una caja en el módulo Caja antes de cobrar.';
+
+            return;
+        }
+
+        if (! $this->puedeConfirmar) {
+            $this->errorVenta = 'El monto recibido es insuficiente.';
+
+            return;
+        }
+
+        $this->procesando = true;
+
+        try {
+            /** @var array<int, array{producto: Producto, unidades: int}> $requerido */
+            $requerido = [];
+            foreach ($this->carrito as $item) {
+                $producto = Producto::find($item['producto_id']);
+                if (! $producto instanceof Producto) {
+                    $this->errorVenta = "El producto '{$item['nombre']}' ya no existe.";
+                    $this->procesando = false;
+
+                    return;
+                }
+                $requerido[$item['producto_id']]['producto'] = $producto;
+                $requerido[$item['producto_id']]['unidades'] = ($requerido[$item['producto_id']]['unidades'] ?? 0) + $this->unidadesRequeridas($item);
+            }
+            foreach ($requerido as $pendiente) {
+                $disponible = $this->stockDisponibleEnSucursal($pendiente['producto']->id);
+                if ($disponible < $pendiente['unidades']) {
+                    $this->errorVenta = "Stock insuficiente para '{$pendiente['producto']->nombre_producto}' en esta sucursal. Disponible: {$disponible}, solicitado: {$pendiente['unidades']} unidades.";
+                    $this->procesando = false;
+
+                    return;
+                }
+            }
+
+            $folio = 'V-'.date('Ymd').'-'.str_pad((string) (Venta::count() + 1), 5, '0', STR_PAD_LEFT);
+
+            $resultado = DB::transaction(function () use ($folio, $sucursalId, $corteActivo) {
+                $pagoPrincipal = null;
+                $pagosAdicionales = [];
+                switch ($this->metodoPago) {
+                    case 'efectivo':
+                        $pagoPrincipal = Pago::create(['monto' => $this->total, 'metodo' => 'Efectivo', 'estado' => 'Completado', 'referencia' => 'EF-'.$folio]);
+                        break;
+                    case 'tarjeta':
+                        $pagoPrincipal = Pago::create(['monto' => $this->total, 'metodo' => 'Tarjeta', 'estado' => 'Completado', 'referencia' => trim($this->referenciaTarjeta) !== '' ? trim($this->referenciaTarjeta) : 'TJ-'.$folio]);
+                        break;
+                    case 'transferencia':
+                        $pagoPrincipal = Pago::create(['monto' => $this->total, 'metodo' => 'Transferencia', 'estado' => 'Completado', 'referencia' => 'TR-'.$folio]);
+                        break;
+                    case 'mixto':
+                        if ($this->pagoMixto['efectivo'] > 0) {
+                            $pagosAdicionales[] = Pago::create(['monto' => $this->pagoMixto['efectivo'], 'metodo' => 'Efectivo', 'estado' => 'Completado', 'referencia' => 'EF-'.$folio]);
+                        }
+                        if ($this->pagoMixto['tarjeta'] > 0) {
+                            $pagosAdicionales[] = Pago::create(['monto' => $this->pagoMixto['tarjeta'], 'metodo' => 'Tarjeta', 'estado' => 'Completado', 'referencia' => 'TJ-'.$folio]);
+                        }
+                        if ($this->pagoMixto['transferencia'] > 0) {
+                            $pagosAdicionales[] = Pago::create(['monto' => $this->pagoMixto['transferencia'], 'metodo' => 'Transferencia', 'estado' => 'Completado', 'referencia' => 'TR-'.$folio]);
+                        }
+                        $pagoPrincipal = $pagosAdicionales[0] ?? null;
+                        break;
+                }
+                if (! $pagoPrincipal) {
+                    throw new \Exception('No se pudo registrar el pago.');
+                }
+                $venta = Venta::create([
+                    'id_sucursal' => (int) $sucursalId,
+                    'id_corte_caja' => $corteActivo?->id,
+                    'folio' => $folio,
+                    'descuento' => 0,
+                    'total' => $this->total,
+                    'id_pago' => $pagoPrincipal->id,
+                    'estado' => 'Completada',
+                ]);
+                foreach ($this->carrito as $item) {
+                    $venta->productos()->attach($item['producto_id'], ['cantidad' => $item['cantidad'], 'precio_unidad' => $item['precio']]);
+                    $unidades = $this->unidadesRequeridas($item);
+                    $this->consumirStockFefo((int) $sucursalId, $item['producto_id'], $unidades);
+                }
+
+                return $venta;
+            });
+
+            $caducadasIgnoradas = $this->unidadesCaducadasIgnoradas((int) $sucursalId, array_values(array_unique(array_column($this->carrito, 'producto_id'))));
+
+            try {
+                $tipoVentas = TipoAlerta::where('nombre', 'VENTAS_RESUMEN')->first();
+                if ($tipoVentas) {
+                    Alerta::create(['id_tipo_alerta' => $tipoVentas->id, 'id_sucursal' => (int) $sucursalId, 'entidad_tipo' => 'venta', 'entidad_id' => $resultado->id, 'estado' => Alerta::ESTADO_ACTIVA]);
+                }
+            } catch (\Throwable $e) {
+            }
+
+            // Actualizar ticket con folio/fecha definitivos
+            $this->ticketDatos['folio'] = $resultado->folio;
+            $this->ticketDatos['fecha'] = ($resultado->creado_en ?? now())->format('d/m/Y H:i');
+
+            $carritoTicket = $this->carrito;
+            $this->carrito = [];
+            session()->forget('carrito_pos');
+            $this->abriendoCobro = false;
+            $this->dispatch('venta-completada', folio: $resultado->folio);
+            if ($caducadasIgnoradas > 0) {
+                $this->dispatch('stock-caducado-ignorado', unidades: $caducadasIgnoradas);
+            }
+            $this->dispatch('imprimir-ticket');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            $this->errorVenta = 'Error al procesar la venta: '.$e->getMessage();
+        } finally {
+            $this->procesando = false;
+        }
     }
 
     public function validarYAgregar(): void
@@ -859,211 +1002,59 @@ class PuntoDeVenta extends Component
             return;
         }
 
-        $this->procesando = true;
+        // Validar stock de forma anticipada para el preview
+        /** @var array<int, array{producto: Producto, unidades: int}> $requerido */
+        $requerido = [];
+        foreach ($this->carrito as $item) {
+            $producto = Producto::find($item['producto_id']);
+            if (! $producto instanceof Producto) {
+                $this->errorVenta = "El producto '{$item['nombre']}' ya no existe.";
 
-        try {
-            // Valida stock por sucursal para todos los ítems del carrito
-            /** @var array<int, array{producto: Producto, unidades: int}> $requerido */
-            $requerido = [];
-            foreach ($this->carrito as $item) {
-                $producto = Producto::find($item['producto_id']);
-
-                if (! $producto instanceof Producto) {
-                    $this->errorVenta = "El producto '{$item['nombre']}' ya no existe.";
-                    $this->procesando = false;
-
-                    return;
-                }
-
-                $requerido[$item['producto_id']]['producto'] = $producto;
-                $requerido[$item['producto_id']]['unidades'] = ($requerido[$item['producto_id']]['unidades'] ?? 0)
-                    + $this->unidadesRequeridas($item);
+                return;
             }
-
-            foreach ($requerido as $pendiente) {
-                $disponible = $this->stockDisponibleEnSucursal($pendiente['producto']->id);
-
-                if ($disponible < $pendiente['unidades']) {
-                    $this->errorVenta = "Stock insuficiente para '{$pendiente['producto']->nombre_producto}' en esta sucursal. Disponible: {$disponible}, solicitado: {$pendiente['unidades']} unidades.";
-                    $this->procesando = false;
-
-                    return;
-                }
-            }
-
-            // Generate folio
-            $folio = 'V-'.date('Ymd').'-'.str_pad((string) (Venta::count() + 1), 5, '0', STR_PAD_LEFT);
-
-            $resultado = DB::transaction(function () use ($folio, $sucursalId, $corteActivo) {
-                // Create payment(s)
-                $pagoPrincipal = null;
-                $pagosAdicionales = [];
-
-                switch ($this->metodoPago) {
-                    case 'efectivo':
-                        $pagoPrincipal = Pago::create([
-                            'monto' => $this->total,
-                            'metodo' => 'Efectivo',
-                            'estado' => 'Completado',
-                            'referencia' => 'EF-'.$folio,
-                        ]);
-                        break;
-                    case 'tarjeta':
-                        $pagoPrincipal = Pago::create([
-                            'monto' => $this->total,
-                            'metodo' => 'Tarjeta',
-                            'estado' => 'Completado',
-                            'referencia' => trim($this->referenciaTarjeta) !== '' ? trim($this->referenciaTarjeta) : 'TJ-'.$folio,
-                        ]);
-                        break;
-                    case 'transferencia':
-                        $pagoPrincipal = Pago::create([
-                            'monto' => $this->total,
-                            'metodo' => 'Transferencia',
-                            'estado' => 'Completado',
-                            'referencia' => 'TR-'.$folio,
-                        ]);
-                        break;
-                    case 'mixto':
-                        if ($this->pagoMixto['efectivo'] > 0) {
-                            $pagosAdicionales[] = Pago::create([
-                                'monto' => $this->pagoMixto['efectivo'],
-                                'metodo' => 'Efectivo',
-                                'estado' => 'Completado',
-                                'referencia' => 'EF-'.$folio,
-                            ]);
-                        }
-                        if ($this->pagoMixto['tarjeta'] > 0) {
-                            $pagosAdicionales[] = Pago::create([
-                                'monto' => $this->pagoMixto['tarjeta'],
-                                'metodo' => 'Tarjeta',
-                                'estado' => 'Completado',
-                                'referencia' => 'TJ-'.$folio,
-                            ]);
-                        }
-                        if ($this->pagoMixto['transferencia'] > 0) {
-                            $pagosAdicionales[] = Pago::create([
-                                'monto' => $this->pagoMixto['transferencia'],
-                                'metodo' => 'Transferencia',
-                                'estado' => 'Completado',
-                                'referencia' => 'TR-'.$folio,
-                            ]);
-                        }
-                        $pagoPrincipal = $pagosAdicionales[0] ?? null;
-                        break;
-                }
-
-                if (! $pagoPrincipal) {
-                    throw new \Exception('No se pudo registrar el pago.');
-                }
-
-                // Create venta vinculada al corte activo (si existe)
-                $venta = Venta::create([
-                    'id_sucursal' => (int) $sucursalId,
-                    'id_corte_caja' => $corteActivo?->id,
-                    'folio' => $folio,
-                    'descuento' => 0,
-                    'total' => $this->total,
-                    'id_pago' => $pagoPrincipal->id,
-                    'estado' => 'Completada',
-                ]);
-
-                // Attach products to venta via pivot
-                foreach ($this->carrito as $item) {
-                    $venta->productos()->attach($item['producto_id'], [
-                        'cantidad' => $item['cantidad'],
-                        'precio_unidad' => $item['precio'],
-                    ]);
-
-                    // Inventario de la sucursal consumiendo lotes FEFO.
-                    $unidades = $this->unidadesRequeridas($item);
-                    $this->consumirStockFefo((int) $sucursalId, $item['producto_id'], $unidades);
-                }
-
-                return $venta;
-            });
-
-            // Unidades que quedaron sin vender por estar en lotes caducados
-            // (se calcula antes de limpiar el carrito).
-            $caducadasIgnoradas = $this->unidadesCaducadasIgnoradas(
-                (int) $sucursalId,
-                array_values(array_unique(array_column($this->carrito, 'producto_id')))
-            );
-
-            // Notificación de venta realizada (visible en Campana / Centro de Notificaciones)
-            try {
-                $tipoVentas = TipoAlerta::where('nombre', 'VENTAS_RESUMEN')->first();
-                if ($tipoVentas) {
-                    Alerta::create([
-                        'id_tipo_alerta' => $tipoVentas->id,
-                        'id_sucursal' => (int) $sucursalId,
-                        'entidad_tipo' => 'venta',
-                        'entidad_id' => $resultado->id,
-                        'estado' => Alerta::ESTADO_ACTIVA,
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                // No bloquear la venta si falla la notificación
-            }
-
-            // Armar ticket térmico 80mm antes de limpiar el carrito
-            $carritoTicket = $this->carrito;
-            $subtotalTicket = $this->subTotal;
-            $totalTicket = $this->total;
-            $metodoTicket = $this->metodoPago;
-            $pagadoTicket = $this->pagado;
-            $cambioTicket = $this->cambio;
-            $efectivoTicket = $this->efectivoRecibido;
-            $pagoMixtoTicket = $this->pagoMixto;
-            $referenciaTicket = $this->referenciaTarjeta;
-            $sucursalTicket = $sucursalId ? Sucursal::find((int) $sucursalId) : null;
-            $this->ticketDatos = [
-                'folio' => $resultado->folio,
-                'fecha' => ($resultado->creado_en ?? now())->format('d/m/Y H:i'),
-                'sucursal' => $sucursalTicket?->nombre_sucursal ?? '—',
-                'sucursalDireccion' => $sucursalTicket?->direccion ?? null,
-                'caja' => $corteActivo?->caja ?? '—',
-                'turno' => $corteActivo?->turno ?? '—',
-                'cajero' => $usuario->name ?? trim(($usuario->nombre ?? '').' '.($usuario->apellido ?? '')),
-                'items' => array_map(fn (array $it): array => [
-                    'nombre' => $it['nombre'],
-                    'presentacion' => $it['presentacion'] ?? '',
-                    'tipo_venta' => $it['tipo_venta'] ?? 'unidad',
-                    'unidades' => $it['unidades'] ?? 1,
-                    'cantidad' => (int) $it['cantidad'],
-                    'precio' => (float) $it['precio'],
-                    'importe' => (float) $it['precio'] * (int) $it['cantidad'],
-                ], $carritoTicket),
-                'subtotal' => $subtotalTicket,
-                'total' => $totalTicket,
-                'metodoPago' => $metodoTicket,
-                'pagado' => $pagadoTicket,
-                'cambio' => $cambioTicket,
-                'efectivoRecibido' => $efectivoTicket,
-                'pagoMixto' => $pagoMixtoTicket,
-                'referenciaTarjeta' => $referenciaTicket,
-            ];
-            $this->mostrandoTicket = true;
-
-            // Clear cart
-            $this->carrito = [];
-            session()->forget('carrito_pos');
-
-            $this->abriendoCobro = false;
-
-            $this->dispatch('venta-completada', folio: $resultado->folio);
-
-            if ($caducadasIgnoradas > 0) {
-                $this->dispatch('stock-caducado-ignorado', unidades: $caducadasIgnoradas);
-            }
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            $this->errorVenta = 'Error al procesar la venta: '.$e->getMessage();
-        } finally {
-            // Nunca dejar el botón «Confirmar venta» bloqueado tras un intento.
-            $this->procesando = false;
+            $requerido[$item['producto_id']]['producto'] = $producto;
+            $requerido[$item['producto_id']]['unidades'] = ($requerido[$item['producto_id']]['unidades'] ?? 0) + $this->unidadesRequeridas($item);
         }
+        foreach ($requerido as $pendiente) {
+            $disponible = $this->stockDisponibleEnSucursal($pendiente['producto']->id);
+            if ($disponible < $pendiente['unidades']) {
+                $this->errorVenta = "Stock insuficiente para '{$pendiente['producto']->nombre_producto}' en esta sucursal. Disponible: {$disponible}, solicitado: {$pendiente['unidades']} unidades.";
+
+                return;
+            }
+        }
+
+        // Solo preview: la venta aún NO se registra. Se registrará al imprimir.
+        $sucursalTicket = $sucursalId ? Sucursal::find((int) $sucursalId) : null;
+        $folioPreview = 'V-'.date('Ymd').'-'.str_pad((string) (Venta::count() + 1), 5, '0', STR_PAD_LEFT);
+        $this->ticketDatos = [
+            'folio' => $folioPreview,
+            'fecha' => now()->format('d/m/Y H:i'),
+            'sucursal' => $sucursalTicket?->nombre_sucursal ?? '—',
+            'sucursalDireccion' => $sucursalTicket?->direccion ?? null,
+            'caja' => $corteActivo?->caja ?? '—',
+            'turno' => $corteActivo?->turno ?? '—',
+            'cajero' => $usuario->name ?? trim(($usuario->nombre ?? '').' '.($usuario->apellido ?? '')),
+            'items' => array_map(fn (array $it): array => [
+                'nombre' => $it['nombre'],
+                'presentacion' => $it['presentacion'] ?? '',
+                'tipo_venta' => $it['tipo_venta'] ?? 'unidad',
+                'unidades' => $it['unidades'] ?? 1,
+                'cantidad' => (int) $it['cantidad'],
+                'precio' => (float) $it['precio'],
+                'importe' => (float) $it['precio'] * (int) $it['cantidad'],
+            ], $this->carrito),
+            'subtotal' => $this->subTotal,
+            'total' => $this->total,
+            'metodoPago' => $this->metodoPago,
+            'pagado' => $this->pagado,
+            'cambio' => $this->cambio,
+            'efectivoRecibido' => $this->efectivoRecibido,
+            'pagoMixto' => $this->pagoMixto,
+            'referenciaTarjeta' => $this->referenciaTarjeta,
+        ];
+        $this->mostrandoTicket = true;
+        $this->abriendoCobro = false;
     }
 
     /**

@@ -91,6 +91,7 @@ test('permite cobrar una segunda venta despues de completar la primera', functio
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 20);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet('errorVenta', '');
     $component->assertSet('carrito', []);
@@ -107,6 +108,7 @@ test('permite cobrar una segunda venta despues de completar la primera', functio
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 20);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet('errorVenta', '');
     $component->assertSet('procesando', false);
@@ -123,6 +125,7 @@ test('permite cobrar con tarjeta varias ventas seguidas', function () {
         $component->call('abrirCobro');
         $component->set('metodoPago', 'tarjeta');
         $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
         $component->assertSet('errorVenta', '');
         expect(Venta::count())->toBe($intento);
@@ -176,6 +179,7 @@ test('abrir la caja desde el POS regresa al punto de venta y permite cobrar', fu
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 20);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet('errorVenta', '');
     expect(Venta::count())->toBe(1)

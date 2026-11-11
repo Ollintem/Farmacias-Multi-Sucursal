@@ -94,6 +94,7 @@ test('confirmar venta consume los lotes de la sucursal activa por caducidad mas 
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 100);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet('errorVenta', '');
     $this->assertSame(0, (int) Inventario::where('id_lote', $loteViejo->id)->value('stock_individual'));
@@ -142,6 +143,7 @@ test('la venta se bloquea si la sucursal activa no tiene stock aunque otra si te
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 100);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet(
         'errorVenta',

@@ -110,6 +110,7 @@ test('la venta ignora los lotes caducados y consume los vigentes por FEFO', func
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 100);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet('errorVenta', '');
     $component->assertDispatched('venta-completada');
@@ -146,6 +147,7 @@ test('un producto cuyo stock sea solo caducado no entra al carrito', function ()
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 100);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet(
         'errorVenta',
@@ -169,6 +171,7 @@ test('un lote sin fecha de caducidad sigue vendible y no lanza el aviso', functi
     $component->set('metodoPago', 'efectivo');
     $component->set('efectivoRecibido', 100);
     $component->call('confirmarVenta');
+    $component->call('imprimirTicket');
 
     $component->assertSet('errorVenta', '');
     $component->assertDispatched('venta-completada');

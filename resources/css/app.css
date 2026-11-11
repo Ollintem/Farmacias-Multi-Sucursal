@@ -297,22 +297,46 @@
 @media (max-width: 900px) { .pos-layout { grid-template-columns: 1fr; } .pos-cart { min-height: 24rem; } }
 @media (max-width: 600px) { .pos-page { padding: 0.6rem; } .pos-header { align-items: flex-start; flex-direction: column; } .pos-branch-picker { width: 100%; } .pos-search-row { align-items: stretch; flex-direction: column; } .pos-scan-button { width: 100%; } }
 
-/* Ticket térmico 80mm estándar — impresión */
+/* Ticket térmico 80mm — vista previa legible + impresión térmica */
 .ticket-80mm {
-    width: 80mm;
-    max-width: 80mm;
+    width: 100%;
+    max-width: 300px;
     background: #fff;
     color: #111827;
-    font-family: 'Courier New', ui-monospace, monospace;
-    font-size: 11px;
-    line-height: 1.35;
-    -webkit-font-smoothing: auto;
+    font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    font-size: 12.5px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    border: 1px solid #e2e8f0;
 }
 
 .ticket-80mm * {
     color: inherit;
 }
 
+.ticket-80mm .font-mono {
+    font-family: ui-monospace, 'Cascadia Code', 'Courier New', monospace;
+}
+
+.ticket-divider {
+    height: 1.5px;
+    background: #0f172a;
+    margin: 0;
+}
+
+.ticket-divider-dashed {
+    border-top: 1px dashed #cbd5e1;
+    margin: 0;
+}
+
+@media screen and (max-width: 640px) {
+    .ticket-80mm {
+        width: 72mm;
+        max-width: 72mm;
+    }
+}
+
+/* Compat: clases antiguas del ticket anterior */
 .ticket-cut {
     border-top: 1px dashed #000;
     margin: 10px 0;
@@ -345,10 +369,16 @@
         width: 80mm !important;
         max-width: 80mm !important;
         margin: 0 !important;
-        padding: 4mm !important;
+        padding: 0 !important;
         box-shadow: none !important;
         border: none !important;
         background: #fff !important;
+        font-size: 11px !important;
+    }
+
+    #ticket-print.ticket-80mm {
+        border: none !important;
+        border-radius: 0 !important;
     }
     /* Oculta el overlay del modal al imprimir */
     .fixed.inset-0 {
@@ -908,10 +938,22 @@ select.theme-input option {
    El modificador .pos-page solo lo lleva la vista del POS. */
 [data-flux-main]:has(> .pos-page) {
     padding: 0;
+    overflow: hidden;
+    scrollbar-width: none;
+}
+
+[data-flux-main]:has(> .pos-page)::-webkit-scrollbar {
+    display: none;
 }
 
 .module-page.pos-page {
     padding: 0.75rem;
+    overflow: hidden;
+    scrollbar-width: none;
+}
+
+.module-page.pos-page::-webkit-scrollbar {
+    display: none;
 }
 
 @media (min-width: 640px) {
@@ -929,6 +971,9 @@ select.theme-input option {
 .module-page.pos-page .module-page-inner {
     max-width: none;
     gap: 1rem;
+    min-height: calc(100dvh - 64px);
+    display: flex;
+    flex-direction: column;
 }
 
 .theme-dark .theme-table {
