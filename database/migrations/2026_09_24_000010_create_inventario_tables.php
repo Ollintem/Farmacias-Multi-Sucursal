@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('id_sucursal')->constrained('sucursales')->cascadeOnDelete();
             $table->foreignId('id_lote')->constrained('lotes')->cascadeOnDelete();
             $table->integer('stock')->default(0);
+            $table->integer('stock_individual')->default(0);
             $table->timestamps();
             $table->unique(['id_sucursal', 'id_lote']);
         });
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->foreignId('producto')->constrained('productos')->cascadeOnDelete();
             $table->decimal('precio_presentacion', 12, 2);
             $table->integer('unidades')->default(1);
+            $table->boolean('es_principal')->default(false);
             $table->integer('stock_minimo')->default(0);
             $table->timestamps();
             $table->unique(['id_presentacion', 'producto'], 'presentacion_producto_unique');

@@ -14,76 +14,29 @@ class PermisoActivadoSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::where('email', 'admin@example.com')->first()
-            ?? User::find(1);
+        $superAdmins = User::whereHas('rol', fn ($query) => $query->where('tipo_rol', 'SuperAdmin'))->get();
 
-        $pruebas = User::where('email', 'test@example.com')->first()
-            ?? User::find(2);
-
-        if (! $admin || ! $pruebas) {
+        if ($superAdmins->isEmpty()) {
             return;
         }
 
         $modulos = Modulo::all();
 
-        // Usuario 1 (admin): acceso total en todos los módulos.
-        foreach ($modulos as $modulo) {
-            PermisoActivado::updateOrCreate(
-                [
-                    'id_usuario' => $admin->id,
-                    'id_modulo' => $modulo->id,
-                ],
-                [
-                    'puede_ver' => true,
-                    'puede_crear' => true,
-                    'puede_editar' => true,
-                    'puede_borrar' => true,
-                ]
-            );
-        }
-
-        // Acceso explícito del admin al módulo Proveedores (complementa el
-        // acceso total del ciclo anterior para dejarlo garantizado).
-        $proveedores = $modulos->firstWhere('nombre_modulo', 'Proveedores');
-
-        if ($proveedores) {
-            PermisoActivado::updateOrCreate(
-                [
-                    'id_usuario' => $admin->id,
-                    'id_modulo' => $proveedores->id,
-                ],
-                [
-                    'puede_ver' => true,
-                    'puede_crear' => true,
-                    'puede_editar' => true,
-                    'puede_borrar' => true,
-                ]
-            );
-        }
-
-        // Usuario 2 (pruebas): permisos limitados, solo operativo básico.
-        $accesosLimitados = [
-            'Dashboard' => ['puede_ver' => true, 'puede_crear' => false, 'puede_editar' => false, 'puede_borrar' => false],
-            'Punto de venta' => ['puede_ver' => true, 'puede_crear' => true, 'puede_editar' => false, 'puede_borrar' => false],
-            'Inventario' => ['puede_ver' => true, 'puede_crear' => false, 'puede_editar' => false, 'puede_borrar' => false],
-            'Caja' => ['puede_ver' => true, 'puede_crear' => true, 'puede_editar' => false, 'puede_borrar' => false],
-            'Alertas' => ['puede_ver' => true, 'puede_crear' => false, 'puede_editar' => false, 'puede_borrar' => false],
-        ];
-
-        foreach ($accesosLimitados as $nombreModulo => $flags) {
-            $modulo = $modulos->firstWhere('nombre_modulo', $nombreModulo);
-
-            if (! $modulo) {
-                continue;
+        foreach ($superAdmins as $superAdmin) {
+            foreach ($modulos as $modulo) {
+                PermisoActivado::updateOrCreate(
+                    [
+                        'id_usuario' => $superAdmin->id,
+                        'id_modulo' => $modulo->id,
+                    ],
+                    [
+                        'puede_ver' => true,
+                        'puede_crear' => true,
+                        'puede_editar' => true,
+                        'puede_borrar' => true,
+                    ]
+                );
             }
-
-            PermisoActivado::updateOrCreate(
-                [
-                    'id_usuario' => $pruebas->id,
-                    'id_modulo' => $modulo->id,
-                ],
-                $flags
-            );
         }
     }
 }

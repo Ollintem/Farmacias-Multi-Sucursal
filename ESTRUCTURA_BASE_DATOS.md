@@ -55,7 +55,7 @@ sucursales ── alertas
 | password | varchar(255) | No | — | |
 | two_factor_secret / two_factor_recovery_codes | text | Sí | NULL | Fortify 2FA |
 | two_factor_confirmed_at | timestamp | Sí | NULL | |
-| nombre / apellido / nombre_usuario | varchar(255) | No | — | `nombre_usuario` unique |
+| nombre / apellido | varchar(255) | No | — | |
 | es_activo | boolean | No | true | |
 | id_rol → `roles.id` | FK | Sí | NULL | `nullOnDelete` |
 | id_sucursal → `sucursales.id` | FK | Sí | NULL | `nullOnDelete` |

@@ -1,4 +1,6 @@
-<flux:dropdown position="bottom" align="start" class="erp-user-menu">
+@props(['position' => 'top'])
+
+<flux:dropdown :position="$position" align="start" class="erp-user-menu">
     <flux:sidebar.profile
         :name="auth()->user()->name"
         :initials="auth()->user()->initials()"

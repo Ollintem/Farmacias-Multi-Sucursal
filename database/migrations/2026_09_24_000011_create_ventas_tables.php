@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create('ventas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_caja')->constrained('cajas')->cascadeOnDelete();
+            $table->foreignId('id_sucursal')->constrained('sucursales')->restrictOnDelete();
+            $table->foreignId('id_corte_caja')->nullable();
             $table->string('folio', 20);
             $table->decimal('descuento', 12, 2);
             $table->decimal('total', 12, 2);

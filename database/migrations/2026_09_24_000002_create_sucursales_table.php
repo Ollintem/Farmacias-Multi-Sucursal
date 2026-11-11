@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('direccion');
             $table->string('telefono', 30)->nullable();
             $table->string('correo_contacto', 150)->nullable();
-            $table->string('responsable', 150)->nullable();
             $table->time('hora_apertura');
             $table->time('hora_cierre');
             $table->boolean('es_activa')->default(true);

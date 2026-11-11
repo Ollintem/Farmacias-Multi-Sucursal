@@ -10,11 +10,15 @@ return new class extends Migration
     {
         Schema::create('proveedores', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre_proveedor', 20);
+            $table->string('nombre_proveedor', 120);
             $table->text('direccion');
-            $table->string('RFC', 20);
-            $table->string('telefono', 20);
-            $table->string('correo', 30);
+            $table->string('unidad_entrega', 60)->nullable();
+            $table->string('rfc', 13)->nullable();
+            $table->string('nombre_contacto', 120)->nullable();
+            $table->boolean('es_activo')->default(true);
+            $table->string('telefono', 30);
+            $table->string('correo', 120)->unique();
+            $table->string('foto_path', 255)->nullable();
             $table->timestamps();
         });
 
@@ -50,14 +54,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('cajas', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('id_sucursal')->constrained('sucursales')->cascadeOnDelete();
-            $table->timestamp('creado_en')->useCurrent();
-            $table->timestamp('actualizado_en')->useCurrent()->useCurrentOnUpdate();
-            $table->timestamps();
-        });
-
         Schema::create('categorias', function (Blueprint $table) {
             $table->id();
             $table->string('nombre', 60)->unique();
@@ -68,7 +64,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('categorias');
-        Schema::dropIfExists('cajas');
         Schema::dropIfExists('configuracion_bancaria');
         Schema::dropIfExists('pagos');
         Schema::dropIfExists('presentaciones');

@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('tipo_rol');
             $table->string('descripcion')->nullable();
+            $table->boolean('corte_ciego')->default(false);
             $table->timestamps();
         });
     }

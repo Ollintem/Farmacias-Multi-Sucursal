@@ -10,9 +10,10 @@ return new class extends Migration
     {
         Schema::create('cortes_caja', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_caja')->constrained('cajas')->cascadeOnDelete();
+            $table->foreignId('id_sucursal')->constrained('sucursales')->restrictOnDelete();
             $table->foreignId('id_usuario')->constrained('usuarios')->cascadeOnDelete();
             $table->string('turno', 20);
+            $table->string('caja', 30)->default('Caja 1');
             $table->decimal('efectivo_inicial', 12, 2);
             $table->decimal('efectivo_declarado', 12, 2);
             $table->decimal('efectivo_esperado', 12, 2);
@@ -20,7 +21,12 @@ return new class extends Migration
             $table->timestamp('fecha_inicio');
             $table->timestamp('fecha_cierre')->nullable();
             $table->string('estado', 20);
+            $table->boolean('cierre_automatico')->default(false);
             $table->timestamp('creado_en')->useCurrent();
+        });
+
+        Schema::table('ventas', function (Blueprint $table) {
+            $table->foreign('id_corte_caja')->references('id')->on('cortes_caja')->nullOnDelete();
         });
 
         Schema::create('traspasos', function (Blueprint $table) {
@@ -39,6 +45,7 @@ return new class extends Migration
 
     public function down(): void
     {
+
         Schema::dropIfExists('traspasos');
         Schema::dropIfExists('cortes_caja');
     }

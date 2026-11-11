@@ -190,7 +190,6 @@
                     :initials="auth()->user()->initials()"
                     icon-trailing="chevron-down"
                 />
-
                 <flux:menu>
                     <flux:menu.radio.group>
                         <div class="p-0 text-sm font-normal">
@@ -199,7 +198,6 @@
                                     :name="auth()->user()->name"
                                     :initials="auth()->user()->initials()"
                                 />
-
                                 <div class="grid flex-1 text-start text-sm leading-tight">
                                     <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
                                     <flux:text class="truncate text-zinc-500 dark:text-zinc-400">{{ auth()->user()->rol?->tipo_rol ?? 'Sin rol asignado' }}</flux:text>
