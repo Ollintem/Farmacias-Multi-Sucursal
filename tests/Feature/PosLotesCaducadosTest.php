@@ -190,8 +190,8 @@ test('el catálogo muestra stock vendible, badge caducado y botón inactivo para
 
     $component = Livewire::test(PuntoDeVenta::class);
 
-    // El stock del catálogo excluye lotes caducados: nada de "20 disp.".
-    $component->assertSee('0 disp.');
+    // El stock del catálogo excluye lotes caducados: nada de "20uds disp.".
+    $component->assertSee('0uds disp.');
     $component->assertSee('Caducado');
     $component->assertDontSee('¡Últimas!');
     $component->assertSee('Sin existencias vigentes — solo lotes caducados');

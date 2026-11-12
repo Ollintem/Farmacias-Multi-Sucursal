@@ -193,12 +193,41 @@ class PuntoDeVenta extends Component
             $disponible = (int) ($stockSucursal[$producto->id] ?? 0);
 
             $producto->setAttribute('stock_sucursal', $disponible);
+            $producto->setAttribute(
+                'stock_presentacion',
+                $this->stockEnPresentacionFiltrada($producto, $disponible)
+            );
             // Inventario con existencia pero todo en lotes caducados: no es vendible.
             $producto->setAttribute(
                 'solo_caducado',
                 $disponible === 0 && (int) ($stockTotal[$producto->id] ?? 0) > 0
             );
         });
+    }
+
+    /**
+     * Stock disponible expresado en la presentación filtrada del header.
+     *
+     * Entrada: producto del catálogo y stock total en la sucursal.
+     * Salida: piso de unidades ÷ unidades por presentación; null cuando no
+     *         hay filtro o el producto no ofrece esa presentación.
+     */
+    private function stockEnPresentacionFiltrada(Producto $producto, int $disponible): ?int
+    {
+        if ($this->filtroPresentacion === '') {
+            return null;
+        }
+
+        $relacion = $producto->presentacionesPrecio->firstWhere(
+            'id_presentacion',
+            (int) $this->filtroPresentacion
+        );
+
+        if ($relacion === null) {
+            return null;
+        }
+
+        return (int) floor($disponible / max(1, (int) $relacion->unidades));
     }
 
     public function getCantidadArticulosProperty(): int
@@ -397,6 +426,12 @@ class PuntoDeVenta extends Component
         );
 
         if ($otrasPresentaciones->isNotEmpty()) {
+            // Con una presentación filtrada en el header no se pregunta: se
+            // agrega directo en esa presentación. El selector es solo de «Todos».
+            if ($this->agregarEnPresentacionFiltrada($producto)) {
+                return;
+            }
+
             $this->abrirSelector($productoId);
 
             return;
@@ -409,6 +444,54 @@ class PuntoDeVenta extends Component
         }
 
         $this->agregarUnidadAlCarrito($productoId);
+    }
+
+    /**
+     * Agrega el producto en la presentación elegida en el filtro del header.
+     *
+     * @return bool true si el producto tenía esa presentación y ya se agregó
+     *              (o se pidió la receta); false para recurrir al selector.
+     */
+    private function agregarEnPresentacionFiltrada(Producto $producto): bool
+    {
+        if ($this->filtroPresentacion === '') {
+            return false;
+        }
+
+        $relacion = $producto->presentacionesPrecio->firstWhere(
+            'id_presentacion',
+            (int) $this->filtroPresentacion
+        );
+
+        if ($relacion === null) {
+            return false;
+        }
+
+        $this->cerrarSelector();
+
+        if (strcasecmp($relacion->presentacion?->presentacion ?? '', 'Unidad') === 0) {
+            if ($producto->es_controlado) {
+                $this->recetaPresentacionId = null;
+                $this->abrirReceta($producto->id);
+
+                return true;
+            }
+
+            $this->agregarUnidadAlCarrito($producto->id);
+
+            return true;
+        }
+
+        if ($producto->es_controlado) {
+            $this->recetaPresentacionId = $relacion->id;
+            $this->abrirReceta($producto->id);
+
+            return true;
+        }
+
+        $this->agregarItemPresentacion($producto->id, $relacion->id);
+
+        return true;
     }
 
     private function agregarUnidadAlCarrito(int $productoId, ?array $receta = null): void

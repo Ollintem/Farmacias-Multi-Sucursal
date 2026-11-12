@@ -129,6 +129,7 @@
                 <div class="flex flex-1 gap-2 overflow-x-auto scrollbar-hide py-0.5 pr-1">
                     <button
                         wire:click="$set('filtroPresentacion', '')"
+                        data-presentacion=""
                         class="inline-flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-4 py-1.5 text-xs font-bold transition
                             {{ $filtroPresentacion === '' ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20 dark:border-[#0e9384] dark:from-[#0e9384] dark:to-[#0c7569] dark:text-white dark:shadow-none' : 'border-slate-200 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-[#3fbda9] dark:hover:bg-slate-700 dark:hover:text-white' }}"
                     >
@@ -138,6 +139,7 @@
                     @foreach($presentaciones as $presentacion)
                         <button
                             wire:click="$set('filtroPresentacion', '{{ $presentacion->id }}')"
+                            data-presentacion="{{ $presentacion->id }}"
                             class="inline-flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-4 py-1.5 text-xs font-bold transition
                                 {{ $filtroPresentacion == $presentacion->id ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/20 dark:border-[#0e9384] dark:from-[#0e9384] dark:to-[#0c7569] dark:text-white dark:shadow-none' : 'border-slate-200 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-[#3fbda9] dark:hover:bg-slate-700 dark:hover:text-white' }}"
                         >
@@ -171,13 +173,16 @@
             @else
                 <div class="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 min-[1700px]:grid-cols-5">
                     @foreach($productos as $producto)
+                        @php
+                            $stockMostrado = $producto->stock_presentacion ?? $producto->stock_sucursal;
+                        @endphp
                         <div class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-[#0e9384] hover:shadow-lg hover:shadow-teal-900/10 dark:border-slate-600 dark:bg-slate-800/80 dark:hover:border-[#0c9f9c]">
                             @if($producto->es_controlado)
                                 <span class="absolute left-2 top-2 z-10 rounded-lg bg-red-600 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white shadow">RX</span>
                             @endif
                             @if($producto->solo_caducado)
                                 <span class="absolute right-2 top-2 z-10 rounded-lg bg-red-600 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white shadow">Caducado</span>
-                            @elseif($producto->stock_sucursal > 0 && $producto->stock_sucursal <= 15)
+                            @elseif($stockMostrado > 0 && $stockMostrado <= 15)
                                 <span class="absolute right-2 top-2 z-10 rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">¡Últimas!</span>
                             @endif
 
@@ -192,10 +197,36 @@
 
                                 @php
                                     $principalPos = $producto->presentacionPrincipalDe();
+                                    $relacionFiltrada = $filtroPresentacion !== ''
+                                        ? $producto->presentacionesPrecio->firstWhere('id_presentacion', (int) $filtroPresentacion)
+                                        : null;
+                                    // Con filtro activo se muestra la presentación elegida (si el
+                                    // producto la ofrece); sin filtro, la principal.
+                                    $relacionVisible = $relacionFiltrada ?? $principalPos;
+
+                                    // Precio de la tarjeta: con filtro, el de esa presentación;
+                                    // sin filtro, «Desde $X» con el más barato de sus presentaciones.
+                                    $precioMostrar = null;
+                                    $precioDesde = false;
+                                    if ($relacionFiltrada !== null) {
+                                        $precioMostrar = $relacionFiltrada->precio_presentacion;
+                                    } elseif ($filtroPresentacion !== '') {
+                                        $precioMostrar = $principalPos?->precio_presentacion;
+                                    } else {
+                                        $preciosPos = $producto->presentacionesPrecio
+                                            ->pluck('precio_presentacion')
+                                            ->filter(fn ($precio) => $precio !== null);
+                                        if ($preciosPos->count() >= 2) {
+                                            $precioDesde = true;
+                                        }
+                                        if ($preciosPos->isNotEmpty()) {
+                                            $precioMostrar = $preciosPos->min();
+                                        }
+                                    }
                                 @endphp
-                                @if($principalPos)
+                                @if($relacionVisible)
                                     <span class="inline-flex w-fit items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-500">
-                                        {{ ucfirst($principalPos->presentacion?->presentacion ?? 'presentación') }} · {{ (int) $principalPos->unidades }} uds
+                                        {{ ucfirst($relacionVisible->presentacion?->presentacion ?? 'presentación') }} · {{ (int) $relacionVisible->unidades }} uds
                                     </span>
                                 @else
                                     <span class="text-xs font-medium text-slate-400 dark:text-slate-400">Sin presentación</span>
@@ -203,9 +234,9 @@
 
                                 <div class="mt-auto flex flex-col gap-2 pt-1">
                                     <div class="flex items-center justify-between gap-2">
-                                        @if($principalPos)
+                                        @if($precioMostrar !== null)
                                             <span class="text-base font-black text-[#0b6e68] dark:text-emerald-300">
-                                                ${{ number_format((float) $principalPos->precio_presentacion, 2) }}
+                                                {{ $precioDesde ? 'Desde ' : '' }}${{ number_format((float) $precioMostrar, 2) }}
                                             </span>
                                         @else
                                             <span class="text-sm font-medium text-slate-400 dark:text-slate-400">Sin precio</span>
@@ -232,9 +263,9 @@
                                         </button>
                                     </div>
 
-                                    <span class="inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-1 text-[11px] font-semibold ring-1 {{ $producto->stock_sucursal <= 0 ? 'bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20' : ($producto->stock_sucursal <= 15 ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20' : 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20') }}">
-                                        <span class="h-1.5 w-1.5 rounded-full {{ $producto->stock_sucursal <= 0 ? 'bg-red-500' : ($producto->stock_sucursal <= 15 ? 'bg-amber-500' : 'bg-emerald-500') }}"></span>
-                                        {{ $producto->stock_sucursal }} disp.
+                                    <span class="inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-1 text-[11px] font-semibold ring-1 {{ $stockMostrado <= 0 ? 'bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20' : ($stockMostrado <= 15 ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20' : 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20') }}">
+                                        <span class="h-1.5 w-1.5 rounded-full {{ $stockMostrado <= 0 ? 'bg-red-500' : ($stockMostrado <= 15 ? 'bg-amber-500' : 'bg-emerald-500') }}"></span>
+                                        {{ $stockMostrado }}uds disp.
                                     </span>
                                 </div>
                             </div>
@@ -313,7 +344,27 @@
                                         >
                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/></svg>
                                         </button>
-                                        <span class="w-8 text-center text-sm font-bold text-slate-800 dark:text-slate-100">{{ $item['cantidad'] }}</span>
+                                        <span
+                                            class="w-8 text-center text-sm font-bold text-slate-800 dark:text-slate-100"
+                                            title="Doble clic para editar la cantidad"
+                                            x-data="{ editando: false, valor: '{{ $item['cantidad'] }}' }"
+                                            x-on:dblclick="editando = true; valor = '{{ $item['cantidad'] }}'; $nextTick(() => { $refs.editor.focus(); $refs.editor.select(); })"
+                                        >
+                                            <span x-show="!editando">{{ $item['cantidad'] }}</span>
+                                            <template x-if="editando">
+                                                <input
+                                                    x-ref="editor"
+                                                    type="text"
+                                                    inputmode="numeric"
+                                                    class="w-8 rounded border border-slate-300 bg-white px-1 text-center text-sm font-bold text-slate-800 focus:border-[#0e9384] focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                                                    x-model="valor"
+                                                    x-on:wheel.prevent
+                                                    x-on:keydown.enter="editando = false; $wire.actualizarCantidad({{ $index }}, Math.max(1, parseInt(valor, 10) || 1))"
+                                                    x-on:keydown.esc="editando = false"
+                                                    x-on:blur="if (editando) { editando = false; $wire.actualizarCantidad({{ $index }}, Math.max(1, parseInt(valor, 10) || 1)) }"
+                                                />
+                                            </template>
+                                        </span>
                                         <button
                                             wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] + 1 }})"
                                             class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-md !text-xs"
@@ -367,44 +418,169 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const topbarSearch = document.getElementById('topbar-pos-search');
-            const livewireSearch = document.querySelector('[wire\\:model\\.live\\.debounce\\.300ms="busqueda"]');
-            const topbarPills = document.querySelectorAll('[data-topbar-presentacion]');
-            const getLivewire = () => {
-                const input = document.querySelector('[wire\\:model\\.live\\.debounce\\.300ms="busqueda"]');
-                const el = input ? input.closest('[wire\\:id]') : document.querySelector('[wire\\:id]');
-                if (!el) return null;
-                const id = el.getAttribute('wire:id') || el.getAttribute('wire\\:id');
-                return window.Livewire ? (window.Livewire.find ? window.Livewire.find(id) : null) : null;
+        (() => {
+            // Sincroniza el selector de presentaciones del topbar (escritorio) con
+            // el componente Livewire del POS. Livewire re-ejecuta este script en
+            // cada wire:navigate, momento en que DOMContentLoaded ya ocurrió: por
+            // eso el init también corre de inmediato si el documento ya está listo.
+            const CLASES_ACTIVO = ['border-[#0a5f56]', 'bg-[#0e9384]', 'text-white', 'shadow-sm'];
+            const CLASES_INACTIVO = ['border-slate-200', 'bg-white', 'text-slate-600', 'hover:border-[#0e9384]/30', 'hover:bg-emerald-50', 'hover:text-[#0b6e68]', 'dark:border-slate-600', 'dark:bg-slate-800', 'dark:text-slate-200', 'dark:hover:border-[#3fbda9]', 'dark:hover:bg-slate-700', 'dark:hover:text-white'];
+            const PUNTO_ACTIVO = ['bg-white'];
+            const PUNTO_INACTIVO = ['bg-slate-300', 'dark:bg-slate-500'];
+
+            const getComponente = () => {
+                if (!window.Livewire || !window.Livewire.find) return null;
+                const raiz = document.querySelector('[wire\\:name="punto-de-venta"]');
+                return raiz ? window.Livewire.find(raiz.getAttribute('wire:id')) || null : null;
             };
-            if (topbarSearch && livewireSearch) {
-                topbarSearch.addEventListener('input', (e) => {
-                    livewireSearch.value = e.target.value;
-                    livewireSearch.dispatchEvent(new Event('input', {bubbles:true}));
+
+            const getPills = () => Array.from(document.querySelectorAll('[data-topbar-presentacion]'));
+
+            const intercambiar = (el, quitar, poner) => {
+                quitar.forEach((c) => el.classList.remove(c));
+                poner.forEach((c) => el.classList.add(c));
+            };
+
+            const aplicarEstado = (filtro) => {
+                const activo = String(filtro == null ? '' : filtro);
+                getPills().forEach((btn) => {
+                    const id = btn.getAttribute('data-topbar-presentacion') || '';
+                    const punto = btn.querySelector('span');
+                    if (id === activo) {
+                        intercambiar(btn, CLASES_INACTIVO, CLASES_ACTIVO);
+                        if (punto) intercambiar(punto, PUNTO_INACTIVO, PUNTO_ACTIVO);
+                        btn.setAttribute('data-active', 'true');
+                    } else {
+                        intercambiar(btn, CLASES_ACTIVO, CLASES_INACTIVO);
+                        if (punto) intercambiar(punto, PUNTO_ACTIVO, PUNTO_INACTIVO);
+                        btn.removeAttribute('data-active');
+                    }
                 });
-                document.addEventListener('livewire:update', () => {
-                    if (document.activeElement !== topbarSearch) topbarSearch.value = livewireSearch.value;
+            };
+
+            // Refleja en el topbar las presentaciones dadas de alta o de baja.
+            // Fuente real: los pills del selector interno, renderizados por el servidor.
+            const sincronizarOpciones = () => {
+                const raiz = document.querySelector('[wire\\:name="punto-de-venta"]');
+                const primerPill = document.querySelector('[data-topbar-presentacion]');
+                if (!raiz || !primerPill || !primerPill.parentElement) return;
+                const contenedor = primerPill.parentElement;
+                const fuente = Array.from(raiz.querySelectorAll('[data-presentacion]')).map((btn) => ({
+                    id: btn.getAttribute('data-presentacion') || '',
+                    nombre: btn.textContent.trim(),
+                }));
+                const pills = getPills();
+                const actuales = pills.map((btn) => ({
+                    id: btn.getAttribute('data-topbar-presentacion') || '',
+                    nombre: btn.textContent.trim(),
+                }));
+                const sinCambios = actuales.length === fuente.length
+                    && actuales.every((pill, i) => pill.id === fuente[i].id && pill.nombre === fuente[i].nombre);
+                if (sinCambios) return;
+                const plantilla = pills.find((pill) => pill.id !== '') || pills[0] || null;
+                pills.forEach((btn) => {
+                    if ((btn.getAttribute('data-topbar-presentacion') || '') !== '') btn.remove();
                 });
+                fuente.forEach((item) => {
+                    if (item.id === '' || !plantilla) return;
+                    const nuevo = plantilla.cloneNode(true);
+                    nuevo.removeAttribute('data-pos-bound');
+                    nuevo.setAttribute('data-topbar-presentacion', item.id);
+                    nuevo.textContent = '';
+                    const punto = document.createElement('span');
+                    punto.className = 'h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-500';
+                    nuevo.appendChild(punto);
+                    nuevo.appendChild(document.createTextNode(' ' + item.nombre));
+                    contenedor.appendChild(nuevo);
+                });
+            };
+
+            const enlazarPills = () => {
+                getPills().forEach((btn) => {
+                    if (btn.getAttribute('data-pos-bound') === '1') return;
+                    btn.setAttribute('data-pos-bound', '1');
+                    btn.addEventListener('click', alClicPill);
+                });
+            };
+
+            const alClicPill = (evento) => {
+                const comp = getComponente();
+                if (!comp) return;
+                const id = evento.currentTarget.getAttribute('data-topbar-presentacion') || '';
+                comp.set('filtroPresentacion', id);
+                aplicarEstado(id);
+            };
+
+            const alEscribirBusqueda = (evento) => {
+                const destino = document.querySelector('[wire\\:model\\.live\\.debounce\\.300ms="busqueda"]');
+                if (!destino) return;
+                destino.value = evento.target.value;
+                destino.dispatchEvent(new Event('input', { bubbles: true }));
+            };
+
+            const enlazarBusqueda = () => {
+                const topbar = document.getElementById('topbar-pos-search');
+                if (!topbar || topbar.getAttribute('data-pos-bound') === '1') return;
+                topbar.setAttribute('data-pos-bound', '1');
+                topbar.addEventListener('input', alEscribirBusqueda);
+            };
+
+            const sincronizarBusqueda = (comp) => {
+                const topbar = document.getElementById('topbar-pos-search');
+                if (!topbar || document.activeElement === topbar) return;
+                const busqueda = comp.get('busqueda');
+                topbar.value = String(busqueda == null ? '' : busqueda);
+            };
+
+            const refrescar = () => {
+                const comp = getComponente();
+                if (!comp) return;
+                sincronizarOpciones();
+                enlazarPills();
+                aplicarEstado(comp.get('filtroPresentacion'));
+                sincronizarBusqueda(comp);
+            };
+
+            // Livewire 4 no dispara "livewire:update": el gancho real es morph.updated,
+            // que se emite por cada elemento actualizado; se coalesce en un solo refresco.
+            const sincronizarTrasMorph = (componente) => {
+                if (componente && componente.name && componente.name !== 'punto-de-venta') return;
+                if (window.__posTopbarPendiente === true) return;
+                window.__posTopbarPendiente = true;
+                setTimeout(() => {
+                    window.__posTopbarPendiente = false;
+                    refrescar();
+                }, 0);
+            };
+
+            const registrarEscuchadores = () => {
+                if (window.__posTopbarDoc !== true) {
+                    window.__posTopbarDoc = true;
+                    document.addEventListener('livewire:navigated', refrescar);
+                }
+                if (window.__posTopbarHook !== true && window.Livewire && typeof window.Livewire.hook === 'function') {
+                    window.__posTopbarHook = true;
+                    window.Livewire.hook('morph.updated', (payload) => sincronizarTrasMorph(payload && payload.component));
+                }
+            };
+
+            const init = () => {
+                sincronizarOpciones();
+                enlazarPills();
+                enlazarBusqueda();
+                registrarEscuchadores();
+                if (!(window.Livewire && typeof window.Livewire.hook === 'function')) {
+                    document.addEventListener('livewire:init', registrarEscuchadores, { once: true });
+                }
+                refrescar();
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init, { once: true });
+            } else {
+                init();
             }
-            topbarPills.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const id = btn.getAttribute('data-topbar-presentacion');
-                    const comp = getLivewire();
-                    if (comp) comp.set('filtroPresentacion', id);
-                    topbarPills.forEach(b => {
-                        b.classList.remove('border-[#0a5f56]','bg-[#0e9384]','text-white','shadow-sm','dark:border-[#0a5f56]');
-                        b.classList.add('border-slate-200','bg-white','text-slate-600','dark:border-slate-600','dark:bg-slate-800','dark:text-slate-200');
-                        const dot = b.querySelector('span');
-                        if (dot) { dot.classList.remove('bg-white'); dot.classList.add('bg-slate-300','dark:bg-slate-500'); }
-                    });
-                    btn.classList.remove('border-slate-200','bg-white','text-slate-600','dark:bg-slate-800','dark:text-slate-200','dark:border-slate-600');
-                    btn.classList.add('border-[#0a5f56]','bg-[#0e9384]','text-white','shadow-sm');
-                    const dot = btn.querySelector('span');
-                    if (dot) { dot.classList.remove('bg-slate-300','dark:bg-slate-500'); dot.classList.add('bg-white'); }
-                });
-            });
-        });
+        })();
     </script>
 
     {{-- Botón flotante carrito (móvil) --}}
@@ -492,7 +668,27 @@
                                             <button wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] - 1 }})" class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-md !text-xs" @disabled($item['cantidad'] <= 1)>
                                                 <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/></svg>
                                             </button>
-                                            <span class="w-8 text-center text-sm font-bold text-slate-800 dark:text-slate-100">{{ $item['cantidad'] }}</span>
+                                            <span
+                                            class="w-8 text-center text-sm font-bold text-slate-800 dark:text-slate-100"
+                                            title="Doble clic para editar la cantidad"
+                                            x-data="{ editando: false, valor: '{{ $item['cantidad'] }}' }"
+                                            x-on:dblclick="editando = true; valor = '{{ $item['cantidad'] }}'; $nextTick(() => { $refs.editor.focus(); $refs.editor.select(); })"
+                                        >
+                                            <span x-show="!editando">{{ $item['cantidad'] }}</span>
+                                            <template x-if="editando">
+                                                <input
+                                                    x-ref="editor"
+                                                    type="text"
+                                                    inputmode="numeric"
+                                                    class="w-8 rounded border border-slate-300 bg-white px-1 text-center text-sm font-bold text-slate-800 focus:border-[#0e9384] focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                                                    x-model="valor"
+                                                    x-on:wheel.prevent
+                                                    x-on:keydown.enter="editando = false; $wire.actualizarCantidad({{ $index }}, Math.max(1, parseInt(valor, 10) || 1))"
+                                                    x-on:keydown.esc="editando = false"
+                                                    x-on:blur="if (editando) { editando = false; $wire.actualizarCantidad({{ $index }}, Math.max(1, parseInt(valor, 10) || 1)) }"
+                                                />
+                                            </template>
+                                        </span>
                                             <button wire:click="actualizarCantidad({{ $index }}, {{ $item['cantidad'] + 1 }})" class="theme-button theme-button-secondary !h-7 !w-7 !min-h-0 !p-0 !rounded-md !text-xs" @disabled($item['cantidad'] >= (int) floor($item['stock'] / (($item['tipo_venta'] ?? 'unidad') === 'presentacion' ? max(1, (int) ($item['unidades'] ?? 1)) : 1)))>
                                                 <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                                             </button>

@@ -179,6 +179,6 @@ test('las tarjetas del pos muestran el stock de la sucursal activa', function ()
     $html = Livewire::test(PuntoDeVenta::class)->html();
 
     expect($html)
-        ->toContain('10 disp.')
-        ->not->toContain('35 disp.');
+        ->toContain('10uds disp.')
+        ->not->toContain('35uds disp.');
 });
