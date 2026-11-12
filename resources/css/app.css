@@ -5165,6 +5165,17 @@ body:has(.inventario-page) {
     box-shadow: 0 10px 22px rgba(14, 147, 132, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
+.erp-sidebar-action--logout:hover {
+    background: rgba(239, 68, 68, 0.14);
+    color: #fecaca;
+    border-color: rgba(239, 68, 68, 0.32);
+    box-shadow: 0 6px 14px rgba(239, 68, 68, 0.18);
+}
+
+.erp-sidebar-action--logout:active {
+    background: rgba(239, 68, 68, 0.22);
+}
+
 /* Cuando está en modo oscuro, el botón se aclara para indicar estado */
 .dark .erp-sidebar-action--theme {
     background: #e6fffa;

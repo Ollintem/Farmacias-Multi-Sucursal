@@ -105,8 +105,8 @@
                     <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
                 </div>
 
-                {{-- Barra de acciones inferior: modo oscuro + ajustes --}}
-                <div class="erp-sidebar-actions grid grid-cols-2 gap-1.5 rounded-2xl border border-white/[0.08] bg-[#0f2a32]/80 p-1.5 backdrop-blur">
+                {{-- Barra de acciones inferior: modo oscuro + ajustes + cerrar sesión --}}
+                <div class="erp-sidebar-actions grid grid-cols-3 gap-1.5 rounded-2xl border border-white/[0.08] bg-[#0f2a32]/80 p-1.5 backdrop-blur">
                     {{-- 1. Modo oscuro / claro (botón principal activo) --}}
                     <button type="button" data-farma-theme-toggle class="erp-sidebar-action erp-sidebar-action--theme" title="Cambiar modo oscuro" aria-label="Cambiar modo oscuro">
                         <svg data-farma-theme-icon-sun class="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36 6.36l-1.41-1.41M7.05 7.05L5.64 5.64m12.72 0l-1.41 1.41M7.05 16.95l-1.41 1.41M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -116,6 +116,14 @@
                     <a href="{{ route('profile.edit') }}" wire:navigate class="erp-sidebar-action" title="Ajustes" aria-label="Ajustes">
                         <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </a>
+                    {{-- 3. Cerrar sesión - puerta abierta --}}
+                    <form method="POST" action="{{ route('logout') }}" class="contents">
+                        @csrf
+                        <button type="submit" class="erp-sidebar-action erp-sidebar-action--logout" title="Cerrar sesión" aria-label="Cerrar sesión" data-test="sidebar-logout-button">
+                            {{-- Heroicon arrow-right-start-on-rectangle (puerta abierta saliendo) --}}
+                            <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+                        </button>
+                    </form>
                 </div>
             </div>
 
