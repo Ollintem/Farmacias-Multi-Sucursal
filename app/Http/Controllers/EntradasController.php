@@ -76,7 +76,7 @@ class EntradasController extends Controller
     private function entradasCompras(?int $sucursalId, string $busqueda): Collection
     {
         return Compra::query()
-            ->with(['proveedor', 'sucursal', 'lotes'])
+            ->with(['proveedor', 'sucursal', 'lotes.producto.presentacionesPrecio.presentacion'])
             ->when($sucursalId, fn ($query) => $query->where('id_sucursal', $sucursalId))
             ->when($busqueda !== '', function ($query) use ($busqueda) {
                 $query->where(function ($subQuery) use ($busqueda) {
@@ -101,6 +101,7 @@ class EntradasController extends Controller
     {
         $fecha = $compra->entregado_en ?? $compra->created_at;
         $estado = $compra->estaRecibida() ? 'recibida' : 'pendiente';
+        $presentaciones = $this->resumenPresentaciones($compra->lotes);
 
         return [
             'id' => $compra->id,
@@ -110,6 +111,8 @@ class EntradasController extends Controller
             'producto' => $compra->proveedor->nombre_proveedor,
             'destino' => $compra->sucursal->nombre_sucursal,
             'unidades' => (int) $compra->lotes->sum('stock_lote'),
+            'presentaciones' => array_sum(array_column($presentaciones, 'cantidad')),
+            'presentaciones_detalle' => $presentaciones,
             'fecha' => $fecha ? Carbon::parse($fecha)->format('Y-m-d') : '-',
             'orden_fecha' => $fecha ? (int) Carbon::parse($fecha)->timestamp : 0,
             'estado' => ucfirst($estado),
@@ -218,7 +221,7 @@ class EntradasController extends Controller
     private function entradasTraspasos(?int $sucursalId, string $busqueda): Collection
     {
         return Traspaso::query()
-            ->with(['sucursalOrigen', 'sucursalDestino', 'detalles'])
+            ->with(['sucursalOrigen', 'sucursalDestino', 'detalles.lote.producto.presentacionesPrecio.presentacion'])
             ->when($sucursalId, function (Builder $query) use ($sucursalId): Builder {
                 return $query->where(function (Builder $sub) use ($sucursalId): Builder {
                     $sub->where('sucursal_a', $sucursalId)->orWhere('sucursal_b', $sucursalId);
@@ -251,6 +254,7 @@ class EntradasController extends Controller
     {
         $origen = $traspaso->sucursalOrigen->nombre_sucursal;
         $destino = $traspaso->sucursalDestino->nombre_sucursal;
+        $presentaciones = $this->resumenPresentaciones($traspaso->detalles);
 
         return [
             'id' => $traspaso->id,
@@ -260,11 +264,51 @@ class EntradasController extends Controller
             'producto' => $origen,
             'destino' => $destino,
             'unidades' => (int) $traspaso->detalles->sum('cantidad'),
+            'presentaciones' => array_sum(array_column($presentaciones, 'cantidad')),
+            'presentaciones_detalle' => $presentaciones,
             'fecha' => $traspaso->creado_en->format('Y-m-d'),
             'orden_fecha' => $traspaso->creado_en->getTimestamp(),
             'estado' => ucfirst((string) $traspaso->estado),
             'estado_class' => $this->claseEstado((string) $traspaso->estado),
         ];
+    }
+
+    /**
+     * Resume las presentaciones principales completas de un conjunto de
+     * líneas de entrada (lotes de compra o detalles de traspaso).
+     *
+     * Cada producto aporta sus unidades base y el factor de su presentación
+     * principal; las líneas del mismo producto se agrupan antes de dividir
+     * para no perder unidades sueltas. El resultado incluye el nombre de la
+     * presentación para mostrarlo tal cual en el listado.
+     *
+     * @param  Collection<int, mixed>  $lineas
+     * @return array<int, array{nombre: string, cantidad: int}>
+     */
+    private function resumenPresentaciones(Collection $lineas): array
+    {
+        return $lineas
+            ->groupBy(function (mixed $linea): int|string {
+                return ($linea->producto ?? $linea->lote?->producto)?->id ?? 'sin-producto';
+            })
+            ->map(function (Collection $grupo): array {
+                $producto = $grupo->first()->producto ?? $grupo->first()->lote?->producto;
+                $unidades = (int) $grupo->sum(fn (mixed $linea): int => (int) ($linea->stock_lote ?? $linea->cantidad ?? 0));
+                $principal = $producto?->presentacionPrincipalDe();
+                $factor = max(1, (int) ($principal?->unidades ?? 1));
+
+                return [
+                    'nombre' => $principal?->presentacion?->presentacion ?? 'Presentación',
+                    'cantidad' => intdiv($unidades, $factor),
+                ];
+            })
+            ->groupBy('nombre')
+            ->map(fn (Collection $grupo, string $nombre): array => [
+                'nombre' => $nombre,
+                'cantidad' => (int) $grupo->sum('cantidad'),
+            ])
+            ->values()
+            ->all();
     }
 
     /**

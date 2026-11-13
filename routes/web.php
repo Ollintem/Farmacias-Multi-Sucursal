@@ -26,7 +26,7 @@ Route::post('/', [AuthController::class, 'login'])->name('login');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
-        return view('dashboard', [
+        return view('pages.dashboard.index', [
             'sucursales' => Sucursal::orderBy('nombre_sucursal')->get(),
         ]);
     })->name('dashboard')->middleware('checarPermisos:ver,dashboard');

@@ -209,3 +209,41 @@ test('la compra actualiza inventario y existencias de sus lotes al registrarse',
         'id_sucursal' => $sucursal->id,
     ]);
 });
+
+test('el listado de entradas expresa las unidades en presentaciones principales', function () {
+    [$sucursal, $proveedor, $producto] = crearContextoCompra($this);
+
+    $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->post(route('compras.store'), [
+            'id_proveedor' => $proveedor->id,
+            'id_sucursal' => $sucursal->id,
+            'lotes' => [
+                [
+                    'id_producto' => $producto->id,
+                    'cantidad' => 3,
+                    'fecha_entrada' => '2026-10-01',
+                    'fecha_caducidad' => '2027-10-01',
+                ],
+                [
+                    'id_producto' => $producto->id,
+                    'cantidad' => 2,
+                    'fecha_entrada' => '2026-10-02',
+                    'fecha_caducidad' => '2027-11-01',
+                ],
+            ],
+        ])
+        ->assertRedirect();
+
+    $response = $this->withSession(['active_sucursal_id' => $sucursal->id])
+        ->get(route('entradas-de-almacen.index', ['sucursal' => $sucursal->id, 'tipo' => 'compras']))
+        ->assertOk()
+        ->assertSee('Cajas');
+
+    $entrada = $response->viewData('entradas')->first();
+
+    expect((int) $entrada['unidades'])->toBe(50)
+        ->and((int) $entrada['presentaciones'])->toBe(5)
+        ->and($entrada['presentaciones_detalle'])->toBe([
+            ['nombre' => 'Caja', 'cantidad' => 5],
+        ]);
+});

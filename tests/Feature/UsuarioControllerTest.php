@@ -330,6 +330,7 @@ it('muestra el alta de usuario con el selector de rol y campos accesibles', func
         ->assertSee('for="id_rol"', false)
         ->assertSee('name="id_rol"', false)
         ->assertSee('Contraseña')
+        ->assertSee('Mostrar contraseña')
         ->assertSee('autocomplete="new-password"', false)
         ->assertSee('option-pick-changed', false)
         ->assertSee('aria-modal="true"', false)

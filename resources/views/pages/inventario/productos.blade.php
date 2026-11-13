@@ -2,7 +2,7 @@
     <div class="module-page inventario-page" style="min-height:auto !important; display:block !important; padding:0.75rem;">
         <div class="module-page-inner inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
             <div class="lg:hidden">
-                @include('pages.inventario.tabs', ['seccion' => 'productos', 'selectedSucursal' => $selectedSucursal])
+                @include('pages.inventario.components.tabs', ['seccion' => 'productos', 'selectedSucursal' => $selectedSucursal])
             </div>
 
             @if(session('success'))

@@ -184,7 +184,7 @@ class UsuariosController extends Controller
             ['corte_ciego' => $request->boolean('corte_ciego')],
         );
 
-        return redirect()->route('usuarios.permisos', $usuario)->with('success', 'Permisos actualizados correctamente.');
+        return redirect()->route('usuarios.index', $usuario)->with('success', 'Permisos actualizados correctamente.');
     }
 
     /**
@@ -356,7 +356,7 @@ class UsuariosController extends Controller
             $this->sincronizarPermisosUsuario($usuario, $permisosInput);
         }
 
-        return redirect()->route('usuarios.edit', $usuario)->with('success', 'Usuario actualizado correctamente.');
+        return redirect()->route('usuarios.index', $usuario)->with('success', 'Usuario actualizado correctamente.');
     }
 
     public function delete(User $usuario): RedirectResponse

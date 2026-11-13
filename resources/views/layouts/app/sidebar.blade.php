@@ -187,6 +187,15 @@
                 @php($topProductoSucursalMobile = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
                 <a href="{{ route('inventario.create', array_filter(['sucursal' => $topProductoSucursalMobile])) }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">+ Agregar producto</a>
             @endif
+            @if(request()->routeIs('entradas-de-almacen.*') && (auth()->user()?->permisosHabilitados('crear', 'entradas-de-almacen') ?? false))
+                @php($topEntradasSucursalMobile = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
+                @if(Route::has('compras.create'))
+                    <a href="{{ route('compras.create', array_filter(['sucursal' => $topEntradasSucursalMobile])) }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">+ Compra</a>
+                @endif
+                @if(Route::has('traspasos.create'))
+                    <a href="{{ route('traspasos.create', array_filter(['sucursal' => $topEntradasSucursalMobile])) }}" class="theme-button theme-button-secondary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">⇄ Traspaso</a>
+                @endif
+            @endif
             @if(request()->routeIs('usuarios.*') && (auth()->user()?->permisosHabilitados('crear', 'usuarios') ?? false))
                 <button type="button" x-on:click="$dispatch('open-modal-rol')" class="theme-button theme-button-secondary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">+ Nuevo rol</button>
                 <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-2.5 !text-xs shrink-0 whitespace-nowrap">+ Nuevo usuario</a>
@@ -313,7 +322,7 @@
                     ?>
                     <div class="flex flex-1 items-center gap-3 min-w-0">
                         <div class="flex items-center gap-1 overflow-x-auto scrollbar-hide shrink-0">
-                            @include('pages.inventario.tabs', ['seccion' => $topSeccion, 'selectedSucursal' => $topSucursalTb])
+                            @include('pages.inventario.components.tabs', ['seccion' => $topSeccion, 'selectedSucursal' => $topSucursalTb])
                         </div>
                         @if($topIsStock)
                             <?php
@@ -775,6 +784,15 @@
                 @if(request()->routeIs('inventario.productos') && (auth()->user()?->permisosHabilitados('crear', 'inventario') ?? false))
                     @php($topProductoSucursal = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
                     <a href="{{ route('inventario.create', array_filter(['sucursal' => $topProductoSucursal])) }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Agregar producto nuevo</a>
+                @endif
+                @if(request()->routeIs('entradas-de-almacen.*') && (auth()->user()?->permisosHabilitados('crear', 'entradas-de-almacen') ?? false))
+                    @php($topEntradasSucursal = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
+                    @if(Route::has('compras.create'))
+                        <a href="{{ route('compras.create', array_filter(['sucursal' => $topEntradasSucursal])) }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Nueva compra</a>
+                    @endif
+                    @if(Route::has('traspasos.create'))
+                        <a href="{{ route('traspasos.create', array_filter(['sucursal' => $topEntradasSucursal])) }}" class="theme-button theme-button-secondary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">⇄ Nuevo traspaso</a>
+                    @endif
                 @endif
                 @if(request()->routeIs('usuarios.*') && (auth()->user()?->permisosHabilitados('crear', 'usuarios') ?? false))
                     <button type="button" x-on:click="$dispatch('open-modal-rol')" class="theme-button theme-button-secondary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Nuevo rol</button>
