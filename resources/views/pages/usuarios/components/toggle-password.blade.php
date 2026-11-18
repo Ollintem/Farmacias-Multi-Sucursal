@@ -26,7 +26,7 @@
 
         <button
             type="button"
-            class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-[0.9rem] text-slate-500 transition hover:text-[#0c7569] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9f9c]/40 dark:text-slate-400 dark:hover:text-[#5ec8b4]"
+            class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-[0.9rem] text-slate-500 transition hover:text-[#0c7569] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9f9c]/40 dark:text-slate-400 dark:hover:text-emerald-400"
             aria-label="Mostrar contraseña"
             aria-controls="{{ $id }}"
             x-bind:aria-label="visible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
@@ -44,7 +44,7 @@
     </div>
 
     @if($help)
-        <p id="{{ $helpId }}" class="mt-1 text-xs text-slate-500 dark:text-zinc-400">{{ $help }}</p>
+        <p id="{{ $helpId }}" class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $help }}</p>
     @endif
 
     @error($name)

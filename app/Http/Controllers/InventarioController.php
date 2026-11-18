@@ -94,7 +94,6 @@ class InventarioController extends Controller
         });
 
         return view('pages.inventario.index', compact(
-            'sucursales',
             'selectedSucursal',
             'productos',
             'stockTotal',
@@ -213,7 +212,8 @@ class InventarioController extends Controller
 
     /**
      * Catálogo de la pestaña "Productos": nombre, categoría, presentación por
-     * caja, controlado, estado y acciones.
+     * caja, controlado, estado y acciones. Los productos inactivos también se
+     * listan (marcados como "Inactivo") para poder reactivarlos desde aquí.
      *
      * Solo se listan los productos dados de alta en la sucursal activa (pivot
      * `producto_sucursal`): cada sucursal tiene su propia tabla Productos.
@@ -229,7 +229,7 @@ class InventarioController extends Controller
         $busqueda = trim((string) $request->query('buscar', ''));
 
         $productos = $this->inventarioService
-            ->buscarProductos($busqueda, $selectedSucursal?->id, soloConInventario: false)
+            ->buscarProductos($busqueda, $selectedSucursal?->id, soloConInventario: false, soloActivos: false)
             ->with(['categoria', 'presentacionesPrecio.presentacion'])
             ->withCount(['lotes', 'ventas'])
             ->orderBy('productos.nombre_producto')
@@ -255,7 +255,6 @@ class InventarioController extends Controller
             });
 
         return view('pages.inventario.productos', compact(
-            'sucursales',
             'selectedSucursal',
             'productos',
             'busqueda',

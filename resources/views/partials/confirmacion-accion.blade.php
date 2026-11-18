@@ -42,7 +42,7 @@
     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="cerrar()"></div>
 
     <div
-        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
         @click.stop
     >
         <div class="mb-5 flex items-center justify-between gap-4">
@@ -53,7 +53,7 @@
         </div>
 
         <p class="font-medium text-slate-800 dark:text-slate-100" x-text="pendiente?.mensaje ?? ''"></p>
-        <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400" x-text="pendiente?.detalle ?? ''"></p>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400" x-text="pendiente?.detalle ?? ''"></p>
 
         <form :action="pendiente?.ruta ?? ''" method="POST">
             @csrf

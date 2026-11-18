@@ -63,7 +63,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="modalRol = false"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -134,7 +134,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="modalEditarRol = false"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -289,11 +289,11 @@
                                         <td>
                                             <div class="font-medium text-slate-800 dark:text-white">{{ $usuario->nombre }} {{ $usuario->apellido }}</div>
                                         </td>
-                                        <td class="text-slate-500 dark:text-zinc-400">{{ $usuario->email }}</td>
+                                        <td class="text-slate-500 dark:text-slate-400">{{ $usuario->email }}</td>
                                         <td>
                                             <span class="inline-flex items-center rounded-full bg-[#0c9f9c]/10 px-2.5 py-0.5 text-xs font-semibold text-[#0c9f9c]">{{ $usuario->rol?->tipo_rol ?? 'Sin rol' }}</span>
                                         </td>
-                                        <td class="text-slate-500 dark:text-zinc-400">{{ $usuario->sucursal?->nombre_sucursal ?? 'Sin sucursal' }}</td>
+                                        <td class="text-slate-500 dark:text-slate-400">{{ $usuario->sucursal?->nombre_sucursal ?? 'Sin sucursal' }}</td>
                                         <td>
                                             @if($usuario->es_activo)
                                                 <span class="inline-flex rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">Activo</span>
@@ -313,7 +313,7 @@
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 </a>
                                                 @if($usuario->id === auth()->id() || $usuario->rol?->tipo_rol === 'SuperAdmin')
-                                                    <span class="text-slate-300 dark:text-zinc-600 text-xs">Protegido</span>
+                                                    <span class="text-slate-300 dark:text-slate-600 text-xs">Protegido</span>
                                                 @else
                                                 <form action="{{ route('usuarios.delete', $usuario) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');" style="margin:0; padding:0;">
                                                     @csrf
@@ -328,7 +328,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-10 text-slate-500 dark:text-zinc-400">No hay usuarios registrados aún.</td>
+                                        <td colspan="7" class="text-center py-10 text-slate-500 dark:text-slate-400">No hay usuarios registrados aún.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

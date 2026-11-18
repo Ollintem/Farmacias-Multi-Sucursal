@@ -276,14 +276,14 @@ test('el badge de stock muestra la presentacion filtrada truncando el decimal', 
 
     $component = Livewire::test(PuntoDeVenta::class);
 
-    $this->assertStringContainsString('20uds disp.', $component->html());
+    $this->assertStringContainsString('20 disp.', $component->html());
 
     $component->set('filtroPresentacion', (string) $caja->id);
 
     // 20 unidades ÷ 8 por presentación = 2.5 → se muestra 2: truncado,
     // nunca redondeado hacia arriba.
-    $this->assertStringContainsString('2uds disp.', $component->html());
-    $this->assertStringNotContainsString('20uds disp.', $component->html());
+    $this->assertStringContainsString('2 disp.', $component->html());
+    $this->assertStringNotContainsString('20 disp.', $component->html());
 });
 
 test('la tarjeta muestra el precio de la presentacion filtrada y su nombre en el chip', function () {

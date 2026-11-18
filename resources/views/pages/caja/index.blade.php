@@ -4,8 +4,8 @@
             {{-- Selector de sucursal --}}
             <header class="mb-4 flex flex-wrap items-center justify-end gap-4" aria-label="Selector de sucursal">
                 <form method="GET" action="{{ route('caja.index') }}" class="flex items-center gap-2">
-                    <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Sucursal</label>
-                    <select name="sucursal" onchange="this.form.submit()" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#0e9384] focus:outline-none focus:ring-2 focus:ring-[#0e9384]/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                    <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Sucursal</label>
+                    <select name="sucursal" onchange="this.form.submit()" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm focus:border-[#0e9384] focus:outline-none focus:ring-2 focus:ring-[#0e9384]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
                         @foreach($sucursales as $s)
                             <option value="{{ $s->id }}" @selected($sucursal?->id === $s->id)>{{ $s->nombre_sucursal }}</option>
                         @endforeach
@@ -18,41 +18,41 @@
                 $abiertosCount = $cortesAbiertos->count();
                 $totalEsperadoAbiertos = $cortesAbiertos->sum(fn($c) => (float) ($c->efectivo_esperado_calculado ?? $c->efectivo_inicial));
             @endphp
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
-                <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-zinc-800 lg:grid-cols-4">
-                    <div class="flex items-center gap-2.5 bg-white px-3.5 py-3 dark:bg-zinc-900">
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:hidden">
+                <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-slate-800 lg:grid-cols-4">
+                    <div class="flex items-center gap-2.5 bg-white px-3.5 py-3 dark:bg-slate-900">
                         <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/20">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
-                            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Abiertas</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 leading-none">Abiertas</p>
                             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">{{ $abiertosCount }} caja(s)</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2.5 bg-white px-3.5 py-3 dark:bg-zinc-900">
-                        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700">
+                    <div class="flex items-center gap-2.5 bg-white px-3.5 py-3 dark:bg-slate-900">
+                        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
-                            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Esperado (abiertas)</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 leading-none">Esperado (abiertas)</p>
                             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">${{ number_format($totalEsperadoAbiertos, 2) }}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2.5 bg-white px-3.5 py-3 dark:bg-zinc-900">
+                    <div class="flex items-center gap-2.5 bg-white px-3.5 py-3 dark:bg-slate-900">
                         <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-100 text-sky-700 ring-1 ring-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:ring-sky-500/20">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13h10V3H3v10zm0 8h10v-6H3v6zm12 0h10V11H15v10zm0-18v6h10V3H15z"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
-                            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Ventas hoy</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 leading-none">Ventas hoy</p>
                             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">${{ number_format((float) ($resumenHoy['totalHoy'] ?? 0), 2) }}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2.5 bg-white px-3.5 py-3 dark:bg-zinc-900">
+                    <div class="flex items-center gap-2.5 bg-white px-3.5 py-3 dark:bg-slate-900">
                         <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </span>
                         <div class="min-w-0 flex-1">
-                            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Historial</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 leading-none">Historial</p>
                             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">{{ $historialCount }} cierre(s)</p>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
 
             @if(!$sucursal)
                 <div class="module-card p-10 text-center">
-                    <p class="text-sm font-semibold text-slate-600 dark:text-zinc-300">No hay sucursal seleccionada.</p>
+                    <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">No hay sucursal seleccionada.</p>
                     <p class="theme-subtle mt-1 text-sm">Selecciona una sucursal activa para operar caja.</p>
                 </div>
             @else
@@ -112,10 +112,10 @@
                 <div class="space-y-6">
                     {{-- Cajas abiertas (multi-caja) --}}
                     <section class="module-card !p-0 overflow-hidden" aria-label="Cajas abiertas">
-                        <header class="flex items-center justify-between border-b border-slate-200 bg-slate-50/60 px-5 py-4 dark:border-zinc-700 dark:bg-zinc-800/60">
+                        <header class="flex items-center justify-between border-b border-slate-200 bg-slate-50/60 px-5 py-4 dark:border-slate-700 dark:bg-slate-800/60">
                             <div>
                                 <h2 class="text-sm font-black tracking-tight text-slate-800 dark:text-white">Cajas abiertas</h2>
-                                <p class="text-xs font-medium text-slate-500 dark:text-zinc-400">Multi-caja por sucursal · {{ $sucursal->nombre_sucursal }}</p>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Multi-caja por sucursal · {{ $sucursal->nombre_sucursal }}</p>
                             </div>
                             <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold {{ $abiertosCount > 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200' : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200' }}">
                                 <span class="h-1.5 w-1.5 rounded-full {{ $abiertosCount > 0 ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
@@ -134,7 +134,7 @@
                                 </p>
                             </div>
                         @else
-                            <div class="divide-y divide-slate-100 dark:divide-zinc-800">
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800">
                                 @foreach($cortesAbiertos as $corte)
                                     @php
                                         $esperado = (float) ($corte->efectivo_esperado_calculado ?? $corte->efectivo_inicial);
@@ -153,23 +153,23 @@
                                                             <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Tu caja
                                                         </span>
                                                     @endif
-                                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">{{ \App\Http\Controllers\CajaController::TURNOS[$corte->turno] ?? $corte->turno }}</span>
-                                                    <span class="text-xs font-medium text-slate-500 dark:text-zinc-400">por {{ $corte->usuario?->nombre }} {{ $corte->usuario?->apellido }} · {{ $corte->fecha_inicio->format('d/m/Y H:i') }}</span>
+                                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">{{ \App\Http\Controllers\CajaController::TURNOS[$corte->turno] ?? $corte->turno }}</span>
+                                                    <span class="text-xs font-medium text-slate-500 dark:text-slate-400">por {{ $corte->usuario?->nombre }} {{ $corte->usuario?->apellido }} · {{ $corte->fecha_inicio->format('d/m/Y H:i') }}</span>
                                                 </div>
                                                 <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-800">
-                                                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Fondo inicial</p>
+                                                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800">
+                                                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Fondo inicial</p>
                                                         <p class="mt-1 text-sm font-black text-slate-800 dark:text-white">${{ number_format((float) $corte->efectivo_inicial, 2) }}</p>
                                                     </div>
                                                     <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
                                                         <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Ventas del corte</p>
                                                         <p class="mt-1 text-sm font-black text-emerald-800 dark:text-emerald-200">${{ number_format($ventasTotal, 2) }} <span class="text-[11px] font-semibold">({{ $ventasCorte->count() }})</span></p>
                                                     </div>
-                                                    <div class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900">
-                                                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Movimientos</p>
+                                                    <div class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900">
+                                                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Movimientos</p>
                                                         <p class="mt-1 text-xs font-bold"><span class="text-emerald-600">+${{ number_format($ingresos,2) }}</span> <span class="text-slate-400">/</span> <span class="text-red-600">-${{ number_format($retiros,2) }}</span></p>
                                                     </div>
-                                                    <div class="rounded-xl border border-[#0e9384]/30 bg-teal-50 px-3 py-2.5 dark:border-[#0e9384]/40 dark:bg-[#0e9384]/15">
+                                                    <div class="rounded-xl border border-[#0e9384]/30 bg-teal-50 px-3 py-2.5 dark:border-emerald-500/40 dark:bg-emerald-500/15">
                                                         <p class="text-[10px] font-bold uppercase tracking-widest text-[#0c7569] dark:text-emerald-300">
                                                             Esperado
                                                         </p>
@@ -183,15 +183,15 @@
 
                                         {{-- Movimientos recientes --}}
                                         @if($corte->movimientos->isNotEmpty())
-                                            <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 dark:border-zinc-700">
-                                                <div class="bg-slate-50 px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:bg-zinc-800 dark:text-zinc-400">Movimientos del corte</div>
-                                                <ul class="divide-y divide-slate-100 dark:divide-zinc-800">
+                                            <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                                                <div class="bg-slate-50 px-3 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:bg-slate-800 dark:text-slate-400">Movimientos del corte</div>
+                                                <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                                                     @foreach($corte->movimientos->sortByDesc('creado_en')->take(5) as $mov)
                                                         <li class="flex items-center justify-between px-3 py-2 text-sm">
                                                             <span class="flex items-center gap-2">
                                                                 <span class="h-2 w-2 rounded-full {{ $mov->tipo === 'ingreso' ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
                                                                 <span class="font-semibold {{ $mov->tipo === 'ingreso' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-300' }}">{{ ucfirst($mov->tipo) }} ${{ number_format((float) $mov->monto,2) }}</span>
-                                                                @if($mov->motivo)<span class="text-slate-500 dark:text-zinc-400">— {{ $mov->motivo }}</span>@endif
+                                                                @if($mov->motivo)<span class="text-slate-500 dark:text-slate-400">— {{ $mov->motivo }}</span>@endif
                                                             </span>
                                                             <span class="text-xs text-slate-400">{{ $mov->creado_en->format('H:i d/m') }}</span>
                                                         </li>
@@ -202,17 +202,17 @@
 
                                         {{-- Acciones: movimiento + cerrar --}}
                                         <div class="mt-4 grid gap-3 lg:grid-cols-2">
-                                            <form method="POST" action="{{ route('caja.movimiento', $corte) }}" class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
+                                            <form method="POST" action="{{ route('caja.movimiento', $corte) }}" class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
                                                 @csrf
-                                                <p class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-300">Registrar movimiento</p>
+                                                <p class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Registrar movimiento</p>
                                                 <div class="mt-2 grid grid-cols-2 gap-2">
-                                                    <select name="tipo" class="rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-white">
+                                                    <select name="tipo" class="rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white">
                                                         <option value="ingreso">Ingreso</option>
                                                         <option value="retiro">Retiro</option>
                                                     </select>
-                                                    <input type="number" step="0.01" min="0.01" name="monto" placeholder="Monto" required class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-white">
+                                                    <input type="number" step="0.01" min="0.01" name="monto" placeholder="Monto" required class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white">
                                                 </div>
-                                                <input type="text" name="motivo" maxlength="255" placeholder="Motivo (opcional)" class="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-white">
+                                                <input type="text" name="motivo" maxlength="255" placeholder="Motivo (opcional)" class="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white">
                                                 <button type="submit" class="theme-button theme-button-secondary mt-2 w-full !py-2 text-sm">Guardar movimiento</button>
                                             </form>
 
@@ -243,20 +243,20 @@
                 {{-- Modal Abrir caja --}}
                 <div x-show="abrirCajaOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
                     <div @click="abrirCajaOpen=false" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-                    <div @click.away="abrirCajaOpen=false" class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
+                    <div @click.away="abrirCajaOpen=false" class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-sm font-black text-slate-800 dark:text-white">Abrir nueva caja</h3>
-                                <p class="mt-1 text-xs text-slate-500 dark:text-zinc-400">Multi-caja: Caja 1 y Caja 2 con turno Mañana/Tarde.</p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Multi-caja: Caja 1 y Caja 2 con turno Mañana/Tarde.</p>
                             </div>
-                            <button @click="abrirCajaOpen=false" class="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800">✕</button>
+                            <button @click="abrirCajaOpen=false" class="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">✕</button>
                         </div>
                         <form method="POST" action="{{ route('caja.abrir') }}" class="mt-4 space-y-3">
                             @csrf
                             <input type="hidden" name="id_sucursal" value="{{ $sucursal?->id }}">
                             <label class="block">
-                                <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-300">Caja física</span>
-                                <select name="caja" required class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Caja física</span>
+                                <select name="caja" required class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold dark:border-slate-700 dark:bg-slate-800 dark:text-white">
                                     <option value="Caja 1">Caja 1 — Mostrador principal</option>
                                     <option value="Caja 2">Caja 2 — Mostrador secundario</option>
                                     <option value="Caja 3">Caja 3</option>
@@ -264,15 +264,15 @@
                                 </select>
                             </label>
                             <label class="block">
-                                <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-300">Turno</span>
-                                <select name="turno" required class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Turno</span>
+                                <select name="turno" required class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold dark:border-slate-700 dark:bg-slate-800 dark:text-white">
                                     <option value="Matutino">Mañana — Matutino (08:00–15:00)</option>
                                     <option value="Vespertino">Tarde — Vespertino (15:00–22:00)</option>
                                 </select>
                             </label>
                             <label class="block">
-                                <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-300">Fondo inicial</span>
-                                <div class="mt-1 flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#0e9384] focus-within:ring-2 focus-within:ring-[#0e9384]/15 dark:border-zinc-700 dark:bg-zinc-800">
+                                <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Fondo inicial</span>
+                                <div class="mt-1 flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#0e9384] focus-within:ring-2 focus-within:ring-[#0e9384]/15 dark:border-slate-700 dark:bg-slate-800">
                                     <span class="pl-3 text-sm font-black text-slate-400">$</span>
                                     <input type="number" step="0.01" min="0" name="efectivo_inicial" value="0.00" required class="flex-1 border-0 bg-transparent px-2 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-0 dark:text-white">
                                 </div>
@@ -284,25 +284,25 @@
                 {{-- Modal Resumen del día --}}
                 <div x-show="resumenOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
                     <div @click="resumenOpen=false" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-                    <div @click.away="resumenOpen=false" class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900">
+                    <div @click.away="resumenOpen=false" class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-sm font-black text-slate-800 dark:text-white">Resumen del día</h3>
-                                <p class="text-xs text-slate-500 dark:text-zinc-400">{{ $sucursal?->nombre_sucursal }} · {{ now()->format('d/m/Y') }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $sucursal?->nombre_sucursal }} · {{ now()->format('d/m/Y') }}</p>
                             </div>
-                            <button @click="resumenOpen=false" class="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800">✕</button>
+                            <button @click="resumenOpen=false" class="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">✕</button>
                         </div>
                         @if($resumenHoy)
                             <dl class="mt-4 space-y-2 text-sm">
-                                <div class="flex justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-zinc-800"><dt class="font-medium text-slate-600 dark:text-zinc-400">Ventas</dt><dd class="font-black tabular-nums text-slate-800 dark:text-white">{{ $resumenHoy['ventasHoy']->count() }}</dd></div>
-                                <div class="flex justify-between rounded-lg bg-white px-3 py-2 ring-1 ring-slate-200 dark:bg-zinc-900 dark:ring-zinc-700"><dt class="font-bold text-slate-800 dark:text-white">Total</dt><dd class="font-black tabular-nums text-[#0c7569] dark:text-emerald-300">${{ number_format($resumenHoy['totalHoy'],2) }}</dd></div>
-                                <div class="flex justify-between px-3 py-1 text-xs"><dt class="text-slate-500 dark:text-zinc-400">Efectivo</dt><dd class="font-bold tabular-nums">${{ number_format($resumenHoy['efectivoHoy'],2) }}</dd></div>
-                                <div class="flex justify-between px-3 py-1 text-xs"><dt class="text-slate-500 dark:text-zinc-400">Tarjeta</dt><dd class="font-bold tabular-nums">${{ number_format($resumenHoy['tarjetaHoy'],2) }}</dd></div>
-                                <div class="flex justify-between px-3 py-1 text-xs"><dt class="text-slate-500 dark:text-zinc-400">Transferencia</dt><dd class="font-bold tabular-nums">${{ number_format($resumenHoy['transferenciaHoy'],2) }}</dd></div>
+                                <div class="flex justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><dt class="font-medium text-slate-600 dark:text-slate-400">Ventas</dt><dd class="font-black tabular-nums text-slate-800 dark:text-white">{{ $resumenHoy['ventasHoy']->count() }}</dd></div>
+                                <div class="flex justify-between rounded-lg bg-white px-3 py-2 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700"><dt class="font-bold text-slate-800 dark:text-white">Total</dt><dd class="font-black tabular-nums text-[#0c7569] dark:text-emerald-300">${{ number_format($resumenHoy['totalHoy'],2) }}</dd></div>
+                                <div class="flex justify-between px-3 py-1 text-xs"><dt class="text-slate-500 dark:text-slate-400">Efectivo</dt><dd class="font-bold tabular-nums">${{ number_format($resumenHoy['efectivoHoy'],2) }}</dd></div>
+                                <div class="flex justify-between px-3 py-1 text-xs"><dt class="text-slate-500 dark:text-slate-400">Tarjeta</dt><dd class="font-bold tabular-nums">${{ number_format($resumenHoy['tarjetaHoy'],2) }}</dd></div>
+                                <div class="flex justify-between px-3 py-1 text-xs"><dt class="text-slate-500 dark:text-slate-400">Transferencia</dt><dd class="font-bold tabular-nums">${{ number_format($resumenHoy['transferenciaHoy'],2) }}</dd></div>
                             </dl>
                             <a href="{{ route('punto-venta.index') }}" class="theme-button theme-button-secondary mt-4 w-full justify-center">Ir a Punto de Venta</a>
                         @else
-                            <p class="mt-4 text-sm text-slate-500 dark:text-zinc-400">Sin movimientos hoy.</p>
+                            <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Sin movimientos hoy.</p>
                         @endif
                     </div>
                 </div>

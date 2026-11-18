@@ -52,9 +52,9 @@
         </div>
 
         @if(count($avisos) > 0)
-            <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800">
-                <span class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400">{{ count($avisos) }} recientes · {{ $noLeidas }} sin leer</span>
-                <a href="{{ route('alertas.index') }}" wire:navigate class="text-xs font-bold text-[#0e9384] hover:underline dark:text-[#5ec8b4]">Centro completo →</a>
+            <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                <span class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">{{ count($avisos) }} recientes · {{ $noLeidas }} sin leer</span>
+                <a href="{{ route('alertas.index') }}" wire:navigate class="text-xs font-bold text-[#0e9384] hover:underline dark:text-emerald-400">Centro completo →</a>
             </div>
         @endif
     </div>

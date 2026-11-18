@@ -3,8 +3,8 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-[#e9efec] text-[#22332f] dark:bg-[#1a2a32] dark:text-[#e6efec]" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
-        <flux:sidebar id="app-sidebar" sticky collapsible class="erp-sidebar erp-sidebar-v2 border-e border-[#2c545e] bg-[#20444c] text-[#c3d4cf] dark:bg-[#1e3039]">
+    <body class="min-h-screen bg-[#e9efec] text-[#22332f] dark:bg-slate-900 dark:text-slate-100" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
+        <flux:sidebar id="app-sidebar" sticky collapsible class="erp-sidebar erp-sidebar-v2 border-e border-[#2c545e] bg-[#20444c] text-[#c3d4cf] dark:border-[#334155] dark:bg-slate-800 dark:text-slate-300">
             <flux:sidebar.header class="!border-b-0">
                 <flux:sidebar.brand name="FarmaERP" href="{{ route('dashboard') }}" wire:navigate>
                     <x-slot name="logo" class="erp-logo flex aspect-square size-8 items-center justify-center rounded-xl bg-[#0e9384] text-white shadow-lg shadow-black/20">
@@ -144,7 +144,7 @@
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
-        <flux:header class="border-b border-[#cfddd7] bg-[#f7faf9] lg:hidden dark:border-[#33505c] dark:bg-[#22353f]" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
+        <flux:header class="border-b border-[#cfddd7] bg-[#f7faf9] lg:hidden dark:border-slate-700 dark:bg-slate-800" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
             <flux:sidebar.toggle for="app-sidebar" class="lg:hidden" icon="bars-2" inset="left" />
 
             <flux:spacer />
@@ -217,7 +217,7 @@
                                 />
                                 <div class="grid flex-1 text-start text-sm leading-tight">
                                     <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
-                                    <flux:text class="truncate text-zinc-500 dark:text-zinc-400">{{ auth()->user()->rol?->tipo_rol ?? 'Sin rol asignado' }}</flux:text>
+                                    <flux:text class="truncate text-zinc-500 dark:text-slate-400">{{ auth()->user()->rol?->tipo_rol ?? 'Sin rol asignado' }}</flux:text>
                                 </div>
                             </div>
                         </div>
@@ -304,10 +304,10 @@
                             <a href="{{ request()->fullUrlWithQuery(['filtro' => $valor]) }}" wire:navigate @class([
                                 'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition',
                                 'border-[#0e9384] bg-[#0e9384] text-white shadow-sm' => $esActivo,
-                                'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/30 hover:bg-teal-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' => !$esActivo,
+                                'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/30 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' => !$esActivo,
                             ])>
                                 <span>{{ $etiqueta }}</span>
-                                <span class="grid min-w-[1.4rem] place-items-center rounded-full px-1.5 py-0.5 text-[11px] font-black @if($esActivo) bg-white/20 text-white @else bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300 @endif">{{ $conteo }}</span>
+                                <span class="grid min-w-[1.4rem] place-items-center rounded-full px-1.5 py-0.5 text-[11px] font-black @if($esActivo) bg-white/20 text-white @else bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 @endif">{{ $conteo }}</span>
                             </a>
                         @endforeach
                     </nav>
@@ -361,34 +361,34 @@
                                 }
                             ?>
                             <div class="hidden lg:flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
-                                <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                                <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                                     </span>
                                     <span class="leading-none">
-                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Productos</span>
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Productos</span>
                                         <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topProductosCount }}</span>
                                     </span>
                                 </span>
-                                <span class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topStockCritico > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800' }}">
-                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topStockCritico > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}">
+                                <span class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topStockCritico > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800' }}">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topStockCritico > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' }}">
                                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
                                     </span>
                                     <span class="leading-none">
-                                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topStockCritico > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-zinc-400' }}">Stock crítico</span>
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topStockCritico > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400' }}">Stock crítico</span>
                                         <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topStockCritico }}</span>
                                     </span>
                                 </span>
-                                <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                                <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                                     <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
                                     </span>
                                     <span class="leading-none">
-                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Unidades</span>
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Unidades</span>
                                         <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ number_format($topUnidades) }}</span>
                                     </span>
                                 </span>
-                                <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-zinc-800">
+                                <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-slate-800">
                                     <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     </span>
@@ -444,16 +444,16 @@
                                 };
                             ?>
                             <div class="hidden lg:flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
-                                <a href="{{ $topEnlaceLotes('todos') }}" class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm hover:border-slate-300 dark:border-zinc-700 dark:bg-zinc-800">
-                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                                <a href="{{ $topEnlaceLotes('todos') }}" class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
                                     </span>
                                     <span class="leading-none">
-                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Total de lotes</span>
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Total de lotes</span>
                                         <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topTotalLotes }}</span>
                                     </span>
                                 </a>
-                                <a href="{{ $topEnlaceLotes('vigentes') }}" class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm hover:border-emerald-300 dark:border-emerald-500/30 dark:bg-zinc-800">
+                                <a href="{{ $topEnlaceLotes('vigentes') }}" class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm hover:border-emerald-300 dark:border-emerald-500/30 dark:bg-slate-800">
                                     <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     </span>
@@ -462,21 +462,21 @@
                                         <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topVigentes }}</span>
                                     </span>
                                 </a>
-                                <a href="{{ $topEnlaceLotes('por-caducar') }}" class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topPorCaducar > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800' }}">
-                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topPorCaducar > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}">
+                                <a href="{{ $topEnlaceLotes('por-caducar') }}" class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topPorCaducar > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800' }}">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topPorCaducar > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' }}">
                                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     </span>
                                     <span class="leading-none">
-                                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topPorCaducar > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-zinc-400' }}">Por caducar</span>
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topPorCaducar > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400' }}">Por caducar</span>
                                         <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topPorCaducar }}</span>
                                     </span>
                                 </a>
-                                <a href="{{ $topEnlaceLotes('caducados') }}" class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topCaducados > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800' }}">
-                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topCaducados > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}">
+                                <a href="{{ $topEnlaceLotes('caducados') }}" class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topCaducados > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800' }}">
+                                    <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topCaducados > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' }}">
                                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
                                     </span>
                                     <span class="leading-none">
-                                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topCaducados > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-zinc-400' }}">Caducados</span>
+                                        <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topCaducados > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400' }}">Caducados</span>
                                         <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topCaducados }}</span>
                                     </span>
                                 </a>
@@ -490,19 +490,19 @@
                         $topInactivas = $topTotalSucursales - $topActivas;
                     ?>
                     <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
-                        <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-6-8h6M7 4.5A1.5 1.5 0 018.5 3h7A1.5 1.5 0 0117 4.5V19a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 19V4.5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 16h10"/></svg>
                             </span>
                             <span class="leading-none">
-                                <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Total</span>
+                                <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Total</span>
                                 <span class="flex items-baseline gap-1.5">
                                     <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topTotalSucursales }}</span>
-                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">sucursales</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-slate-400">sucursales</span>
                                 </span>
                             </span>
                         </span>
-                        <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-zinc-800">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-slate-800">
                             <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </span>
@@ -510,19 +510,19 @@
                                 <span class="block text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Activas</span>
                                 <span class="flex items-baseline gap-1.5">
                                     <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topActivas }}</span>
-                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">operativas</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-slate-400">operativas</span>
                                 </span>
                             </span>
                         </span>
-                        <span class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topInactivas > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800' }}">
-                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topInactivas > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topInactivas > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800' }}">
+                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topInactivas > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' }}">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
                             </span>
                             <span class="leading-none">
-                                <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topInactivas > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-zinc-400' }}">Inactivas</span>
+                                <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topInactivas > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400' }}">Inactivas</span>
                                 <span class="flex items-baseline gap-1.5">
                                     <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topInactivas }}</span>
-                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">ocultas</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-slate-400">ocultas</span>
                                 </span>
                             </span>
                         </span>
@@ -535,19 +535,19 @@
                         $topProvCompletos = \App\Models\Proveedor::where('es_activo', true)->whereNotNull('telefono')->where('telefono','!=','')->whereNotNull('correo')->where('correo','!=','')->count();
                     ?>
                     <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
-                        <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 7.5v-.75A2.25 2.25 0 0018 4.5h-1.5a2.25 2.25 0 00-2.25 2.25v.75m-6 0V6.75A2.25 2.25 0 017.5 4.5H6A2.25 2.25 0 003.75 6.75v.75m13.5 0v6a2.25 2.25 0 01-2.25 2.25h-1.5a2.25 2.25 0 01-2.25-2.25v-6m-6 0v6a2.25 2.25 0 002.25 2.25H9A2.25 2.25 0 0011.25 13.5v-6m-6 0h13.5"/></svg>
                             </span>
                             <span class="leading-none">
-                                <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Total</span>
+                                <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Total</span>
                                 <span class="flex items-baseline gap-1.5">
                                     <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topTotalProveedores }}</span>
-                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">proveedores</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-slate-400">proveedores</span>
                                 </span>
                             </span>
                         </span>
-                        <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-zinc-800">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-slate-800">
                             <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </span>
@@ -555,19 +555,19 @@
                                 <span class="block text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Activos</span>
                                 <span class="flex items-baseline gap-1.5">
                                     <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topProvActivos }}</span>
-                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">completos</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-slate-400">completos</span>
                                 </span>
                             </span>
                         </span>
-                        <span class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topProvInactivos > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-zinc-700 dark:bg-zinc-800' }}">
-                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topProvInactivos > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-zinc-700 dark:text-zinc-400' }}">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border px-3 py-1.5 shadow-sm {{ $topProvInactivos > 0 ? 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800' }}">
+                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full {{ $topProvInactivos > 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400' }}">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
                             </span>
                             <span class="leading-none">
-                                <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topProvInactivos > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-zinc-400' }}">Inactivos</span>
+                                <span class="block text-[10px] font-bold uppercase tracking-widest {{ $topProvInactivos > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400' }}">Inactivos</span>
                                 <span class="flex items-baseline gap-1.5">
                                     <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topProvInactivos }}</span>
-                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">ocultos</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-slate-400">ocultos</span>
                                 </span>
                             </span>
                         </span>
@@ -601,7 +601,7 @@
                             <a href="{{ route('entradas-de-almacen.index', array_filter(['sucursal' => $topSucursalIdEntradas, 'tipo' => $valor === 'todas' ? null : $valor])) }}" @class([
                                 'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold whitespace-nowrap transition',
                                 'border-[#0e9384] bg-[#0e9384] text-white shadow-sm' => $esActivoEntrada,
-                                'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/30 hover:bg-teal-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' => !$esActivoEntrada,
+                                'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/30 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' => !$esActivoEntrada,
                             ])>
                                 @if($valor === 'todas')
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
@@ -611,32 +611,17 @@
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
                                 @endif
                                 <span>{{ $etiqueta }}</span>
-                                <span class="grid min-w-[1.4rem] place-items-center rounded-full px-1.5 py-0.5 text-[11px] font-black @if($esActivoEntrada) bg-white/20 text-white @else bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300 @endif">{{ $conteo }}</span>
+                                <span class="grid min-w-[1.4rem] place-items-center rounded-full px-1.5 py-0.5 text-[11px] font-black @if($esActivoEntrada) bg-white/20 text-white @else bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 @endif">{{ $conteo }}</span>
                             </a>
                         @endforeach
                     </nav>
                 <?php elseif(request()->routeIs('punto-venta.*')): ?>
-                    <?php
-                        $topPresentaciones = \App\Models\PresentacionProducto::orderBy('presentacion')->get();
-                        $topFiltroPres = (string) (request()->query('presentacion', '') ?? '');
-                    ?>
                     <div class="flex flex-1 items-center gap-3 min-w-0">
-                        <div class="relative hidden max-w-md flex-1 lg:flex">
-                            <span class="pointer-events-none absolute left-3.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <div class="relative hidden w-full lg:flex">
+                            <span class="pointer-events-none absolute left-4 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                                <svg class="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             </span>
-                            <input id="topbar-pos-search" type="search" placeholder="Buscar producto o código de barras..." class="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-11 pr-3 text-sm font-medium leading-none text-slate-700 placeholder:text-slate-400 shadow-sm focus:border-[#0e9384] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0e9384]/15 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-slate-800" aria-label="Buscar producto en punto de venta">
-                        </div>
-                        <div class="hidden items-center gap-2 overflow-x-auto scrollbar-hide pr-1 lg:flex">
-                            <span class="hidden shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-300 lg:inline-flex">Presentación</span>
-                            <button type="button" data-topbar-presentacion="" class="topbar-pos-pill inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-bold transition border-[#0a5f56] bg-[#0e9384] text-white shadow-sm" data-active="true">
-                                <span class="h-1.5 w-1.5 rounded-full bg-white"></span> Todos
-                            </button>
-                            @foreach($topPresentaciones as $topPres)
-                                <button type="button" data-topbar-presentacion="{{ $topPres->id }}" class="topbar-pos-pill inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:border-[#0e9384]/30 hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-[#3fbda9] dark:hover:bg-slate-700 dark:hover:text-white">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-500"></span> {{ ucfirst($topPres->presentacion) }}
-                                </button>
-                            @endforeach
+                            <input id="topbar-pos-search" type="search" placeholder="Buscar producto o código de barras..." class="w-full rounded-full border-2 border-slate-200 bg-white py-3 pl-12 pr-4 text-base font-medium leading-none text-slate-700 placeholder:text-slate-400 shadow-sm focus:border-[#0e9384] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0e9384]/15 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-slate-800" aria-label="Buscar producto en punto de venta">
                         </div>
                     </div>
                 <?php elseif(request()->routeIs('caja.*')): ?>
@@ -664,7 +649,7 @@
                         $topHistorialCaja = $topSucursalIdCaja ? \App\Models\CorteCaja::where('id_sucursal', $topSucursalIdCaja)->where('estado','cerrado')->count() : 0;
                     ?>
                     <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
-                        <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-zinc-800">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-emerald-200 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-slate-800">
                             <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                             </span>
@@ -672,23 +657,23 @@
                                 <span class="block text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-300">Abiertas</span>
                                 <span class="flex items-baseline gap-1.5">
                                     <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topAbiertasCaja }}</span>
-                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">caja(s)</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-slate-400">caja(s)</span>
                                 </span>
                             </span>
                         </span>
-                        <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-300">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </span>
                             <span class="leading-none">
-                                <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Esperado</span>
+                                <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Esperado</span>
                                 <span class="flex items-baseline gap-1.5">
                                     <span class="text-sm font-black leading-none text-slate-900 dark:text-white">${{ number_format($topEsperadoCaja, 2) }}</span>
-                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">abiertas</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-slate-400">abiertas</span>
                                 </span>
                             </span>
                         </span>
-                        <span class="inline-flex items-center gap-2.5 rounded-full border border-sky-200 bg-white px-3 py-1.5 shadow-sm dark:border-sky-500/30 dark:bg-zinc-800">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-sky-200 bg-white px-3 py-1.5 shadow-sm dark:border-sky-500/30 dark:bg-slate-800">
                             <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </span>
@@ -699,7 +684,7 @@
                                 </span>
                             </span>
                         </span>
-                        <span class="inline-flex items-center gap-2.5 rounded-full border border-amber-200 bg-white px-3 py-1.5 shadow-sm dark:border-amber-500/30 dark:bg-zinc-800">
+                        <span class="inline-flex items-center gap-2.5 rounded-full border border-amber-200 bg-white px-3 py-1.5 shadow-sm dark:border-amber-500/30 dark:bg-slate-800">
                             <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             </span>
@@ -707,7 +692,7 @@
                                 <span class="block text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">Historial</span>
                                 <span class="flex items-baseline gap-1.5">
                                     <span class="text-sm font-black leading-none text-slate-900 dark:text-white">{{ $topHistorialCaja }}</span>
-                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-zinc-400">cierre(s)</span>
+                                    <span class="text-[11px] font-medium leading-none text-slate-500 dark:text-slate-400">cierre(s)</span>
                                 </span>
                             </span>
                         </span>
@@ -735,9 +720,9 @@
                     ?>
                     <div class="flex items-center gap-2">
                         <?php if ($topPosCorte): ?>
-                            <span class="inline-flex items-center gap-2 rounded-full border border-[#0e9384]/20 bg-white px-3 py-1.5 shadow-sm dark:border-[#3fbda9]/30 dark:bg-[#1e3039]" title="Caja que recibirá la próxima venta">
+                            <span class="inline-flex items-center gap-2 rounded-full border border-[#0e9384]/20 bg-white px-3 py-1.5 shadow-sm dark:border-emerald-500/30 dark:bg-slate-800" title="Caja que recibirá la próxima venta">
                                 <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-[#0c7569] dark:text-[#5ec8b4]"><?php echo e($topPosCajaPropia ? 'MI CAJA' : 'Caja'); ?></span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-[#0c7569] dark:text-emerald-400"><?php echo e($topPosCajaPropia ? 'MI CAJA' : 'Caja'); ?></span>
                                 <span class="text-xs font-black text-slate-800 dark:text-slate-100"><?php echo e($topPosCorte->caja); ?> · <?php echo e($topPosTurno); ?></span>
                             </span>
                         <?php else: ?>
@@ -823,8 +808,8 @@
                     </a>
                 @elseif(request()->routeIs('caja.auditoria'))
                     @php($cajaVolverSucursal = request()->query('sucursal') ?? session('active_sucursal_id', auth()->user()?->id_sucursal))
-                    <a href="{{ route('caja.index', array_filter(['sucursal' => $cajaVolverSucursal])) }}" class="group inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all" title="Volver a operación de caja">
-                        <span class="grid h-6 w-6 place-items-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200 group-hover:bg-slate-200 dark:bg-zinc-700 dark:text-zinc-300 dark:ring-zinc-600">
+                    <a href="{{ route('caja.index', array_filter(['sucursal' => $cajaVolverSucursal])) }}" class="group inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-all" title="Volver a operación de caja">
+                        <span class="grid h-6 w-6 place-items-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200 group-hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-600">
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                         </span>
                         Volver a caja

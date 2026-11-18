@@ -59,7 +59,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-[#e9efec] text-[#22332f] antialiased dark:bg-[#1a2a32] dark:text-[#e6efec]">
+<body class="min-h-screen bg-[#e9efec] text-[#22332f] antialiased dark:bg-slate-900 dark:text-slate-100">
     <div class="flex min-h-screen w-full">
         <aside id="login-aside" class="login-aside hidden w-[42%] flex-col justify-between px-10 py-12 text-white lg:flex xl:w-[39%] xl:px-14">
             <div class="login-fondo" aria-hidden="true">

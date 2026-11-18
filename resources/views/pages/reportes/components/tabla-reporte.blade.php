@@ -4,10 +4,10 @@
 @endphp
 
 <section class="module-card !p-0 overflow-hidden" aria-label="Resultados del reporte de ventas">
-    <header class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4 dark:border-zinc-700 dark:bg-zinc-900">
+    <header class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4 dark:border-slate-700 dark:bg-slate-900">
         <div>
             <h2 class="text-sm font-black tracking-tight text-slate-800 dark:text-white">Ventas del periodo</h2>
-            <p class="mt-0.5 text-xs font-medium text-slate-500 dark:text-zinc-400">
+            <p class="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                 {{ $reporte['etiqueta'] }} ·
                 {{ $consolidado ? 'Todas las sucursales' : $reporte['sucursal']->nombre_sucursal }} ·
                 {{ $reporte['totales']['cantidad'] }} venta(s)
@@ -19,21 +19,21 @@
         </span>
     </header>
 
-    <div class="grid grid-cols-2 gap-px border-b border-slate-200 bg-slate-200 dark:border-zinc-700 dark:bg-zinc-700 lg:grid-cols-5">
-        <div class="bg-white px-4 py-3 dark:bg-zinc-900">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Ventas</p>
+    <div class="grid grid-cols-2 gap-px border-b border-slate-200 bg-slate-200 dark:border-slate-700 dark:bg-slate-700 lg:grid-cols-5">
+        <div class="bg-white px-4 py-3 dark:bg-slate-900">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Ventas</p>
             <p class="mt-1 text-lg font-black leading-none text-slate-900 dark:text-white">{{ $reporte['totales']['cantidad'] }}</p>
         </div>
-        <div class="bg-white px-4 py-3 dark:bg-zinc-900">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Unidades</p>
+        <div class="bg-white px-4 py-3 dark:bg-slate-900">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Unidades</p>
             <p class="mt-1 text-lg font-black leading-none text-slate-900 dark:text-white">{{ number_format((int) $reporte['totales']['unidades']) }}</p>
         </div>
-        <div class="bg-white px-4 py-3 dark:bg-zinc-900">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Subtotal</p>
+        <div class="bg-white px-4 py-3 dark:bg-slate-900">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Subtotal</p>
             <p class="mt-1 text-lg font-black leading-none text-slate-900 dark:text-white">${{ number_format((float) $reporte['totales']['subtotal'], 2) }}</p>
         </div>
-        <div class="bg-white px-4 py-3 dark:bg-zinc-900">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Descuento</p>
+        <div class="bg-white px-4 py-3 dark:bg-slate-900">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Descuento</p>
             <p class="mt-1 text-lg font-black leading-none text-slate-900 dark:text-white">${{ number_format((float) $reporte['totales']['descuento'], 2) }}</p>
         </div>
         <div class="bg-emerald-50 px-4 py-3 dark:bg-emerald-500/10">
@@ -43,14 +43,14 @@
     </div>
 
     @if(! empty($reporte['totales']['por_metodo']))
-        <div class="flex flex-wrap items-center gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-800/40">
-            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400">Por método de pago</span>
+        <div class="flex flex-wrap items-center gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/40">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Por método de pago</span>
             @foreach($reporte['totales']['por_metodo'] as $metodo)
-                <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                     {{ $metodo['metodo'] }}
-                    <span class="text-slate-400 dark:text-zinc-500">·</span>
+                    <span class="text-slate-400 dark:text-slate-500">·</span>
                     ${{ number_format((float) $metodo['total'], 2) }}
-                    <span class="text-slate-400 dark:text-zinc-500">({{ $metodo['cantidad'] }})</span>
+                    <span class="text-slate-400 dark:text-slate-500">({{ $metodo['cantidad'] }})</span>
                 </span>
             @endforeach
         </div>
@@ -78,13 +78,13 @@
                     <tr>
                         <td>
                             <span class="block font-bold text-slate-800 dark:text-slate-100">{{ $venta->folio }}</span>
-                            <span class="block text-xs text-slate-500 dark:text-zinc-400">
+                            <span class="block text-xs text-slate-500 dark:text-slate-400">
                                 {{ $venta->detalles->count() }} producto(s)
                             </span>
                         </td>
                         <td class="whitespace-nowrap">
                             {{ $venta->creado_en?->format('d/m/Y') }}
-                            <span class="block text-xs text-slate-500 dark:text-zinc-400">{{ $venta->creado_en?->format('H:i') }}</span>
+                            <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $venta->creado_en?->format('H:i') }}</span>
                         </td>
                         @if($consolidado)
                             <td>{{ $venta->sucursal?->nombre_sucursal ?? '—' }}</td>
@@ -92,13 +92,13 @@
                         <td>
                             @if($venta->corteCaja)
                                 <span class="block font-semibold text-slate-700 dark:text-slate-200">{{ $venta->corteCaja->caja }}</span>
-                                <span class="block text-xs text-slate-500 dark:text-zinc-400">{{ $venta->corteCaja->turno }}</span>
+                                <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $venta->corteCaja->turno }}</span>
                             @else
                                 <span class="text-slate-400">—</span>
                             @endif
                         </td>
                         <td>
-                            <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                            <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                 {{ $venta->pago?->metodo ?? 'Sin pago' }}
                             </span>
                         </td>
@@ -113,7 +113,7 @@
                             <span @class([
                                 'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold',
                                 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200' => strcasecmp((string) $venta->estado, 'Completada') === 0,
-                                'border-slate-200 bg-slate-50 text-slate-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' => strcasecmp((string) $venta->estado, 'Completada') !== 0,
+                                'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' => strcasecmp((string) $venta->estado, 'Completada') !== 0,
                             ])>
                                 {{ $venta->estado ?: 'Sin estado' }}
                             </span>
@@ -139,8 +139,8 @@
             </tbody>
             @if($reporte['ventas']->isNotEmpty())
                 <tfoot>
-                    <tr class="bg-slate-50 dark:bg-zinc-800/70">
-                        <td colspan="{{ $consolidado ? 5 : 4 }}" class="px-4 py-3 text-right text-xs font-black uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+                    <tr class="bg-slate-50 dark:bg-slate-800/70">
+                        <td colspan="{{ $consolidado ? 5 : 4 }}" class="px-4 py-3 text-right text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
                             Totales del periodo
                         </td>
                         <td class="entradas-num px-4 py-3 font-bold text-slate-900 dark:text-white">

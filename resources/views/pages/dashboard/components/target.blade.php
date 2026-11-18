@@ -28,7 +28,7 @@
             </span>
             <div>
                 <h2 class="text-sm font-black tracking-tight text-slate-800 dark:text-white">Inventario que requiere atención</h2>
-                <p class="mt-0.5 text-xs font-medium text-slate-500 dark:text-zinc-400">
+                <p class="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
                     Caducidades y stock mínimo · {{ $sucursalTarget?->nombre_sucursal ?? 'Todas las sucursales' }}
                 </p>
             </div>
@@ -41,8 +41,8 @@
     </header>
 
     <div class="mt-4 grid gap-4 lg:grid-cols-2">
-        <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-700">
-            <div class="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800/60">
+        <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
                 <div class="flex items-center gap-2">
                     <span class="grid h-7 w-7 place-items-center rounded-lg bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-300">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -51,15 +51,15 @@
                     </span>
                     <div>
                         <p class="text-xs font-black text-slate-800 dark:text-white">Próximos a caducar</p>
-                        <p class="text-[11px] text-slate-500 dark:text-zinc-400">Caducados y dentro de los próximos 90 días</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Caducados y dentro de los próximos 90 días</p>
                     </div>
                 </div>
-                <span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-slate-600 ring-1 ring-slate-200 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-700">
+                <span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
                     {{ $totalProximosCaducar }}
                 </span>
             </div>
 
-            <ul class="divide-y divide-slate-100 dark:divide-zinc-800">
+            <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                 @forelse($proximosCaducar as $fila)
                     @php($dias = $fila['dias_restantes'])
                     <li class="flex items-start justify-between gap-3 px-4 py-3">
@@ -67,7 +67,7 @@
                             <p class="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
                                 {{ $fila['producto']?->nombre_producto ?? 'Producto sin nombre' }}
                             </p>
-                            <p class="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-zinc-400">
+                            <p class="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                                 Lote {{ $fila['folio'] }} · {{ $fila['stock'] }} uds. · {{ $fila['sucursal']?->nombre_sucursal ?? 'Sin sucursal' }}
                             </p>
                         </div>
@@ -79,24 +79,24 @@
                             ])>
                                 {{ $fila['estado'] === 'CADUCADO' ? 'Caducado' : 'Por caducar' }}
                             </span>
-                            <p class="mt-1 text-[11px] font-semibold text-slate-500 dark:text-zinc-400">
+                            <p class="mt-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                                 {{ $fila['fecha_caducidad']?->format('d/m/Y') ?? 'Sin fecha' }}
                             </p>
                             @if($dias !== null)
-                                <p class="text-[10px] text-slate-400 dark:text-zinc-500">
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500">
                                     {{ $dias < 0 ? 'Vencido hace '.abs($dias).' día(s)' : ($dias === 0 ? 'Caduca hoy' : "En {$dias} día(s)") }}
                                 </p>
                             @endif
                         </div>
                     </li>
                 @empty
-                    <li class="px-4 py-8 text-center text-sm text-slate-500 dark:text-zinc-400">
+                    <li class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
                         No hay lotes caducados ni próximos a caducar.
                     </li>
                 @endforelse
             </ul>
 
-            <div class="border-t border-slate-100 px-4 py-2.5 dark:border-zinc-800">
+            <div class="border-t border-slate-100 px-4 py-2.5 dark:border-slate-800">
                 <a href="{{ route('lotes.index', array_filter(['sucursal' => $sucursalTarget?->id])) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-[#0e9384] hover:text-[#0c7569] dark:text-emerald-300">
                     Ver lotes y caducidades
                     <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -106,8 +106,8 @@
             </div>
         </div>
 
-        <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-700">
-            <div class="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800/60">
+        <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
                 <div class="flex items-center gap-2">
                     <span class="grid h-7 w-7 place-items-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -116,15 +116,15 @@
                     </span>
                     <div>
                         <p class="text-xs font-black text-slate-800 dark:text-white">Stock bajo</p>
-                        <p class="text-[11px] text-slate-500 dark:text-zinc-400">Productos en o por debajo de su mínimo</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Productos en o por debajo de su mínimo</p>
                     </div>
                 </div>
-                <span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-slate-600 ring-1 ring-slate-200 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-700">
+                <span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
                     {{ $totalStockBajo }}
                 </span>
             </div>
 
-            <ul class="divide-y divide-slate-100 dark:divide-zinc-800">
+            <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                 @forelse($stockBajo as $fila)
                     @php($porcentaje = $fila['minimo'] > 0 ? min(100, (int) round(($fila['stock'] / $fila['minimo']) * 100)) : 0)
                     <li class="px-4 py-3">
@@ -133,7 +133,7 @@
                                 <p class="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
                                     {{ $fila['producto']->nombre_producto }}
                                 </p>
-                                <p class="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-zinc-400">
+                                <p class="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                                     {{ $fila['presentacion']?->presentacion?->presentacion ?? 'Unidad base' }} · mínimo {{ $fila['minimo'] }} uds.
                                 </p>
                             </div>
@@ -141,18 +141,18 @@
                                 {{ $fila['stock'] }} uds.
                             </span>
                         </div>
-                        <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
+                        <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                             <div class="h-full rounded-full bg-amber-500" style="width: {{ $porcentaje }}%"></div>
                         </div>
                     </li>
                 @empty
-                    <li class="px-4 py-8 text-center text-sm text-slate-500 dark:text-zinc-400">
+                    <li class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
                         Todos los productos están por encima de su stock mínimo.
                     </li>
                 @endforelse
             </ul>
 
-            <div class="border-t border-slate-100 px-4 py-2.5 dark:border-zinc-800">
+            <div class="border-t border-slate-100 px-4 py-2.5 dark:border-slate-800">
                 <a href="{{ route('inventario.stock', array_filter(['sucursal' => $sucursalTarget?->id])) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-[#0e9384] hover:text-[#0c7569] dark:text-emerald-300">
                     Ver inventario
                     <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

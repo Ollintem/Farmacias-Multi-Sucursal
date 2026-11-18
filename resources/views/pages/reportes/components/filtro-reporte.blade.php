@@ -26,7 +26,7 @@
     <form method="GET" action="{{ route('reportes.index') }}" class="grid gap-4 lg:grid-cols-12 lg:items-end">
         <div class="grid gap-3 sm:grid-cols-2 lg:col-span-6">
             <div>
-                <label for="reporte-tipo" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+                <label for="reporte-tipo" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                     Tipo de periodo
                 </label>
                 <x-option-pick
@@ -39,7 +39,7 @@
             </div>
 
             <div x-show="tipo === 'dia'" x-cloak>
-                <label for="reporte-fecha" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+                <label for="reporte-fecha" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                     Fecha
                 </label>
                 <input
@@ -53,7 +53,7 @@
             </div>
 
             <div x-show="tipo === 'semana'" x-cloak>
-                <label for="reporte-semana" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+                <label for="reporte-semana" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                     Semana (lunes a domingo)
                 </label>
                 <input
@@ -67,7 +67,7 @@
             </div>
 
             <div x-show="tipo === 'mes'" x-cloak>
-                <label for="reporte-mes" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+                <label for="reporte-mes" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                     Mes
                 </label>
                 <input
@@ -82,7 +82,7 @@
         </div>
 
         <div class="lg:col-span-3">
-            <label for="reporte-sucursal" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+            <label for="reporte-sucursal" class="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                 Sucursal
             </label>
 
@@ -97,7 +97,7 @@
                 </select>
             @else
                 <input type="hidden" name="sucursal" value="{{ $filtros['sucursal'] ?? '' }}">
-                <div class="theme-input flex w-full items-center gap-2 text-slate-700 dark:text-zinc-200">
+                <div class="theme-input flex w-full items-center gap-2 text-slate-700 dark:text-slate-200">
                     <svg class="h-4 w-4 shrink-0 text-[#0e9384]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 21s7-5.25 7-11a7 7 0 10-14 0c0 5.75 7 11 7 11z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 10.5h.01"/>
@@ -128,7 +128,7 @@
                 Descargar PDF
             </a>
 
-            <span class="ms-auto inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            <span class="ms-auto inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3M4 11h16M5 21h14a1 1 0 001-1V7a1 1 0 00-1-1H5a1 1 0 00-1 1v13a1 1 0 001 1z"/>
                 </svg>

@@ -91,7 +91,7 @@
         x-show="abierto"
         x-cloak
         x-transition.opacity
-        class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-zinc-700 dark:bg-zinc-900"
+        class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-slate-700 dark:bg-slate-900"
     >
         <div
             class="farma-pick-scroll"
@@ -104,7 +104,7 @@
                 role="option"
                 :aria-selected="String(valor) === '{{ $optValue }}'"
                 @click="elegir('{{ $optValue }}', $el.querySelector('[data-etiqueta]').textContent)"
-                :class="String(valor) === '{{ $optValue }}' ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100'"
+                :class="String(valor) === '{{ $optValue }}' ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 dark:border-emerald-300 dark:from-emerald-400 dark:to-emerald-500 dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100'"
                 class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border-[1.5px] px-3 py-2 text-left text-sm font-semibold transition active:scale-[0.99]"
             >
                 <span data-etiqueta class="truncate">{{ $optLabel }}</span>

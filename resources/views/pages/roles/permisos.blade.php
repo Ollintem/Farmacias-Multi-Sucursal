@@ -84,8 +84,8 @@
                     </form>
 
                     @if($selectedRol)
-                        <p class="mt-3 text-sm text-slate-500 dark:text-zinc-400">
-                            Configuración de <span class="font-semibold text-slate-700 dark:text-zinc-200">{{ $selectedRol->tipo_rol }}</span>.
+                        <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                            Configuración de <span class="font-semibold text-slate-700 dark:text-slate-200">{{ $selectedRol->tipo_rol }}</span>.
                             Los cambios aplican a todos los usuarios con este rol.
                         </p>
                     @endif

@@ -19,7 +19,7 @@
 
     @if($rolConPermisos)
         <div x-show="rol !== ''" x-cloak class="mt-2 flex flex-wrap items-center gap-2">
-            <span class="text-xs text-slate-500 dark:text-zinc-400" x-text="resumenPermisos()"></span>
+            <span class="text-xs text-slate-500 dark:text-slate-400" x-text="resumenPermisos()"></span>
             <button type="button" @click="abierto = true" class="text-xs font-semibold text-[#0c9f9c] underline hover:text-[#0a8582]">Ver / editar permisos</button>
         </div>
     @endif

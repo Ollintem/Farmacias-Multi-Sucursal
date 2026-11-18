@@ -46,7 +46,7 @@
                         role="radio"
                         :aria-checked="modo === 'claro'"
                         class="rounded-2xl border p-4 text-left transition"
-                        :class="modo === 'claro' ? 'border-[#0e9384] ring-2 ring-[#0e9384]/25 bg-[#f7faf9]' : 'border-[#cfddd7] dark:border-[#33505c]'"
+                        :class="modo === 'claro' ? 'border-[#0e9384] ring-2 ring-[#0e9384]/25 bg-[#f7faf9]' : 'border-[#cfddd7] dark:border-slate-700'"
                     >
                         <span class="flex h-20 items-center justify-center rounded-xl bg-[#eef5f2] border border-[#cfddd7]">
                             <span class="theme-switch" aria-hidden="true">
@@ -68,9 +68,9 @@
                         role="radio"
                         :aria-checked="modo === 'oscuro'"
                         class="rounded-2xl border p-4 text-left transition"
-                        :class="modo === 'oscuro' ? 'border-[#0e9384] ring-2 ring-[#0e9384]/25' : 'border-slate-200 dark:border-zinc-700'"
+                        :class="modo === 'oscuro' ? 'border-[#0e9384] ring-2 ring-[#0e9384]/25' : 'border-slate-200 dark:border-slate-700'"
                     >
-                        <span class="flex h-20 items-center justify-center rounded-xl bg-[#1e3039] border border-[#33505c]">
+                        <span class="flex h-20 items-center justify-center rounded-xl bg-[#0f172a] border border-[#334155]">
                             <span class="theme-switch" aria-hidden="true">
                                 <span class="theme-switch-track">
                                     <span class="theme-switch-thumb"></span>
@@ -90,7 +90,7 @@
                         role="radio"
                         :aria-checked="modo === 'sistema'"
                         class="rounded-2xl border p-4 text-left transition"
-                        :class="modo === 'sistema' ? 'border-[#0e9384] ring-2 ring-[#0e9384]/25' : 'border-slate-200 dark:border-zinc-700'"
+                        :class="modo === 'sistema' ? 'border-[#0e9384] ring-2 ring-[#0e9384]/25' : 'border-slate-200 dark:border-slate-700'"
                     >
                         <span class="flex h-20 items-center justify-center rounded-xl bg-gradient-to-br from-white to-zinc-900 border border-slate-200">
                             <svg class="h-8 w-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

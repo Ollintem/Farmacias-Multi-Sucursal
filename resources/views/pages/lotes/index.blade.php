@@ -21,43 +21,43 @@
             {{-- KPIs: en escritorio viven en el topbar, aquí solo móvil --}}
             <header class="mb-6 lg:hidden" aria-label="Indicadores de lotes y caducidades">
                 <div>
-                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-  <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-zinc-800 lg:grid-cols-4">
-    <a class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60" href="{{ $enlaceTarjeta('todos') }}" @if($filtroEstado === 'todos') aria-current="true" @endif>
-    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 ring-1">
+                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+  <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-slate-800 lg:grid-cols-4">
+    <a class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/60" href="{{ $enlaceTarjeta('todos') }}" @if($filtroEstado === 'todos') aria-current="true" @endif>
+    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 ring-1">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
         </span>
         <div class="min-w-0 flex-1">
-            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Total de lotes</p>
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 leading-none">Total de lotes</p>
             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">{{ $totalLotes }}</p>
-        </div><span class="ml-auto grid h-5 w-5 place-items-center rounded-full bg-slate-50 text-slate-400 opacity-60 transition group-hover:opacity-100 dark:bg-zinc-800 dark:text-zinc-500"><svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></span>
+        </div><span class="ml-auto grid h-5 w-5 place-items-center rounded-full bg-slate-50 text-slate-400 opacity-60 transition group-hover:opacity-100 dark:bg-slate-800 dark:text-slate-500"><svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></span>
 </a>
-    <a class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60" href="{{ $enlaceTarjeta('vigentes') }}" @if($filtroEstado === 'vigentes') aria-current="true" @endif>
+    <a class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/60" href="{{ $enlaceTarjeta('vigentes') }}" @if($filtroEstado === 'vigentes') aria-current="true" @endif>
     <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/20 ring-1">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </span>
         <div class="min-w-0 flex-1">
-            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Vigentes</p>
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 leading-none">Vigentes</p>
             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">{{ $vigentes }}</p>
-        </div><span class="ml-auto grid h-5 w-5 place-items-center rounded-full bg-slate-50 text-slate-400 opacity-60 transition group-hover:opacity-100 dark:bg-zinc-800 dark:text-zinc-500"><svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></span>
+        </div><span class="ml-auto grid h-5 w-5 place-items-center rounded-full bg-slate-50 text-slate-400 opacity-60 transition group-hover:opacity-100 dark:bg-slate-800 dark:text-slate-500"><svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></span>
 </a>
-    <a href="{{ $enlaceTarjeta('por-caducar') }}" @class(['relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60', '!border-amber-200 !bg-amber-50 dark:!border-amber-500/30 dark:!bg-amber-500/10' => $porCaducar > 0]) @if($filtroEstado === 'por-caducar') aria-current="true" @endif>
+    <a href="{{ $enlaceTarjeta('por-caducar') }}" @class(['relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/60', '!border-amber-200 !bg-amber-50 dark:!border-amber-500/30 dark:!bg-amber-500/10' => $porCaducar > 0]) @if($filtroEstado === 'por-caducar') aria-current="true" @endif>
     <span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-amber-500"></span><span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20 ring-1">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </span>
         <div class="min-w-0 flex-1">
-            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Por caducar</p>
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 leading-none">Por caducar</p>
             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">{{ $porCaducar }}</p>
-        </div><span class="ml-auto grid h-5 w-5 place-items-center rounded-full bg-slate-50 text-slate-400 opacity-60 transition group-hover:opacity-100 dark:bg-zinc-800 dark:text-zinc-500"><svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></span>
+        </div><span class="ml-auto grid h-5 w-5 place-items-center rounded-full bg-slate-50 text-slate-400 opacity-60 transition group-hover:opacity-100 dark:bg-slate-800 dark:text-slate-500"><svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></span>
 </a>
-    <a href="{{ $enlaceTarjeta('caducados') }}" @class(['relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/60', '!border-amber-200 !bg-amber-50 dark:!border-amber-500/30 dark:!bg-amber-500/10' => $caducados > 0]) @if($filtroEstado === 'caducados') aria-current="true" @endif>
+    <a href="{{ $enlaceTarjeta('caducados') }}" @class(['relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/60', '!border-amber-200 !bg-amber-50 dark:!border-amber-500/30 dark:!bg-amber-500/10' => $caducados > 0]) @if($filtroEstado === 'caducados') aria-current="true" @endif>
     <span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-amber-500"></span><span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-700 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20 ring-1">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
         </span>
         <div class="min-w-0 flex-1">
-            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400 leading-none">Caducados</p>
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 leading-none">Caducados</p>
             <p class="mt-1 text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white">{{ $caducados }}</p>
-        </div><span class="ml-auto grid h-5 w-5 place-items-center rounded-full bg-slate-50 text-slate-400 opacity-60 transition group-hover:opacity-100 dark:bg-zinc-800 dark:text-zinc-500"><svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></span>
+        </div><span class="ml-auto grid h-5 w-5 place-items-center rounded-full bg-slate-50 text-slate-400 opacity-60 transition group-hover:opacity-100 dark:bg-slate-800 dark:text-slate-500"><svg class="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></span>
 </a>
   </dl>
 </div>
@@ -65,7 +65,7 @@
             </header>
 
             <div class="lg:hidden">
-                @include('pages.inventario.tabs', ['seccion' => 'lotes', 'selectedSucursal' => $selectedSucursal])
+                @include('pages.inventario.components.tabs', ['seccion' => 'lotes', 'selectedSucursal' => $selectedSucursal])
             </div>
 
             <section class="module-card noti-listado inventario-listado !flex-none" style="flex:none !important; display:block !important;" aria-label="Listado de lotes"
@@ -153,16 +153,12 @@
                     </div>
                 </header>
 
-                {{-- Toolbar: picker + buscador alineados --}}
+                {{-- Toolbar: buscador --}}
                 <div class="entradas-toolbar border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
                     <form method="GET" action="{{ route('lotes.index') }}" class="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         @if($filtroEstado !== 'todos')
                             <input type="hidden" name="estado" value="{{ $filtroEstado }}">
                         @endif
-                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                            <span class="shrink-0">Sucursal</span>
-                            <span class="min-w-[12rem]"><x-option-pick name="sucursal" label="Sucursales" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="$selectedSucursal?->id" placeholder="Seleccionar sucursal" :autoSubmit="true" /></span>
-                        </label>
                         <div class="flex items-center gap-2">
                             <input type="search" name="buscar" value="{{ old('buscar', $busqueda) }}" placeholder="Buscar folio, proveedor o producto" class="theme-input w-full sm:w-72" aria-label="Buscar lote" @input.debounce.200ms="texto = $event.target.value">
                             <button type="submit" class="theme-button theme-button-secondary shrink-0 whitespace-nowrap !min-h-0 !py-2.5">Buscar</button>
@@ -282,7 +278,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="merma.abierto = false"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -428,7 +424,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="anular.abierto = false"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"

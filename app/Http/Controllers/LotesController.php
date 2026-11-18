@@ -135,7 +135,6 @@ class LotesController extends Controller
 
         return view('pages.lotes.index', compact(
             'lotes',
-            'sucursales',
             'selectedSucursal',
             'busqueda',
             'filtroEstado',

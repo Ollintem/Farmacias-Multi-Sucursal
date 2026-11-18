@@ -17,18 +17,21 @@ use Illuminate\Support\Collection;
 class InventarioService
 {
     /**
-     * Consulta base de productos activos, opcionalmente acotada a una sucursal.
+     * Consulta base de productos, opcionalmente acotada a una sucursal.
      *
      * `soloConInventario` usa las filas reales de `inventario` (pestaña Stock
      * y punto de venta). Cuando es false, la sucursal se resuelve por el pivot
      * `producto_sucursal`, que es el catálogo dado de alta en esa sucursal.
      *
+     * `soloActivos` se desactiva solo en el catálogo (pestaña Productos),
+     * donde los inactivos deben listarse para poder reactivarlos.
+     *
      * @return Builder<Producto>
      */
-    public function consultaProductos(?int $idSucursal = null, bool $soloConInventario = true): Builder
+    public function consultaProductos(?int $idSucursal = null, bool $soloConInventario = true, bool $soloActivos = true): Builder
     {
         return Producto::query()
-            ->where('productos.es_activo', true)
+            ->when($soloActivos, fn (Builder $query) => $query->where('productos.es_activo', true))
             ->when($idSucursal !== null, function (Builder $query) use ($idSucursal, $soloConInventario): void {
                 if ($soloConInventario) {
                     $query->whereHas(
@@ -47,7 +50,7 @@ class InventarioService
     }
 
     /**
-     * Busca productos activos por nombre parcial o código de barras.
+     * Busca productos por nombre parcial o código de barras.
      *
      * El código se compara exacto por defecto (lectura de escáner); los
      * llamadores que necesitan el comportamiento histórico de búsqueda
@@ -62,9 +65,10 @@ class InventarioService
         string $termino,
         ?int $idSucursal = null,
         bool $soloConInventario = true,
-        bool $codigoExacto = true
+        bool $codigoExacto = true,
+        bool $soloActivos = true
     ): Builder {
-        $query = $this->consultaProductos($idSucursal, $soloConInventario);
+        $query = $this->consultaProductos($idSucursal, $soloConInventario, $soloActivos);
         $termino = trim($termino);
 
         if ($termino === '') {

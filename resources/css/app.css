@@ -52,9 +52,10 @@
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-farma-400);
-        --color-accent-content: var(--color-farma-300);
-        --color-accent-foreground: #10201d;
+        /* Modo oscuro clínico: acento esmeralda (acciones/éxito). */
+        --color-accent: #10b981;
+        --color-accent-content: #34d399;
+        --color-accent-foreground: #052e2b;
     }
 }
 
@@ -83,7 +84,7 @@
         min-height: 2.9rem;
         border-left: 3px solid transparent;
         border-radius: 0 0.75rem 0.75rem 0;
-        color: #d5e5e0;
+        color: #e2e8f0;
         font-size: 0.925rem;
         font-weight: 500;
         letter-spacing: 0.01em;
@@ -100,7 +101,7 @@
     }
 
     .erp-sidebar [data-current="true"] {
-        border-left-color: #5ec8b4;
+        border-left-color: #34d399;
         background: rgba(14, 147, 132, 0.35);
         color: #ffffff;
         font-weight: 700;
@@ -108,14 +109,14 @@
     }
 
     .erp-sidebar [data-flux-sidebar-item] svg {
-        color: #a9c6bf;
+        color: #94a3b8;
         width: 20px;
         height: 20px;
         flex-shrink: 0;
     }
 
     .erp-sidebar [data-flux-sidebar-item]:hover svg {
-        color: #d5e5e0;
+        color: #e2e8f0;
     }
 
     .erp-sidebar [data-flux-sidebar-item][data-current="true"] svg {
@@ -139,21 +140,21 @@
     }
 
     .erp-sidebar [data-flux-sidebar-profile] {
-        color: #eef5f2;
+        color: #e2e8f0;
     }
 
     .erp-sidebar-version {
         border-top: 1px solid rgba(190, 210, 203, 0.18);
-        color: #8fa9a3;
+        color: #94a3b8;
     }
 }
 
 /* --- Menú de usuario del sidebar (mismo tema FarmaERP) --- */
 
 .erp-user-menu [data-flux-menu] {
-    background: #1e3039;
-    border: 1px solid rgba(190, 210, 203, 0.22);
-    box-shadow: 0 16px 40px rgba(26, 42, 50, 0.5);
+    background: #1e293b;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 16px 40px rgba(2, 6, 23, 0.5);
 }
 
 .erp-user-menu [data-flux-heading] {
@@ -161,11 +162,11 @@
 }
 
 .erp-user-menu [data-flux-text] {
-    color: #c3d4cf;
+    color: #cbd5e1;
 }
 
 .erp-user-menu [data-flux-menu-item] {
-    color: #d5e5e0;
+    color: #e2e8f0;
 }
 
 .erp-user-menu [data-flux-menu-item]:hover,
@@ -175,7 +176,7 @@
 }
 
 .erp-user-menu [data-flux-menu-item-icon] {
-    color: #a9c6bf;
+    color: #94a3b8;
 }
 
 .erp-user-menu [data-flux-menu-item]:hover [data-flux-menu-item-icon],
@@ -189,6 +190,12 @@
     --color-accent: #0c9f9c;
     --color-accent-content: #ffffff;
     --color-accent-foreground: #ffffff;
+}
+
+.dark .settings-shell {
+    --color-accent: #10b981;
+    --color-accent-content: #34d399;
+    --color-accent-foreground: #052e2b;
 }
 
 /* --- Tarjetas de tema (como el interruptor del dashboard) --- */
@@ -235,7 +242,7 @@
     color: #047857;
 }
 
-.pos-page { min-height: 100%; background: #0b1322; color: #f8fafc; padding: 1rem; }
+.pos-page { min-height: 100%; background: #0f172a; color: #f8fafc; padding: 1rem; }
 .pos-shell { max-width: 1540px; margin: 0 auto; }
 .pos-header, .pos-search-row, .pos-toolbar, .pos-cart-heading, .pos-cart-summary > div { display: flex; align-items: center; justify-content: space-between; }
 .pos-header { gap: 1rem; padding: 1.25rem 0 1.5rem; }
@@ -453,7 +460,7 @@
 }
 
 .tema-preview-oscuro {
-    background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
+    background: #0f172a;
     border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
@@ -467,7 +474,7 @@
 }
 
 .tema-preview-sistema {
-    background: linear-gradient(90deg, #f4f9f3 0%, #f4f9f3 50%, #111827 50%, #0b1220 100%);
+    background: linear-gradient(90deg, #f4f9f3 0%, #f4f9f3 50%, #0f172a 50%, #1e293b 100%);
     border: 1px solid #d8e5d8;
 }
 
@@ -517,8 +524,8 @@ select.theme-input option {
 
 .dark .theme-input option,
 .theme-dark .theme-input option {
-    background-color: #1e3039;
-    color: #e6efec;
+    background-color: #162032;
+    color: #f1f5f9;
 }
 
 .theme-input::placeholder {
@@ -527,7 +534,7 @@ select.theme-input option {
 }
 
 .dark .theme-input::placeholder {
-    color: #8fa9a3;
+    color: #94a3b8;
     opacity: 1;
 }
 
@@ -552,8 +559,8 @@ select.theme-input option {
 }
 
 .theme-dark {
-    background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
-    color: #f8fafc;
+    background: #0f172a;
+    color: #f1f5f9;
 }
 
 .theme-shell-inner {
@@ -653,12 +660,21 @@ select.theme-input option {
     box-shadow: 0 16px 32px rgba(14, 147, 132, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
-.theme-dark .theme-button-primary {
-    background: linear-gradient(135deg, #34d399, #0e9384);
-    border-color: #6ee7b7;
+.theme-dark .theme-button-primary,
+.dark .theme-button-primary {
+    background: #10b981;
+    border-color: #34d399;
     color: #052e2b;
     text-shadow: none;
-    box-shadow: 0 10px 22px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    box-shadow: 0 10px 22px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.theme-dark .theme-button-primary:hover,
+.dark .theme-button-primary:hover {
+    background: #34d399;
+    border-color: #6ee7b7;
+    color: #052e2b;
+    box-shadow: 0 14px 28px rgba(16, 185, 129, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .theme-button-secondary {
@@ -677,37 +693,29 @@ select.theme-input option {
 }
 
 .theme-dark .theme-button-secondary {
-    background: rgba(34, 53, 63, 0.95);
-    border-color: #3fbda9;
+    background: rgba(30, 41, 59, 0.95);
+    border-color: #10b981;
     border-width: 1.5px;
-    color: #e6fffa;
+    color: #f1f5f9;
 }
 
 .theme-dark .theme-button-secondary:hover {
-    border-color: #5ec8b4;
-    background: rgba(14, 147, 132, 0.35);
+    border-color: #34d399;
+    background: rgba(16, 185, 129, 0.22);
     color: #ffffff;
-}
-
-.dark .theme-button-primary {
-    background: linear-gradient(135deg, #34d399, #0e9384);
-    border-color: #6ee7b7;
-    color: #052e2b;
-    text-shadow: none;
-    box-shadow: 0 10px 22px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .dark .theme-button-secondary {
-    background: rgba(34, 53, 63, 0.95);
-    border-color: #3fbda9;
+    background: rgba(30, 41, 59, 0.95);
+    border-color: #10b981;
     border-width: 1.5px;
-    color: #e6fffa;
+    color: #f1f5f9;
 }
 
 .dark .theme-button-secondary:hover {
-    border-color: #5ec8b4;
-    background: rgba(14, 147, 132, 0.35);
-    color: #ffffff;
+    border-color: #34d399;
+    background: rgba(16, 185, 129, 0.22);
+    color: #f1f5f9;
 }
 
 .theme-button-danger {
@@ -791,8 +799,8 @@ select.theme-input option {
 
 .dark .theme-button-ghost:hover,
 .theme-dark .theme-button-ghost:hover {
-    background: rgba(94, 200, 180, 0.12);
-    color: #5ec8b4;
+    background: rgba(52, 211, 153, 0.12);
+    color: #34d399;
 }
 
 .theme-button:disabled,
@@ -828,6 +836,18 @@ select.theme-input option {
 .theme-input:focus {
     border-color: #34d399;
     box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
+}
+
+/* Foco en modo oscuro: acento sky (elementos de enfoque/Información).
+   Sin @layer y con mayor especificidad que .theme-input:focus. */
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus,
+.theme-dark input:focus,
+.theme-dark textarea:focus,
+.theme-dark select:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.22);
 }
 
 .theme-input:-webkit-autofill,
@@ -916,8 +936,8 @@ select.theme-input option {
 
 .dark .module-tab:hover,
 .dark .module-tab-active {
-    border-bottom-color: #34d399;
-    color: #6ee7b7;
+    border-bottom-color: #0ea5e9;
+    color: #7dd3fc;
 }
 
 .module-hero {
@@ -931,8 +951,8 @@ select.theme-input option {
 }
 
 .dark .module-hero {
-    border-color: rgba(71, 85, 105, 0.7);
-    background: linear-gradient(120deg, #123b3a 0%, #142338 65%, #17253e 100%);
+    border-color: #334155;
+    background: #1e293b;
 }
 
 .module-card {
@@ -996,9 +1016,22 @@ select.theme-input option {
 /* Punto de venta: usa todo el ancho disponible. Anula el padding doble
    heredado de flux:main + module-page y el tope de ancho del inner.
    El modificador .pos-page solo lo lleva la vista del POS. */
+/* El POS se ajusta al viewport: con el body a altura fija, la fila 1fr del
+   grid de flux entrega a main exactamente el espacio restante bajo el
+   topbar —89px en escritorio, 137px en móvil, más si el pill se envuelve—
+   sin constantes por ancho. El inner llena la página vía flex y las tarjetas
+   crecen hasta el borde inferior. Si el contenido mínimo (tarjeta de 520px)
+   no cabe, hace scroll en main en vez de recortar; en impresión html/body
+   vuelven a auto/visible (regla @media print). */
+body:has([data-flux-main] > .pos-page) {
+    height: 100dvh;
+    overflow: hidden;
+}
+
 [data-flux-main]:has(> .pos-page) {
     padding: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     scrollbar-width: none;
 }
 
@@ -1007,9 +1040,11 @@ select.theme-input option {
 }
 
 .module-page.pos-page {
-    padding: 0.75rem;
+    padding: 0.5rem 0.75rem;
     overflow: hidden;
     scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
 }
 
 .module-page.pos-page::-webkit-scrollbar {
@@ -1018,7 +1053,7 @@ select.theme-input option {
 
 @media (min-width: 640px) {
     .module-page.pos-page {
-        padding: 0.875rem;
+        padding: 0.5rem 0.875rem;
     }
 }
 
@@ -1031,9 +1066,18 @@ select.theme-input option {
 .module-page.pos-page .module-page-inner {
     max-width: none;
     gap: 1rem;
-    min-height: calc(100dvh - 64px);
+    /* Sin min-height: la altura la da main (grid 1fr con body a 100dvh) y el
+       flex:1 de .noti-full llena la página; el contenido mínimo de las
+       tarjetas (520px) marca el piso y main se encarga del scroll si no cabe. */
     display: flex;
     flex-direction: column;
+}
+
+/* Por debajo de lg el gap entre bloques se compacta; en lg+ se conserva 1rem. */
+@media (max-width: 1023.98px) {
+    .module-page.pos-page .module-page-inner {
+        gap: 0.75rem;
+    }
 }
 
 .theme-dark .theme-table {
@@ -1525,6 +1569,12 @@ select.theme-input option {
     box-shadow: 0 0 0 2px rgba(12, 159, 156, 0.2);
 }
 
+/* Estado activo en oscuro: esmeralda (contraste sobre slate). */
+.dark .role-card.active {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.22);
+}
+
 .role-card-icon {
     display: flex;
     align-items: center;
@@ -1544,6 +1594,11 @@ select.theme-input option {
 .role-card-icon.role-card-icon-teal {
     background: rgba(12, 159, 156, 0.1);
     color: #0c9f9c;
+}
+
+.dark .role-card-icon.role-card-icon-teal {
+    background: rgba(16, 185, 129, 0.14);
+    color: #34d399;
 }
 
 .role-card-title {
@@ -1609,6 +1664,11 @@ select.theme-input option {
 .role-card-actions a:hover {
     color: #0c9f9c;
     background: rgba(12, 159, 156, 0.1);
+}
+
+.dark .role-card-actions a:hover {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.16);
 }
 
 .role-card-actions button:hover {
@@ -1693,6 +1753,12 @@ input[type="checkbox"]:focus {
     border-color: #0c9f9c;
 }
 
+/* Enfoque en oscuro: acento sky. */
+.dark input[type="checkbox"]:focus {
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+    border-color: #0ea5e9;
+}
+
 input[type="checkbox"]:checked {
     background: #0c9f9c;
     border-color: #0c9f9c;
@@ -1712,8 +1778,8 @@ input[type="checkbox"]:checked {
 }
 
 .dark input[type="checkbox"]:checked {
-    background: #0c9f9c;
-    border-color: #0c9f9c;
+    background: #10b981;
+    border-color: #10b981;
 }
 
 input[type="checkbox"]:disabled {
@@ -1724,8 +1790,10 @@ input[type="checkbox"]:disabled {
 /* ==========================================================================
    FarmaERP — Sistema de diseño 2026 (psicología del color farmacia)
    - Claro: fondo salvia medio #e9efec (no blanco puro), tarjetas #f7faf9.
-   - Oscuro: fondo petróleo suave #1a2a32 (no negro puro), superficie #22353f.
-   - Primario teal medio #0e9384 (salud/confianza), secundario petróleo #245a6b.
+   - Oscuro: fondo pizarra slate #0f172a (no negro puro), superficie #1e293b
+     con bordes sutiles #334155 (aspecto SaaS clínico / panel médico).
+   - Primario esmeralda #10b981 (acciones/éxito), acento info sky #0ea5e9
+     (pestañas, foco, etiquetas informativas).
    ========================================================================== */
 
 :root {
@@ -1744,18 +1812,18 @@ input[type="checkbox"]:disabled {
 }
 
 .dark {
-    --farma-bg: #1a2a32;
-    --farma-surface: #22353f;
-    --farma-surface-2: #1e3039;
-    --farma-border: #33505c;
-    --farma-text: #e6efec;
-    --farma-muted: #a9bfb8;
-    --farma-primary: #3fbda9;
-    --farma-primary-strong: #5ec8b4;
-    --farma-primary-soft: rgba(63, 189, 169, 0.14);
-    --farma-petrol: #33505c;
-    --farma-sidebar: #1e3039;
-    --farma-sidebar-2: #1a2a32;
+    --farma-bg: #0f172a;
+    --farma-surface: #1e293b;
+    --farma-surface-2: #162032;
+    --farma-border: #334155;
+    --farma-text: #f1f5f9;
+    --farma-muted: #94a3b8;
+    --farma-primary: #10b981;
+    --farma-primary-strong: #34d399;
+    --farma-primary-soft: rgba(16, 185, 129, 0.14);
+    --farma-petrol: #334155;
+    --farma-sidebar: #1e293b;
+    --farma-sidebar-2: #0f172a;
 }
 
 body {
@@ -1775,8 +1843,8 @@ body {
 }
 
 .dark .module-page {
-    background: #1a2a32;
-    color: #e6efec;
+    background: #0f172a;
+    color: #f1f5f9;
 }
 
 .module-hero {
@@ -1785,8 +1853,8 @@ body {
 }
 
 .dark .module-hero {
-    border-color: #33505c;
-    background: linear-gradient(120deg, #234741 0%, #22353f 65%, #245a6b 100%);
+    border-color: #334155;
+    background: #1e293b;
 }
 
 .module-card,
@@ -1799,8 +1867,8 @@ body {
 .dark .module-card,
 .dark .module-stat,
 .dark .module-table {
-    background: #22353f;
-    border-color: #33505c;
+    background: #1e293b;
+    border-color: #334155;
 }
 
 /* Botones terapéuticos: las definiciones principales viven arriba
@@ -1830,9 +1898,9 @@ body {
 }
 
 .dark .farma-theme-toggle {
-    background: #22353f;
-    border-color: #33505c;
-    color: #e6efec;
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
 }
 
 .farma-theme-dot {
@@ -1846,7 +1914,7 @@ body {
 }
 
 .dark .farma-theme-dot {
-    color: #5ec8b4;
+    color: #34d399;
 }
 
 .farma-kicker {
@@ -1858,7 +1926,7 @@ body {
 }
 
 .dark .farma-kicker {
-    color: #5ec8b4;
+    color: #34d399;
 }
 
 /* ==========================================================================
@@ -1869,8 +1937,14 @@ body {
    invisible sobre el fondo oscuro.
    ========================================================================== */
 
+/* Modo oscuro: color sólido slate-800, sin degradado pesado. */
+.dark .erp-sidebar {
+    background: #1e293b;
+    box-shadow: 8px 0 24px rgba(2, 6, 23, 0.35);
+}
+
 .erp-sidebar [data-flux-sidebar-item] {
-    color: #e8f1ee;
+    color: #e2e8f0;
 }
 
 .erp-sidebar [data-flux-sidebar-item]:hover {
@@ -1879,11 +1953,11 @@ body {
 }
 
 .erp-sidebar [data-flux-sidebar-item] svg {
-    color: #a9c6bf;
+    color: #94a3b8;
 }
 
 .erp-sidebar [data-flux-sidebar-item]:hover svg {
-    color: #e8f1ee;
+    color: #e2e8f0;
 }
 
 .erp-sidebar [data-flux-sidebar-item][data-current] {
@@ -1891,7 +1965,7 @@ body {
     font-weight: 700;
     background-color: rgba(14, 147, 132, 0.38);
     border-color: transparent;
-    border-left-color: #5ec8b4;
+    border-left-color: #34d399;
 }
 
 .erp-sidebar [data-flux-sidebar-item][data-current] svg {
@@ -1904,12 +1978,12 @@ body {
 }
 
 .erp-sidebar [data-flux-sidebar-profile] {
-    color: #e8f1ee;
+    color: #e2e8f0;
 }
 
 /* Nombre del perfil (hijo directo): claro sobre petróleo en ambos modos. */
 .erp-sidebar [data-flux-sidebar-profile] > span {
-    color: #e8f1ee;
+    color: #e2e8f0;
 }
 
 .erp-sidebar [data-flux-sidebar-profile]:hover > span {
@@ -1935,13 +2009,13 @@ body {
 .erp-sidebar [data-flux-sidebar-profile] svg,
 .erp-sidebar [data-flux-sidebar-collapse] button,
 .erp-sidebar [data-flux-sidebar-collapse] svg {
-    color: #d5e5e0;
+    color: #e2e8f0;
 }
 
 .dark .erp-sidebar [data-flux-sidebar-profile] svg,
 .dark .erp-sidebar [data-flux-sidebar-collapse] button,
 .dark .erp-sidebar [data-flux-sidebar-collapse] svg {
-    color: #a9c6bf;
+    color: #94a3b8;
 }
 
 .erp-sidebar [data-flux-sidebar-profile]:hover svg,
@@ -1956,11 +2030,11 @@ body {
 
 /* Versión del sidebar: más clara solo en modo claro. En oscuro se conserva. */
 .erp-sidebar-version {
-    color: #c3d4cf;
+    color: #cbd5e1;
 }
 
 .dark .erp-sidebar-version {
-    color: #8fa9a3;
+    color: #94a3b8;
 }
 
 /* ==========================================================================
@@ -2006,9 +2080,9 @@ body {
 }
 
 .dark .farma-topbar-pill {
-    background: rgba(30, 48, 57, 0.86);
-    border-color: rgba(255, 255, 255, 0.09);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    background: rgba(30, 41, 59, 0.88);
+    border-color: #334155;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* Animación atractiva que resalta al sobreponer el cursor — bounce + glow teal */
@@ -2058,7 +2132,7 @@ body {
     box-shadow:
         0 14px 32px rgba(14, 147, 132, 0.28),
         0 6px 16px rgba(16, 42, 50, 0.14),
-        0 0 0 2px rgba(94, 200, 180, 0.35),
+        0 0 0 2px rgba(52, 211, 153, 0.35),
         inset 0 1px 0 rgba(255,255,255,0.85);
     border-color: #0e9384 !important;
     filter: saturate(1.12) brightness(1.03);
@@ -2070,7 +2144,7 @@ body {
     box-shadow:
         0 14px 32px rgba(0, 0, 0, 0.45),
         0 6px 16px rgba(14, 147, 132, 0.22),
-        0 0 0 2px rgba(94, 200, 180, 0.45),
+        0 0 0 2px rgba(52, 211, 153, 0.45),
         inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
@@ -2096,7 +2170,7 @@ body {
 
 .farma-topbar-pill #topbar-pos-search:hover {
     transform: translateY(-2px) scale(1.01);
-    box-shadow: 0 10px 22px rgba(16, 42, 50, 0.10), 0 0 0 2px rgba(94, 200, 180, 0.25);
+    box-shadow: 0 10px 22px rgba(16, 42, 50, 0.10), 0 0 0 2px rgba(52, 211, 153, 0.25);
     border-color: rgba(14, 147, 132, 0.35) !important;
 }
 
@@ -2134,8 +2208,8 @@ body {
 }
 
 .dark .farma-topbar-plus {
-    border-color: #1a2a32;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(94, 200, 180, 0.25);
+    border-color: #0f172a;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(52, 211, 153, 0.25);
 }
 
 /* Campana dentro del pill: globo 100% visible con número */
@@ -2196,7 +2270,7 @@ html:not(.dark) .farma-topbar {
 }
 
 .dark .farma-theme-toggle-compacto {
-    border-color: #5ec8b4;
+    border-color: #34d399;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 
@@ -2352,9 +2426,9 @@ html:not(.dark) .farma-topbar {
 }
 
 .dark .entradas-stat-icono.total {
-    color: #5ec8b4;
+    color: #34d399;
     background: rgba(63, 189, 169, 0.15);
-    border-color: rgba(94, 200, 180, 0.4);
+    border-color: rgba(52, 211, 153, 0.4);
 }
 
 .entradas-stat-numero {
@@ -3108,8 +3182,8 @@ html:not(.dark) .farma-topbar {
 }
 
 .dark .inventario-segment {
-    background: #22353f;
-    border-color: #33505c;
+    background: #1e293b;
+    border-color: #334155;
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
 }
 
@@ -3120,14 +3194,14 @@ html:not(.dark) .farma-topbar {
 }
 
 .dark .inventario-seg-btn:hover {
-    border-color: #5ec8b4;
+    border-color: #34d399;
     background: rgba(14, 147, 132, 0.3);
     color: #ffffff;
 }
 
 .dark .inventario-seg-btn-activo {
-    background: linear-gradient(135deg, #34d399, #0e9384);
-    border-color: #6ee7b7;
+    background: #10b981;
+    border-color: #34d399;
     color: #052e2b;
     text-shadow: none;
 }
@@ -3450,13 +3524,13 @@ html:not(.dark) .farma-topbar {
 }
 
 .dark .farma-pick-scroll {
-    border-color: #33505c;
-    background: color-mix(in srgb, #1e3039 60%, transparent);
-    scrollbar-color: #3fbda9 transparent;
+    border-color: #334155;
+    background: color-mix(in srgb, #1e293b 60%, transparent);
+    scrollbar-color: #10b981 transparent;
 }
 
 .dark .farma-pick-scroll::-webkit-scrollbar-thumb {
-    background: #3fbda9;
+    background: #10b981;
 }
 
 /* ==========================================================================
@@ -3550,7 +3624,7 @@ select.theme-input option:focus,
 /* Teal #0c9f9c sobre fondos oscuros pierde contraste: se aclara solo
    en oscuro (en claro ya se oscurece a #0b6e68 más arriba). */
 .dark .text-\[\#0c9f9c\] {
-    color: #5ec8b4 !important;
+    color: #34d399 !important;
 }
 
 .dark .hover\:text-\[\#0c9f9c\]:hover {
@@ -3558,24 +3632,24 @@ select.theme-input option:focus,
 }
 
 .dark .hover\:border-\[\#0c9f9c\]:hover {
-    border-color: #5ec8b4 !important;
+    border-color: #34d399 !important;
 }
 
 /* Opción personalizada seleccionada: en oscuro usa degradado brillante
    con letra petróleo oscura (igual que .inventario-seg-btn-activo dark),
    nunca blanco sobre blanco. */
 .dark .farma-pick-scroll [role="option"][aria-selected="true"] {
-    border-color: #6ee7b7 !important;
-    background: linear-gradient(135deg, #34d399, #0e9384) !important;
+    border-color: #34d399 !important;
+    background: #10b981 !important;
     color: #052e2b !important;
     text-shadow: none !important;
 }
 
-/* Opción no seleccionada al pasar el cursor en oscuro: fondo teal
+/* Opción no seleccionada al pasar el cursor en oscuro: fondo esmeralda
    translúcido con letra clara, nunca fondo blanco. */
 .dark .farma-pick-scroll [role="option"]:not([aria-selected="true"]):hover {
-    background: rgba(14, 147, 132, 0.3) !important;
-    border-color: #5ec8b4 !important;
+    background: rgba(16, 185, 129, 0.28) !important;
+    border-color: #34d399 !important;
     color: #ffffff !important;
 }
 
@@ -4757,8 +4831,8 @@ body.noti-modal-abierto {
 }
 
 .dark .noti-hero {
-    background: linear-gradient(120deg, #123b36 0%, #1a4a44 45%, #237a6e 100%);
-    border-color: #33505c;
+    background: #1e293b;
+    border-color: #334155;
 }
 
 .noti-kpi-alerta {
@@ -4769,10 +4843,11 @@ body.noti-modal-abierto {
     background: var(--farma-surface-2);
 }
 
+/* Etiqueta informativa (grupo) en oscuro: tinte sky, no blanco crudo. */
 .dark .noti-etiqueta-grupo {
-    background: #e6fffa;
-    border-color: #e6fffa;
-    color: #0b3b35;
+    background: rgba(14, 165, 233, 0.16);
+    border-color: rgba(14, 165, 233, 0.45);
+    color: #7dd3fc;
 }
 
 .dark .noti-etiqueta-prioridad.prioridad-alta {
@@ -4794,8 +4869,8 @@ body.noti-modal-abierto {
 }
 
 .dark .noti-etiqueta-estado.no-leida {
-    background: #3fbda9;
-    border-color: #3fbda9;
+    background: #10b981;
+    border-color: #10b981;
     color: #052e2b;
 }
 
@@ -4836,7 +4911,9 @@ body.noti-modal-abierto {
    max-width centrado para que el listado ocupe casi todo el espacio.
    ========================================================================== */
 
-.module-page.noti-page {
+/* :not(.pos-page) — el POS define su propio padding/altura (bloque pos-page);
+   sin la exclusión estas reglas, al ir después, ganaban por orden. */
+.module-page.noti-page:not(.pos-page) {
     padding: 0.75rem;
     min-height: calc(100vh - 4rem);
     display: flex;
@@ -4844,13 +4921,13 @@ body.noti-modal-abierto {
 }
 
 @media (min-width: 640px) {
-    .module-page.noti-page {
+    .module-page.noti-page:not(.pos-page) {
         padding: 0.75rem 1rem;
     }
 }
 
 @media (min-width: 1024px) {
-    .module-page.noti-page {
+    .module-page.noti-page:not(.pos-page) {
         padding: 1rem 1.25rem;
     }
 }
@@ -5035,8 +5112,8 @@ a.noti-kpi[aria-current="true"] {
 
 .dark .branch-select option,
 .theme-dark .branch-select option {
-    background-color: #1e3039;
-    color: #e6efec;
+    background-color: #1e293b;
+    color: #f1f5f9;
 }
 
 /* Inventario: scroll solo al tamaño del contenido, como las demás vistas.
@@ -5083,7 +5160,7 @@ body:has(.inventario-page) {
 }
 
 .erp-sidebar-search-field input::placeholder {
-    color: #8fa9a3;
+    color: #94a3b8;
 }
 
 /* ---- Ítems animados ---- */
@@ -5110,7 +5187,7 @@ body:has(.inventario-page) {
     top: 50%;
     width: 3px;
     height: 0;
-    background: #5ec8b4;
+    background: #34d399;
     border-radius: 9999px;
     transform: translateY(-50%);
     transition: height 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
@@ -5193,7 +5270,7 @@ body:has(.inventario-page) {
     border-radius: 0.75rem;
     border: 1px solid transparent;
     background: rgba(255, 255, 255, 0.06);
-    color: #c3d4cf;
+    color: #cbd5e1;
     text-decoration: none;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -5263,3 +5340,135 @@ body:has(.inventario-page) {
     margin: 2px 4px !important;
     justify-content: center;
 }
+
+/* ==========================================================================
+   Layout responsivo del shell (<lg)
+   --------------------------------------------------------------------------
+   El body es un grid de Flux con áreas "sidebar/header/main/aside". El
+   topbar flotante es un hijo directo sin área asignada: por auto-placement
+   caía en la celda del sidebar —libre en pantallas angostas, donde el
+   sidebar está off-canvas (fixed/hidden)—, con lo que la columna del
+   sidebar se inflaba al ancho mínimo del topbar (~335-430px) y empujaba
+   header/main a la derecha, dejándolos sin ancho en pantallas chicas.
+   Solución: en <lg el topbar recibe su propia fila completa y el pill
+   permite saltos de línea para no desbordar; sidebar/header/main/aside
+   conservan su ancho natural. En ≥lg no se toca nada.
+   ========================================================================== */
+@media (max-width: 1023.98px) {
+    body:has(>[data-flux-sidebar]+[data-flux-header]) {
+        grid-template-areas:
+            "sidebar topbar topbar"
+            "sidebar header header"
+            "sidebar main   aside"
+            "sidebar footer aside";
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+    }
+
+    .farma-topbar {
+        grid-area: topbar;
+    }
+
+    /* En anchos angostos el pill salta de línea en vez de desbordar */
+    .farma-topbar-pill {
+        flex-wrap: wrap;
+        row-gap: 0.5rem;
+    }
+
+    .farma-topbar-pill > div:last-child {
+        margin-left: auto;
+        flex-shrink: 1;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /* Header móvil: padding más compacto y hijos comprimibles para que el
+       selector de sucursal se trunque en vez de empujar el menú de usuario
+       fuera de la pantalla. */
+    body > header {
+        padding-inline: 0.75rem;
+    }
+
+    body > header > * {
+        min-width: 0;
+    }
+}
+
+/* ==========================================================================
+   Modo oscuro clÃ­nico â€” remapeo de acentos teal compartidos (claro + oscuro)
+   a esmeralda. Bloque SIN @layer al final del archivo: en oscuro estas clases
+   arbitrarias compartidas se pintan esmeralda/sky; el modo claro conserva el
+   teal original. Las guardas :not([class*="dark:..."]) dejan ganar a las
+   utilidades dark: explÃ­citas de cada vista.
+   ========================================================================== */
+
+.dark .bg-\[\#0c9f9c\]:not([class*="dark:bg-"]) { background-color: #10b981 !important; }
+.dark .bg-\[\#0c9f9c\]\/5:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.06) !important; }
+.dark .bg-\[\#0c9f9c\]\/10:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.10) !important; }
+.dark .bg-\[\#0c9f9c\]\/15:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.15) !important; }
+.dark .bg-\[\#0c9f9c\]\/20:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.20) !important; }
+.dark .bg-\[\#0e9384\]:not([class*="dark:bg-"]) { background-color: #10b981 !important; }
+.dark .bg-\[\#0e9384\]\/10:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.10) !important; }
+.dark .bg-\[\#0e9384\]\/15:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.15) !important; }
+.dark .bg-\[\#0e9384\]\/20:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.20) !important; }
+.dark .bg-\[\#0e9384\]\/25:not([class*="dark:bg-"]) { background-color: rgba(16, 185, 129, 0.25) !important; }
+.dark .bg-\[\#0c7569\]:not([class*="dark:bg-"]) { background-color: #059669 !important; }
+.dark .hover\:bg-\[\#0a8582\]:not([class*="dark:hover:bg-"]) { background-color: #059669 !important; }
+.dark .hover\:bg-\[\#0c7569\]:not([class*="dark:hover:bg-"]) { background-color: #059669 !important; }
+.dark .hover\:bg-\[\#0c9f9c\]:not([class*="dark:hover:bg-"]) { background-color: #34d399 !important; }
+.dark .hover\:bg-\[\#0c9f9c\]\/5:not([class*="dark:hover:bg-"]) { background-color: rgba(52, 211, 153, 0.08) !important; }
+.dark .text-\[\#0c9f9c\]:not([class*="dark:text-"]) { color: #34d399 !important; }
+.dark .text-\[\#0e9384\]:not([class*="dark:text-"]) { color: #34d399 !important; }
+.dark .text-\[\#0c7569\]:not([class*="dark:text-"]) { color: #6ee7b7 !important; }
+.dark .hover\:text-\[\#0c7569\]:not([class*="dark:hover:text-"]) { color: #a7f3d0 !important; }
+.dark .hover\:text-\[\#0c9f9c\]:not([class*="dark:hover:text-"]) { color: #6ee7b7 !important; }
+.dark .hover\:text-\[\#0a8582\]:not([class*="dark:hover:text-"]) { color: #a7f3d0 !important; }
+.dark .border-\[\#0e9384\]:not([class*="dark:border-"]) { border-color: #10b981 !important; }
+.dark .border-\[\#0c9f9c\]:not([class*="dark:border-"]) { border-color: #10b981 !important; }
+.dark .border-\[\#0e9384\]\/20:not([class*="dark:border-"]) { border-color: rgba(16, 185, 129, 0.25) !important; }
+.dark .border-\[\#0e9384\]\/40:not([class*="dark:border-"]) { border-color: rgba(16, 185, 129, 0.40) !important; }
+.dark .border-\[\#0c9f9c\]\/20:not([class*="dark:border-"]) { border-color: rgba(16, 185, 129, 0.25) !important; }
+.dark .hover\:border-\[\#0e9384\]:not([class*="dark:hover:border-"]) { border-color: #34d399 !important; }
+.dark .hover\:border-\[\#0c9f9c\]:not([class*="dark:hover:border-"]) { border-color: #34d399 !important; }
+.dark .ring-\[\#0e9384\]:not([class*="dark:ring-"]) { --tw-ring-color: #10b981 !important; }
+.dark .ring-\[\#0c9f9c\]:not([class*="dark:ring-"]) { --tw-ring-color: #10b981 !important; }
+.dark .ring-\[\#0c9f9c\]\/60:not([class*="dark:ring-"]) { --tw-ring-color: rgba(16, 185, 129, 0.6) !important; }
+.dark .shadow-\[\#0c9f9c\]\/20:not([class*="dark:shadow-"]) { --tw-shadow-color: rgba(16, 185, 129, 0.30) !important; }
+.dark .from-\[\#0e9384\]:not([class*="dark:from-"]) { --tw-gradient-from: #10b981 !important; }
+.dark .to-\[\#0c7569\]:not([class*="dark:to-"]) { --tw-gradient-to: #059669 !important; }
+
+/* Foco en oscuro sobre componentes no nativos: acento sky. */
+.dark .focus\:ring-\[\#0c9f9c\]:focus-visible:not([class*="dark:ring-"]) {
+    --tw-ring-color: rgba(14, 165, 233, 0.55);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25) !important;
+}
+
+/* Segundo lote: focus/focus-within (sky en oscuro) y restos de teal. */
+.dark .hover\:bg-\[\#0c7a6e\]:not([class*="dark:hover:bg-"]) { background-color: #059669 !important; }
+.dark .shadow-\[\#0c9f9c\]:not([class*="dark:shadow-"]) { --tw-shadow-color: rgba(16, 185, 129, 0.30) !important; }
+.dark .shadow-\[\#0c9f9c\]\/20:not([class*="dark:shadow-"]) { --tw-shadow-color: rgba(16, 185, 129, 0.30) !important; }
+.dark .text-\[\#0b6e68\]:not([class*="dark:text-"]) { color: #6ee7b7 !important; }
+.dark .hover\:text-\[\#0b6e68\]:not([class*="dark:hover:text-"]) { color: #a7f3d0 !important; }
+.dark .hover\:text-\[\#0e9384\]:not([class*="dark:hover:text-"]) { color: #6ee7b7 !important; }
+.dark .border-\[\#0a5f56\]:not([class*="dark:border-"]) { border-color: #10b981 !important; }
+.dark .focus\:border-\[\#0c9f9c\]:not([class*="dark:border-"]) { border-color: #0ea5e9 !important; }
+.dark .focus\:border-\[\#0e9384\]:not([class*="dark:border-"]) { border-color: #0ea5e9 !important; }
+.dark .focus-within\:border-\[\#0e9384\]:not([class*="dark:border-"]) { border-color: #0ea5e9 !important; }
+.dark .focus\:ring-\[\#0c9f9c\]:not([class*="dark:ring-"]) { --tw-ring-color: rgba(14, 165, 233, 0.55) !important; }
+.dark .focus\:ring-\[\#0e9384\]:not([class*="dark:ring-"]) { --tw-ring-color: rgba(14, 165, 233, 0.55) !important; }
+.dark .focus-within\:ring-\[\#0e9384\]:not([class*="dark:ring-"]) { --tw-ring-color: rgba(14, 165, 233, 0.55) !important; }
+.dark .focus-visible\:ring-\[\#0c9f9c\]:not([class*="dark:ring-"]) { --tw-ring-color: rgba(14, 165, 233, 0.55) !important; }
+.dark .to-\[\#34d399\]:not([class*="dark:to-"]) { --tw-gradient-to: #34d399 !important; }
+/* Tercer lote: opacidades de anillo/borde en oscuro. */
+.dark .ring-\[\#0e9384\]\/15:not([class*="dark:ring-"]) { --tw-ring-color: rgba(16, 185, 129, 0.35) !important; }
+.dark .ring-\[\#0e9384\]\/20:not([class*="dark:ring-"]) { --tw-ring-color: rgba(16, 185, 129, 0.35) !important; }
+.dark .ring-\[\#0e9384\]\/25:not([class*="dark:ring-"]) { --tw-ring-color: rgba(16, 185, 129, 0.35) !important; }
+.dark .ring-\[\#0e9384\]\/30:not([class*="dark:ring-"]) { --tw-ring-color: rgba(16, 185, 129, 0.35) !important; }
+.dark .focus\:ring-\[\#0c9f9c\]\/20:not([class*="dark:ring-"]) { --tw-ring-color: rgba(14, 165, 233, 0.45) !important; }
+.dark .focus\:ring-\[\#0c9f9c\]\/40:not([class*="dark:ring-"]) { --tw-ring-color: rgba(14, 165, 233, 0.45) !important; }
+.dark .focus\:ring-\[\#0c9f9c\]\/60:not([class*="dark:ring-"]) { --tw-ring-color: rgba(14, 165, 233, 0.45) !important; }
+.dark .ring-\[\#0c9f9c\]\/20:not([class*="dark:ring-"]) { --tw-ring-color: rgba(16, 185, 129, 0.35) !important; }
+.dark .border-\[\#0e9384\]\/20:not([class*="dark:border-"]) { border-color: rgba(16, 185, 129, 0.35) !important; }
+.dark .border-\[\#0e9384\]\/30:not([class*="dark:border-"]) { border-color: rgba(16, 185, 129, 0.35) !important; }
+.dark .border-\[\#0e9384\]\/40:not([class*="dark:border-"]) { border-color: rgba(16, 185, 129, 0.35) !important; }

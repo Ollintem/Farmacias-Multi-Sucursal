@@ -48,12 +48,6 @@
                 {{-- Toolbar --}}
                 <div class="entradas-toolbar !py-3 !px-4 border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
                     <form method="GET" action="{{ route('inventario.productos') }}" class="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        @isset($sucursales)
-                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                            <span class="shrink-0">Sucursal</span>
-                            <span class="min-w-[12rem]"><x-option-pick name="sucursal" label="Sucursales" :options="$sucursales->pluck('nombre_sucursal', 'id')" :value="$selectedSucursal?->id" placeholder="Seleccionar sucursal" :autoSubmit="true" /></span>
-                        </label>
-                        @endisset
                         <div class="flex items-center gap-2">
                             <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre…" class="theme-input w-full sm:w-72" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
                             <button type="submit" class="theme-button theme-button-secondary !min-h-0 shrink-0 !py-2.5">Buscar</button>
@@ -136,7 +130,7 @@
                                             <td class="px-4 py-4 text-right">
                                                 @if($principal)
                                                     <span class="text-sm font-extrabold text-emerald-700 dark:text-emerald-300">${{ number_format((float) $principal->precio_presentacion, 2) }}</span>
-                                                    <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">precio por presentación</p>
+                                                    
                                                 @else
                                                     <span class="text-xs font-medium text-slate-400">—</span>
                                                 @endif

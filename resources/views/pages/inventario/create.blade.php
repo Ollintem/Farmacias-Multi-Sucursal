@@ -164,7 +164,7 @@
                 <div class="module-table">
                     <div class="p-5">
                         <h2 class="text-lg font-bold text-slate-800 dark:text-white">Datos del producto</h2>
-                        <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">{{ $esEdicion ? 'Actualiza la informacion de este producto.' : 'Completa la informacion para registrar un nuevo producto.' }}</p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ $esEdicion ? 'Actualiza la informacion de este producto.' : 'Completa la informacion para registrar un nuevo producto.' }}</p>
 
                         <div class="mt-5 grid gap-5 md:grid-cols-2">
                             <div>
@@ -208,7 +208,7 @@
                                         </svg>
                                     </button>
 
-                                    <div x-show="dropdownAbierto === 'categoria'" x-cloak x-transition.opacity class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-zinc-700 dark:bg-zinc-900">
+                                    <div x-show="dropdownAbierto === 'categoria'" x-cloak x-transition.opacity class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-slate-700 dark:bg-slate-900">
                                         <div class="farma-pick-scroll" role="listbox" aria-label="Categorías">
                                             <template x-for="categoria in categorias" :key="categoria.id">
                                                 <button
@@ -216,7 +216,7 @@
                                                     role="option"
                                                     x-on:click="seleccionarCategoria(categoria.id)"
                                                     x-bind:aria-selected="String(categoriaSeleccionada) === String(categoria.id)"
-                                                    x-bind:class="String(categoriaSeleccionada) === String(categoria.id) ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100'"
+                                                    x-bind:class="String(categoriaSeleccionada) === String(categoria.id) ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 dark:border-emerald-300 dark:from-emerald-400 dark:to-emerald-500 dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100'"
                                                     class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border-[1.5px] px-3 py-2 text-left text-sm font-semibold transition active:scale-[0.99]"
                                                 >
                                                     <span class="truncate" x-text="categoria.nombre"></span>
@@ -256,11 +256,11 @@
                         </div>
                     </div>
 
-                    <div class="border-t border-slate-200 p-5 dark:border-zinc-700">
+                    <div class="border-t border-slate-200 p-5 dark:border-slate-700">
                         <div class="flex items-center justify-between">
                             <div>
                                 <h2 class="text-lg font-bold text-slate-800 dark:text-white">Presentaciones</h2>
-                                <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">Define las presentaciones del producto con sus unidades y precio.</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Define las presentaciones del producto con sus unidades y precio.</p>
                             </div>
                             <div class="flex flex-wrap items-center gap-3">
                                 <button
@@ -288,7 +288,7 @@
                                     class="rounded-xl border p-4 transition-colors"
                                     x-bind:class="principalIndex === indice
                                         ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/40 dark:border-emerald-400 dark:bg-emerald-500/10 dark:ring-emerald-400/40'
-                                        : 'border-slate-200 dark:border-zinc-700'"
+                                        : 'border-slate-200 dark:border-slate-700'"
                                 >
                                     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                                         <div>
@@ -330,7 +330,7 @@
                                                     </svg>
                                                 </button>
 
-                                                <div x-show="dropdownAbierto === ('presentacion-' + indice)" x-cloak x-transition.opacity class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-zinc-700 dark:bg-zinc-900">
+                                                <div x-show="dropdownAbierto === ('presentacion-' + indice)" x-cloak x-transition.opacity class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-slate-700 dark:bg-slate-900">
                                                     <div class="farma-pick-scroll" role="listbox" aria-label="Presentaciones">
                                                         <template x-for="presentacion in catalogoPresentaciones" :key="presentacion.id">
                                                             <button
@@ -338,7 +338,7 @@
                                                                 role="option"
                                                                 x-on:click="seleccionarPresentacion(indice, presentacion.id)"
                                                                 x-bind:aria-selected="String(fila.id_presentacion) === String(presentacion.id)"
-                                                                x-bind:class="String(fila.id_presentacion) === String(presentacion.id) ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 dark:border-[#6ee7b7] dark:from-[#34d399] dark:to-[#0e9384] dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-[#0c9f9c] dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100'"
+                                                                x-bind:class="String(fila.id_presentacion) === String(presentacion.id) ? 'border-[#0a5f56] bg-gradient-to-r from-[#0e9384] to-[#0c7569] text-white shadow-md shadow-teal-900/25 dark:border-emerald-300 dark:from-emerald-400 dark:to-emerald-500 dark:text-[#052e2b]' : 'border-slate-300 bg-white text-slate-700 hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0b6e68] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-100'"
                                                                 class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border-[1.5px] px-3 py-2 text-left text-sm font-semibold transition active:scale-[0.99]"
                                                             >
                                                                 <span class="truncate" x-text="presentacion.presentacion"></span>
@@ -440,8 +440,8 @@
                         </div>
                     </div>
 
-                    <div class="border-t border-slate-200 p-5 dark:border-zinc-700">
-                        <p class="text-sm text-slate-500 dark:text-zinc-400">Marca esta opción si el producto requiere receta o control especial.</p>
+                    <div class="border-t border-slate-200 p-5 dark:border-slate-700">
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Marca esta opción si el producto requiere receta o control especial.</p>
 
                         <label class="mt-4 inline-flex items-center gap-3 text-sm font-medium">
                             <input type="checkbox" name="es_controlado" value="1" {{ old('es_controlado', $producto?->es_controlado ?? false) ? 'checked' : '' }}>
@@ -476,7 +476,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="confirmarQuitarPresentaciones = false"></div>
 
                     <div
-                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
                         x-on:click.stop
                     >
                         <div class="mb-5 flex items-center justify-between">
@@ -513,7 +513,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="confirmarAgregarPresentacion = false"></div>
 
                     <div
-                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
                         x-on:click.stop
                     >
                         <div class="mb-5 flex items-center justify-between">
@@ -550,7 +550,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="cerrarModal()"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-[#1e3a5f]/60 dark:bg-[#0b1322]/95"
+                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
                         x-on:click.stop
                     >
                         <div class="mb-5 flex items-center justify-between">
