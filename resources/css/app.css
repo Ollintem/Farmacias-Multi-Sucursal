@@ -349,12 +349,16 @@
 @media print {
     @page {
         size: 80mm auto;
-        margin: 0;
+        margin: 3mm 0;
     }
     html, body {
         background: #fff !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     body * {
         visibility: hidden !important;
@@ -364,26 +368,82 @@
     }
     #ticket-print {
         position: absolute !important;
-        left: 0 !important;
+        left: 50% !important;
         top: 0 !important;
+        transform: translateX(-50%) !important;
         width: 80mm !important;
         max-width: 80mm !important;
+        min-width: 80mm !important;
         margin: 0 !important;
         padding: 0 !important;
         box-shadow: none !important;
         border: none !important;
         background: #fff !important;
         font-size: 11px !important;
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
     }
-
     #ticket-print.ticket-80mm {
         border: none !important;
         border-radius: 0 !important;
     }
-    /* Oculta el overlay del modal al imprimir */
-    .fixed.inset-0 {
+    /* Ocultar cualquier overlay/modal que no sea el del ticket */
+    .fixed.inset-0:not(:has(#ticket-print)) {
+        display: none !important;
+    }
+    /* Contenedor modal del ticket: quitar centrado, fondo, y recorte que rompe la impresión */
+    .fixed.inset-0:has(#ticket-print), #ticket-modal {
+        position: static !important;
+        inset: auto !important;
+        display: block !important;
+        width: auto !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
         background: transparent !important;
         backdrop-filter: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .fixed.inset-0:has(#ticket-print) > .absolute, #ticket-modal > .absolute {
+        display: none !important;
+    }
+    /* Tarjeta del modal que envuelve el ticket: quitar limites y estilos de modal */
+    .fixed.inset-0:has(#ticket-print) > .relative, #ticket-modal > .relative {
+        display: block !important;
+        position: static !important;
+        max-height: none !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+        width: auto !important;
+    }
+    /* Ocultar header "Venta completada" y footer de botones Cerrar/Imprimir */
+    .fixed.inset-0:has(#ticket-print) > .relative > .flex.items-center.justify-between, #ticket-modal > .relative > .flex.items-center.justify-between {
+        display: none !important;
+    }
+    .fixed.inset-0:has(#ticket-print) > .relative > .flex.gap-2\.5, #ticket-modal > .relative > .flex.gap-2\.5 {
+        display: none !important;
+    }
+    /* Contenedor con scroll alrededor del ticket: quitar scroll, padding y fondo */
+    .fixed.inset-0:has(#ticket-print) > .relative > .flex-1, #ticket-modal > .relative > .flex-1 {
+        display: block !important;
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
     }
 }
 

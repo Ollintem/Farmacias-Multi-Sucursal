@@ -5,7 +5,7 @@
     @stock-caducado-ignorado.window="avisoCaducado = $event.detail.unidades; setTimeout(() => avisoCaducado = 0, 4000)"
     @pos-error.window="avisoError = $event.detail.mensaje; setTimeout(() => avisoError = '', 5000)"
     @pos-activar-caja.window="$wire.abrirModalCaja()"
-    @imprimir-ticket.window="window.print()"
+    @imprimir-ticket.window="setTimeout(() => window.print(), 250)"
 >
     {{-- Toast de éxito --}}
     <template x-if="successFolio">
@@ -1357,7 +1357,7 @@
     {{-- Ticket térmico 80mm — se muestra tras cobrar para imprimir --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($mostrandoTicket && $ticketDatos)
-        <div class="fixed inset-0 z-[70] flex items-center justify-center p-3">
+        <div id="ticket-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-3">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarTicket"></div>
 
             <div class="relative flex max-h-[78vh] w-full max-w-xs flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
