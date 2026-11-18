@@ -8,6 +8,7 @@ use App\Models\Merma;
 use App\Models\Proveedor;
 use App\Models\Sucursal;
 use App\Models\Traspaso;
+use App\Services\InventarioService;
 use App\Support\EstadoCaducidad;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +20,8 @@ use Illuminate\View\View;
 
 class LotesController extends Controller
 {
+    public function __construct(private readonly InventarioService $inventarioService) {}
+
     /**
      * Muestra lotes y su producto asociado, filtrados por sucursal vía inventario.
      *
@@ -42,28 +45,9 @@ class LotesController extends Controller
             $filtroEstado = 'todos';
         }
 
-        $lotes = Lote::with(['producto.presentacionesPrecio', 'presentacion', 'compra.proveedor', 'proveedor', 'inventarios.sucursal'])
-            ->when($selectedSucursal, function ($query, $sucursal) {
-                $query->where(function ($subQuery) use ($sucursal) {
-                    $subQuery->whereHas('inventarios', function ($inventarioQuery) use ($sucursal) {
-                        $inventarioQuery->where('inventario.id_sucursal', $sucursal->id);
-                    })->orWhereDoesntHave('inventarios');
-                });
-            })
-            ->when($busqueda !== '', function ($query) use ($busqueda) {
-                $query->where(function ($subQuery) use ($busqueda) {
-                    $subQuery->where('folio', 'like', "%{$busqueda}%")
-                        ->orWhereHas('proveedor', function ($proveedorQuery) use ($busqueda) {
-                            $proveedorQuery->where('nombre_proveedor', 'like', "%{$busqueda}%");
-                        })
-                        ->orWhereHas('compra.proveedor', function ($proveedorQuery) use ($busqueda) {
-                            $proveedorQuery->where('nombre_proveedor', 'like', "%{$busqueda}%");
-                        })
-                        ->orWhereHas('producto', function ($productoQuery) use ($busqueda) {
-                            $productoQuery->where('nombre_producto', 'like', "%{$busqueda}%");
-                        });
-                });
-            })
+        $lotes = $this->inventarioService
+            ->consultaLotes($selectedSucursal?->id, $busqueda)
+            ->with(['producto.presentacionesPrecio', 'presentacion', 'compra.proveedor', 'proveedor', 'inventarios.sucursal'])
             ->orderBy('fecha_caducidad')
             ->get()
             ->map(function (Lote $lote) use ($selectedSucursal): array {

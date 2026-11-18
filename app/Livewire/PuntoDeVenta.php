@@ -13,6 +13,7 @@ use App\Models\ProductoPresentacion;
 use App\Models\Sucursal;
 use App\Models\TipoAlerta;
 use App\Models\Venta;
+use App\Services\InventarioService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
@@ -161,23 +162,15 @@ class PuntoDeVenta extends Component
     {
         $sucursalId = (int) (session('active_sucursal_id') ?? 0);
 
-        $query = Producto::query()
-            ->with(['presentacionesPrecio.presentacion'])
-            ->where('es_activo', true)
-            // Solo se ofrecen productos con inventario registrado en la
-            // sucursal activa: el catálogo es global, la venta es por sucursal.
-            ->when($sucursalId > 0, fn ($q) => $q->whereHas(
-                'inventarios',
-                fn ($inventarioQuery) => $inventarioQuery->where('inventario.id_sucursal', $sucursalId)
-            ));
-
-        if ($this->busqueda !== '') {
-            $termino = $this->busqueda;
-            $query->where(function (Builder $q) use ($termino): void {
-                $q->where('nombre_producto', 'like', "%{$termino}%")
-                    ->orWhere('codigo_barras', 'like', "%{$termino}%");
-            });
-        }
+        // Solo se ofrecen productos activos con inventario registrado en la
+        // sucursal activa: el catálogo es global, la venta es por sucursal.
+        $query = app(InventarioService::class)
+            ->buscarProductos(
+                $this->busqueda,
+                $sucursalId > 0 ? $sucursalId : null,
+                codigoExacto: false
+            )
+            ->with(['presentacionesPrecio.presentacion']);
 
         if ($this->filtroPresentacion !== '') {
             $query->whereHas('presentacionesPrecio', function ($subQuery) {

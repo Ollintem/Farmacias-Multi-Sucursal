@@ -8,7 +8,7 @@ use App\Models\Lote;
 use App\Models\PresentacionProducto;
 use App\Models\Producto;
 use App\Models\Sucursal;
-use Illuminate\Database\Eloquent\Builder;
+use App\Services\InventarioService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -18,6 +18,8 @@ use Illuminate\View\View;
 
 class InventarioController extends Controller
 {
+    public function __construct(private readonly InventarioService $inventarioService) {}
+
     /**
      * Redirige la raíz del módulo a la pestaña Productos, que es la pestaña por defecto.
      *
@@ -61,14 +63,9 @@ class InventarioController extends Controller
             ? Inventario::lotesPorProducto((int) $selectedSucursal->id)
             : [];
 
-        $productos = Producto::query()
-            ->where('productos.es_activo', true)
+        $productos = $this->inventarioService
+            ->buscarProductos($busqueda, $selectedSucursal?->id)
             ->with('presentacionesPrecio.presentacion')
-            ->when($selectedSucursal !== null, fn (Builder $query) => $query->whereHas(
-                'inventarios',
-                fn (Builder $inventarioQuery) => $inventarioQuery->where('inventario.id_sucursal', $selectedSucursal->id)
-            ))
-            ->when($busqueda !== '', fn (Builder $query) => $this->aplicarBusquedaProducto($query, $busqueda))
             ->orderBy('productos.nombre_producto')
             ->get()
             ->each(function (Producto $producto) use ($stockPorProducto, $lotesPorProducto) {
@@ -105,26 +102,6 @@ class InventarioController extends Controller
             'valorTotal',
             'busqueda',
         ));
-    }
-
-    /**
-     * Filtro de búsqueda compartido por las pestañas Stock y Productos.
-     *
-     * Busca por código de barras o nombre (los campos que promete el
-     * placeholder del formulario y que el filtrado en tiempo real usa en
-     * `data-buscar`), con columnas calificadas para evitar ambigüedades.
-     *
-     * Entrada: query Eloquent de productos y texto ya recortado (no vacío).
-     * Salida: ninguna, modifica el query recibido.
-     *
-     * @param  Builder<Producto>  $query
-     */
-    private function aplicarBusquedaProducto(Builder $query, string $busqueda): void
-    {
-        $query->where(function (Builder $subQuery) use ($busqueda) {
-            $subQuery->where('productos.codigo_barras', 'like', "%{$busqueda}%")
-                ->orWhere('productos.nombre_producto', 'like', "%{$busqueda}%");
-        });
     }
 
     /**
@@ -251,14 +228,10 @@ class InventarioController extends Controller
         $selectedSucursal = $sucursales->firstWhere('id', $selectedSucursalId) ?? $sucursales->first();
         $busqueda = trim((string) $request->query('buscar', ''));
 
-        $productos = Producto::query()
+        $productos = $this->inventarioService
+            ->buscarProductos($busqueda, $selectedSucursal?->id, soloConInventario: false)
             ->with(['categoria', 'presentacionesPrecio.presentacion'])
             ->withCount(['lotes', 'ventas'])
-            ->when($selectedSucursal !== null, fn (Builder $query) => $query->whereHas(
-                'sucursales',
-                fn (Builder $sucursalQuery) => $sucursalQuery->whereKey($selectedSucursal->id)
-            ))
-            ->when($busqueda !== '', fn (Builder $query) => $this->aplicarBusquedaProducto($query, $busqueda))
             ->orderBy('productos.nombre_producto')
             ->get();
 

@@ -10,6 +10,7 @@ use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\LotesController;
 use App\Http\Controllers\PresentacionController;
 use App\Http\Controllers\ProveedoresController;
+use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\RolPermisoController;
 use App\Http\Controllers\SucursalesController;
@@ -99,9 +100,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/caja/{corte}/movimiento', [CajaController::class, 'movimiento'])->name('caja.movimiento')->middleware('checarPermisos:editar,caja');
     Route::post('/caja/{corte}/cerrar', [CajaController::class, 'cerrar'])->name('caja.cerrar')->middleware('checarPermisos:editar,caja');
 
-    // Módulo: Reportes (por trabajar)
+    // Módulo: Reportes
 
-    Route::view('/reportes', 'pages.modulos.placeholder', ['tituloModulo' => 'Reportes'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
+    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index')->middleware('checarPermisos:ver,reportes');
+    Route::get('/reportes/pdf', [ReporteController::class, 'pdf'])->name('reportes.pdf')->middleware('checarPermisos:ver,reportes');
 
     // Modulo: Alertas
 

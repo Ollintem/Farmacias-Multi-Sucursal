@@ -5,13 +5,13 @@ namespace App\Support;
 use App\Models\Alerta;
 use App\Models\AlertaUsuario;
 use App\Models\CorteCaja;
-use App\Models\Inventario;
 use App\Models\Lote;
 use App\Models\Modulo;
 use App\Models\Producto;
 use App\Models\TipoAlerta;
 use App\Models\Traspaso;
 use App\Models\Venta;
+use App\Services\InventarioService;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -653,19 +653,7 @@ class AlertasFeed
      */
     private static function lotesPorCaducarQuery(int $sucursalId): Builder
     {
-        $limite = Carbon::today()->addDays(90)->endOfDay();
-
-        return Lote::query()
-            ->whereHas('inventarios', function ($query) use ($sucursalId): void {
-                $query->where('inventario.id_sucursal', $sucursalId)
-                    ->where('inventario.stock_individual', '>', 0);
-            })
-            ->where(function ($query) use ($limite): void {
-                $query->where(function ($sinFecha): void {
-                    $sinFecha->whereNull('fecha_de_caducidad')
-                        ->whereNull('fecha_caducidad');
-                })->orWhereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) <= ?', [$limite]);
-            });
+        return app(InventarioService::class)->lotesProximosACaducar($sucursalId, incluirSinFecha: true);
     }
 
     /**
@@ -1084,24 +1072,7 @@ class AlertasFeed
      */
     private static function stockBajoDeSucursal(int $sucursalId): Collection
     {
-        $stockPorProducto = Inventario::stockPorProducto($sucursalId);
-
-        return Producto::query()
-            ->where('productos.es_activo', true)
-            ->whereHas('inventarios', fn ($query) => $query->where('inventario.id_sucursal', $sucursalId))
-            ->with('presentacionesPrecio')
-            ->get()
-            ->filter(function (Producto $producto) use ($stockPorProducto) {
-                $minimo = (int) ($producto->presentacionPrincipalDe()?->stock_minimo ?? 0);
-
-                return $minimo > 0 && (int) ($stockPorProducto[$producto->id] ?? 0) <= $minimo;
-            })
-            ->map(fn (Producto $producto) => [
-                'producto' => $producto,
-                'stock' => (int) ($stockPorProducto[$producto->id] ?? 0),
-                'minimo' => (int) ($producto->presentacionPrincipalDe()?->stock_minimo ?? 0),
-            ])
-            ->values();
+        return app(InventarioService::class)->productosConStockBajo($sucursalId);
     }
 
     private static function tipoParaTraspaso(?int $traspasoId): string

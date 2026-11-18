@@ -2,9 +2,8 @@
 
 namespace App\Support;
 
-use App\Models\Lote;
 use App\Models\Traspaso;
-use Carbon\Carbon;
+use App\Services\InventarioService;
 
 class AlertasResumen
 {
@@ -31,15 +30,8 @@ class AlertasResumen
             ->whereIn('estado', ['pendiente', 'enviado'])
             ->count();
 
-        $limite = Carbon::today()->addDays(30)->endOfDay();
-
-        $rojos = Lote::query()
-            ->whereHas('inventarios', function ($query) use ($sucursalId) {
-                $query->where('inventario.id_sucursal', $sucursalId)
-                    ->where('stock_individual', '>', 0);
-            })
-            ->whereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) IS NOT NULL')
-            ->whereRaw('COALESCE(fecha_de_caducidad, fecha_caducidad) <= ?', [$limite])
+        $rojos = app(InventarioService::class)
+            ->lotesProximosACaducar($sucursalId, 30)
             ->count();
 
         return ['pendientes' => $pendientes, 'rojos' => $rojos, 'total' => $pendientes + $rojos];
