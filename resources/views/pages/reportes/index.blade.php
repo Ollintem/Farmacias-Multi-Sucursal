@@ -20,7 +20,9 @@
                 'puedeConsultarVarias' => $puedeConsultarVarias,
             ])
 
-            @include('pages.reportes.components.tabla-reporte', ['reporte' => $reporte])
+            @include('pages.reportes.components.tabla-reporte', ['reporte' => $reporte, 'interactivo' => true])
+
+            <livewire:reportes.detalles-modal />
         </div>
     </div>
 </x-layouts::app>

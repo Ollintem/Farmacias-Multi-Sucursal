@@ -1,6 +1,7 @@
 @php
     $consolidado = $reporte['sucursal'] === null;
-    $totalColumnas = $consolidado ? 9 : 8;
+    $totalColumnas = $consolidado ? 8 : 7;
+    $interactivo = $interactivo ?? false;
 @endphp
 
 <section class="module-card !p-0 overflow-hidden" aria-label="Resultados del reporte de ventas">
@@ -70,12 +71,21 @@
                     <th class="entradas-num">Artículos</th>
                     <th class="entradas-num">Descuento</th>
                     <th class="entradas-num">Total</th>
-                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($reporte['ventas'] as $venta)
-                    <tr>
+                    <tr
+                        @if($interactivo)
+                            class="cursor-pointer"
+                            x-on:click="$dispatch('ver-detalle-venta', { idVenta: {{ $venta->id }} })"
+                            x-on:keydown.enter.prevent="$dispatch('ver-detalle-venta', { idVenta: {{ $venta->id }} })"
+                            x-on:keydown.space.prevent="$dispatch('ver-detalle-venta', { idVenta: {{ $venta->id }} })"
+                            tabindex="0"
+                            role="button"
+                            aria-label="Ver productos vendidos de la venta {{ $venta->folio }}"
+                        @endif
+                    >
                         <td>
                             <span class="block font-bold text-slate-800 dark:text-slate-100">{{ $venta->folio }}</span>
                             <span class="block text-xs text-slate-500 dark:text-slate-400">
@@ -108,15 +118,6 @@
                         <td class="entradas-num">${{ number_format((float) $venta->descuento, 2) }}</td>
                         <td class="entradas-num font-bold text-slate-900 dark:text-white">
                             ${{ number_format((float) $venta->total, 2) }}
-                        </td>
-                        <td>
-                            <span @class([
-                                'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold',
-                                'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200' => strcasecmp((string) $venta->estado, 'Completada') === 0,
-                                'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' => strcasecmp((string) $venta->estado, 'Completada') !== 0,
-                            ])>
-                                {{ $venta->estado ?: 'Sin estado' }}
-                            </span>
                         </td>
                     </tr>
                 @empty
@@ -152,7 +153,6 @@
                         <td class="entradas-num px-4 py-3 text-sm font-black text-emerald-700 dark:text-emerald-300">
                             ${{ number_format((float) $reporte['totales']['total'], 2) }}
                         </td>
-                        <td class="px-4 py-3"></td>
                     </tr>
                 </tfoot>
             @endif

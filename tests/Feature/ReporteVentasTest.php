@@ -71,13 +71,14 @@ function ventaReporte(
     return $venta->fresh(['pago', 'sucursal']);
 }
 
-test('el reporte por día incluye solo el día solicitado y excluye canceladas', function () {
+test('el reporte por día incluye solo el día solicitado y excluye las ventas no completadas', function () {
     $this->travelTo(CarbonImmutable::create(2026, 11, 17, 12, 0, 0));
     [$centro] = contextoReporte();
 
     ventaReporte($centro, 'V-DIA-1', 100, CarbonImmutable::create(2026, 11, 17, 9, 0, 0));
     ventaReporte($centro, 'V-DIA-2', 50, CarbonImmutable::create(2026, 11, 16, 10, 0, 0));
     ventaReporte($centro, 'V-DIA-CANCEL', 30, CarbonImmutable::create(2026, 11, 17, 11, 0, 0), 'Cancelada');
+    ventaReporte($centro, 'V-DIA-PENDIENTE', 20, CarbonImmutable::create(2026, 11, 17, 11, 30, 0), 'Pendiente');
 
     $servicio = app(VentasReporteService::class);
     $reporte = $servicio->ventasPorDia('2026-11-17', $centro->id);

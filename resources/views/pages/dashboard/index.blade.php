@@ -24,16 +24,11 @@
             </div>
         </div>
         <div class="module-page-inner relative z-10 noti-full noti-formal">
-            @include('pages.dashboard.components.acciones-panel')
-
             @include('pages.dashboard.components.grafica')
 
             @include('pages.dashboard.components.target')
 
             <div class="grid gap-4 lg:grid-cols-[1.8fr_1fr]">
-                <div class="space-y-4">
-                    @include('pages.dashboard.components.acceso-rapido')
-                </div>
 
                 <div class="space-y-4">
                     @include('pages.dashboard.components.actividad-reciente')

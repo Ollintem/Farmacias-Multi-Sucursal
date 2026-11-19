@@ -216,12 +216,6 @@
                                 />
                                 <span>Recordarme</span>
                             </label>
-
-                            @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" class="text-base font-semibold text-[#0e9384] transition hover:text-[#0c7569] hover:underline">
-                                    ¿Olvidaste tu contraseña?
-                                </a>
-                            @endif
                         </div>
 
                         <button

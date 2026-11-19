@@ -159,10 +159,7 @@ class VentasReporteService
                 $idSucursal !== null,
                 fn (Builder $consulta) => $consulta->where('ventas.id_sucursal', $idSucursal)
             )
-            ->where(function (Builder $consulta): void {
-                $consulta->whereNull('ventas.estado')
-                    ->orWhereRaw('LOWER(ventas.estado) NOT LIKE ?', ['cancel%']);
-            });
+            ->whereRaw('LOWER(ventas.estado) = ?', ['completada']);
     }
 
     /**
