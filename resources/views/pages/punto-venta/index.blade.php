@@ -1,8 +1,8 @@
 <x-layouts::app :title="__('Punto de venta')">
     <div class="pos-page">
         <div class="pos-shell">
-            <div class="pos-layout">
-                <main class="pos-catalog !border-0 !bg-transparent !p-0 !shadow-none">
+            <div class="pos-layout !gap-6 lg:!grid-cols-[minmax(0,1fr)_360px] !items-stretch">
+                <main class="pos-catalog order-1 !border-0 !bg-transparent !p-0 !shadow-none !h-full !self-stretch">
                     <div class="mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                         <div class="flex items-center gap-3">
                             <label class="relative flex-1">
@@ -47,7 +47,7 @@
                     </div>
                 </main>
 
-                <aside class="pos-cart" aria-label="Carrito de venta">
+                <aside class="pos-cart order-2 !h-full !self-stretch !min-h-[520px] lg:!min-h-[640px]" aria-label="Carrito de venta">
                     <div class="pos-cart-heading">
                         <div>
                             <p class="pos-kicker">Venta actual</p>

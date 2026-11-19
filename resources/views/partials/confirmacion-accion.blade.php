@@ -42,7 +42,7 @@
     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="cerrar()"></div>
 
     <div
-        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
+        class="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95 sm:p-6"
         @click.stop
     >
         <div class="mb-5 flex items-center justify-between gap-4">

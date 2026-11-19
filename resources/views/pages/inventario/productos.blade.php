@@ -1,6 +1,29 @@
 <x-layouts::app :title="__('Productos')">
-    <div class="module-page inventario-page" style="min-height:auto !important; display:block !important; padding:0.75rem;">
-        <div class="module-page-inner inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
+    <div class="module-page relative isolate overflow-hidden">
+        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+        <div class="pos-water" aria-hidden="true">
+            <div class="pos-water-gradient"></div>
+            <div class="pos-water-highlight"></div>
+            <div class="pos-water-layer pos-water-layer--back">
+                <div class="pos-wave-track pos-wave-track--slow">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer pos-water-layer--mid">
+                <div class="pos-wave-track pos-wave-track--mid">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer">
+                <div class="pos-wave-track pos-wave-track--fast">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="module-page-inner relative z-10">
             <div class="lg:hidden">
                 @include('pages.inventario.components.tabs', ['seccion' => 'productos', 'selectedSucursal' => $selectedSucursal])
             </div>
@@ -37,29 +60,28 @@
                 </div>
             @endif
 
-            <section class="module-card noti-listado inventario-listado !flex-none !p-0" style="display:block !important;" aria-label="Catálogo de productos" x-data="buscadorTabla()" x-effect="filtrar($el)">
-                <header class="noti-listado-cabecera noti-listado-cabecera-empresa !py-2.5 !px-3">
+            <section class="module-card pos-glass-highlight overflow-hidden" aria-label="Catálogo de productos" x-data="buscadorTabla()" x-effect="filtrar($el)">
+                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                     <div>
-                        <h2 class="!text-sm">Catálogo de productos</h2>
-                        <p class="theme-subtle !text-xs">{{ $productos->count() }} producto(s) · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
+                        <h2>Catálogo de productos</h2>
+                        <p class="theme-subtle text-sm">{{ $productos->count() }} producto(s) · {{ $selectedSucursal?->nombre_sucursal ?? 'Sin sucursal' }}</p>
                     </div>
                 </header>
 
-                {{-- Toolbar --}}
-                <div class="entradas-toolbar !py-3 !px-4 border-b border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40">
+                <div class="flex flex-col gap-3 border-b border-white/50 bg-white/50 backdrop-blur-sm supports-[backdrop-filter]:bg-white/40 px-4 py-3 dark:border-white/10 dark:bg-slate-800/40 sm:flex-row sm:items-center sm:justify-between lg:hidden">
                     <form method="GET" action="{{ route('inventario.productos') }}" class="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex items-center gap-2">
-                            <input type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre…" class="theme-input w-full sm:w-72" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
-                            <button type="submit" class="theme-button theme-button-secondary !min-h-0 shrink-0 !py-2.5">Buscar</button>
+                            <input id="inventario-buscar" type="search" name="buscar" value="{{ $busqueda }}" placeholder="Buscar código o nombre…" class="theme-input w-full sm:w-72" aria-label="Buscar producto" @input.debounce.200ms="texto = $event.target.value">
+                            <button type="submit" class="theme-button theme-button-secondary shrink-0">Buscar</button>
                         </div>
                     </form>
                 </div>
 
-                <div class="entradas-tabla-wrap !border-0 !max-h-none !overflow-visible rounded-b-2xl" style="max-height:none !important; overflow:visible !important;">
-                    <div class="overflow-x-auto" style="overflow:visible !important;">
+                <div class="module-table">
+                    <div class="overflow-x-auto">
                         <table class="w-full min-w-[920px] text-left">
-                            <thead>
-                                <tr class="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
+                            <thead class="bg-white/60 backdrop-blur-sm supports-[backdrop-filter]:bg-white/50 dark:bg-slate-800/40">
+                                <tr class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:border-slate-700 dark:text-slate-400">
                                     <th class="px-5 py-3.5 w-[28%]">Producto</th>
                                     <th class="px-4 py-3.5 w-[14%]">Categoría</th>
                                     <th class="px-4 py-3.5 w-[20%]">Presentación</th>
@@ -79,9 +101,9 @@
                                             $totalDesplegable = $presentacionesLista->count();
                                             $mostrarDesplegable = $totalDesplegable > 0;
                                         @endphp
-                                    <tbody x-data="{ abierta: false }" data-buscar="{{ $producto->codigo_barras }} {{ $producto->nombre_producto }}" class="group/tbody">
+                                    <tbody x-data="{ abierta: false }" data-buscar="{{ $producto->codigo_barras }} {{ $producto->nombre_producto }}" class="pos-card-animate group/tbody divide-y divide-slate-100 dark:divide-slate-800" style="animation-delay: {{ $loop->index * 35 }}ms">
                                         <tr @class([
-                                            'transition hover:bg-slate-50/70 dark:hover:bg-slate-800/30',
+                                            'transition hover:bg-white/60 backdrop-blur-sm dark:hover:bg-slate-700/30',
                                             'opacity-60' => ! $producto->es_activo,
                                         ])>
                                             <td class="px-5 py-4">
@@ -115,7 +137,7 @@
                                                     <button
                                                         type="button"
                                                         @click="abierta = !abierta"
-                                                        :aria-expanded="abierta"
+                                                        :aria-expanded="abierta.toString()"
                                                         aria-controls="presentaciones-{{ $producto->id }}"
                                                         class="mt-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 shadow-sm transition hover:border-[#0e9384] hover:bg-emerald-50 hover:text-[#0c7569] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-500/40"
                                                     >
@@ -130,7 +152,6 @@
                                             <td class="px-4 py-4 text-right">
                                                 @if($principal)
                                                     <span class="text-sm font-extrabold text-emerald-700 dark:text-emerald-300">${{ number_format((float) $principal->precio_presentacion, 2) }}</span>
-                                                    
                                                 @else
                                                     <span class="text-xs font-medium text-slate-400">—</span>
                                                 @endif
@@ -145,7 +166,7 @@
                                             </td>
 
                                             <td class="px-4 py-4 text-center">
-                                                <form action="{{ route('inventario.estado', $producto) }}" method="POST" style="margin:0;">
+                                                <form action="{{ route('inventario.estado', $producto) }}" method="POST">
                                                     @csrf
                                                     @method('PATCH')
                                                     <input type="hidden" name="es_activo" value="{{ $producto->es_activo ? 0 : 1 }}">
@@ -194,12 +215,14 @@
 
                                         @if($mostrarDesplegable)
                                             <tr>
-                                                <td colspan="7" class="!p-0">
+                                                <td colspan="7" class="p-0">
                                                     <div
                                                         id="presentaciones-{{ $producto->id }}"
                                                         x-show="abierta"
                                                         x-collapse
-                                                        class="border-t border-dashed border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-slate-700 dark:bg-slate-900/30"
+                                                        x-transition
+                                                        x-cloak
+                                                        class="border-t border-slate-200 bg-slate-50/50 px-5 py-4 dark:border-slate-700 dark:bg-slate-900/30"
                                                     >
                                                         <p class="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Presentaciones y precios</p>
                                                         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
@@ -247,6 +270,27 @@
             </section>
         </div>
     </div>
+
+    <script>
+        (() => {
+            const sync = () => {
+                const topbar = document.getElementById('topbar-inventario-buscar');
+                const card = document.getElementById('inventario-buscar');
+                if (!topbar || !card) return;
+                if (topbar.dataset.bound === '1') return;
+                topbar.dataset.bound = '1';
+                topbar.addEventListener('input', () => {
+                    card.value = topbar.value;
+                    card.dispatchEvent(new Event('input', { bubbles: true }));
+                });
+                // Sincroniza valor inicial desde query
+                if (card.value && !topbar.value) topbar.value = card.value;
+            };
+            document.addEventListener('DOMContentLoaded', sync);
+            document.addEventListener('livewire:navigated', sync);
+            if (document.readyState !== 'loading') sync();
+        })();
+    </script>
 
     @include('partials.confirmacion-accion')
     @include('partials.buscador-cliente')

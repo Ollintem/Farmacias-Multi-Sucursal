@@ -40,7 +40,7 @@
                             default => 'Media',
                         };
                     @endphp
-                    <article class="group relative flex items-stretch gap-3 border-b border-slate-100 bg-white px-4 py-4 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/60 sm:px-5 {{ ! $aviso['leida'] ? '!bg-teal-50/40 dark:!bg-teal-900/10' : '' }}">
+                    <article wire:key="noti-{{ $aviso['id'] }}" class="group relative flex items-stretch gap-3 border-b border-slate-100 bg-white px-4 py-4 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/60 sm:px-5 {{ ! $aviso['leida'] ? '!bg-teal-50/40 dark:!bg-teal-900/10' : '' }}">
                         <span class="absolute inset-y-0 left-0 w-1 {{ $aviso['prioridad'] === 'alta' ? 'bg-red-500' : ($aviso['prioridad'] === 'media' ? 'bg-amber-500' : 'bg-teal-500') }}"></span>
                         <span class="noti-avatar prioridad-{{ $aviso['prioridad'] }} relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-black text-white shadow-sm @if($aviso['prioridad'] === 'alta') bg-gradient-to-br from-red-500 to-red-700 @elseif($aviso['prioridad'] === 'media') bg-gradient-to-br from-amber-500 to-orange-600 @else bg-gradient-to-br from-teal-600 to-teal-700 @endif">
                             {{ $aviso['avatar'] ?? '•' }}

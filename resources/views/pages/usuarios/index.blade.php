@@ -1,6 +1,29 @@
 <x-layouts::app :title="__('Usuarios')">
-    <div class="module-page noti-page">
-        <div class="module-page-inner noti-full noti-formal">
+    <div class="module-page relative isolate overflow-hidden">
+        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+        <div class="pos-water" aria-hidden="true">
+            <div class="pos-water-gradient"></div>
+            <div class="pos-water-highlight"></div>
+            <div class="pos-water-layer pos-water-layer--back">
+                <div class="pos-wave-track pos-wave-track--slow">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer pos-water-layer--mid">
+                <div class="pos-wave-track pos-wave-track--mid">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer">
+                <div class="pos-wave-track pos-wave-track--fast">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="module-page-inner relative z-10 noti-full noti-formal">
             @if(session('success'))
                 <div
                     x-data="{ show: true }"
@@ -63,7 +86,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="modalRol = false"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
+                        class="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95 sm:p-6"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -134,7 +157,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="modalEditarRol = false"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
+                        class="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95 sm:p-6"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -197,8 +220,9 @@
                         role="button"
                         tabindex="0"
                         @keydown.enter="filtrar(null)"
-                        class="role-card"
+                        class="role-card pos-card-animate"
                         :class="rolSeleccionado === null ? 'active' : ''"
+                        style="animation-delay: 0ms"
                     >
                         <div class="flex items-center gap-2 mb-2">
                             <span class="role-card-icon">
@@ -216,8 +240,9 @@
                             role="button"
                             tabindex="0"
                             @keydown.enter="filtrar({{ $rol->id }})"
-                            class="role-card"
+                            class="role-card pos-card-animate"
                             :class="rolSeleccionado === {{ $rol->id }} ? 'active' : ''"
+                            style="animation-delay: {{ ($loop->index + 1) * 45 }}ms"
                         >
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="role-card-icon role-card-icon-teal">
@@ -259,7 +284,7 @@
                     @endforeach
                 </div>
 
-                <section class="module-card noti-listado" aria-label="Listado de usuarios">
+                <section class="module-card noti-listado pos-glass-highlight" aria-label="Listado de usuarios">
                     <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                         <div>
                             <h2>Listado de usuarios</h2>
@@ -285,6 +310,8 @@
                                 @forelse($usuarios as $usuario)
                                     <tr
                                         x-show="rolSeleccionado === null || rolSeleccionado === {{ $usuario->id_rol ?? 'null' }}"
+                                        class="pos-card-animate"
+                                        style="animation-delay: {{ $loop->index * 35 }}ms"
                                     >
                                         <td>
                                             <div class="font-medium text-slate-800 dark:text-white">{{ $usuario->nombre }} {{ $usuario->apellido }}</div>

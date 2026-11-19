@@ -290,7 +290,7 @@
                                         ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/40 dark:border-emerald-400 dark:bg-emerald-500/10 dark:ring-emerald-400/40'
                                         : 'border-slate-200 dark:border-slate-700'"
                                 >
-                                    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                                         <div>
                                             <label class="mb-2 block text-sm font-medium">Presentación</label>
 
@@ -476,7 +476,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="confirmarQuitarPresentaciones = false"></div>
 
                     <div
-                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
+                        class="relative w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95 sm:p-6"
                         x-on:click.stop
                     >
                         <div class="mb-5 flex items-center justify-between">
@@ -513,7 +513,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="confirmarAgregarPresentacion = false"></div>
 
                     <div
-                        class="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
+                        class="relative w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95 sm:p-6"
                         x-on:click.stop
                     >
                         <div class="mb-5 flex items-center justify-between">
@@ -550,7 +550,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="cerrarModal()"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
+                        class="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95 sm:p-6"
                         x-on:click.stop
                     >
                         <div class="mb-5 flex items-center justify-between">

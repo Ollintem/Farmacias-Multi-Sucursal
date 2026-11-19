@@ -431,6 +431,8 @@ class InventarioController extends Controller
      */
     public function cambiarEstado(Request $request, Producto $producto): RedirectResponse
     {
+        $request->validate(['es_activo' => ['required', 'boolean']]);
+
         $activo = $request->boolean('es_activo');
 
         $producto->update(['es_activo' => $activo]);

@@ -19,7 +19,7 @@
         </span>
     </header>
 
-    <div class="grid grid-cols-2 gap-px border-b border-slate-200 bg-slate-200 dark:border-slate-700 dark:bg-slate-700 lg:grid-cols-5">
+    <div class="grid grid-cols-1 gap-px border-b border-slate-200 bg-slate-200 dark:border-slate-700 dark:bg-slate-700 sm:grid-cols-2 lg:grid-cols-5">
         <div class="bg-white px-4 py-3 dark:bg-slate-900">
             <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Ventas</p>
             <p class="mt-1 text-lg font-black leading-none text-slate-900 dark:text-white">{{ $reporte['totales']['cantidad'] }}</p>

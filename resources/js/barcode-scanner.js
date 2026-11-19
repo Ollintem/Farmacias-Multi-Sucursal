@@ -28,13 +28,14 @@ const createScannerDialog = () => {
     return dialog;
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+const initBarcodeScanner = () => {
     const trigger = document.getElementById('scanner-focus-button');
     const barcodeInput = document.getElementById('barcode-input');
 
-    if (! trigger || ! barcodeInput) {
+    if (! trigger || ! barcodeInput || trigger.dataset.scannerBound === '1') {
         return;
     }
+    trigger.dataset.scannerBound = '1';
 
     const dialog = createScannerDialog();
     const video = dialog.querySelector('[data-scanner-video]');
@@ -71,7 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         status.textContent = 'Solicitando acceso a la cámara...';
-        dialog.showModal();
+        try {
+            dialog.showModal();
+        } catch (e) {
+            if (dialog.open) return;
+            dialog.showModal();
+        }
 
         try {
             controls = await reader.decodeFromConstraints(
@@ -95,4 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('No se pudo iniciar el lector de códigos:', error);
         }
     });
-});
+};
+
+document.addEventListener('DOMContentLoaded', initBarcodeScanner);
+document.addEventListener('livewire:navigated', initBarcodeScanner);
+document.addEventListener('livewire:init', initBarcodeScanner);

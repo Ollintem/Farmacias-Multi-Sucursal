@@ -1,12 +1,35 @@
 <x-layouts::app :title="__('Entradas de almacén')">
-    <div class="module-page noti-page">
-        <div class="module-page-inner noti-full noti-formal">
+    <div class="module-page relative isolate overflow-hidden">
+        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+        <div class="pos-water" aria-hidden="true">
+            <div class="pos-water-gradient"></div>
+            <div class="pos-water-highlight"></div>
+            <div class="pos-water-layer pos-water-layer--back">
+                <div class="pos-wave-track pos-wave-track--slow">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer pos-water-layer--mid">
+                <div class="pos-wave-track pos-wave-track--mid">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer">
+                <div class="pos-wave-track pos-wave-track--fast">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="module-page-inner relative z-10 noti-full noti-formal">
             @php($tipoActual = $tipo ?? request('tipo', 'todas'))
             @php($totalTodas = $totalEntradas ?? ($entradas->count() ?? 0))
 
             @include('pages.entradas.components.alertas')
 
-            <section class="module-card noti-listado noti-listado--formal" aria-label="Listado de entradas" x-data="{ traspasoModal: null }">
+            <section class="module-card noti-listado noti-listado--formal pos-glass-highlight" aria-label="Listado de entradas" x-data="{ traspasoModal: null }">
                 @include('pages.entradas.components.cabecera-listado', [
                     'titulo' => 'Listado de entradas',
                     'subtitulo' => ($selectedSucursal?->nombre_sucursal ?? 'Sin sucursal') . ' · ' . $totalTodas . ' registro(s)',

@@ -1,7 +1,7 @@
 <script>
     function compraLotes() {
-        const presentaciones = {!! json_encode($presentacionPorProducto) !!};
-        const filasIniciales = {!! json_encode(collect(old('lotes', [['id_producto' => '', 'cantidad' => 1, 'fecha_entrada' => now()->toDateString(), 'fecha_caducidad' => '']]))->map(fn ($item) => ['key' => uniqid(), 'producto' => (string) ($item['id_producto'] ?? ''), 'cantidad' => (int) ($item['cantidad'] ?? 1), 'fecha_entrada' => (string) ($item['fecha_entrada'] ?? now()->toDateString()), 'fecha_caducidad' => (string) ($item['fecha_caducidad'] ?? '')])->values()) !!};
+        const presentaciones = {!! json_encode($presentacionPorProducto, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!};
+        const filasIniciales = {!! json_encode(collect(old('lotes', [['id_producto' => '', 'cantidad' => 1, 'fecha_entrada' => now()->toDateString(), 'fecha_caducidad' => '']]))->map(fn ($item) => ['key' => uniqid(), 'producto' => (string) ($item['id_producto'] ?? ''), 'cantidad' => (int) ($item['cantidad'] ?? 1), 'fecha_entrada' => (string) ($item['fecha_entrada'] ?? now()->toDateString()), 'fecha_caducidad' => (string) ($item['fecha_caducidad'] ?? '')])->values(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!};
 
         return {
             rows: filasIniciales,

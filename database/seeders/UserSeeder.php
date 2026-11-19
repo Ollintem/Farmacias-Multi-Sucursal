@@ -29,5 +29,18 @@ class UserSeeder extends Seeder
                 'id_rol' => $rolSuperAdmin?->id,
             ]
         );
+
+        User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'nombre' => 'Usuario',
+                'apellido' => 'Pruebas',
+                'id_sucursal' => 1,
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+                'es_activo' => true,
+                'id_rol' => $rolCajero?->id,
+            ]
+        );
     }
 }

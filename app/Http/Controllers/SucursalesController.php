@@ -107,6 +107,8 @@ class SucursalesController extends Controller
      */
     public function cambiarEstado(Request $request, Sucursal $sucursal): RedirectResponse
     {
+        $request->validate(['es_activa' => ['required', 'boolean']]);
+
         $activa = $request->boolean('es_activa');
 
         $sucursal->update(['es_activa' => $activa]);

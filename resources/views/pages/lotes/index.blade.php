@@ -1,6 +1,29 @@
 <x-layouts::app :title="__('Lotes y caducidades')">
-    <div class="module-page inventario-page" style="min-height:auto !important; display:block !important; padding:0.75rem;">
-        <div class="module-page-inner inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
+    <div class="module-page relative isolate overflow-hidden" style="min-height:auto !important; display:block !important; padding:0.75rem;">
+        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+        <div class="pos-water" aria-hidden="true">
+            <div class="pos-water-gradient"></div>
+            <div class="pos-water-highlight"></div>
+            <div class="pos-water-layer pos-water-layer--back">
+                <div class="pos-wave-track pos-wave-track--slow">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer pos-water-layer--mid">
+                <div class="pos-wave-track pos-wave-track--mid">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer">
+                <div class="pos-wave-track pos-wave-track--fast">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="module-page-inner relative z-10 inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
             @php
                 // Parámetros que toda tarjeta conserva al cambiar de filtro.
                 $filtrosBase = array_filter([
@@ -22,7 +45,7 @@
             <header class="mb-6 lg:hidden" aria-label="Indicadores de lotes y caducidades">
                 <div>
                     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-  <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-slate-800 lg:grid-cols-4">
+  <dl class="grid grid-cols-1 gap-px bg-slate-200 dark:bg-slate-800 sm:grid-cols-2 lg:grid-cols-4">
     <a class="relative flex items-center gap-2.5 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/60" href="{{ $enlaceTarjeta('todos') }}" @if($filtroEstado === 'todos') aria-current="true" @endif>
     <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 ring-1">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
@@ -68,7 +91,7 @@
                 @include('pages.inventario.components.tabs', ['seccion' => 'lotes', 'selectedSucursal' => $selectedSucursal])
             </div>
 
-            <section class="module-card noti-listado inventario-listado !flex-none" style="flex:none !important; display:block !important;" aria-label="Listado de lotes"
+            <section class="module-card pos-glass-highlight noti-listado inventario-listado !flex-none" style="flex:none !important; display:block !important;" aria-label="Listado de lotes"
                  x-data="{
                      ...buscadorTabla(),
                      merma: {
@@ -185,7 +208,7 @@
                             </thead>
                             <tbody>
                                 @foreach($lotes as $lote)
-                                    <tr class="border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5" data-buscar="{{ $lote['folio'] }} {{ $lote['producto'] }} {{ $lote['marca'] }}">
+                                    <tr class="pos-card-animate border-t border-slate-200 transition hover:bg-emerald-50/60 dark:border-slate-700 dark:hover:bg-emerald-500/5" style="animation-delay: {{ $loop->index * 35 }}ms" data-buscar="{{ $lote['folio'] }} {{ $lote['producto'] }} {{ $lote['marca'] }}">
                                         <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $lote['folio'] }}</td>
                                         <td class="px-4 py-3">
                                             <div class="font-medium text-slate-800 dark:text-slate-100">{{ $lote['producto'] }}</div>
@@ -278,7 +301,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="merma.abierto = false"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
+                        class="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95 sm:p-6"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
@@ -424,7 +447,7 @@
                     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" x-on:click="anular.abierto = false"></div>
 
                     <div
-                        class="relative w-full max-w-lg rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95"
+                        class="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-2xl backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-800/95 sm:p-6"
                         x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"

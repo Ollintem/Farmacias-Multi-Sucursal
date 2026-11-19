@@ -144,8 +144,8 @@
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
-        <flux:header class="border-b border-[#cfddd7] bg-[#f7faf9] lg:hidden dark:border-slate-700 dark:bg-slate-800" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
-            <flux:sidebar.toggle for="app-sidebar" class="lg:hidden" icon="bars-2" inset="left" />
+        <flux:header class="border-b border-[#cfddd7] bg-[#f7faf9] md:hidden dark:border-slate-700 dark:bg-slate-800" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
+            <flux:sidebar.toggle for="app-sidebar" class="md:hidden" icon="bars-2" inset="left" />
 
             <flux:spacer />
 
@@ -264,7 +264,7 @@
         </script>
 
         {{-- Barra superior de escritorio: pill flotante (sin botón +) --}}
-        <div class="farma-topbar hidden lg:flex">
+        <div class="farma-topbar !hidden md:!flex">
             <div class="farma-topbar-pill-wrap">
                 <div class="farma-topbar-pill">
                     <div class="flex min-w-0 flex-1 items-center">
@@ -324,6 +324,18 @@
                         <div class="flex items-center gap-1 overflow-x-auto scrollbar-hide shrink-0">
                             @include('pages.inventario.components.tabs', ['seccion' => $topSeccion, 'selectedSucursal' => $topSucursalTb])
                         </div>
+                        @if($topIsProductos)
+                            <form method="GET" action="{{ route('inventario.productos') }}" class="hidden lg:flex flex-1 items-center gap-2 justify-end max-w-md ml-auto">
+                                <div class="relative flex-1">
+                                    <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"/></svg>
+                                    <input id="topbar-inventario-buscar" type="search" name="buscar" value="{{ request()->query('buscar') }}" placeholder="Buscar código o nombre…" class="theme-input !py-2 !pl-9 w-full" aria-label="Buscar producto">
+                                </div>
+                                <button type="submit" class="theme-button theme-button-secondary !py-2 shrink-0">Buscar</button>
+                                @if(request()->query('sucursal'))
+                                    <input type="hidden" name="sucursal" value="{{ request()->query('sucursal') }}">
+                                @endif
+                            </form>
+                        @endif
                         @if($topIsStock)
                             <?php
                                 $topSucursalIdInv = (int) (session('active_sucursal_id', auth()->user()?->id_sucursal ?? request()->query('sucursal') ?? 0) ?: 0);
@@ -782,6 +794,18 @@
                 @if(request()->routeIs('usuarios.*') && (auth()->user()?->permisosHabilitados('crear', 'usuarios') ?? false))
                     <button type="button" x-on:click="$dispatch('open-modal-rol')" class="theme-button theme-button-secondary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Nuevo rol</button>
                     <a href="{{ route('usuarios.create') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-3 !text-xs shrink-0 whitespace-nowrap">+ Nuevo usuario</a>
+                @endif
+                @if(request()->routeIs('sucursales.*') && (auth()->user()?->permisosHabilitados('crear', 'sucursales') ?? true))
+                    <a href="{{ route('sucursales.create') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-4 !text-xs shrink-0 whitespace-nowrap">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Nueva sucursal
+                    </a>
+                @endif
+                @if(request()->routeIs('proveedores.*') && (auth()->user()?->permisosHabilitados('crear', 'proveedores') ?? true))
+                    <a href="{{ route('proveedores.create') }}" class="theme-button theme-button-primary !min-h-0 !py-2 !px-4 !text-xs shrink-0 whitespace-nowrap">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Nuevo proveedor
+                    </a>
                 @endif
                 @if(request()->routeIs('caja.index'))
                     <?php $cajaTopMiAbierta_tmp = \App\Models\CorteCaja::where('id_usuario', (int) (auth()->id() ?? 0))->where('estado','abierto')->exists(); ?>

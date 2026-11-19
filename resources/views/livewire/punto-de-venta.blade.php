@@ -1,26 +1,55 @@
 <div
-    class="module-page pos-page noti-page !overflow-hidden scrollbar-hide"
+    class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide"
     x-data="{ successFolio: null, avisoCaducado: 0, avisoError: '' }"
-    @venta-completada.window="successFolio = $event.detail.folio; setTimeout(() => successFolio = null, 4000)"
+    @venta-completada.window="successFolio = $event.detail.folio; setTimeout(() => successFolio = null, 1800)"
     @stock-caducado-ignorado.window="avisoCaducado = $event.detail.unidades; setTimeout(() => avisoCaducado = 0, 4000)"
     @pos-error.window="avisoError = $event.detail.mensaje; setTimeout(() => avisoError = '', 5000)"
     @pos-activar-caja.window="$wire.abrirModalCaja()"
-    @imprimir-ticket.window="setTimeout(() => window.print(), 250)"
+    @imprimir-ticket.window="setTimeout(() => { const modoPrevio = localStorage.getItem('farmacia-theme-modo'); const darkPrevio = document.documentElement.classList.contains('dark'); const restaurarTema = () => { if (modoPrevio) localStorage.setItem('farmacia-theme-modo', modoPrevio); document.documentElement.classList.toggle('dark', darkPrevio); document.documentElement.classList.toggle('theme-dark', darkPrevio); document.documentElement.classList.toggle('theme-light', !darkPrevio); document.documentElement.style.colorScheme = darkPrevio ? 'dark' : 'light'; window.FarmaTheme?.aplicar(modoPrevio); try { window.Flux?.applyAppearance(modoPrevio === 'sistema' ? 'system' : darkPrevio ? 'dark' : 'light'); } catch(e) {} }; const cerrarTicket = () => { $wire.cerrarTicket(); setTimeout(restaurarTema, 80); }; if ('onafterprint' in window) { window.addEventListener('afterprint', cerrarTicket, { once: true }); window.addEventListener('afterprint', restaurarTema, { once: true }); } else { const mql = window.matchMedia('print'); const listener = (e) => { if (!e.matches) { cerrarTicket(); restaurarTema(); mql.removeEventListener('change', listener); } }; mql.addEventListener('change', listener); setTimeout(() => { cerrarTicket(); restaurarTema(); }, 2200); } window.print(); }, 250)"
 >
-    {{-- Toast de éxito --}}
+    {{-- Fondo agua animado — cyan/teal contrastante + brillo superior, solo transform (ultra ligero), solo POS --}}
+    <div class="pos-water" aria-hidden="true">
+        <div class="pos-water-gradient"></div>
+        <div class="pos-water-highlight"></div>
+        {{-- Onda trasera — lenta, cyan claro --}}
+        <div class="pos-water-layer pos-water-layer--back">
+            <div class="pos-wave-track pos-wave-track--slow">
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+            </div>
+        </div>
+        {{-- Onda media — teal --}}
+        <div class="pos-water-layer pos-water-layer--mid">
+            <div class="pos-wave-track pos-wave-track--mid">
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+            </div>
+        </div>
+        {{-- Onda frontal — cyan brillante, máximo contraste --}}
+        <div class="pos-water-layer">
+            <div class="pos-wave-track pos-wave-track--fast">
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+            </div>
+        </div>
+    </div>
+
+    {{-- Notificación de venta completada — centrada para máxima visibilidad antes de imprimir --}}
     <template x-if="successFolio">
         <div
             x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 translate-y-4"
-            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
             x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-            class="fixed right-4 top-4 z-[100] rounded-2xl border border-emerald-300 bg-emerald-50 px-5 py-3 shadow-xl dark:border-emerald-700 dark:bg-emerald-900/90"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="fixed left-1/2 top-1/2 z-[110] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-2 border-emerald-400 bg-white px-8 py-6 shadow-2xl dark:border-emerald-600 dark:bg-slate-900"
         >
-            <div class="flex items-center gap-2">
-                <span class="grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-xs font-bold text-white">✓</span>
-                <span class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Venta registrada: <span x-text="successFolio"></span></span>
+            <div class="flex flex-col items-center gap-3 text-center">
+                <span class="grid h-12 w-12 place-items-center rounded-full bg-emerald-600 text-lg font-bold text-white shadow-lg">✓</span>
+                <p class="text-base font-black text-emerald-800 dark:text-emerald-200">¡Venta registrada!</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Folio: <span x-text="successFolio" class="font-mono text-emerald-700 dark:text-emerald-300"></span></p>
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Preparando ticket para impresión…</p>
             </div>
         </div>
     </template>
@@ -63,7 +92,7 @@
         </div>
     </template>
 
-    <div class="module-page-inner noti-full noti-formal">
+    <div class="module-page-inner noti-full noti-formal relative z-10">
     {{-- Aviso de cierre de turno (se actualiza solo cada minuto) --}}
     <livewire:aviso-turno-caja />
 
@@ -99,7 +128,7 @@
     </header>
 
     {{-- Barra superior de búsqueda — en escritorio vive en el topbar, aquí solo móvil --}}
-    <div class="module-card !p-0 overflow-hidden border border-slate-200 dark:border-slate-600 shadow-sm lg:hidden">
+    <div class="module-card !p-0 overflow-hidden border border-white/60 dark:border-white/10 !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 shadow-sm md:hidden">
         <div class="flex flex-col">
             {{-- Fila búsqueda --}}
             <div class="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-2 dark:border-slate-600 dark:bg-slate-800">
@@ -123,13 +152,13 @@
         </div>
     </div>
 
-    {{-- Área de productos + carrito --}}
-    <div class="grid grow min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] items-stretch">
-        {{-- Grid de productos --}}
-        <div class="module-card min-w-0 !p-0 overflow-hidden flex flex-col min-h-[520px] shadow-sm">
+    {{-- Área de productos + carrito — catálogo y carrito lado a lado, misma altura --}}
+    <div class="grid grow min-h-0 gap-6 md:grid-cols-[minmax(0,1fr)_360px] items-stretch">
+        {{-- Catálogo ordenado (izquierda) — cristal para ver fondo agua --}}
+        <div class="order-1 module-card pos-glass-highlight min-w-0 !p-0 overflow-hidden flex flex-col min-h-[520px] lg:min-h-[640px] h-full !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:border-white/10">
             {{-- Filtros de presentación: bajo el buscador principal, justo sobre el catálogo --}}
             <div
-                class="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-slate-50/60 px-4 py-2 dark:border-slate-600 dark:bg-slate-800/60"
+                class="flex shrink-0 items-center gap-3 border-b border-white/50 bg-white/50 backdrop-blur-sm supports-[backdrop-filter]:bg-white/40 px-4 py-2 dark:border-white/10 dark:bg-slate-800/40"
                 x-data="{
                     hayDesbordamiento: false,
                     revisarDesbordamiento() {
@@ -164,6 +193,7 @@
                         </button>
                         @foreach($presentaciones as $presentacion)
                             <button
+                                wire:key="presentacion-{{ $presentacion->id }}"
                                 wire:click="$set('filtroPresentacion', '{{ $presentacion->id }}')"
                                 data-presentacion="{{ $presentacion->id }}"
                                 class="inline-flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-4 py-1.5 text-xs font-bold transition
@@ -192,9 +222,9 @@
                     </div>
                 </div>
             </div>
-            <div class="flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50/60 px-4 py-2 dark:border-slate-600 dark:bg-slate-800/60">
+            <div class="flex shrink-0 items-center justify-between border-b border-white/50 bg-white/50 backdrop-blur-sm supports-[backdrop-filter]:bg-white/40 px-4 py-2 dark:border-white/10 dark:bg-slate-800/40">
                 <h2 class="text-sm font-bold tracking-tight text-slate-700 dark:text-slate-100">Catálogo ordenado</h2>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800/60 dark:text-slate-200 dark:ring-white/10">
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                     {{ $productos->count() }} {{ Str::plural('producto', $productos->count()) }}
                 </span>
@@ -207,12 +237,12 @@
                     <p class="mt-1 text-xs text-slate-400 dark:text-slate-400">Prueba con otro nombre o código de barras</p>
                 </div>
             @else
-                <div class="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 min-[1700px]:grid-cols-5">
+                <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[1700px]:grid-cols-5">
                     @foreach($productos as $producto)
                         @php
                             $stockMostrado = $producto->stock_presentacion ?? $producto->stock_sucursal;
                         @endphp
-                        <div class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-[#0e9384] hover:shadow-lg hover:shadow-teal-900/10 dark:border-slate-600 dark:bg-slate-800/80 dark:hover:border-emerald-500">
+                        <div wire:key="producto-{{ $producto->id }}" style="animation-delay: {{ $loop->index * 35 }}ms" class="pos-card-animate group relative flex flex-col overflow-hidden rounded-2xl border border-white/60 bg-white/85 backdrop-blur-sm supports-[backdrop-filter]:bg-white/80 transition-all duration-300 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.01] hover:border-teal-500/40 hover:shadow-xl hover:shadow-teal-900/10 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:transform-none dark:border-white/10 dark:bg-slate-800/70 dark:backdrop-blur dark:hover:border-emerald-500/50">
                             @if($producto->es_controlado)
                                 <span class="absolute left-2 top-2 z-10 rounded-lg bg-red-600 px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-white shadow">RX</span>
                             @endif
@@ -222,8 +252,8 @@
                                 <span class="absolute right-2 top-2 z-10 rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">¡Últimas!</span>
                             @endif
 
-                            <div class="flex h-20 items-center justify-center bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-600/60">
-                                <span class="grid h-10 w-10 place-items-center rounded-xl bg-white text-sm font-black text-[#0c7569] shadow-sm ring-1 ring-slate-200 dark:bg-slate-700 dark:text-emerald-300 dark:ring-slate-500 transition group-hover:scale-105">Rx</span>
+                            <div class="flex h-20 items-center justify-center bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-800/80 border-b border-slate-100 dark:border-slate-600/60">
+                                <span class="grid h-10 w-10 place-items-center rounded-xl bg-white text-sm font-black text-[#0c7569] shadow-sm ring-1 ring-slate-200 dark:bg-slate-700 dark:text-emerald-300 dark:ring-slate-500 transition-all duration-300 ease-out group-hover:scale-110 group-hover:rotate-2 group-hover:shadow-md">Rx</span>
                             </div>
 
                             <div class="flex flex-1 flex-col gap-2 p-4">
@@ -281,7 +311,7 @@
                                         <button
                                             wire:click="agregarAlCarrito({{ $producto->id }})"
                                             @disabled($producto->stock_sucursal <= 0)
-                                            class="theme-button theme-button-primary !h-8 !w-8 !min-h-0 !p-0 !rounded-full shrink-0"
+                                            class="theme-button theme-button-primary !h-8 !w-8 !min-h-0 !p-0 !rounded-full shrink-0 transition-transform duration-200 ease-out hover:scale-110 hover:shadow-md active:scale-90 disabled:hover:scale-100 disabled:opacity-50"
                                             @if($producto->solo_caducado)
                                                 title="Sin existencias vigentes — solo lotes caducados"
                                                 aria-label="No se puede agregar {{ $producto->nombre_producto }}: solo tiene lotes caducados"
@@ -312,10 +342,10 @@
             </div>
         </div>
 
-        {{-- Panel derecho: Carrito (desktop) --}}
-        <div class="module-card hidden min-w-0 flex-col overflow-hidden !p-0 lg:flex min-h-[520px]">
-            {{-- Header del carrito --}}
-            <div class="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-teal-700/5 to-transparent px-5 py-4 dark:border-slate-600">
+        {{-- Carrito (derecha, misma altura que catálogo) --}}
+        <div class="order-2 module-card pos-glass-highlight hidden min-w-0 flex-col overflow-hidden !p-0 md:flex min-h-[520px] md:min-h-[640px] h-full self-stretch !bg-white/75 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/65 border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:border-white/10">
+            {{-- Header del carrito — cristal --}}
+            <div class="flex items-center justify-between border-b border-white/50 bg-white/60 backdrop-blur-md supports-[backdrop-filter]:bg-white/40 px-5 py-4 dark:border-white/10 dark:bg-slate-800/40">
                 <div>
                     <h2 class="text-base font-extrabold text-slate-800 dark:text-slate-100">Carrito</h2>
                     <p class="text-xs font-medium text-slate-500 dark:text-slate-300">{{ $cantidadArticulos }} {{ Str::plural('artículo', $cantidadArticulos) }}</p>
@@ -344,7 +374,7 @@
                 @else
                     <div class="flex flex-col gap-2">
                         @foreach($carrito as $index => $item)
-                            <div class="rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-600 dark:bg-slate-800">
+                            <div wire:key="carrito-{{ $index }}-{{ $item['producto_id'] ?? $item['id'] ?? $index }}-{{ $item['presentacion'] ?? 'unidad' }}" class="pos-cart-item rounded-lg border border-white/60 bg-white/70 backdrop-blur-sm supports-[backdrop-filter]:bg-white/60 p-3 dark:border-white/10 dark:bg-slate-800/50">
                                 <div class="flex items-start justify-between gap-2">
                                     <div class="min-w-0 flex-1">
                                         <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100 line-clamp-1" title="{{ $item['nombre'] }}">
@@ -419,8 +449,8 @@
                 @endif
             </div>
 
-            {{-- Resumen --}}
-            <div class="shrink-0 border-t border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-600 dark:bg-slate-800/70">
+            {{-- Resumen — cristal --}}
+            <div class="shrink-0 border-t border-white/50 bg-white/65 backdrop-blur-md supports-[backdrop-filter]:bg-white/50 px-5 py-4 dark:border-white/10 dark:bg-slate-800/50">
                 <div class="space-y-2">
                     <div class="flex items-center justify-between text-sm">
                         <span class="font-medium text-slate-500 dark:text-slate-300">Subtotal</span>
@@ -441,7 +471,7 @@
                 <button
                     wire:click="abrirCobro"
                     @disabled(empty($carrito))
-                    class="theme-button theme-button-primary mt-4 w-full"
+                    class="theme-button theme-button-primary mt-4 w-full transition-all duration-200 ease-out hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -533,7 +563,7 @@
     </script>
 
     {{-- Botón flotante carrito (móvil) --}}
-    <div class="fixed bottom-5 right-5 z-40 sm:bottom-6 sm:right-6 lg:hidden">
+    <div class="fixed bottom-5 right-5 z-40 sm:bottom-6 sm:right-6 md:hidden">
         <button
             wire:click="$set('mostrandoCarrito', true)"
             class="theme-button theme-button-primary relative !h-14 !w-14 !min-h-0 !p-0 !rounded-full shadow-xl"
@@ -550,7 +580,7 @@
     {{-- Overlay carrito móvil --}}
     @if($mostrandoCarrito)
         <div
-            class="fixed inset-0 z-50 lg:hidden"
+            class="fixed inset-0 z-50 md:hidden"
             x-data
             x-init="$nextTick(() => { $el.querySelector('[data-cart-panel]')?.classList.remove('translate-x-full'); })"
             x-transition:enter="transition ease-out duration-300"
@@ -594,7 +624,7 @@
                     @else
                         <div class="flex flex-col gap-2">
                             @foreach($carrito as $index => $item)
-                                <div class="rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-600 dark:bg-slate-800">
+                                <div wire:key="carrito-movil-{{ $index }}-{{ $item['producto_id'] ?? $item['id'] ?? $index }}-{{ $item['presentacion'] ?? 'unidad' }}" class="pos-cart-item rounded-lg border border-white/60 bg-white/70 backdrop-blur-sm supports-[backdrop-filter]:bg-white/60 p-3 dark:border-white/10 dark:bg-slate-800/50">
                                     <div class="flex items-start justify-between gap-2">
                                         <div class="min-w-0 flex-1">
                                             <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100 line-clamp-1">{{ $item['nombre'] }}</h4>
@@ -914,7 +944,7 @@
                         <button
                             wire:click="seleccionarMetodo('efectivo')"
                             class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-[11px] font-bold transition
-                                {{ $metodoPago === 'efectivo' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-sm dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-400/40' }}"
+                                {{ $metodoPago === 'efectivo' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-sm dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-200' }}"
                         >
                             <span class="grid h-7 w-7 place-items-center rounded-lg {{ $metodoPago === 'efectivo' ? 'bg-[#0e9384] text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300' }}"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span>
                             Efectivo
@@ -922,7 +952,7 @@
                         <button
                             wire:click="seleccionarMetodo('tarjeta')"
                             class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-[11px] font-bold transition
-                                {{ $metodoPago === 'tarjeta' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-sm dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-400/40' }}"
+                                {{ $metodoPago === 'tarjeta' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-sm dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-200' }}"
                         >
                             <span class="grid h-7 w-7 place-items-center rounded-lg {{ $metodoPago === 'tarjeta' ? 'bg-[#0e9384] text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300' }}"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg></span>
                             Tarjeta
@@ -930,7 +960,7 @@
                         <button
                             wire:click="seleccionarMetodo('transferencia')"
                             class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-[11px] font-bold transition
-                                {{ $metodoPago === 'transferencia' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-sm dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-400/40' }}"
+                                {{ $metodoPago === 'transferencia' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-sm dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-200' }}"
                         >
                             <span class="grid h-7 w-7 place-items-center rounded-lg {{ $metodoPago === 'transferencia' ? 'bg-[#0e9384] text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300' }}"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg></span>
                             Transf.
@@ -938,7 +968,7 @@
                         <button
                             wire:click="seleccionarMetodo('mixto')"
                             class="flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-[11px] font-bold transition
-                                {{ $metodoPago === 'mixto' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-sm dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-400/40' }}"
+                                {{ $metodoPago === 'mixto' ? 'border-[#0e9384] bg-teal-50 text-[#0c7569] shadow-sm dark:border-emerald-400 dark:bg-emerald-500/20 dark:text-emerald-200' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/40 hover:bg-teal-50/50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-200' }}"
                         >
                             <span class="grid h-7 w-7 place-items-center rounded-lg {{ $metodoPago === 'mixto' ? 'bg-[#0e9384] text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300' }}"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg></span>
                             Mixto
@@ -957,7 +987,7 @@
                                     @foreach([500, 200, 100, 50, 20, 10] as $billete)
                                         <button
                                             wire:click="setEfectivoRapido({{ $billete }})"
-                                            class="rounded-xl border-2 border-slate-200 bg-white px-2 py-3 text-[11px] font-bold text-slate-700 shadow-sm transition hover:border-[#0e9384] hover:bg-teal-50 hover:text-[#0c7569] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-400"
+                                            class="rounded-xl border-2 border-slate-200 bg-white px-2 py-3 text-[11px] font-bold text-slate-700 shadow-sm transition hover:border-[#0e9384] hover:bg-teal-50 hover:text-[#0c7569] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-400 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-200"
                                         >
                                             +${{ $billete }}
                                         </button>
@@ -995,7 +1025,7 @@
                                     <p class="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Cambio a entregar</p>
                                     <p class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">Calculado automáticamente</p>
                                 </div>
-                                <p class="text-xl font-black {{ $cambio > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' }}">${{ number_format($cambio, 2) }}</p>
+                                <p class="text-xl font-black {{ $cambio > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400' }}">${{ number_format($cambio, 2) }}</p>
                             </div>
                         </div>
                     @endif
@@ -1006,10 +1036,10 @@
                             <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-800">
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">Monto cobrado</p>
                                 <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">Total exacto</p>
-                                <p class="mt-1 text-2xl font-extrabold text-[#0c9f9c]">${{ number_format($total, 2) }}</p>
+                                <p class="mt-1 text-2xl font-black text-[#0b6e68] dark:text-emerald-300">${{ number_format($total, 2) }}</p>
                             </div>
                             <div>
-                                <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">N.° de aprobacion <span class="font-normal normal-case tracking-normal">(opcional)</span></label>
+                                <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">N.° de aprobación <span class="font-normal normal-case tracking-normal">(opcional)</span></label>
                                 <input
                                     type="text"
                                     wire:model.live="referenciaTarjeta"
@@ -1082,7 +1112,7 @@
                                     <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-600">
                                         <div>
                                             <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Monto a transferir</p>
-                                            <p class="mt-1 text-2xl font-black text-[#0c9f9c]">${{ number_format($total, 2) }}</p>
+                                            <p class="mt-1 text-2xl font-black text-[#0b6e68] dark:text-emerald-300">${{ number_format($total, 2) }}</p>
                                         </div>
                                         <div class="sm:text-right">
                                             <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">N.° referencia / folio</p>
@@ -1306,10 +1336,10 @@
     {{-- Ticket térmico 80mm — se muestra tras cobrar para imprimir --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($mostrandoTicket && $ticketDatos)
-        <div id="ticket-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-3">
+        <div id="ticket-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarTicket"></div>
 
-            <div class="relative flex max-h-[78vh] w-full max-w-xs flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+            <div class="relative flex max-h-[92dvh] w-full max-w-xs flex-col overflow-y-auto overscroll-contain rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
                 <div class="flex items-center justify-between border-b border-slate-200 px-4 py-2.5 dark:border-slate-700">
                     <div>
                         <h3 class="text-[13px] font-black text-slate-800 dark:text-slate-100">Venta completada</h3>

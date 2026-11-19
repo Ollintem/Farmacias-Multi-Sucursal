@@ -1,8 +1,8 @@
 <script>
     function traspasoLotes() {
         return {
-            rows: {!! json_encode(collect(old('lotes', [['lote' => '', 'cantidad' => 1]]))->map(fn ($item) => ['key' => uniqid(), 'lote' => (string) ($item['lote'] ?? ''), 'cantidad' => (int) ($item['cantidad'] ?? 1)])->values()) !!},
-            mapaStock: {!! json_encode(($lotesDisponibles ?? collect())->mapWithKeys(fn ($lote) => [$lote->id => (int) ($lote->inventarios->firstWhere('id_sucursal', $origenLotesId)?->stock ?? 0)])) !!},
+            rows: {!! json_encode(collect(old('lotes', [['lote' => '', 'cantidad' => 1]]))->map(fn ($item) => ['key' => uniqid(), 'lote' => (string) ($item['lote'] ?? ''), 'cantidad' => (int) ($item['cantidad'] ?? 1)])->values(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!},
+            mapaStock: {!! json_encode(($lotesDisponibles ?? collect())->mapWithKeys(fn ($lote) => [$lote->id => (int) ($lote->inventarios->firstWhere('id_sucursal', $origenLotesId)?->stock ?? 0)]), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!},
             init() {
                 // Al cambiar la sucursal elegible se recarga el formulario
                 // para que el SELECT de lotes consulte el inventario de la

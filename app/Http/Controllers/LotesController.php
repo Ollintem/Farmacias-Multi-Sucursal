@@ -90,7 +90,7 @@ class LotesController extends Controller
                     'folio' => $lote->folio,
                     'producto' => $nombreProducto,
                     'marca' => $lote->id_proveedor !== null
-                        ? $lote->proveedor->nombre_proveedor
+                        ? ($lote->proveedor?->nombre_proveedor ?? 'Proveedor no disponible')
                         : ($lote->id_compra !== null
                             ? $lote->compra?->proveedor?->nombre_proveedor
                             : 'Sin proveedor'),

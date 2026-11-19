@@ -31,7 +31,7 @@
     $maxHora = max(1.0, (float) ($porHora->max('total') ?? 0));
 @endphp
 
-<section class="module-card p-4 sm:p-5" aria-label="Gráfica de ventas de hoy">
+<section class="module-card pos-glass-highlight p-4 sm:p-5" aria-label="Gráfica de ventas de hoy">
     <header class="flex flex-wrap items-start justify-between gap-3">
         <div class="flex items-start gap-3">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/20">
@@ -73,15 +73,15 @@
             </div>
 
             <div class="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-                <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800">
+                <div class="pos-card-animate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800" style="animation-delay: 0ms">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Ventas</p>
                     <p class="mt-1 text-lg font-black leading-none text-slate-900 dark:text-white">{{ number_format($cantidadVentas) }}</p>
                 </div>
-                <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800">
+                <div class="pos-card-animate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800" style="animation-delay: 70ms">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Unidades</p>
                     <p class="mt-1 text-lg font-black leading-none text-slate-900 dark:text-white">{{ number_format((int) $totalesHoy['unidades']) }}</p>
                 </div>
-                <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800">
+                <div class="pos-card-animate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800" style="animation-delay: 140ms">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Ticket promedio</p>
                     <p class="mt-1 text-lg font-black leading-none text-slate-900 dark:text-white">${{ number_format($ticketPromedio, 2) }}</p>
                 </div>
@@ -92,7 +92,7 @@
             <div class="mt-5 grid gap-3 border-t border-slate-100 pt-4 dark:border-slate-800 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach($totalesHoy['por_metodo'] as $metodo)
                     @php($porcentaje = $totalHoy > 0 ? round(($metodo['total'] / $totalHoy) * 100) : 0)
-                    <div class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900">
+                    <div class="pos-card-animate rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900" style="animation-delay: {{ $loop->index * 70 }}ms">
                         <div class="flex items-center justify-between gap-2">
                             <span class="truncate text-xs font-bold text-slate-600 dark:text-slate-300">{{ $metodo['metodo'] }}</span>
                             <span class="text-xs font-black text-slate-900 dark:text-white">${{ number_format((float) $metodo['total'], 2) }}</span>

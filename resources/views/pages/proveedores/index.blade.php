@@ -1,8 +1,31 @@
 <x-layouts::app :title="__('Proveedores')">
-    <div class="module-page noti-page">
-        <div class="module-page-inner noti-full noti-formal">
-            {{-- Acciones --}}
-            <header class="mb-6" aria-label="Acciones de proveedores">
+    <div class="module-page relative isolate overflow-hidden">
+        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+        <div class="pos-water" aria-hidden="true">
+            <div class="pos-water-gradient"></div>
+            <div class="pos-water-highlight"></div>
+            <div class="pos-water-layer pos-water-layer--back">
+                <div class="pos-wave-track pos-wave-track--slow">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer pos-water-layer--mid">
+                <div class="pos-wave-track pos-wave-track--mid">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer">
+                <div class="pos-wave-track pos-wave-track--fast">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="module-page-inner relative z-10 noti-full noti-formal">
+            {{-- Acciones (solo móvil: en escritorio el botón vive en el topbar superior) --}}
+            <header class="mb-6 lg:hidden" aria-label="Acciones de proveedores">
                 <div class="flex flex-wrap items-start justify-end gap-4">
                     <a href="{{ route('proveedores.create') }}" class="theme-button theme-button-primary whitespace-nowrap">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -83,7 +106,7 @@
                 </div>
             </div>
 
-            <section class="module-card noti-listado" aria-label="Directorio de proveedores" x-data="buscadorTabla()" x-effect="filtrar($el)">
+            <section class="module-card noti-listado pos-glass-highlight overflow-hidden" aria-label="Directorio de proveedores" x-data="buscadorTabla()" x-effect="filtrar($el)">
                 <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                     <div>
                         <h2>Directorio de proveedores</h2>
@@ -113,7 +136,7 @@
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                             @forelse ($proveedores as $proveedor)
                                 @php($contactoCompleto = filled($proveedor->telefono) && filled($proveedor->correo))
-                                <tr class="group transition hover:bg-emerald-50/50 dark:hover:bg-emerald-500/[0.04]" data-buscar="{{ $proveedor->nombre_proveedor }} {{ $proveedor->correo }} {{ $proveedor->telefono }} {{ $proveedor->unidad_entrega }} {{ $proveedor->direccion }}">
+                                <tr class="group pos-card-animate transition hover:bg-white/60 backdrop-blur-sm dark:hover:bg-emerald-500/[0.04]" style="animation-delay: {{ $loop->index * 35 }}ms" data-buscar="{{ $proveedor->nombre_proveedor }} {{ $proveedor->correo }} {{ $proveedor->telefono }} {{ $proveedor->unidad_entrega }} {{ $proveedor->direccion }}">
                                     <td class="px-5 py-4">
                                         <div class="flex items-center gap-3.5">
                                             <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#0e9384] to-[#0c7569] text-[15px] font-black tracking-tight text-white shadow-md shadow-teal-900/15 ring-1 ring-black/5 transition group-hover:shadow-lg group-hover:shadow-teal-900/20">{{ strtoupper(mb_substr($proveedor->nombre_proveedor ?? '?', 0, 1)) }}</span>

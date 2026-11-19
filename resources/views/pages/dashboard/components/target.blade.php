@@ -18,7 +18,7 @@
     $totalAlertas = $totalProximosCaducar + $totalStockBajo;
 @endphp
 
-<section class="module-card p-4 sm:p-5" aria-label="Productos que requieren atención">
+<section class="module-card pos-glass-highlight p-4 sm:p-5" aria-label="Productos que requieren atención">
     <header class="flex flex-wrap items-start justify-between gap-3">
         <div class="flex items-start gap-3">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20">
@@ -62,7 +62,7 @@
             <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                 @forelse($proximosCaducar as $fila)
                     @php($dias = $fila['dias_restantes'])
-                    <li class="flex items-start justify-between gap-3 px-4 py-3">
+                    <li class="pos-card-animate flex items-start justify-between gap-3 px-4 py-3" style="animation-delay: {{ $loop->index * 60 }}ms">
                         <div class="min-w-0">
                             <p class="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
                                 {{ $fila['producto']?->nombre_producto ?? 'Producto sin nombre' }}
@@ -127,7 +127,7 @@
             <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                 @forelse($stockBajo as $fila)
                     @php($porcentaje = $fila['minimo'] > 0 ? min(100, (int) round(($fila['stock'] / $fila['minimo']) * 100)) : 0)
-                    <li class="px-4 py-3">
+                    <li class="pos-card-animate px-4 py-3" style="animation-delay: {{ $loop->index * 60 }}ms">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-bold text-slate-800 dark:text-slate-100">

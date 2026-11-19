@@ -1,6 +1,29 @@
 <x-layouts::app :title="__('Caja')">
-    <div class="module-page noti-page">
-        <div class="module-page-inner noti-full noti-formal">
+    <div class="module-page relative isolate overflow-hidden">
+        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+        <div class="pos-water" aria-hidden="true">
+            <div class="pos-water-gradient"></div>
+            <div class="pos-water-highlight"></div>
+            <div class="pos-water-layer pos-water-layer--back">
+                <div class="pos-wave-track pos-wave-track--slow">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer pos-water-layer--mid">
+                <div class="pos-wave-track pos-wave-track--mid">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer">
+                <div class="pos-wave-track pos-wave-track--fast">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="module-page-inner relative z-10 noti-full noti-formal">
             {{-- Selector de sucursal --}}
             <header class="mb-4 flex flex-wrap items-center justify-end gap-4" aria-label="Selector de sucursal">
                 <form method="GET" action="{{ route('caja.index') }}" class="flex items-center gap-2">
@@ -19,7 +42,7 @@
                 $totalEsperadoAbiertos = $cortesAbiertos->sum(fn($c) => (float) ($c->efectivo_esperado_calculado ?? $c->efectivo_inicial));
             @endphp
             <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:hidden">
-                <dl class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-slate-800 lg:grid-cols-4">
+                <dl class="grid grid-cols-1 gap-px bg-slate-200 dark:bg-slate-800 sm:grid-cols-2 lg:grid-cols-4">
                     <div class="flex items-center gap-2.5 bg-white px-3.5 py-3 dark:bg-slate-900">
                         <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/20">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -111,7 +134,7 @@
                 {{-- Cajas abiertas (principal) --}}
                 <div class="space-y-6">
                     {{-- Cajas abiertas (multi-caja) --}}
-                    <section class="module-card !p-0 overflow-hidden" aria-label="Cajas abiertas">
+                    <section class="module-card pos-glass-highlight !p-0 overflow-hidden" aria-label="Cajas abiertas">
                         <header class="flex items-center justify-between border-b border-slate-200 bg-slate-50/60 px-5 py-4 dark:border-slate-700 dark:bg-slate-800/60">
                             <div>
                                 <h2 class="text-sm font-black tracking-tight text-slate-800 dark:text-white">Cajas abiertas</h2>
@@ -143,7 +166,7 @@
                                         $ventasCorte = \App\Models\Venta::where('id_corte_caja', $corte->id)->with('pago')->get();
                                         $ventasTotal = (float) $ventasCorte->sum('total');
                                     @endphp
-                                    <div class="p-5">
+                                    <div class="pos-card-animate p-5" style="animation-delay: {{ $loop->index * 35 }}ms">
                                         <div class="flex flex-wrap items-start justify-between gap-3">
                                             <div>
                                                 <div class="flex flex-wrap items-center gap-2">
@@ -243,7 +266,7 @@
                 {{-- Modal Abrir caja --}}
                 <div x-show="abrirCajaOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
                     <div @click="abrirCajaOpen=false" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-                    <div @click.away="abrirCajaOpen=false" class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900">
+                    <div @click.away="abrirCajaOpen=false" class="relative w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900 sm:p-6">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-sm font-black text-slate-800 dark:text-white">Abrir nueva caja</h3>
@@ -284,7 +307,7 @@
                 {{-- Modal Resumen del día --}}
                 <div x-show="resumenOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
                     <div @click="resumenOpen=false" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-                    <div @click.away="resumenOpen=false" class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900">
+                    <div @click.away="resumenOpen=false" class="relative w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900 sm:p-6">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-sm font-black text-slate-800 dark:text-white">Resumen del día</h3>
