@@ -702,7 +702,7 @@ select.theme-input option {
 .theme-dark .theme-button-secondary:hover {
     border-color: #34d399;
     background: rgba(16, 185, 129, 0.22);
-    color: #ffffff;
+    color: #a7f3d0;
 }
 
 .dark .theme-button-secondary {
@@ -715,7 +715,7 @@ select.theme-input option {
 .dark .theme-button-secondary:hover {
     border-color: #34d399;
     background: rgba(16, 185, 129, 0.22);
-    color: #f1f5f9;
+    color: #a7f3d0;
 }
 
 .theme-button-danger {
@@ -3364,7 +3364,7 @@ html:not(.dark) .farma-topbar {
 .dark .inventario-seg-btn:hover {
     border-color: #34d399;
     background: rgba(14, 147, 132, 0.3);
-    color: #ffffff;
+    color: #a7f3d0;
 }
 
 .dark .inventario-seg-btn-activo {
@@ -4067,10 +4067,33 @@ select.theme-input option:focus,
     border-color: var(--farma-primary);
 }
 
+.dark .noti-filtro:not(.activo) {
+    border-color: #475569 !important;
+    background: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+.dark .noti-filtro:not(.activo):hover,
+.dark .noti-filtro:not(.activo):focus,
+.dark .noti-filtro:not(.activo):focus-visible,
+.dark .noti-filtro:not(.activo):active {
+    border-color: #34d399 !important;
+    background: #1e293b !important;
+    background-color: #1e293b !important;
+    color: #ecfdf5 !important;
+    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.35), 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+}
+
 .noti-filtro.activo {
     border-color: var(--farma-primary-strong);
     background: linear-gradient(135deg, #0e9384 0%, #0c7569 100%);
     color: #ffffff;
+}
+
+.dark .noti-filtro.activo {
+    border-color: #10b981 !important;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
 }
 
 /* Fila estilo Facebook: avatar con insignia, texto corrido y menú •••. */
@@ -4692,6 +4715,16 @@ body.noti-modal-abierto {
     background: rgba(255, 255, 255, 0.22);
 }
 
+.dark .noti-filtro-conteo {
+    background: #475569 !important;
+    color: #f8fafc !important;
+}
+
+.dark .noti-filtro.activo .noti-filtro-conteo {
+    background: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
+}
+
 .noti-listado {
     padding: 0;
     overflow: hidden;
@@ -5146,37 +5179,71 @@ body.noti-modal-abierto {
     padding: 0.6rem 0.85rem;
 }
 
-/* Listado flexible: crece y su scroll interno ocupa el alto visible. */
+/* Listado compacto: se ajusta al contenido, sin sobrante vacío.
+   Solo scrollea cuando supera el max-height. */
 .noti-full .noti-listado {
-    flex: 1;
+    flex: none;
     display: flex;
     flex-direction: column;
     min-height: 0;
+    height: auto;
 }
 
 .noti-full .noti-desplegable {
-    flex: 1;
+    flex: none;
     display: flex;
     flex-direction: column;
     min-height: 0;
+    height: auto;
 }
 
 .noti-full .noti-scroll {
-    flex: 1;
+    flex: none;
     height: auto;
-    /* Tope de alto: sin este max-height el flex-basis: 0 del flex: 1 hace
-       que el listado crezca con todo el contenido y nunca active el scroll
-       interno (el contenedor padre solo tiene min-height, no alto fijo). */
-    max-height: calc(100vh - 24rem);
-    min-height: 22rem;
+    max-height: 60vh;
+    min-height: 0;
 }
 
 @media (max-width: 1023px) {
     .noti-full .noti-scroll {
         height: auto;
-        max-height: 70vh;
-        min-height: 18rem;
+        max-height: 65vh;
+        min-height: 0;
     }
+}
+
+/* === Corrección de desborde horizontal del listado — garantiza que la tabla
+   nunca sobresalga del viewport y el scroll quede contenido dentro de la card === */
+.noti-listado {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.noti-desplegable,
+.noti-scroll {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.noti-scroll {
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
+}
+.noti-fila-formal,
+.noti-fila {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+}
+.module-page.noti-page {
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+.module-page-inner.noti-full {
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 /* Icono único del botón desplegar: la rotación indica el estado. */
@@ -5640,3 +5707,113 @@ body:has(.inventario-page) {
 .dark .border-\[\#0e9384\]\/20:not([class*="dark:border-"]) { border-color: rgba(16, 185, 129, 0.35) !important; }
 .dark .border-\[\#0e9384\]\/30:not([class*="dark:border-"]) { border-color: rgba(16, 185, 129, 0.35) !important; }
 .dark .border-\[\#0e9384\]\/40:not([class*="dark:border-"]) { border-color: rgba(16, 185, 129, 0.35) !important; }
+
+/* === Fix contraste hover en modo oscuro: evita texto blanco puro que pierde color === */
+.dark .theme-button-secondary:hover,
+.theme-dark .theme-button-secondary:hover,
+.dark .inventario-seg-btn:hover {
+    color: #a7f3d0 !important;
+}
+/* Botones temáticos con utilidades hover:text-white en oscuro — mantener acento menta */
+.dark .theme-button.hover\:text-white:hover,
+.dark .theme-button.dark\:hover\:text-white:hover {
+    color: #a7f3d0 !important;
+}
+
+/* === Fix contraste filtros de notificaciones en modo oscuro ===
+   Evita letras blancas sobre fondo blanco (Traspasos) y garantiza AA:
+   inactivo = slate-800 con texto slate-100; hover = esmeralda sutil;
+   activo = esmeralda con texto blanco; conteos con contraste propio;
+   cubre :focus/:focus-visible/:active/:focus-within en html.dark y .dark. */
+html.dark .noti-filtro:not(.activo),
+html.dark .noti-filtro:not(.activo):hover,
+html.dark .noti-filtro:not(.activo):focus,
+html.dark .noti-filtro:not(.activo):focus-visible,
+html.dark .noti-filtro:not(.activo):active,
+html.dark .noti-filtro:not(.activo):focus-within,
+.dark .noti-filtro:not(.activo),
+.dark .noti-filtro:not(.activo):hover,
+.dark .noti-filtro:not(.activo):focus,
+.dark .noti-filtro:not(.activo):focus-visible,
+.dark .noti-filtro:not(.activo):active,
+.dark .noti-filtro:not(.activo):focus-within {
+    background: #1e293b !important;
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    color: #f1f5f9 !important;
+    box-shadow: none !important;
+}
+html.dark .noti-filtro:not(.activo):hover,
+html.dark .noti-filtro:not(.activo):focus-visible,
+.dark .noti-filtro:not(.activo):hover,
+.dark .noti-filtro:not(.activo):focus-visible {
+    background: #1e293b !important;
+    background-color: #1e293b !important;
+    border-color: #34d399 !important;
+    color: #ecfdf5 !important;
+    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.35), 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+}
+html.dark .noti-filtro:not(.activo):hover span,
+html.dark .noti-filtro:not(.activo):focus-visible span,
+.dark .noti-filtro:not(.activo):hover span,
+.dark .noti-filtro:not(.activo):focus-visible span {
+    color: #ecfdf5 !important;
+}
+html.dark .noti-filtro:not(.activo):hover svg,
+html.dark .noti-filtro:not(.activo):focus-visible svg,
+.dark .noti-filtro:not(.activo):hover svg,
+.dark .noti-filtro:not(.activo):focus-visible svg {
+    color: #6ee7b7 !important;
+}
+html.dark .noti-filtro.activo,
+html.dark .noti-filtro.activo:hover,
+html.dark .noti-filtro.activo:focus,
+html.dark .noti-filtro.activo:focus-visible,
+html.dark .noti-filtro.activo:active,
+.dark .noti-filtro.activo,
+.dark .noti-filtro.activo:hover,
+.dark .noti-filtro.activo:focus,
+.dark .noti-filtro.activo:focus-visible,
+.dark .noti-filtro.activo:active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.30) !important;
+}
+html.dark .noti-filtro:not(.activo) .noti-filtro-conteo,
+.dark .noti-filtro:not(.activo) .noti-filtro-conteo {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+html.dark .noti-filtro:not(.activo):hover .noti-filtro-conteo,
+html.dark .noti-filtro:not(.activo):focus-visible .noti-filtro-conteo,
+.dark .noti-filtro:not(.activo):hover .noti-filtro-conteo,
+.dark .noti-filtro:not(.activo):focus-visible .noti-filtro-conteo {
+    background: #475569 !important;
+    color: #ffffff !important;
+}
+html.dark .noti-filtro.activo .noti-filtro-conteo,
+.dark .noti-filtro.activo .noti-filtro-conteo {
+    background: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
+}
+html.dark .noti-filtro:focus-visible,
+.dark .noti-filtro:focus-visible {
+    outline: 2px solid #0ea5e9 !important;
+    outline-offset: 2px !important;
+}
+/* Refuerzo final: cualquier hover/focus en oscuro nunca puede quedar blanco.
+   Selectores con :where y doble clase para superar cualquier utilidad de Tailwind/Flux. */
+html.dark body .noti-filtro:not(.activo):hover,
+html.dark body .noti-filtro:not(.activo):focus,
+html.dark body .noti-filtro:not(.activo):focus-visible,
+html.dark body .noti-filtro:not(.activo):active,
+body.dark .noti-filtro:not(.activo):hover,
+body.dark .noti-filtro:not(.activo):focus,
+body.dark .noti-filtro:not(.activo):focus-visible,
+body.dark .noti-filtro:not(.activo):active {
+    background: #1e293b !important;
+    background-color: #1e293b !important;
+    border-color: #34d399 !important;
+    color: #ecfdf5 !important;
+}
