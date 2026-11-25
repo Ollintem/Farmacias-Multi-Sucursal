@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Caja')">
-    <div class="module-page relative isolate overflow-hidden">
-        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+    <div class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide">
+        {{-- Fondo agua POS — idéntico a Punto de venta (livewire/punto-de-venta) --}}
         <div class="pos-water" aria-hidden="true">
             <div class="pos-water-gradient"></div>
             <div class="pos-water-highlight"></div>
@@ -23,7 +23,7 @@
                 </div>
             </div>
         </div>
-        <div class="module-page-inner relative z-10 noti-full noti-formal">
+        <div class="module-page-inner noti-full noti-formal relative z-10">
             {{-- Selector de sucursal --}}
             <header class="mb-4 flex flex-wrap items-center justify-end gap-4" aria-label="Selector de sucursal">
                 <form method="GET" action="{{ route('caja.index') }}" class="flex items-center gap-2">
@@ -134,7 +134,7 @@
                 {{-- Cajas abiertas (principal) --}}
                 <div class="space-y-6">
                     {{-- Cajas abiertas (multi-caja) --}}
-                    <section class="module-card pos-glass-highlight !p-0 overflow-hidden" aria-label="Cajas abiertas">
+                    <section class="module-card pos-glass-highlight !p-0 overflow-hidden !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10 flex flex-col flex-1 min-h-[520px] lg:min-h-[640px]" aria-label="Cajas abiertas">
                         <header class="flex items-center justify-between border-b border-slate-200 bg-slate-50/60 px-5 py-4 dark:border-slate-700 dark:bg-slate-800/60">
                             <div>
                                 <h2 class="text-sm font-black tracking-tight text-slate-800 dark:text-white">Cajas abiertas</h2>

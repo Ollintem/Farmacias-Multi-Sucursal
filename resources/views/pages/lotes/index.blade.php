@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Lotes y caducidades')">
-    <div class="module-page relative isolate overflow-hidden" style="min-height:auto !important; display:block !important; padding:0.75rem;">
-        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+    <div class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide">
+        {{-- Fondo agua POS — idéntico a Punto de venta (livewire/punto-de-venta) --}}
         <div class="pos-water" aria-hidden="true">
             <div class="pos-water-gradient"></div>
             <div class="pos-water-highlight"></div>
@@ -23,7 +23,7 @@
                 </div>
             </div>
         </div>
-        <div class="module-page-inner relative z-10 inventario-inner" style="display:block !important; flex:none !important; max-width:none; margin:0; width:100%; gap:0.75rem !important;">
+        <div class="module-page-inner noti-full noti-formal inventario-inner relative z-10">
             @php
                 // Parámetros que toda tarjeta conserva al cambiar de filtro.
                 $filtrosBase = array_filter([
@@ -91,7 +91,7 @@
                 @include('pages.inventario.components.tabs', ['seccion' => 'lotes', 'selectedSucursal' => $selectedSucursal])
             </div>
 
-            <section class="module-card pos-glass-highlight noti-listado inventario-listado !flex-none" style="flex:none !important; display:block !important;" aria-label="Listado de lotes"
+            <section class="module-card pos-glass-highlight noti-listado inventario-listado !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10 flex flex-col flex-1 overflow-hidden min-h-[520px] lg:min-h-[640px]" aria-label="Listado de lotes"
                  x-data="{
                      ...buscadorTabla(),
                      merma: {

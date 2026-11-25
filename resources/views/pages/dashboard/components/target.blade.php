@@ -18,7 +18,7 @@
     $totalAlertas = $totalProximosCaducar + $totalStockBajo;
 @endphp
 
-<section class="module-card pos-glass-highlight p-4 sm:p-5" aria-label="Productos que requieren atención">
+<section class="module-card pos-glass-highlight !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10 p-4 sm:p-5" aria-label="Productos que requieren atención">
     <header class="flex flex-wrap items-start justify-between gap-3">
         <div class="flex items-start gap-3">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/20">

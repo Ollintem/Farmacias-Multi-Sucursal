@@ -1,40 +1,35 @@
 <x-layouts::app :title="__('Notificaciones')">
-    <div class="module-page noti-page">
-        <div class="module-page-inner noti-full noti-feed noti-formal">
-            <header class="mb-5" aria-label="Encabezado de notificaciones">
-                <div class="space-y-3">
-<div class="rounded-[20px] border border-slate-200/70 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                            <nav class="noti-tabs !m-0 flex flex-wrap gap-1.5 border-0 bg-transparent p-0" role="tablist" aria-label="Filtrar notificaciones por grupo">
-                                @foreach([
-                                    'todas' => ['Todas', $totalAvisos, 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z'],
-                                    'no_leidas' => ['No leídas', $totalNoLeidas, 'M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z'],
-                                    'stock' => ['Stock', $tipos['stock'], 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z'],
-                                    'caducidad' => ['Caducidad', $tipos['caducidad'], 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z'],
-                                    'traspasos' => ['Traspasos', $tipos['traspasos'], 'M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5'],
-                                    'ventas' => ['Ventas', $tipos['ventas'], 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .298-.119.585-.33.795a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0Z'],
-                                    'caja' => ['Caja', $tipos['caja'], 'M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
-                                ] as $valor => [$etiqueta, $conteo, $icono])
-                                    <a href="{{ route('alertas.index', ['sucursal' => $selectedSucursal?->id, 'filtro' => $valor]) }}"
-                                       @class(['noti-filtro !px-3 !py-1.5 !text-xs', 'activo' => $filtro === $valor])
-                                       @if($filtro === $valor) aria-current="page" @endif>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $icono }}"/></svg>
-                                        <span>{{ $etiqueta }}</span>
-                                        <span class="noti-filtro-conteo">{{ $conteo }}</span>
-                                    </a>
-                                @endforeach
-                            
-                            </nav>
-                        </div>
+    <div class="module-page pos-page noti-page relative isolate overflow-hidden! scrollbar-hide">
+        {{-- Fondo agua POS — idéntico a las demás vistas (Dashboard, Proveedores, etc.) --}}
+        <div class="pos-water" aria-hidden="true">
+            <div class="pos-water-gradient"></div>
+            <div class="pos-water-highlight"></div>
+            <div class="pos-water-layer pos-water-layer--back">
+                <div class="pos-wave-track pos-wave-track--slow">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
                 </div>
-            </header>
-
+            </div>
+            <div class="pos-water-layer pos-water-layer--mid">
+                <div class="pos-wave-track pos-wave-track--mid">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer">
+                <div class="pos-wave-track pos-wave-track--fast">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="module-page-inner noti-full noti-formal relative z-10">
             @if(session('success'))
                 <div class="noti-alerta noti-alerta-exito" role="status">
                     <span class="noti-alerta-icono" aria-hidden="true">✓</span>
                     {{ session('success') }}
                 </div>
             @endif
-
             @if(session('error'))
                 <div class="noti-alerta noti-alerta-error" role="alert">
                     <span class="noti-alerta-icono" aria-hidden="true">!</span>
@@ -42,40 +37,56 @@
                 </div>
             @endif
 
-
-            @if($filtro === 'caducidad')
-                <nav class="noti-tabs noti-tabs-nivel" role="tablist" aria-label="Filtrar por nivel de caducidad">
-                    @foreach(['todos' => 'Todos los niveles', 'rojo' => 'Nivel rojo · 30 días o menos', 'amarillo' => 'Nivel amarillo · 31 a 90 días', 'verde' => 'Nivel verde · más de 90 días'] as $valor => $etiqueta)
-                        <a href="{{ route('alertas.index', ['sucursal' => $selectedSucursal?->id, 'filtro' => 'caducidad', 'nivel' => $valor]) }}"
-                           @class(['noti-filtro', 'activo' => $nivel === $valor])>
-                            {{ $etiqueta }}
-                        </a>
-                    @endforeach
-                </nav>
-            @endif
-
-            {{-- Listado empresarial en cuadro desplegable con scroll. El estado
-                abierto/contraído se guarda en localStorage para que se mantenga
-                al cambiar de vista y regresar, hasta volver a presionarlo. --}}
-            <section class="module-card noti-listado" aria-label="Listado de notificaciones"
-                x-data="{ abierto: true,
-                    init() { try { const g = localStorage.getItem('noti-listado-abierto'); if (g !== null) { this.abierto = g === '1'; } } catch (e) {} },
-                    alternar() { this.abierto = ! this.abierto; try { localStorage.setItem('noti-listado-abierto', this.abierto ? '1' : '0'); } catch (e) {} } }">
-                <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
+            <section class="module-card noti-listado pos-glass-highlight bg-white/80! backdrop-blur-xl supports-backdrop-filter:bg-white/60! border border-white/60! shadow-xl shadow-teal-900/5 dark:bg-slate-800/60! dark:border-white/10! flex flex-col overflow-hidden p-0! max-w-4xl mx-auto w-full rounded-2xl box-border" aria-label="Listado de notificaciones"
+                x-data="{ abierto: true, init() { try { const g = localStorage.getItem('noti-listado-abierto'); if (g !== null) { this.abierto = g === '1'; } } catch (e) {} }, alternar() { this.abierto = ! this.abierto; try { localStorage.setItem('noti-listado-abierto', this.abierto ? '1' : '0'); } catch (e) {} } }">
+                <header class="flex flex-wrap items-center justify-between gap-3 rounded-t-2xl border-b border-slate-200 bg-slate-50/60 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
                     <div>
-                        <h2>Detalle de avisos</h2>
-                        <p class="theme-subtle text-sm">{{ count($notificaciones) }} registro(s) · filtro activo: {{ $filtro === 'no_leidas' ? 'no leídas' : $filtro }} · {{ $selectedSucursal?->nombre_sucursal ?? 'sin sucursal' }}</p>
+                        <h2 class="text-sm font-black tracking-tight text-slate-800 dark:text-white">Detalle de avisos</h2>
+                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ count($notificaciones) }} registro(s) · {{ $filtro === 'no_leidas' ? 'no leídas' : $filtro }} · {{ $selectedSucursal?->nombre_sucursal ?? 'sin sucursal' }}</p>
                     </div>
-                    <div class="noti-cabecera-lado">
-                        <span class="noti-sla">SLA sugerido: alta hoy · media 48 h · baja esta semana</span>
-                        <button type="button" @click="alternar()" :aria-expanded="abierto" aria-controls="noti-listado-cuerpo" class="noti-desplegar" :aria-label="abierto ? 'Contraer notificaciones' : 'Desplegar notificaciones'">
-                            <svg :class="{ 'girada': !abierto }" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"/></svg>
+                    <div class="flex items-center gap-2">
+                        <span class="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">SLA: alta hoy · media 48h</span>
+                        <button type="button" @click="alternar()" :aria-expanded="abierto" aria-controls="noti-listado-cuerpo" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm transition hover:border-[#0e9384] hover:bg-emerald-50 hover:text-farma-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200" :aria-label="abierto ? 'Contraer notificaciones' : 'Desplegar notificaciones'">
+                            <svg :class="{ 'girada': !abierto }" class="h-3.5 w-3.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"/></svg>
                             <span x-text="abierto ? 'Contraer' : 'Desplegar'"></span>
                         </button>
                     </div>
                 </header>
-                <div x-show="abierto" x-transition x-cloak class="noti-desplegable" id="noti-listado-cuerpo">
-                    <div class="noti-scroll" tabindex="0" role="region" aria-label="Notificaciones con desplazamiento">
+
+                <div class="flex flex-col gap-2 border-b border-slate-100 bg-slate-50/60 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/30">
+                    <nav class="noti-tabs m-0! flex flex-wrap gap-1.5 border-0 bg-transparent p-0" role="tablist" aria-label="Filtrar notificaciones por grupo">
+                        @foreach([
+                            'todas' => ['Todas', $totalAvisos, 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z'],
+                            'no_leidas' => ['No leídas', $totalNoLeidas, 'M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z'],
+                            'stock' => ['Stock', $tipos['stock'], 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z'],
+                            'caducidad' => ['Caducidad', $tipos['caducidad'], 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z'],
+                            'traspasos' => ['Traspasos', $tipos['traspasos'], 'M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5'],
+                            'ventas' => ['Ventas', $tipos['ventas'], 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .298-.119.585-.33.795a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0l-.09-.092a1.125 1.125 0 00-1.591 0l-.09.092a.75.75 0 01-1.08 0Z'],
+                            'caja' => ['Caja', $tipos['caja'], 'M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ] as $valor => [$etiqueta, $conteo, $icono])
+                            <a href="{{ route('alertas.index', ['sucursal' => $selectedSucursal?->id, 'filtro' => $valor]) }}"
+                               @class(['noti-filtro px-3! py-1.5! text-xs!', 'activo' => $filtro === $valor])
+                               @if($filtro === $valor) aria-current="page" @endif>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $icono }}"/></svg>
+                                <span>{{ $etiqueta }}</span>
+                                <span class="noti-filtro-conteo">{{ $conteo }}</span>
+                            </a>
+                        @endforeach
+                    </nav>
+                    @if($filtro === 'caducidad')
+                        <nav class="noti-tabs noti-tabs-nivel m-0! flex flex-wrap gap-1.5 border-0 bg-transparent p-0" role="tablist" aria-label="Filtrar por nivel de caducidad">
+                            @foreach(['todos' => 'Todos los niveles', 'rojo' => 'Nivel rojo · 30 días o menos', 'amarillo' => 'Nivel amarillo · 31 a 90 días', 'verde' => 'Nivel verde · más de 90 días'] as $valor => $etiqueta)
+                                <a href="{{ route('alertas.index', ['sucursal' => $selectedSucursal?->id, 'filtro' => 'caducidad', 'nivel' => $valor]) }}"
+                                   @class(['noti-filtro text-xs!', 'activo' => $nivel === $valor])>
+                                    {{ $etiqueta }}
+                                </a>
+                            @endforeach
+                        </nav>
+                    @endif
+                </div>
+
+                <div x-show="abierto" x-transition x-cloak class="noti-desplegable flex-none! w-full max-w-full overflow-hidden rounded-b-2xl box-border" id="noti-listado-cuerpo">
+                    <div class="noti-scroll min-h-0! max-h-none! h-auto! max-h-[60vh] w-full max-w-full overflow-x-hidden overflow-y-auto overscroll-contain scrollbar-gutter-stable box-border rounded-b-2xl" tabindex="0" role="region" aria-label="Notificaciones con desplazamiento">
                 @forelse($notificaciones as $aviso)
                     @php
                         $grupo = $aviso['grupo'] ?? $aviso['tipo'] ?? 'general';
@@ -93,7 +104,7 @@
                             default => 'Prioridad media',
                         };
                     @endphp
-                    <article @class(['noti-fila', 'noti-fila-formal', 'no-leida' => ! $aviso['leida']]) data-noti-fila="{{ $aviso['id'] }}">
+                    <article @class(['noti-fila', 'noti-fila-formal', 'pos-card-animate', '!py-3 !pl-4 !pr-3', 'no-leida' => ! $aviso['leida']]) data-noti-fila="{{ $aviso['id'] }}" style="animation-delay: {{ $loop->index * 35 }}ms">
                         <span class="noti-barra-prioridad prioridad-{{ $aviso['prioridad'] }}" aria-hidden="true"></span>
                         <span class="noti-avatar prioridad-{{ $aviso['prioridad'] }}" aria-hidden="true">
                             {{ $aviso['avatar'] ?? '•' }}
@@ -115,12 +126,10 @@
                             @if(! empty($aviso['mensaje']))
                                 <blockquote class="noti-mensaje">“{{ $aviso['mensaje'] }}”</blockquote>
                             @endif
-
                             <div class="noti-acciones noti-acciones-formal">
                                 <button type="button" data-noti-detalle="{{ $aviso['id'] }}" class="theme-button theme-button-secondary">Ver detalle</button>
                                 <a href="{{ $aviso['destino_url'] ?? $aviso['url'] }}" data-noti-ir="{{ $aviso['id'] }}" class="theme-button theme-button-primary">{{ $aviso['destino_etiqueta'] ?? 'Ir al apartado' }}</a>
                             </div>
-
                             @if($aviso['tipo'] === 'traspasos' && isset($aviso['traspaso_id']))
                                 <div class="noti-traspaso-panel">
                                     <p class="noti-traspaso-titulo">Gestión del traspaso T-{{ $aviso['traspaso_id'] }}</p>
@@ -178,18 +187,12 @@
             </section>
         </div>
     </div>
-
     <script>
-        // Refleja en la fila el cambio de leída/no leída sin recargar la página.
         document.addEventListener('notificacion:actualizada', (evento) => {
             const { id, leida } = evento.detail || {};
-            if (!id) {
-                return;
-            }
+            if (!id) return;
             const fila = document.querySelector('[data-noti-fila="' + CSS.escape(id) + '"]');
-            if (!fila) {
-                return;
-            }
+            if (!fila) return;
             fila.classList.toggle('no-leida', !leida);
             fila.querySelector('[data-noti-punto]')?.remove();
             const estado = fila.querySelector('.noti-etiqueta-estado');

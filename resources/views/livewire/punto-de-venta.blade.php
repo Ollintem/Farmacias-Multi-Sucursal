@@ -1,11 +1,11 @@
 <div
     class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide"
     x-data="{ successFolio: null, avisoCaducado: 0, avisoError: '' }"
-    @venta-completada.window="successFolio = $event.detail.folio; setTimeout(() => successFolio = null, 1800)"
+    @venta-completada.window="successFolio = $event.detail.folio; setTimeout(() => successFolio = null, 4000)"
     @stock-caducado-ignorado.window="avisoCaducado = $event.detail.unidades; setTimeout(() => avisoCaducado = 0, 4000)"
     @pos-error.window="avisoError = $event.detail.mensaje; setTimeout(() => avisoError = '', 5000)"
     @pos-activar-caja.window="$wire.abrirModalCaja()"
-    @imprimir-ticket.window="setTimeout(() => { const modoPrevio = localStorage.getItem('farmacia-theme-modo'); const darkPrevio = document.documentElement.classList.contains('dark'); const restaurarTema = () => { if (modoPrevio) localStorage.setItem('farmacia-theme-modo', modoPrevio); document.documentElement.classList.toggle('dark', darkPrevio); document.documentElement.classList.toggle('theme-dark', darkPrevio); document.documentElement.classList.toggle('theme-light', !darkPrevio); document.documentElement.style.colorScheme = darkPrevio ? 'dark' : 'light'; window.FarmaTheme?.aplicar(modoPrevio); try { window.Flux?.applyAppearance(modoPrevio === 'sistema' ? 'system' : darkPrevio ? 'dark' : 'light'); } catch(e) {} }; const cerrarTicket = () => { $wire.cerrarTicket(); setTimeout(restaurarTema, 80); }; if ('onafterprint' in window) { window.addEventListener('afterprint', cerrarTicket, { once: true }); window.addEventListener('afterprint', restaurarTema, { once: true }); } else { const mql = window.matchMedia('print'); const listener = (e) => { if (!e.matches) { cerrarTicket(); restaurarTema(); mql.removeEventListener('change', listener); } }; mql.addEventListener('change', listener); setTimeout(() => { cerrarTicket(); restaurarTema(); }, 2200); } window.print(); }, 250)"
+    @imprimir-ticket.window="setTimeout(() => { const modoPrevio = localStorage.getItem('farmacia-theme-modo'); const darkPrevio = document.documentElement.classList.contains('dark'); const restaurarTema = () => { if (modoPrevio) localStorage.setItem('farmacia-theme-modo', modoPrevio); document.documentElement.classList.toggle('dark', darkPrevio); document.documentElement.classList.toggle('theme-dark', darkPrevio); document.documentElement.classList.toggle('theme-light', !darkPrevio); document.documentElement.style.colorScheme = darkPrevio ? 'dark' : 'light'; window.FarmaTheme?.aplicar(modoPrevio); try { window.Flux?.applyAppearance(modoPrevio === 'sistema' ? 'system' : darkPrevio ? 'dark' : 'light'); } catch(e) {} }; const cerrarTicket = () => { $wire.cerrarTicket(); setTimeout(restaurarTema, 80); }; if ('onafterprint' in window) { window.addEventListener('afterprint', cerrarTicket, { once: true }); window.addEventListener('afterprint', restaurarTema, { once: true }); } else { const mql = window.matchMedia('print'); const listener = (e) => { if (!e.matches) { cerrarTicket(); restaurarTema(); mql.removeEventListener('change', listener); } }; mql.addEventListener('change', listener); setTimeout(() => { cerrarTicket(); restaurarTema(); }, 2200); } window.print(); setTimeout(() => { try { $wire.cerrarTicket(); } catch(e) {} }, 1800); }, 4300)"
 >
     {{-- Fondo agua animado — cyan/teal contrastante + brillo superior, solo transform (ultra ligero), solo POS --}}
     <div class="pos-water" aria-hidden="true">
@@ -34,24 +34,26 @@
         </div>
     </div>
 
-    {{-- Notificación de venta completada — centrada para máxima visibilidad antes de imprimir --}}
-    <template x-if="successFolio">
-        <div
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95"
-            class="fixed left-1/2 top-1/2 z-[110] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-2 border-emerald-400 bg-white px-8 py-6 shadow-2xl dark:border-emerald-600 dark:bg-slate-900"
-        >
-            <div class="flex flex-col items-center gap-3 text-center">
-                <span class="grid h-12 w-12 place-items-center rounded-full bg-emerald-600 text-lg font-bold text-white shadow-lg">✓</span>
-                <p class="text-base font-black text-emerald-800 dark:text-emerald-200">¡Venta registrada!</p>
-                <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Folio: <span x-text="successFolio" class="font-mono text-emerald-700 dark:text-emerald-300"></span></p>
-                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Preparando ticket para impresión…</p>
+    {{-- Notificación de venta completada — teletransportada a body, por encima del ticket, visible antes de imprimir --}}
+    <template x-teleport="body">
+        <template x-if="successFolio">
+            <div
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="fixed left-1/2 top-1/2 z-[120] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-2 border-emerald-400 bg-white px-8 py-6 shadow-2xl dark:border-emerald-600 dark:bg-slate-900"
+            >
+                <div class="flex flex-col items-center gap-3 text-center">
+                    <span class="grid h-12 w-12 place-items-center rounded-full bg-emerald-600 text-lg font-bold text-white shadow-lg">✓</span>
+                    <p class="text-base font-black text-emerald-800 dark:text-emerald-200">¡Venta registrada!</p>
+                    <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Folio: <span x-text="successFolio" class="font-mono text-emerald-700 dark:text-emerald-300"></span></p>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ticket listo — la impresión comenzará en unos segundos…</p>
+                </div>
             </div>
-        </div>
+        </template>
     </template>
 
     {{-- Toast de lotes caducados ignorados --}}
@@ -711,6 +713,7 @@
     {{-- Modal Activar caja (se abre desde el POS o desde el topbar) --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($abriendoCaja)
+        <template x-teleport="body">
         <div class="fixed inset-0 z-[65] flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarModalCaja"></div>
 
@@ -818,12 +821,14 @@
                 @endif
             </div>
         </div>
+        </template>
     @endif
 
     {{-- ═══════════════════════════════════════════════════════════ --}}
     {{-- Modal Cerrar caja (arquear el turno desde el POS) --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($cerrandoCaja && $cortePropio)
+        <template x-teleport="body">
         <div class="fixed inset-0 z-[65] flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarModalCierre"></div>
 
@@ -880,12 +885,14 @@
                 </form>
             </div>
         </div>
+        </template>
     @endif
 
     {{-- ═══════════════════════════════════════════════════════════ --}}
-    {{-- Modal de Cobro / Pago --}}
+    {{-- Modal de Cobro / Pago — teletransportado a body para evitar clip de .pos-page overflow-hidden --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($abriendoCobro)
+        <template x-teleport="body">
         <div
             class="fixed inset-0 z-[60] flex items-center justify-center p-4"
             x-data
@@ -1330,12 +1337,14 @@
                 </div>
             </div>
         </div>
+        </template>
     @endif
 
     {{-- ═══════════════════════════════════════════════════════════ --}}
     {{-- Ticket térmico 80mm — se muestra tras cobrar para imprimir --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($mostrandoTicket && $ticketDatos)
+        <template x-teleport="body">
         <div id="ticket-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarTicket"></div>
 
@@ -1461,12 +1470,14 @@
                 </div>
             </div>
         </div>
+        </template>
     @endif
 
     {{-- ═══════════════════════════════════════════════════════════ --}}
     {{-- Modal Receta Medica (medicamentos controlados) --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($mostrandoReceta)
+        <template x-teleport="body">
         <div class="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarReceta"></div>
 
@@ -1568,12 +1579,14 @@
                 </div>
             </div>
         </div>
+        </template>
     @endif
 
     {{-- ═══════════════════════════════════════════════════════════ --}}
     {{-- Modal Selector de venta (presentaciones y/o unidad suelta) --}}
     {{-- ═══════════════════════════════════════════════════════════ --}}
     @if($selectorProductoId)
+        <template x-teleport="body">
         <div class="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" wire:click="cerrarSelector"></div>
 
@@ -1677,5 +1690,6 @@
                 </div>
             </div>
         </div>
+        </template>
     @endif
 </div>

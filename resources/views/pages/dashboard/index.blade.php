@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Dashboard')">
-    <div class="module-page relative isolate overflow-hidden">
-        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+    <div class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide">
+        {{-- Fondo agua POS — idéntico a Punto de venta (livewire/punto-de-venta) --}}
         <div class="pos-water" aria-hidden="true">
             <div class="pos-water-gradient"></div>
             <div class="pos-water-highlight"></div>
@@ -23,7 +23,7 @@
                 </div>
             </div>
         </div>
-        <div class="module-page-inner relative z-10 noti-full noti-formal">
+        <div class="module-page-inner noti-full noti-formal relative z-10">
             @include('pages.dashboard.components.grafica')
 
             @include('pages.dashboard.components.target')

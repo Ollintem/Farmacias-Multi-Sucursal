@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Productos')">
-    <div class="module-page relative isolate overflow-hidden">
-        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+    <div class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide">
+        {{-- Fondo agua POS — idéntico a Punto de venta (livewire/punto-de-venta) --}}
         <div class="pos-water" aria-hidden="true">
             <div class="pos-water-gradient"></div>
             <div class="pos-water-highlight"></div>
@@ -23,7 +23,7 @@
                 </div>
             </div>
         </div>
-        <div class="module-page-inner relative z-10">
+        <div class="module-page-inner noti-full noti-formal relative z-10">
             <div class="lg:hidden">
                 @include('pages.inventario.components.tabs', ['seccion' => 'productos', 'selectedSucursal' => $selectedSucursal])
             </div>
@@ -60,7 +60,7 @@
                 </div>
             @endif
 
-            <section class="module-card pos-glass-highlight overflow-hidden" aria-label="Catálogo de productos" x-data="buscadorTabla()" x-effect="filtrar($el)">
+            <section class="module-card pos-glass-highlight overflow-hidden !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10 flex flex-col flex-1 min-h-[520px] lg:min-h-[640px]" aria-label="Catálogo de productos" x-data="buscadorTabla()" x-effect="filtrar($el)">
                 <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                     <div>
                         <h2>Catálogo de productos</h2>

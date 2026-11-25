@@ -31,7 +31,7 @@
     $maxHora = max(1.0, (float) ($porHora->max('total') ?? 0));
 @endphp
 
-<section class="module-card pos-glass-highlight p-4 sm:p-5" aria-label="Gráfica de ventas de hoy">
+<section class="module-card pos-glass-highlight !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10 p-4 sm:p-5" aria-label="Gráfica de ventas de hoy">
     <header class="flex flex-wrap items-start justify-between gap-3">
         <div class="flex items-start gap-3">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/20">

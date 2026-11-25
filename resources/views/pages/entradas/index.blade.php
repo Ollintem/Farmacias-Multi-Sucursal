@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Entradas de almacén')">
-    <div class="module-page relative isolate overflow-hidden">
-        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+    <div class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide">
+        {{-- Fondo agua POS — idéntico a Punto de venta (livewire/punto-de-venta) --}}
         <div class="pos-water" aria-hidden="true">
             <div class="pos-water-gradient"></div>
             <div class="pos-water-highlight"></div>
@@ -23,13 +23,13 @@
                 </div>
             </div>
         </div>
-        <div class="module-page-inner relative z-10 noti-full noti-formal">
+        <div class="module-page-inner noti-full noti-formal relative z-10">
             @php($tipoActual = $tipo ?? request('tipo', 'todas'))
             @php($totalTodas = $totalEntradas ?? ($entradas->count() ?? 0))
 
             @include('pages.entradas.components.alertas')
 
-            <section class="module-card noti-listado noti-listado--formal pos-glass-highlight" aria-label="Listado de entradas" x-data="{ traspasoModal: null }">
+            <section class="module-card noti-listado noti-listado--formal pos-glass-highlight !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10 flex flex-col flex-1 overflow-hidden min-h-[520px] lg:min-h-[640px]" aria-label="Listado de entradas" x-data="{ traspasoModal: null }">
                 @include('pages.entradas.components.cabecera-listado', [
                     'titulo' => 'Listado de entradas',
                     'subtitulo' => ($selectedSucursal?->nombre_sucursal ?? 'Sin sucursal') . ' · ' . $totalTodas . ' registro(s)',

@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Historial y auditoría — Caja')">
-    <div class="module-page relative isolate overflow-hidden">
-        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+    <div class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide">
+        {{-- Fondo agua POS — idéntico a Punto de venta (livewire/punto-de-venta) --}}
         <div class="pos-water" aria-hidden="true">
             <div class="pos-water-gradient"></div>
             <div class="pos-water-highlight"></div>
@@ -23,7 +23,7 @@
                 </div>
             </div>
         </div>
-        <div class="module-page-inner relative z-10 noti-full noti-formal">
+        <div class="module-page-inner noti-full noti-formal relative z-10">
             <header class="mb-4 flex flex-wrap items-end justify-between gap-4" aria-label="Encabezado de auditoría">
                 <div>
                     <a href="{{ route('caja.index', array_filter(['sucursal' => $sucursal?->id])) }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#0e9384] hover:text-[#0c7569] dark:text-emerald-300">← Volver a caja</a>
@@ -43,7 +43,7 @@
                     <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">No hay sucursal seleccionada.</p>
                 </div>
             @else
-            <section class="module-card pos-glass-highlight !p-0 overflow-hidden" aria-label="Historial de cortes y auditoría" x-data="buscadorTabla()" x-effect="filtrar($el)">
+            <section class="module-card pos-glass-highlight !p-0 overflow-hidden !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10 flex flex-col flex-1 min-h-[520px] lg:min-h-[640px]" aria-label="Historial de cortes y auditoría" x-data="buscadorTabla()" x-effect="filtrar($el)">
                 <header class="border-b border-slate-200 bg-white px-5 py-4 dark:border-slate-700 dark:bg-slate-900">
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <div>

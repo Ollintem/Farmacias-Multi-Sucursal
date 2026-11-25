@@ -4,7 +4,7 @@
     $interactivo = $interactivo ?? false;
 @endphp
 
-<section class="module-card !p-0 overflow-hidden" aria-label="Resultados del reporte de ventas">
+<section class="module-card pos-glass-highlight !p-0 overflow-hidden !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10" aria-label="Resultados del reporte de ventas">
     <header class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4 dark:border-slate-700 dark:bg-slate-900">
         <div>
             <h2 class="text-sm font-black tracking-tight text-slate-800 dark:text-white">Ventas del periodo</h2>

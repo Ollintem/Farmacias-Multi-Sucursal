@@ -1,8 +1,31 @@
 <x-layouts::app :title="__('Permisos por rol')">
-    <div class="module-page noti-page">
-        <div class="module-page-inner noti-full noti-formal">
+    <div class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide">
+        {{-- Fondo agua POS — idéntico a Punto de venta (livewire/punto-de-venta) --}}
+        <div class="pos-water" aria-hidden="true">
+            <div class="pos-water-gradient"></div>
+            <div class="pos-water-highlight"></div>
+            <div class="pos-water-layer pos-water-layer--back">
+                <div class="pos-wave-track pos-wave-track--slow">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer pos-water-layer--mid">
+                <div class="pos-wave-track pos-wave-track--mid">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                </div>
+            </div>
+            <div class="pos-water-layer">
+                <div class="pos-wave-track pos-wave-track--fast">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                </div>
+            </div>
+        </div>
+        <div class="module-page-inner noti-full noti-formal relative z-10">
             {{-- Acciones --}}
-            <section class="module-card noti-hero" aria-label="Acciones de permisos por rol">
+            <section class="module-card noti-hero pos-glass-highlight !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10" aria-label="Acciones de permisos por rol">
                 <div class="noti-hero-fondo" aria-hidden="true"></div>
                 <div class="noti-encabezado-texto noti-hero-texto">
                     <div class="mt-4 flex flex-wrap gap-2">
@@ -39,7 +62,7 @@
                 </div>
             @endif
 
-            <section class="module-card noti-listado" aria-label="Selección de rol">
+            <section class="module-card noti-listado pos-glass-highlight !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10" aria-label="Selección de rol">
                 <div class="p-5">
                     <form action="{{ route('roles.permisos') }}" method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
                         <div class="w-full sm:max-w-xs">
@@ -92,7 +115,7 @@
                 </div>
             </section>
 
-            <section class="module-card noti-listado" aria-label="Permisos por módulo">
+            <section class="module-card noti-listado pos-glass-highlight !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10" aria-label="Permisos por módulo">
                 <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                     <div>
                         <h2>Permisos por módulo</h2>
@@ -237,7 +260,7 @@
             </section>
 
             @if($selectedUsuario)
-                <section class="module-card noti-listado" aria-label="Excepciones individuales del usuario">
+                <section class="module-card noti-listado pos-glass-highlight !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10" aria-label="Excepciones individuales del usuario">
                     <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                         <div>
                             <h2>Excepciones de {{ $selectedUsuario->nombre }} {{ $selectedUsuario->apellido }}</h2>

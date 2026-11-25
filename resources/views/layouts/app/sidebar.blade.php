@@ -612,8 +612,8 @@
                             @php($esActivoEntrada = $topTipoEntradas === $valor)
                             <a href="{{ route('entradas-de-almacen.index', array_filter(['sucursal' => $topSucursalIdEntradas, 'tipo' => $valor === 'todas' ? null : $valor])) }}" @class([
                                 'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold whitespace-nowrap transition',
-                                'border-[#0e9384] bg-[#0e9384] text-white shadow-sm' => $esActivoEntrada,
-                                'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/30 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300' => !$esActivoEntrada,
+                                'border-[#0e9384] bg-[#0e9384] text-white shadow-sm dark:border-emerald-500 dark:bg-emerald-500 dark:text-white' => $esActivoEntrada,
+                                'border-slate-200 bg-white text-slate-600 hover:border-[#0e9384]/30 hover:bg-teal-50 hover:text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-emerald-400/40 dark:hover:bg-emerald-500/15 dark:hover:text-white' => !$esActivoEntrada,
                             ])>
                                 @if($valor === 'todas')
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
@@ -623,7 +623,7 @@
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
                                 @endif
                                 <span>{{ $etiqueta }}</span>
-                                <span class="grid min-w-[1.4rem] place-items-center rounded-full px-1.5 py-0.5 text-[11px] font-black @if($esActivoEntrada) bg-white/20 text-white @else bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 @endif">{{ $conteo }}</span>
+                                <span class="grid min-w-[1.4rem] place-items-center rounded-full px-1.5 py-0.5 text-[11px] font-black @if($esActivoEntrada) bg-white/20 text-white @else bg-slate-100 text-slate-600 dark:bg-slate-600 dark:text-slate-100 @endif">{{ $conteo }}</span>
                             </a>
                         @endforeach
                     </nav>

@@ -45,7 +45,58 @@ class UsuariosController extends Controller
 
         $totalUsuarios = User::where('id_sucursal', $selectedSucursalId)->count();
 
-        return view('pages.usuarios.index', compact('usuarios', 'sucursales', 'selectedSucursal', 'roles', 'totalUsuarios'));
+        // Porcentaje de permisos efectivos por usuario (para la columna PERMISOS)
+        $modulos = Modulo::orderBy('id')->get();
+        $totalChecks = max(1, $modulos->count() * 4);
+        $permisosPorcentaje = [];
+        $permisosActivosCount = [];
+        $permisosTotales = $totalChecks;
+
+        if ($usuarios->isNotEmpty()) {
+            $usuariosIds = $usuarios->pluck('id');
+            $rolesIds = $usuarios->pluck('id_rol')->filter()->unique();
+
+            $activadosPorUsuario = PermisoActivado::whereIn('id_usuario', $usuariosIds)->get()->groupBy('id_usuario');
+            $rolPermisosPorRol = RolPermiso::whereIn('id_rol', $rolesIds)->get()->groupBy('id_rol');
+
+            foreach ($usuarios as $u) {
+                // SuperAdmin siempre 100%
+                if ($u->rol?->tipo_rol === 'SuperAdmin') {
+                    $permisosPorcentaje[$u->id] = 100;
+                    $permisosActivosCount[$u->id] = $totalChecks;
+                    continue;
+                }
+
+                $personales = $activadosPorUsuario->get($u->id, collect())->keyBy('id_modulo');
+                $deRol = $u->id_rol ? ($rolPermisosPorRol->get($u->id_rol, collect())->keyBy('id_modulo')) : collect();
+                $rolTieneConfig = $deRol->isNotEmpty();
+                $sinConfigAlguna = ! $rolTieneConfig && $personales->isEmpty();
+
+                $activos = 0;
+                foreach ($modulos as $mod) {
+                    $personal = $personales->get($mod->id);
+                    $rolPerm = $deRol->get($mod->id);
+
+                    if ($personal !== null) {
+                        $flags = [(bool) $personal->puede_ver, (bool) $personal->puede_crear, (bool) $personal->puede_editar, (bool) $personal->puede_borrar];
+                    } elseif ($rolPerm !== null) {
+                        $flags = [(bool) $rolPerm->puede_ver, (bool) $rolPerm->puede_crear, (bool) $rolPerm->puede_editar, (bool) $rolPerm->puede_borrar];
+                    } else {
+                        $heredado = $sinConfigAlguna;
+                        $flags = [$heredado, $heredado, $heredado, $heredado];
+                    }
+
+                    foreach ($flags as $f) {
+                        if ($f) $activos++;
+                    }
+                }
+
+                $permisosActivosCount[$u->id] = $activos;
+                $permisosPorcentaje[$u->id] = (int) round(($activos / $totalChecks) * 100);
+            }
+        }
+
+        return view('pages.usuarios.index', compact('usuarios', 'sucursales', 'selectedSucursal', 'roles', 'totalUsuarios', 'permisosPorcentaje', 'permisosActivosCount', 'permisosTotales'));
     }
 
     public function create(): View

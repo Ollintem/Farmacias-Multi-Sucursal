@@ -18,7 +18,7 @@
 @endphp
 
 <section
-    class="module-card p-4 sm:p-5"
+    class="module-card pos-glass-highlight !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10 p-4 sm:p-5"
     x-data="{ tipo: @js($filtros['tipo']) }"
     @option-pick-changed.window="if ($event.detail.name === 'tipo') { tipo = $event.detail.value }"
     aria-label="Filtros del reporte de ventas"

@@ -1,13 +1,36 @@
-<div class="module-page noti-page" wire:poll.30s x-data x-on:abrir-notificacion.window="$wire.abrirDetalle($event.detail.id)">
-    <div class="module-page-inner noti-full noti-formal">
+<div class="module-page pos-page noti-page relative isolate overflow-hidden scrollbar-hide" wire:poll.30s x-data x-on:abrir-notificacion.window="$wire.abrirDetalle($event.detail.id)">
+    {{-- Fondo agua POS — mismo efecto de olas que en la imagen referencia --}}
+    <div class="pos-water" aria-hidden="true">
+        <div class="pos-water-gradient"></div>
+        <div class="pos-water-highlight"></div>
+        <div class="pos-water-layer pos-water-layer--back">
+            <div class="pos-wave-track pos-wave-track--slow">
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,60 C150,85 350,35 600,60 C850,85 1050,35 1200,60 L1200,120 L0,120 Z" fill="rgba(6,182,212,0.20)"/></svg>
+            </div>
+        </div>
+        <div class="pos-water-layer pos-water-layer--mid">
+            <div class="pos-wave-track pos-wave-track--mid">
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,55 C180,90 380,30 600,58 C820,86 1000,28 1200,55 L1200,120 L0,120 Z" fill="rgba(14,147,132,0.18)"/></svg>
+            </div>
+        </div>
+        <div class="pos-water-layer">
+            <div class="pos-wave-track pos-wave-track--fast">
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0,65 C160,95 340,25 600,65 C860,105 1020,20 1200,65 L1200,120 L0,120 Z" fill="rgba(34,211,238,0.24)"/></svg>
+            </div>
+        </div>
+    </div>
+    <div class="module-page-inner noti-full noti-formal relative z-10">
         <div wire:loading.delay class="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
             <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
             Actualizando…
         </div>
 
-        {{-- Listado colapsable con memoria localStorage --}}
-        <section class="module-card noti-listado overflow-hidden !p-0" aria-label="Listado de notificaciones" x-data="{ abierto: true, init() { try { const v = localStorage.getItem('noti-listado-abierto'); if (v !== null) this.abierto = v === '1'; } catch(e) {} }, alternar() { this.abierto = !this.abierto; try { localStorage.setItem('noti-listado-abierto', this.abierto ? '1' : '0'); } catch(e) {} } }">
-            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-teal-50/60 to-transparent px-4 py-3 dark:border-slate-700 dark:from-slate-800/50 sm:px-5">
+        {{-- Listado colapsable con memoria localStorage — contenido sin desborde horizontal --}}
+        <section class="module-card noti-listado pos-glass-highlight bg-white/75 backdrop-blur-xl supports-backdrop-filter:bg-white/65 dark:bg-slate-800/60 w-full max-w-5xl mx-auto overflow-hidden !p-0 rounded-2xl border border-white/60 dark:border-white/10 shadow-xl shadow-teal-900/5" aria-label="Listado de notificaciones" x-data="{ abierto: true, init() { try { const v = localStorage.getItem('noti-listado-abierto'); if (v !== null) this.abierto = v === '1'; } catch(e) {} }, alternar() { this.abierto = !this.abierto; try { localStorage.setItem('noti-listado-abierto', this.abierto ? '1' : '0'); } catch(e) {} } }">
+            <header class="flex flex-wrap items-center justify-between gap-3 rounded-t-2xl border-b border-slate-200 bg-gradient-to-r from-teal-50/60 to-transparent px-4 py-3 dark:border-slate-700 dark:from-slate-800/50 sm:px-5">
                 <div>
                     <h2 class="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Detalle de avisos</h2>
                     <p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ count($notificaciones) }} registro(s) · filtro: <span class="font-bold text-slate-700 dark:text-slate-200">{{ $filtro === 'no_leidas' ? 'no leídas' : $filtro }}</span> · {{ $selectedSucursal?->nombre_sucursal ?? 'sin sucursal' }}</p>
@@ -22,8 +45,8 @@
                 </div>
             </header>
 
-            <div x-show="abierto" x-transition x-cloak id="noti-listado-cuerpo" class="noti-desplegable">
-            <div class="noti-scroll max-h-[62vh] min-h-[18rem] overflow-y-auto overscroll-contain">
+            <div x-show="abierto" x-transition x-cloak id="noti-listado-cuerpo" class="noti-desplegable w-full max-w-full overflow-hidden">
+            <div class="noti-scroll max-h-[60vh] min-h-0 w-full max-w-full overflow-x-hidden overflow-y-auto overscroll-contain box-border">
                 @forelse($notificaciones as $aviso)
                     @php
                         $grupo = $aviso['grupo'] ?? $aviso['tipo'] ?? 'general';
@@ -40,7 +63,7 @@
                             default => 'Media',
                         };
                     @endphp
-                    <article wire:key="noti-{{ $aviso['id'] }}" class="group relative flex items-stretch gap-3 border-b border-slate-100 bg-white px-4 py-4 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/60 sm:px-5 {{ ! $aviso['leida'] ? '!bg-teal-50/40 dark:!bg-teal-900/10' : '' }}">
+                    <article wire:key="noti-{{ $aviso['id'] }}" class="group relative flex items-stretch gap-3 border-b border-slate-100 bg-white px-4 py-4 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/60 sm:px-5 max-w-full overflow-hidden {{ ! $aviso['leida'] ? '!bg-teal-50/40 dark:!bg-teal-900/10' : '' }}">
                         <span class="absolute inset-y-0 left-0 w-1 {{ $aviso['prioridad'] === 'alta' ? 'bg-red-500' : ($aviso['prioridad'] === 'media' ? 'bg-amber-500' : 'bg-teal-500') }}"></span>
                         <span class="noti-avatar prioridad-{{ $aviso['prioridad'] }} relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-black text-white shadow-sm @if($aviso['prioridad'] === 'alta') bg-gradient-to-br from-red-500 to-red-700 @elseif($aviso['prioridad'] === 'media') bg-gradient-to-br from-amber-500 to-orange-600 @else bg-gradient-to-br from-teal-600 to-teal-700 @endif">
                             {{ $aviso['avatar'] ?? '•' }}

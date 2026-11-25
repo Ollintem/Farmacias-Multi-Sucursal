@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Usuarios')">
-    <div class="module-page relative isolate overflow-hidden">
-        {{-- Fondo agua POS — mismo diseño que punto de venta --}}
+    <div class="module-page pos-page noti-page relative isolate !overflow-hidden scrollbar-hide">
+        {{-- Fondo agua POS — idéntico a Punto de venta (livewire/punto-de-venta) --}}
         <div class="pos-water" aria-hidden="true">
             <div class="pos-water-gradient"></div>
             <div class="pos-water-highlight"></div>
@@ -23,7 +23,7 @@
                 </div>
             </div>
         </div>
-        <div class="module-page-inner relative z-10 noti-full noti-formal">
+        <div class="module-page-inner noti-full noti-formal relative z-10">
             @if(session('success'))
                 <div
                     x-data="{ show: true }"
@@ -284,7 +284,7 @@
                     @endforeach
                 </div>
 
-                <section class="module-card noti-listado pos-glass-highlight" aria-label="Listado de usuarios">
+                <section class="module-card noti-listado pos-glass-highlight !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10 flex flex-col flex-1 overflow-hidden min-h-[520px] lg:min-h-[640px]" aria-label="Listado de usuarios">
                     <header class="noti-listado-cabecera noti-listado-cabecera-empresa">
                         <div>
                             <h2>Listado de usuarios</h2>
@@ -329,9 +329,19 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            <a href="{{ route('usuarios.permisos', $usuario) }}" class="inline-flex items-center gap-1.5 rounded-full border border-[#0c9f9c]/20 bg-[#0c9f9c]/10 px-2.5 py-1 text-xs font-semibold text-[#0c9f9c] hover:bg-[#0c9f9c] hover:text-white transition" title="Modificar permisos de {{ $usuario->nombre }}">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                                Permisos
+                                            @php
+                                                $pct = $permisosPorcentaje[$usuario->id] ?? 0;
+                                                $activos = $permisosActivosCount[$usuario->id] ?? 0;
+                                                $total = $permisosTotales ?? 48;
+                                                $colorBar = $pct >= 80 ? 'bg-emerald-500' : ($pct >= 50 ? 'bg-[#0e9384]' : ($pct >= 25 ? 'bg-amber-500' : 'bg-red-500'));
+                                                $colorText = $pct >= 80 ? 'text-emerald-700 dark:text-emerald-300' : ($pct >= 50 ? 'text-[#0c7569] dark:text-emerald-300' : ($pct >= 25 ? 'text-amber-700 dark:text-amber-300' : 'text-red-600 dark:text-red-300'));
+                                            @endphp
+                                            <a href="{{ route('usuarios.permisos', $usuario) }}" class="group inline-flex flex-col items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition hover:border-[#0e9384]/30 hover:bg-teal-50/60 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700/60" title="Ver permisos de {{ $usuario->nombre }} — {{ $activos }}/{{ $total }} ({{ $pct }}%)">
+                                                <span class="text-xs font-black {{ $colorText }}">{{ $pct }}%</span>
+                                                <span class="h-1.5 w-20 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                                                    <span class="block h-full rounded-full {{ $colorBar }} transition-all" style="width: {{ $pct }}%"></span>
+                                                </span>
+                                                <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{{ $activos }}/{{ $total }}</span>
                                             </a>
                                         </td>
                                         <td class="text-right">
