@@ -82,7 +82,7 @@ new #[Title('Ajustes de perfil')] class extends Component {
             </div>
         </form>
 
-            @unless (auth()->user()->rol?->tipo_rol === 'SuperAdmin')
+            @unless (auth()->user()?->esSuperAdmin() ?? false)
                 <livewire:pages::settings.delete-user-form />
             @endunless
     </x-pages::settings.layout>

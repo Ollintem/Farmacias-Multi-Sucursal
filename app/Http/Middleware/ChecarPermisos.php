@@ -21,7 +21,9 @@ class ChecarPermisos
             abort(403, 'No tienes permiso para acceder a este módulo.');
         }
 
-        if ($user->rol?->tipo_rol === 'SuperAdmin') {
+        // SuperAdmin tiene acceso total, sin importar la configuración de permisos.
+        // Se usa el método del modelo para centralizar la lógica (case-insensitive y con fallback si la relación no está cargada).
+        if (method_exists($user, 'esSuperAdmin') && $user->esSuperAdmin()) {
             return $next($request);
         }
 

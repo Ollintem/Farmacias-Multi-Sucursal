@@ -61,9 +61,10 @@ class UsuariosController extends Controller
 
             foreach ($usuarios as $u) {
                 // SuperAdmin siempre 100%
-                if ($u->rol?->tipo_rol === 'SuperAdmin') {
+                if ($u->esSuperAdmin()) {
                     $permisosPorcentaje[$u->id] = 100;
                     $permisosActivosCount[$u->id] = $totalChecks;
+
                     continue;
                 }
 
@@ -87,7 +88,9 @@ class UsuariosController extends Controller
                     }
 
                     foreach ($flags as $f) {
-                        if ($f) $activos++;
+                        if ($f) {
+                            $activos++;
+                        }
                     }
                 }
 
@@ -416,7 +419,7 @@ class UsuariosController extends Controller
             return redirect()->route('usuarios.index')->with('error', 'No puedes eliminar tu propio usuario.');
         }
 
-        if ($usuario->rol?->tipo_rol === 'SuperAdmin') {
+        if ($usuario->esSuperAdmin()) {
             return redirect()->route('usuarios.index')->with('error', 'No se puede eliminar a un SuperAdmin.');
         }
 

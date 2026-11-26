@@ -122,7 +122,7 @@ class PuntoDeVenta extends Component
     public function mount(): void
     {
         $this->carrito = session('carrito_pos', []);
-        $this->esSuperAdmin = auth()->user()?->rol?->tipo_rol === 'SuperAdmin';
+        $this->esSuperAdmin = (bool) (auth()->user()?->esSuperAdmin() ?? false);
         // Si el alta de caja falló (p. ej. caja+turno duplicados) se vuelve a
         // abrir el modal para corregir sin perder el carrito.
         $this->abriendoCaja = session()->has('error');

@@ -349,7 +349,7 @@
                                                 <a href="{{ route('usuarios.edit', $usuario) }}" class="text-[#0c9f9c] hover:text-[#0a8582] transition" title="Editar">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 </a>
-                                                @if($usuario->id === auth()->id() || $usuario->rol?->tipo_rol === 'SuperAdmin')
+                                                @if($usuario->id === auth()->id() || $usuario->esSuperAdmin())
                                                     <span class="text-slate-300 dark:text-slate-600 text-xs">Protegido</span>
                                                 @else
                                                 <form action="{{ route('usuarios.delete', $usuario) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');" style="margin:0; padding:0;">

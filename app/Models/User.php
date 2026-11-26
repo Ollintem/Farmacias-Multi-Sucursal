@@ -227,10 +227,31 @@ class User extends Authenticatable
 
     /**
      * Indica si el usuario es SuperAdmin.
+     *
+     * Centraliza la verificación para que el middleware y las vistas usen la misma lógica.
+     * Es case-insensitive, ignora espacios y hace fallback a consulta directa si la relación
+     * no está cargada (evita falsos negativos cuando el lazy loading está deshabilitado o la relación es null en caché).
      */
     public function esSuperAdmin(): bool
     {
-        return $this->rol?->tipo_rol === 'SuperAdmin';
+        $tipo = $this->rol?->tipo_rol;
+
+        if (is_string($tipo) && trim(strtolower($tipo)) === 'superadmin') {
+            return true;
+        }
+
+        // Fallback: si la relación no está cargada pero id_rol existe, consultar directamente.
+        if ($tipo === null && $this->id_rol !== null) {
+            if ($this->relationLoaded('rol')) {
+                return false;
+            }
+
+            $tipoDirecto = Rol::whereKey($this->id_rol)->value('tipo_rol');
+
+            return is_string($tipoDirecto) && trim(strtolower($tipoDirecto)) === 'superadmin';
+        }
+
+        return false;
     }
 
     /**

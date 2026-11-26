@@ -4,66 +4,72 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-[#e9efec] text-[#22332f] dark:bg-slate-900 dark:text-slate-100" x-data="{ currentDate: '' }" x-init="updateDate(); setInterval(updateDate, 60000)">
-        <flux:sidebar id="app-sidebar" sticky collapsible class="erp-sidebar erp-sidebar-v2 border-e border-[#2c545e] bg-[#20444c] text-[#c3d4cf] dark:border-[#334155] dark:bg-slate-800 dark:text-slate-300">
-            <flux:sidebar.header class="!border-b-0">
-                <flux:sidebar.brand name="FarmaERP" href="{{ route('dashboard') }}" wire:navigate>
-                    <x-slot name="logo" class="erp-logo flex aspect-square size-8 items-center justify-center rounded-xl bg-[#0e9384] text-white shadow-lg shadow-black/20">
-                        <span class="text-xs font-black">Rx</span>
-                    </x-slot>
-                </flux:sidebar.brand>
-                <flux:sidebar.collapse class="text-[#c3d4cf] hover:text-white" />
+        <flux:sidebar id="app-sidebar" sticky collapsible class="erp-sidebar erp-sidebar-v2 relative border-e border-white/5 bg-[#20444c] text-[#c3d4cf] dark:border-[#334155] dark:bg-slate-800 dark:text-slate-300 overflow-hidden">
+            <div class="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-emerald-400/10 blur-[50px]"></div>
+            <div class="pointer-events-none absolute top-1/2 -left-20 h-64 w-64 rounded-full bg-cyan-400/5 blur-[60px]"></div>
+            <flux:sidebar.header class="!border-b-0 !pb-2">
+                <div class="flex w-full items-center gap-2">
+                    <flux:sidebar.brand name="FarmaERP" href="{{ route('dashboard') }}" wire:navigate class="flex-1">
+                        <x-slot name="logo" class="erp-logo flex aspect-square size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#0e9384] to-[#0f766e] text-white shadow-lg shadow-black/20 ring-1 ring-white/10">
+                            <span class="text-[11px] font-black tracking-widest">Rx</span>
+                        </x-slot>
+                    </flux:sidebar.brand>
+                    <flux:sidebar.collapse class="text-[#c3d4cf] hover:text-white hover:bg-white/10 rounded-lg transition-colors" />
+                </div>
+                <p class="in-data-flux-sidebar-collapsed-desktop:hidden -mt-1 px-2 text-[10px] font-semibold tracking-[0.14em] text-[#7fb8ad]/80 uppercase">Panel farmacéutico • v2</p>
             </flux:sidebar.header>
 
-            <flux:sidebar.nav class="erp-nav erp-nav-animated">
+            <flux:sidebar.nav class="erp-nav erp-nav-animated px-2">
                 @php($usuarioActual = auth()->user())
+                @php($navIdx = 0)
                 @if($usuarioActual?->puedeVerModulo('Dashboard') ?? false)
-                <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate data-erp-label="dashboard">
+                <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate data-erp-label="dashboard" style="--i: {{ $navIdx++ }}">
                     Dashboard
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Punto de venta') ?? false)
-                <flux:sidebar.item icon="receipt-percent" :href="route('punto-venta.index')" :current="request()->routeIs('punto-venta.*')" wire:navigate data-erp-label="punto venta pos">
+                <flux:sidebar.item icon="receipt-percent" :href="route('punto-venta.index')" :current="request()->routeIs('punto-venta.*')" wire:navigate data-erp-label="punto venta pos" style="--i: {{ $navIdx++ }}">
                     Punto de venta
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Inventario') ?? false)
-                <flux:sidebar.item icon="archive-box" :href="route('inventario.productos')" :current="request()->routeIs('inventario.*')" wire:navigate data-erp-label="inventario stock productos lotes">
+                <flux:sidebar.item icon="archive-box" :href="route('inventario.productos')" :current="request()->routeIs('inventario.*')" wire:navigate data-erp-label="inventario stock productos lotes" style="--i: {{ $navIdx++ }}">
                     Inventario
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Entradas de almacén') ?? false)
-                <flux:sidebar.item icon="inbox-arrow-down" :href="route('entradas-de-almacen.index')" :current="request()->routeIs('entradas-de-almacen.*')" wire:navigate data-erp-label="entradas almacen compras traspasos">
+                <flux:sidebar.item icon="inbox-arrow-down" :href="route('entradas-de-almacen.index')" :current="request()->routeIs('entradas-de-almacen.*')" wire:navigate data-erp-label="entradas almacen compras traspasos" style="--i: {{ $navIdx++ }}">
                     Entradas de almacén
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Proveedores') ?? false)
-                <flux:sidebar.item icon="truck" :href="route('proveedores.index')" :current="request()->routeIs('proveedores.*')" wire:navigate data-erp-label="proveedores">
+                <flux:sidebar.item icon="truck" :href="route('proveedores.index')" :current="request()->routeIs('proveedores.*')" wire:navigate data-erp-label="proveedores" style="--i: {{ $navIdx++ }}">
                     Proveedores
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Sucursales') ?? false)
-                <flux:sidebar.item icon="map-pin" :href="route('sucursales.index')" :current="request()->routeIs('sucursales.*')" wire:navigate data-erp-label="sucursales">
+                <flux:sidebar.item icon="map-pin" :href="route('sucursales.index')" :current="request()->routeIs('sucursales.*')" wire:navigate data-erp-label="sucursales" style="--i: {{ $navIdx++ }}">
                     Sucursales
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Usuarios y roles') ?? false)
-                <flux:sidebar.item icon="users" :href="route('usuarios.index')" :current="request()->routeIs('usuarios.*')" wire:navigate data-erp-label="usuarios roles permisos">
+                <flux:sidebar.item icon="users" :href="route('usuarios.index')" :current="request()->routeIs('usuarios.*')" wire:navigate data-erp-label="usuarios roles permisos" style="--i: {{ $navIdx++ }}">
                     Usuarios y roles
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Caja') ?? false)
-                <flux:sidebar.item icon="banknotes" :href="route('caja.index')" :current="request()->routeIs('caja.*')" wire:navigate data-erp-label="caja cortes">
+                <flux:sidebar.item icon="banknotes" :href="route('caja.index')" :current="request()->routeIs('caja.*')" wire:navigate data-erp-label="caja cortes" style="--i: {{ $navIdx++ }}">
                     Caja
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Reportes') ?? false)
-                <flux:sidebar.item icon="list-bullet" :href="route('reportes.index')" :current="request()->routeIs('reportes.*')" wire:navigate data-erp-label="reportes">
+                <flux:sidebar.item icon="list-bullet" :href="route('reportes.index')" :current="request()->routeIs('reportes.*')" wire:navigate data-erp-label="reportes" style="--i: {{ $navIdx++ }}">
                     Reportes
                 </flux:sidebar.item>
                 @endif
                 @if($usuarioActual?->puedeVerModulo('Alertas') ?? false)
                 @php($alertasTotal = \App\Support\AlertasFeed::noLeidasCount((int) (session('active_sucursal_id', $usuarioActual?->id_sucursal ?? 0) ?: 0), $usuarioActual?->id))
-                <flux:sidebar.item icon="bell" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" :badge="$alertasTotal > 0 ? $alertasTotal : null" wire:navigate data-erp-label="notificaciones alertas">
+                <flux:sidebar.item icon="bell" :href="route('alertas.index')" :current="request()->routeIs('alertas.*')" :badge="$alertasTotal > 0 ? $alertasTotal : null" wire:navigate data-erp-label="notificaciones alertas" style="--i: {{ $navIdx++ }}">
                     Notificaciones
                 </flux:sidebar.item>
                 @endif
@@ -129,16 +135,27 @@
 
             <script>
                 (() => {
-                    // Ripple: guarda coordenadas del click para el efecto radial
-                    document.querySelectorAll('.erp-nav-animated [data-flux-sidebar-item]').forEach((item) => {
-                        item.addEventListener('click', (e) => {
-                            const rect = item.getBoundingClientRect();
-                            const x = ((e.clientX - rect.left) / rect.width) * 100;
-                            const y = ((e.clientY - rect.top) / rect.height) * 100;
-                            item.style.setProperty('--x', x + '%');
-                            item.style.setProperty('--y', y + '%');
-                        });
+                    // Ripple + hover spotlight en nav y acciones inferiores
+                    const setSpot = (el, e) => {
+                        const r = el.getBoundingClientRect();
+                        el.style.setProperty('--x', ((e.clientX - r.left) / r.width) * 100 + '%');
+                        el.style.setProperty('--y', ((e.clientY - r.top) / r.height) * 100 + '%');
+                    };
+                    document.querySelectorAll('.erp-nav-animated [data-flux-sidebar-item], .erp-sidebar-action').forEach((el) => {
+                        el.addEventListener('mousemove', (e) => setSpot(el, e));
+                        el.addEventListener('click', (e) => setSpot(el, e));
                     });
+                    // Entrada suave del sidebar al cargar
+                    const sb = document.getElementById('app-sidebar');
+                    if (sb) {
+                        sb.style.opacity = '0';
+                        sb.style.transform = 'translateX(-8px)';
+                        requestAnimationFrame(() => {
+                            sb.style.transition = 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.2,0.8,0.2,1)';
+                            sb.style.opacity = '1';
+                            sb.style.transform = 'translateX(0)';
+                        });
+                    }
                 })();
             </script>
         </flux:sidebar>

@@ -58,7 +58,7 @@ class TraspasoController extends Controller
         $fija = $sucursales->firstWhere('id', $activaId) ?? $sucursales->first();
         $opciones = $sucursales->where('id', '!==', $fija?->id)->values();
 
-        $esSuperAdmin = $usuarioActual?->rol?->tipo_rol === 'SuperAdmin';
+        $esSuperAdmin = (bool) ($usuarioActual?->esSuperAdmin() ?? false);
         $campoPicker = $esSuperAdmin ? 'sucursal_a' : 'sucursal_b';
         $campoFijo = $esSuperAdmin ? 'sucursal_b' : 'sucursal_a';
         $paramQuery = $esSuperAdmin ? 'origen' : 'destino';
@@ -126,7 +126,7 @@ class TraspasoController extends Controller
             return back()->with('error', 'No se pudo determinar tu sucursal activa. Vuelve a elegir sucursal activa.')->withInput();
         }
 
-        $esSuperAdmin = $usuarioActual?->rol?->tipo_rol === 'SuperAdmin';
+        $esSuperAdmin = (bool) ($usuarioActual?->esSuperAdmin() ?? false);
 
         if ($esSuperAdmin) {
             $destinoId = $activaId;
@@ -276,7 +276,7 @@ class TraspasoController extends Controller
     {
         $usuario = $request->user();
 
-        if ($usuario?->rol?->tipo_rol === 'SuperAdmin') {
+        if ($usuario?->esSuperAdmin() ?? false) {
             return true;
         }
 
@@ -428,7 +428,7 @@ class TraspasoController extends Controller
     {
         $usuario = $request->user();
 
-        if ($usuario?->rol?->tipo_rol === 'SuperAdmin') {
+        if ($usuario?->esSuperAdmin() ?? false) {
             return true;
         }
 
@@ -444,7 +444,7 @@ class TraspasoController extends Controller
     {
         $usuario = $request->user();
 
-        if ($usuario?->rol?->tipo_rol === 'SuperAdmin') {
+        if ($usuario?->esSuperAdmin() ?? false) {
             return true;
         }
 
