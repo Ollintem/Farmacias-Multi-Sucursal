@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Reportes\VentasDiaModal;
 use App\Models\Pago;
 use App\Models\Rol;
 use App\Models\Sucursal;
@@ -8,6 +9,7 @@ use App\Models\Venta;
 use App\Services\VentasReporteService;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 
 /**
  * Crea dos sucursales y un usuario SuperAdmin para los reportes.
@@ -229,6 +231,94 @@ test('un usuario con permiso multicursal puede consolidar todas las sucursales',
         ->assertSee('V-CONS-CENTRO')
         ->assertSee('V-CONS-NORTE')
         ->assertSee('Todas las sucursales');
+});
+
+test('el resumen diario agrupa los totales por día e incluye días sin ventas', function () {
+    $hoy = CarbonImmutable::create(2026, 11, 18, 12, 0, 0);
+    $this->travelTo($hoy);
+    [$centro] = contextoReporte();
+
+    ventaReporte($centro, 'V-RES-LUN-A', 10, CarbonImmutable::create(2026, 11, 16, 9, 0, 0));
+    ventaReporte($centro, 'V-RES-LUN-B', 5, CarbonImmutable::create(2026, 11, 16, 18, 0, 0));
+    ventaReporte($centro, 'V-RES-MIE', 20, CarbonImmutable::create(2026, 11, 18, 10, 0, 0));
+
+    $reporte = app(VentasReporteService::class)->ventasPorSemana($hoy->format('o-\WW'), $centro->id);
+    $dias = collect($reporte['dias'])->keyBy('fecha');
+
+    expect($reporte['dias'])->toHaveCount(3)
+        ->and($dias['2026-11-16']['cantidad'])->toBe(2)
+        ->and($dias['2026-11-16']['total'])->toBe(15.0)
+        ->and($dias['2026-11-16']['dia_semana'])->toBe('Lunes')
+        ->and($dias['2026-11-17']['cantidad'])->toBe(0)
+        ->and($dias['2026-11-17']['total'])->toBe(0.0)
+        ->and($dias['2026-11-18']['total'])->toBe(20.0);
+});
+
+test('la pantalla semanal muestra tarjetas por día enlazadas al modal de ventas', function () {
+    $hoy = CarbonImmutable::create(2026, 11, 18, 12, 0, 0);
+    $this->travelTo($hoy);
+    [$centro, , $usuario] = contextoReporte();
+
+    ventaReporte($centro, 'V-CARD-LUN', 10, CarbonImmutable::create(2026, 11, 16, 9, 0, 0));
+    ventaReporte($centro, 'V-CARD-MIE', 20, CarbonImmutable::create(2026, 11, 18, 10, 0, 0));
+
+    $this->actingAs($usuario)
+        ->get(route('reportes.index', [
+            'tipo' => 'semana',
+            'semana' => $hoy->format('o-\WW'),
+            'sucursal' => $centro->id,
+        ]))
+        ->assertOk()
+        ->assertSee('Toca un día con ventas para ver el detalle de sus ventas.')
+        ->assertSee('ver-ventas-dia', false)
+        ->assertSee('Lun · 16 Nov')
+        ->assertSee('$10.00')
+        ->assertDontSee('V-CARD-LUN')
+        ->assertDontSee('V-CARD-MIE');
+});
+
+test('la pantalla mensual también usa tarjetas por día', function () {
+    $this->travelTo(CarbonImmutable::create(2026, 11, 17, 12, 0, 0));
+    [$centro, , $usuario] = contextoReporte();
+
+    ventaReporte($centro, 'V-MES-CARD-1', 33, CarbonImmutable::create(2026, 11, 1, 9, 0, 0));
+    ventaReporte($centro, 'V-MES-CARD-17', 12, CarbonImmutable::create(2026, 11, 17, 9, 0, 0));
+
+    $this->actingAs($usuario)
+        ->get(route('reportes.index', [
+            'tipo' => 'mes',
+            'mes' => '2026-11',
+            'sucursal' => $centro->id,
+        ]))
+        ->assertOk()
+        ->assertSee('ver-ventas-dia', false)
+        ->assertSee('1 Nov')
+        ->assertSee('17 Nov')
+        ->assertSee('$33.00')
+        ->assertDontSee('V-MES-CARD-1')
+        ->assertDontSee('V-MES-CARD-17');
+});
+
+test('el modal del día carga solo las ventas de esa fecha y sucursal', function () {
+    $this->travelTo(CarbonImmutable::create(2026, 11, 18, 12, 0, 0));
+    [$centro, $norte, $usuario] = contextoReporte();
+
+    ventaReporte($centro, 'V-MODAL-CENTRO', 25, CarbonImmutable::create(2026, 11, 17, 9, 0, 0));
+    ventaReporte($norte, 'V-MODAL-NORTE', 99, CarbonImmutable::create(2026, 11, 17, 10, 0, 0));
+    ventaReporte($centro, 'V-MODAL-OTRO-DIA', 40, CarbonImmutable::create(2026, 11, 16, 11, 0, 0));
+
+    $this->actingAs($usuario);
+
+    Livewire::test(VentasDiaModal::class)
+        ->dispatch('ver-ventas-dia', fecha: '2026-11-17', sucursal: $centro->id)
+        ->assertSet('abierto', true)
+        ->assertSee('V-MODAL-CENTRO')
+        ->assertDontSee('V-MODAL-NORTE')
+        ->assertDontSee('V-MODAL-OTRO-DIA')
+        ->assertSee('$25.00')
+        ->call('cerrar')
+        ->assertSet('abierto', false)
+        ->assertSet('ventas', []);
 });
 
 test('la gráfica del dashboard muestra las ventas de hoy de la sucursal activa', function () {

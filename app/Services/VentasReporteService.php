@@ -45,6 +45,44 @@ class VentasReporteService
         12 => 'diciembre',
     ];
 
+    /** @var array<int, string> */
+    private const MESES_CORTOS = [
+        1 => 'Ene',
+        2 => 'Feb',
+        3 => 'Mar',
+        4 => 'Abr',
+        5 => 'May',
+        6 => 'Jun',
+        7 => 'Jul',
+        8 => 'Ago',
+        9 => 'Sep',
+        10 => 'Oct',
+        11 => 'Nov',
+        12 => 'Dic',
+    ];
+
+    /** @var array<int, string> */
+    private const DIAS_SEMANA = [
+        0 => 'Domingo',
+        1 => 'Lunes',
+        2 => 'Martes',
+        3 => 'Miércoles',
+        4 => 'Jueves',
+        5 => 'Viernes',
+        6 => 'Sábado',
+    ];
+
+    /** @var array<int, string> */
+    private const DIAS_SEMANA_CORTOS = [
+        0 => 'Dom',
+        1 => 'Lun',
+        2 => 'Mar',
+        3 => 'Mié',
+        4 => 'Jue',
+        5 => 'Vie',
+        6 => 'Sáb',
+    ];
+
     /**
      * Sucursales que el usuario puede consultar.
      *
@@ -116,7 +154,8 @@ class VentasReporteService
      *     etiqueta: string,
      *     sucursal: Sucursal|null,
      *     ventas: Collection<int, Venta>,
-     *     totales: array<string, mixed>
+     *     totales: array<string, mixed>,
+     *     dias: array<int, array<string, mixed>>
      * }
      */
     public function generar(string $tipo, ?int $idSucursal, string $periodo): array
@@ -138,6 +177,7 @@ class VentasReporteService
             'sucursal' => $idSucursal !== null ? Sucursal::find($idSucursal) : null,
             'ventas' => $ventas,
             'totales' => $this->calcularTotales($ventas),
+            'dias' => $this->resumenPorDia($ventas, $rango['inicio'], $rango['fin']),
         ];
     }
 
@@ -332,5 +372,68 @@ class VentasReporteService
             'total' => $total,
             'por_metodo' => $porMetodo,
         ];
+    }
+
+    /**
+     * Resume las ventas del periodo en una entrada por cada día del rango.
+     *
+     * Se incluyen también los días sin ventas (total en cero) para que la
+     * pantalla pueda mostrar la semana o el mes completo como tarjetas.
+     *
+     * @param  Collection<int, Venta>  $ventas
+     * @return array<int, array{
+     *     fecha: string,
+     *     dia: int,
+     *     dia_semana: string,
+     *     dia_semana_corto: string,
+     *     mes_corto: string,
+     *     etiqueta: string,
+     *     cantidad: int,
+     *     unidades: int,
+     *     descuento: float,
+     *     total: float
+     * }>
+     */
+    private function resumenPorDia(Collection $ventas, CarbonImmutable $inicio, CarbonImmutable $fin): array
+    {
+        $porFecha = $ventas->groupBy(
+            fn (Venta $venta): string => $venta->creado_en?->format('Y-m-d') ?? ''
+        );
+
+        $dias = [];
+        $cursor = $inicio->startOfDay();
+        $limite = $fin->startOfDay();
+
+        while ($cursor->lessThanOrEqualTo($limite)) {
+            $clave = $cursor->format('Y-m-d');
+            $grupo = $porFecha->get($clave, collect());
+            $indiceDia = (int) $cursor->dayOfWeek;
+            $numeroMes = (int) $cursor->month;
+
+            $dias[] = [
+                'fecha' => $clave,
+                'dia' => (int) $cursor->day,
+                'dia_semana' => self::DIAS_SEMANA[$indiceDia] ?? '',
+                'dia_semana_corto' => self::DIAS_SEMANA_CORTOS[$indiceDia] ?? '',
+                'mes_corto' => self::MESES_CORTOS[$numeroMes] ?? '',
+                'etiqueta' => (self::DIAS_SEMANA[$indiceDia] ?? '').' '.$cursor->format('d/m/Y'),
+                'cantidad' => $grupo->count(),
+                'unidades' => (int) $grupo->sum(
+                    fn (Venta $venta): int => (int) $venta->detalles->sum('cantidad')
+                ),
+                'descuento' => round(
+                    (float) $grupo->sum(fn (Venta $venta): float => (float) $venta->descuento),
+                    2
+                ),
+                'total' => round(
+                    (float) $grupo->sum(fn (Venta $venta): float => (float) $venta->total),
+                    2
+                ),
+            ];
+
+            $cursor = $cursor->addDay();
+        }
+
+        return $dias;
     }
 }

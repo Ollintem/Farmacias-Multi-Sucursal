@@ -22,7 +22,6 @@ return new class extends Migration
             $table->timestamp('fecha_cierre')->nullable();
             $table->string('estado', 20);
             $table->boolean('cierre_automatico')->default(false);
-            $table->timestamp('creado_en')->useCurrent();
         });
 
         Schema::table('ventas', function (Blueprint $table) {
@@ -45,6 +44,9 @@ return new class extends Migration
 
     public function down(): void
     {
+        Schema::table('ventas', function (Blueprint $table) {
+            $table->dropForeign(['id_corte_caja']);
+        });
 
         Schema::dropIfExists('traspasos');
         Schema::dropIfExists('cortes_caja');

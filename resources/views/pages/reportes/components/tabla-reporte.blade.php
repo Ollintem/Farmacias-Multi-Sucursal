@@ -2,6 +2,11 @@
     $consolidado = $reporte['sucursal'] === null;
     $totalColumnas = $consolidado ? 8 : 7;
     $interactivo = $interactivo ?? false;
+    $vistaPorDias = $interactivo && in_array(
+        $reporte['tipo'],
+        [\App\Services\VentasReporteService::TIPO_SEMANA, \App\Services\VentasReporteService::TIPO_MES],
+        true
+    );
 @endphp
 
 <section class="module-card pos-glass-highlight !p-0 overflow-hidden !bg-white/70 backdrop-blur-xl supports-[backdrop-filter]:!bg-white/60 !border-white/50 shadow-xl shadow-teal-900/5 dark:!bg-slate-800/60 dark:!border-white/10" aria-label="Resultados del reporte de ventas">
@@ -57,6 +62,55 @@
         </div>
     @endif
 
+    @if($vistaPorDias)
+        <div class="p-4 sm:p-5">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+                @foreach($reporte['dias'] as $dia)
+                    @php($tieneVentas = $dia['cantidad'] > 0)
+                    <button
+                        type="button"
+                        @if($tieneVentas)
+                            x-on:click="$dispatch('ver-ventas-dia', { fecha: '{{ $dia['fecha'] }}', sucursal: {{ $reporte['sucursal']?->id ?? 'null' }} })"
+                        @else
+                            disabled
+                        @endif
+                        aria-label="{{ $dia['etiqueta'] }}: {{ $tieneVentas ? $dia['cantidad'].' venta(s), $'.number_format((float) $dia['total'], 2) : 'sin ventas' }}"
+                        class="group flex min-h-[7.5rem] flex-col justify-between rounded-2xl border p-4 text-left transition {{ $tieneVentas
+                            ? 'cursor-pointer border-slate-200 bg-white hover:-translate-y-0.5 hover:border-[#0e9384] hover:shadow-lg hover:shadow-teal-900/10 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-emerald-500'
+                            : 'cursor-default border-dashed border-slate-200 bg-slate-50/60 opacity-70 dark:border-slate-700 dark:bg-slate-800/40' }}"
+                    >
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest {{ $tieneVentas ? 'text-[#0c7569] dark:text-emerald-300' : 'text-slate-400 dark:text-slate-500' }}">
+                                {{ $dia['dia_semana_corto'] }} · {{ $dia['dia'] }} {{ $dia['mes_corto'] }}
+                            </span>
+                            @if($tieneVentas)
+                                <svg class="h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-[#0e9384] dark:text-slate-600 dark:group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            @endif
+                        </div>
+
+                        <div>
+                            <p class="text-xl font-black leading-none {{ $tieneVentas ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500' }}">
+                                ${{ number_format((float) $dia['total'], 2) }}
+                            </p>
+                            <p class="mt-2 text-[11px] font-semibold {{ $tieneVentas ? 'text-slate-500 dark:text-slate-400' : 'text-slate-400 dark:text-slate-500' }}">
+                                @if($tieneVentas)
+                                    {{ $dia['cantidad'] }} venta(s) · {{ number_format((int) $dia['unidades']) }} unidad(es)
+                                @else
+                                    Sin ventas
+                                @endif
+                            </p>
+                        </div>
+                    </button>
+                @endforeach
+            </div>
+
+            <p class="mt-3 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                Toca un día con ventas para ver el detalle de sus ventas.
+            </p>
+        </div>
+    @else
     <div class="overflow-x-auto">
         <table class="entradas-tabla !min-w-[960px]">
             <thead>
@@ -158,4 +212,5 @@
             @endif
         </table>
     </div>
+    @endif
 </section>

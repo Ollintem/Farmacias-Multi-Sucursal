@@ -15,7 +15,6 @@ return new class extends Migration
             $table->text('descripcion');
             $table->foreignId('id_categoria')->nullable()->constrained('categorias')->nullOnDelete();
             $table->boolean('es_controlado')->default(false);
-            $table->timestamp('entregado_en')->nullable();
             $table->boolean('es_activo')->default(true);
             $table->timestamps();
         });

@@ -45,6 +45,7 @@
 
             @include('pages.reportes.components.tabla-reporte', ['reporte' => $reporte, 'interactivo' => true])
 
+            <livewire:reportes.ventas-dia-modal />
             <livewire:reportes.detalles-modal />
         </div>
     </div>

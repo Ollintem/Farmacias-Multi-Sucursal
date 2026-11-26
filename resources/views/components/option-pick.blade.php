@@ -54,9 +54,17 @@
                 window.removeEventListener("resize", this._alMover);
                 this._alMover = null;
             }
+        },
+        cerrarSiFuera(event) {
+            if (! this.abierto) { return; }
+            const panel = this.$refs.panel;
+            const gatillo = this.$refs.gatillo;
+            if (gatillo?.contains(event.target) || panel?.contains(event.target)) { return; }
+            this.abierto = false;
+            this.detener();
         }
     }'
-    @click.outside="abierto = false; detener()"
+    @click.window="cerrarSiFuera($event)"
     @keydown.escape.window="abierto = false; detener()"
 >
     <input type="hidden" name="{{ $name }}" :value="valor">
@@ -86,12 +94,13 @@
         </svg>
     </button>
 
+    <template x-teleport="body">
     <div
         x-ref="panel"
         x-show="abierto"
         x-cloak
         x-transition.opacity
-        class="fixed z-20 rounded-xl bg-white p-2 shadow-xl dark:border dark:border-slate-700 dark:bg-slate-900"
+        class="fixed z-[70] rounded-xl bg-white p-2 shadow-xl dark:border dark:border-slate-700 dark:bg-slate-900"
     >
         <div
             class="farma-pick-scroll"
@@ -125,4 +134,5 @@
         @endforelse
         </div>
     </div>
+    </template>
 </div>
